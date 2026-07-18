@@ -45,6 +45,9 @@ Status: source-observed on 2026-07-18 under strict read-only rules. Excel open/e
 - There are no card-to-axis connectors or alternating visual lanes. Changing the period updates the month rail, day ticks and dated ledger from the same filtered collection, so no delivery can remain visible outside the selected interval.
 - Desktop fits dated groups into a calm responsive grid. Mobile retains the same date-grouped information model in one column while the month rail scrolls horizontally; it is not a separate or reduced data representation.
 - Timeline events are a dedicated typed source fixture derived from all 23 source rows across both delivery pages. The six future rows without an arrival date are intentionally excluded from the dated chronology until the source supplies a date.
+- The full chronology body (month rail and dated ledger together) can be collapsed from its title control. The title, current range, `Період` control and legend remain visible, so the collapsed section still explains its content and can be adjusted without reopening it.
+- The open state is reusable UI state rather than schedule data. It persists as `1` or `0` under the locale-independent key `brp-clone-ui-v1:collapsible:admin.schedule.chronology`, defaults to open on first visit, survives reloads, synchronizes across tabs and falls back safely when browser storage is unavailable or corrupt.
+- The collapse control exposes native button semantics and `aria-expanded`; the body is one labelled region and remains browser-search discoverable through `hidden="until-found"`. Height is measured by the collapse primitive, motion is brief, and reduced-motion preferences disable it.
 
 ## Deliveries tab
 
