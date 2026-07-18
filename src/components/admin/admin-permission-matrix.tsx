@@ -1,0 +1,166 @@
+"use client";
+
+import { type ReactNode } from "react";
+import { AdminTableShell } from "./admin-ui";
+import styles from "./admin-permission-matrix.module.css";
+
+export type PermissionMatrixState = "on" | "off";
+
+export type PermissionMatrixAction<TAction extends string> = {
+  readonly id: TAction;
+  readonly label: string;
+  readonly icon?: ReactNode;
+  readonly tone?: "neutral" | "blue" | "green" | "amber" | "red";
+};
+
+export type PermissionMatrixRow<TAction extends string> = {
+  readonly id: string;
+  readonly label: string;
+  readonly icon?: ReactNode;
+  readonly sectionBefore?: string;
+  readonly permissions: Readonly<Partial<Record<TAction, PermissionMatrixState>>>;
+};
+
+function PermissionSwitch({
+  state,
+  rowLabel,
+  actionLabel,
+}: {
+  state: PermissionMatrixState;
+  rowLabel: string;
+  actionLabel: string;
+}) {
+  const checked = state === "on";
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={`${rowLabel}: ${actionLabel} — ${checked ? "увімкнено" : "вимкнено"}, лише перегляд`}
+      aria-disabled="true"
+      disabled
+      title="Зміна дозволу заблокована у read-only демонстрації"
+      className={styles.permissionSwitch}
+      data-state={checked ? "checked" : "unchecked"}
+    >
+      <span aria-hidden="true" />
+    </button>
+  );
+}
+
+function ActionLabel<TAction extends string>({
+  action,
+}: {
+  action: PermissionMatrixAction<TAction>;
+}) {
+  return (
+    <span className={styles.actionLabel} data-tone={action.tone ?? "neutral"}>
+      {action.icon ? <span aria-hidden="true">{action.icon}</span> : null}
+      <span>{action.label}</span>
+    </span>
+  );
+}
+
+function RowLabel<TAction extends string>({ row }: { row: PermissionMatrixRow<TAction> }) {
+  return (
+    <span className={styles.rowLabel}>
+      {row.icon ? <span className={styles.rowIcon} aria-hidden="true">{row.icon}</span> : null}
+      <strong>{row.label}</strong>
+    </span>
+  );
+}
+
+export function AdminPermissionMatrix<TAction extends string>({
+  actions,
+  rows,
+  ariaLabel,
+  title,
+  description,
+  emptyCopy,
+}: {
+  actions: readonly PermissionMatrixAction<TAction>[];
+  rows: readonly PermissionMatrixRow<TAction>[];
+  ariaLabel: string;
+  title?: ReactNode;
+  description?: ReactNode;
+  emptyCopy?: string;
+}) {
+  return (
+    <AdminTableShell title={title} description={description} scrollLabel={ariaLabel}>
+      <table className={styles.desktopTable} aria-label={ariaLabel}>
+        <thead>
+          <tr>
+            <th scope="col">Об&apos;єкт</th>
+            {actions.map((action) => (
+              <th key={action.id} scope="col"><ActionLabel action={action} /></th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <MatrixRows key={row.id} row={row} actions={actions} />
+          ))}
+        </tbody>
+      </table>
+
+      <div className={styles.mobileList} aria-label={ariaLabel}>
+        {rows.map((row) => (
+          <div key={row.id} className={styles.mobileGroup}>
+            {row.sectionBefore ? <div className={styles.sectionLabel}>{row.sectionBefore}</div> : null}
+            <article className={styles.mobileCard}>
+              <header><RowLabel row={row} /></header>
+              <div className={styles.mobilePermissions}>
+                {actions.map((action) => {
+                  const state = row.permissions[action.id];
+                  if (!state) return null;
+                  return (
+                    <div key={action.id} className={styles.mobilePermissionRow}>
+                      <ActionLabel action={action} />
+                      <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          </div>
+        ))}
+      </div>
+
+      {!rows.length && emptyCopy ? <div className={styles.emptyState}>{emptyCopy}</div> : null}
+    </AdminTableShell>
+  );
+}
+
+function MatrixRows<TAction extends string>({
+  row,
+  actions,
+}: {
+  row: PermissionMatrixRow<TAction>;
+  actions: readonly PermissionMatrixAction<TAction>[];
+}) {
+  return (
+    <>
+      {row.sectionBefore ? (
+        <tr className={styles.sectionRow}>
+          <th colSpan={actions.length + 1} scope="rowgroup">{row.sectionBefore}</th>
+        </tr>
+      ) : null}
+      <tr>
+        <th scope="row"><RowLabel row={row} /></th>
+        {actions.map((action) => {
+          const state = row.permissions[action.id];
+          return (
+            <td key={action.id}>
+              {state ? (
+                <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} />
+              ) : (
+                <span className={styles.notApplicable} aria-label="Не застосовується">—</span>
+              )}
+            </td>
+          );
+        })}
+      </tr>
+    </>
+  );
+}

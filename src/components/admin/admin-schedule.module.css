@@ -1,0 +1,158 @@
+.timelineViewport {
+  width: 100%;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  overscroll-behavior-inline: contain;
+}
+
+.timelineViewport:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.timelineTrack {
+  position: relative;
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  height: 156px;
+  padding-inline: 44px;
+}
+
+.timelineTrack::before {
+  position: absolute;
+  right: 44px;
+  bottom: 34px;
+  left: 44px;
+  height: 1px;
+  background: var(--border);
+  content: "";
+}
+
+.timelineDay {
+  position: relative;
+  flex: 1 0 18px;
+  width: 18px;
+  min-width: 18px;
+}
+
+.timelineEvent {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  width: 82px;
+  min-height: 28px;
+  padding: 4px 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, var(--border));
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  font-size: 8px;
+  line-height: 1.2;
+  transform: translateX(-50%);
+}
+
+.timelineEvent::after {
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  background: currentColor;
+  opacity: .38;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.timelineEvent > span {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineEvent > strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineEvent > small {
+  grid-column: 1 / -1;
+  color: currentColor;
+  font-size: 7px;
+}
+
+.lane0 { top: 2px; }
+.lane1 { top: 36px; }
+.lane2 { top: 70px; }
+.lane0::after { top: 100%; height: 84px; }
+.lane1::after { top: 100%; height: 50px; }
+.lane2::after { top: 100%; height: 16px; }
+
+.eventArrived { color: var(--green); }
+.eventTransit { color: var(--blue); }
+.eventFuture { color: var(--muted-foreground); }
+
+.timelineToday::before {
+  position: absolute;
+  top: 0;
+  bottom: 24px;
+  left: 50%;
+  z-index: 1;
+  width: 2px;
+  background: var(--orange);
+  content: "";
+  opacity: .8;
+}
+
+.todayLabel {
+  position: absolute;
+  right: 4px;
+  bottom: 40px;
+  z-index: 3;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--orange-soft);
+  color: var(--orange);
+  font-size: 8px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.monthLabel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.timelineEmpty {
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .timelineTrack {
+    padding-inline: 42px;
+  }
+
+  .timelineTrack::before {
+    right: 42px;
+    left: 42px;
+  }
+
+  .timelineDay {
+    flex-basis: 20px;
+    width: 20px;
+    min-width: 20px;
+  }
+}

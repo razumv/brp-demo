@@ -1,0 +1,88 @@
+"use client";
+
+import {
+  BookOpen,
+  CheckCircle2,
+  KeyRound,
+  LockKeyhole,
+  PackageOpen,
+  Save,
+  Search,
+  ShieldCheck,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
+import { InlineNotice, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import { useDemoStore } from "@/components/providers/demo-store-provider";
+import styles from "./dealer.module.css";
+
+const permissions = [
+  { label: "Каталог", helper: "Читання", icon: BookOpen, enabled: true },
+  { label: "Консигнація", helper: "Відвантаження", icon: PackageOpen, enabled: false },
+  { label: "Консигнація", helper: "Читання", icon: PackageOpen, enabled: true },
+  { label: "Консигнація", helper: "Запит", icon: PackageOpen, enabled: false },
+  { label: "Пошук запчастини", helper: "Читання", icon: Search, enabled: true },
+];
+
+export function TeamAccessPage() {
+  const { state } = useDemoStore();
+  const name = state.session?.displayName || "Финансы";
+  const email = state.session?.email || "dealer@logos.local";
+
+  return (
+    <main className="page page-narrow">
+      <PageHeader
+        icon={<UsersRound size={21} />}
+        title="Команда і доступи"
+        description="Налаштуйте користувачів компанії та профілі доступу."
+        action={<StatusBadge tone="neutral"><UsersRound size={12} /> 1</StatusBadge>}
+      />
+
+      <InlineNotice>
+        Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.
+      </InlineNotice>
+
+      <Panel className={styles.teamUsersPanel}>
+        <header><h2>Користувачі</h2><p>Профіль обирається окремо для кожного користувача.</p></header>
+        <div className="data-table-wrap">
+          <table className="data-table">
+            <thead><tr><th>Назва</th><th>Email</th><th>Роль</th><th>Статус доступу</th><th>Профіль</th></tr></thead>
+            <tbody><tr><td><strong>{name}</strong></td><td>{email}</td><td>Головний дилер</td><td><StatusBadge tone="green">Основний акаунт</StatusBadge></td><td><button type="button" className="button button-outline" disabled>Оберіть профіль</button></td></tr></tbody>
+          </table>
+        </div>
+      </Panel>
+
+      <Panel className={styles.selectedAccount}>
+        <header>
+          <span><UserRound size={19} /></span>
+          <div><small>Обраний акаунт</small><h2>{name}</h2><p>{email}</p></div>
+        </header>
+        <div className={styles.accountBadges}><StatusBadge tone="neutral">Головний дилер</StatusBadge><StatusBadge tone="green">Основний акаунт</StatusBadge><StatusBadge tone="neutral">Оберіть профіль</StatusBadge></div>
+        <div className={styles.accountControls}>
+          <label className="field"><span>Ім&apos;я акаунта</span><input value={name} readOnly disabled /></label>
+          <button type="button" className="button button-outline" disabled>Зберегти ім&apos;я</button>
+          <span className={styles.quickLabel}>Швидкий доступ</span>
+          <button type="button" className="button button-outline" disabled><ShieldCheck size={15} /> Дати Full Access</button>
+          <button type="button" className="button button-outline" disabled><LockKeyhole size={15} /> Без доступу</button>
+        </div>
+      </Panel>
+
+      <Panel className={styles.permissionsPanel}>
+        <header><div><h2>Права профілю</h2><p>Показані лише функції, доступні вашій компанії.</p></div><button type="button" className="button button-primary" disabled><Save size={14} /> Зберегти</button></header>
+        <div>
+          {permissions.map(({ label, helper, icon: Icon, enabled }, index) => (
+            <div className={styles.permissionRow} key={`${label}-${helper}-${index}`}>
+              <span className={styles.permissionIcon}>{enabled ? <CheckCircle2 size={17} /> : <Icon size={17} />}</span>
+              <span><strong>{label}</strong><small>{helper}</small></span>
+              <label className={styles.switch} title="Керується адміністратором">
+                <input type="checkbox" checked={enabled} disabled readOnly />
+                <i />
+              </label>
+            </div>
+          ))}
+        </div>
+        <footer><KeyRound size={15} /> Щоб змінити права або додати співробітника, зверніться до адміністратора.</footer>
+      </Panel>
+    </main>
+  );
+}
