@@ -39,10 +39,11 @@ Status: source-observed on 2026-07-18 under strict read-only rules. Excel open/e
 - Source captures remain the structural authority: chronology is a page-level overview after KPI and before tabs, so search, pagination, category filters, slot selection and the Stock tab do not replace or filter it.
 - Primary visual direction: Refero Orderful `9c657624-4aa8-4688-a6be-4eb3d6f2ce57` — white operational canvas, thin borders and restrained orange emphasis.
 - Secondary craft: shadcn `c14c0a94-1037-449e-bf5b-4cb972656ac7` for compact 8px rhythm; Operate `a0f473eb-0310-4df5-b5f6-5bc124ad5954` for a light ledger/grid treatment.
-- Concrete timeline patterns: Fibery `720d9d4a-426e-4a16-b9b3-30663429bd81` and Wrike `bda83b6e-42ea-47e1-b247-e5ac3250b71f` — even temporal divisions, compact markers and a single current-date line.
+- Concrete schedule patterns: Understory `b3e53a84-9852-4257-9164-60dd97cf5ed0` for a calm date-first agenda, Sunsama `7a9afeca-9bb2-4b73-afcf-82a9c2b80e52` for compact grouped schedule rows, and Linear `ca93c49f-8e22-4510-bbce-dabce69e8140` for restrained metadata hierarchy.
 - Default context is six months before and two months after the reference current month. A collapsed `Період` control immediately beside the title opens compact steppers for past context from 0–12 months and future context from 0–6 months.
-- Wide desktop spreads only the groups whose exact arrival dates fall inside the chosen interval across the usable width in two readable lanes. Each connector terminates at its real date marker; changing the period therefore moves the scale and adds or removes cards together.
-- Mobile uses a readable two-column marker summary because the source's scaled-down plot made labels illegible.
+- The chronology deliberately separates overview from detail. A full-width month rail shows equal temporal divisions, exact day ticks inside months that contain deliveries, monthly group/unit totals, and one current-day marker. Below it, a compact ledger groups the same visible deliveries by real arrival date.
+- There are no card-to-axis connectors or alternating visual lanes. Changing the period updates the month rail, day ticks and dated ledger from the same filtered collection, so no delivery can remain visible outside the selected interval.
+- Desktop fits dated groups into a calm responsive grid. Mobile retains the same date-grouped information model in one column while the month rail scrolls horizontally; it is not a separate or reduced data representation.
 - Timeline events are a dedicated typed source fixture derived from all 23 source rows across both delivery pages. The six future rows without an arrival date are intentionally excluded from the dated chronology until the source supplies a date.
 
 ## Deliveries tab
