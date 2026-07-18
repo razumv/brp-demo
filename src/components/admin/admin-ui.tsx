@@ -213,7 +213,7 @@ export function AdminToolbar({
     <section className={cn(styles.toolbar, contained && styles.toolbarContained, className)}>
       {search ? <div className={styles.toolbarSearch}>{search}</div> : null}
       {filters ? <div className={styles.toolbarFilters}>{filters}</div> : null}
-      <div className={styles.toolbarSpacer} aria-hidden="true" />
+      {!search ? <div className={styles.toolbarSpacer} aria-hidden="true" /> : null}
       {view ? <div className={styles.toolbarView}>{view}</div> : null}
       {actions ? <div className={styles.toolbarActions}>{actions}</div> : null}
       {meta ? <div className={styles.toolbarMeta}>{meta}</div> : null}

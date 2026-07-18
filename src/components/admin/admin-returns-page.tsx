@@ -364,7 +364,6 @@ export function AdminReturnsPage() {
             onValueChange={setQuery}
             label="Пошук повернень"
             placeholder="Пошук за поверненням, дилером, замовленням, нотаткою..."
-            maxWidth={520}
           />
         )}
         filters={(

@@ -182,7 +182,6 @@ export function AdminSettingsPage() {
             onValueChange={setQuery}
             label="Пошук за налаштуваннями"
             placeholder="Пошук за налаштуваннями, чергою, воркерами, базою..."
-            maxWidth={560}
           />
         )}
       />

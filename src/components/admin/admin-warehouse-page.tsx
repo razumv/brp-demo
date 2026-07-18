@@ -168,8 +168,9 @@ function ReceivingTab() {
       <AdminToolbar
         filters={(
           <label className="field w-full lg:max-w-[460px]">
-            <span>Постачання</span>
+            <span className="sr-only">Постачання</span>
             <select
+              className="h-10"
               value={shipmentId}
               onChange={(event) => setShipmentId(event.target.value as (typeof warehouseShipments)[number]["id"])}
             >
@@ -306,7 +307,6 @@ function ReceiptSummaryTab() {
             onValueChange={setQuery}
             label="Пошук за артикулом"
             placeholder="Пошук за артикулом…"
-            maxWidth={320}
           />
         )}
         filters={(
@@ -400,7 +400,6 @@ function ShortagesTab() {
             onValueChange={setQuery}
             label="Пошук за артикулом або постачанням"
             placeholder="Пошук за артикулом або постачанням..."
-            maxWidth={360}
           />
         )}
         filters={(
@@ -484,7 +483,6 @@ function FulfillmentTab() {
             onValueChange={setQuery}
             label="Пошук замовлень"
             placeholder="Пошук замовлень..."
-            maxWidth={360}
           />
         )}
         filters={(
@@ -629,7 +627,6 @@ function InventorySummaryTab() {
             onValueChange={setQuery}
             label="Пошук артикулу"
             placeholder="Пошук артикулу..."
-            maxWidth={280}
           />
         )}
         filters={(
@@ -776,7 +773,6 @@ function PlacementTab() {
             onValueChange={changeQuery}
             label="Пошук за артикулом, коміркою або зоною"
             placeholder="Пошук: артикул, комірка, зона…"
-            maxWidth={360}
           />
         )}
         actions={(

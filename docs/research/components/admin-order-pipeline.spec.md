@@ -97,3 +97,9 @@ Captured computed CSS at 1440px/light:
 - Every declared representative status must have an openable order, not only an aggregate number.
 - Search, empty state, list/Kanban, unread filter, group expansion and pagination work without APIs.
 - All operational CTAs are disabled and no reducer/callback changes order or line operational status.
+
+## User refinement lock — 2026-07-18
+
+- Compose search, period, notification/unread filters and the list/Kanban switch through the shared `AdminToolbar`, `AdminSearchField` and `AdminSegmentedControl` grammar used by Ocean Freight.
+- Search takes all remaining row width; the translated filter labels and view control retain natural widths at the trailing edge and wrap only when they no longer fit.
+- The seven summary cards are not tabs and must not gain tab semantics or invented filtering behavior. Existing search, pagination, group expansion, period and view handlers remain unchanged.

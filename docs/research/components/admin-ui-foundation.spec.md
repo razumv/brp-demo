@@ -42,7 +42,9 @@ Preserve:
 | Refero Orderful style `9c657624-4aa8-4688-a6be-4eb3d6f2ce57` | surface hierarchy and accent discipline | neutral canvas -> white content surfaces -> orange only for primary/selected emphasis; 8px shapes and minimal elevation |
 | Refero shadcn style `c14c0a94-1037-449e-bf5b-4cb972656ac7` | compact control composition | 8px control gaps, 16px panel padding, clear focus rings and contained segmented controls |
 | Refero Rows style `984071b0-dd6d-4d43-a7b7-e71af93052df` | dense worksheet rhythm | compact filters/tags, thin dividers and direct interaction without decorative chrome |
-| Refero Resend screen `1879b4bd-f716-4305-a694-be47edc013de` | data toolbar | search/filter/actions share one bounded row above a table; right actions do not detach from the working context |
+| Refero Resend screen `362b9a44-0dc3-4089-a081-d1d11d1dda0f` | data toolbar | the search owns the flexible left side while a naturally sized dropdown stays pinned to the right edge |
+| Refero MonoDesk screen `e90cbc63-a4f5-4d14-ae8e-8d57df5e365a` | task toolbar | search, filters and actions remain one working row and wrap as coherent groups rather than leaving dead space |
+| Refero Rox screen `fa448c4d-d996-4317-9dcb-d56ff860a892` | localized filter row | search expands against variable-width trailing controls without assigning fixed widths to translated labels |
 | Refero Tango screen `737a1b76-03c7-48b9-92c8-d638660b12d3` | permission comparison | permission names remain left aligned; action states form scan-friendly, centered columns with subtle row separation |
 | Refero Wrike screen `3003f1bf-b086-416f-994c-5260412f3377` | timeline readability | render only a meaningful event window, use consistent spacing and a distinct current-time marker |
 
@@ -76,6 +78,8 @@ All migrated admin routes use the following grammar unless source evidence requi
 5. `AdminTableShell` or an equivalent bounded route-specific data surface below the toolbar.
 
 Search and primary tabs may share one `AdminToolbar` when the route is compact and the user explicitly requested a single row, as on Consignment. Responsive wrapping is allowed; controls must keep their order and remain keyboard accessible.
+
+When a toolbar has search, the search owns all remaining inline space. Filters, view controls, actions and result metadata retain their natural content width and sit at the trailing edge. There is no competing flexible spacer. The toolbar stays on one row while its contents fit, wraps before controls collide, and gives search a full row at the mobile breakpoint. A toolbar without search may still use the internal spacer to keep actions trailing.
 
 The contract is compositional, not cosmetic: route logic and state stay local, final operational actions remain hard-disabled, and filters are never hidden merely to create a visually empty toolbar.
 
@@ -180,7 +184,7 @@ type AdminToolbarProps = {
 };
 ```
 
-Desktop order is search -> filters -> flexible spacer -> view/actions. Narrow layouts wrap in semantic groups. The toolbar is one bounded surface when `contained=true`; route-specific filters remain intact.
+Desktop order is search -> filters -> view/actions/meta. Search is the only flexible owner of leftover width; trailing groups keep natural widths. Toolbars without search use an internal spacer before trailing actions. Narrow layouts wrap in semantic groups, with search taking a full row at 640px and below. The toolbar is one bounded surface when `contained=true`; route-specific filters remain intact.
 
 ### `AdminSearchField`
 

@@ -182,6 +182,7 @@
 .toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   min-width: 0;
   gap: 8px;
 }
@@ -196,7 +197,11 @@
 
 .toolbarSearch {
   min-width: 0;
-  flex: 1 1 320px;
+  flex: 1 1 280px;
+}
+
+.toolbarSearch .searchField {
+  max-width: none;
 }
 
 .toolbarFilters,
@@ -204,6 +209,7 @@
 .toolbarActions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   flex: 0 1 auto;
   min-width: 0;
   gap: 8px;
@@ -537,16 +543,8 @@
     text-align: left;
   }
 
-  .toolbar {
-    flex-wrap: wrap;
-  }
-
   .toolbarSpacer {
     display: none;
-  }
-
-  .toolbarSearch {
-    flex-basis: 100%;
   }
 
   .searchField {
@@ -633,6 +631,10 @@
   .toolbarContained {
     align-items: stretch;
     padding: 8px;
+  }
+
+  .toolbarSearch {
+    flex-basis: 100%;
   }
 
   .toolbarFilters,

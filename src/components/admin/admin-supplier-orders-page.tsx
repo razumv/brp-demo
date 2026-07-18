@@ -9,9 +9,14 @@ import {
   ChevronDown,
   FileText,
   PackageOpen,
-  Search,
-  X,
 } from "lucide-react";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import {
   sourceSupplierBackorders,
   sourceSupplierOrders,
@@ -168,12 +173,12 @@ function PeriodPicker({
         <div
           role="dialog"
           aria-label="Період замовлень постачальнику"
-          className="absolute left-0 z-30 mt-2 w-[min(620px,calc(100vw-32px))] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xl"
+          className="absolute left-0 z-30 mt-2 w-[min(620px,calc(100vw-32px))] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xl sm:right-0 sm:left-auto sm:w-[320px] lg:w-[560px] xl:w-[620px]"
         >
           <p className="mb-4 text-center text-[11px] text-[var(--muted-foreground)]">
             {!start || end ? "Click start date" : "Click end date"}
           </p>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             {calendarMonths.map((month) => (
               <CalendarMonthView key={month.id} month={month} start={start} end={end} onSelect={onSelect} />
             ))}
@@ -206,50 +211,40 @@ function SearchToolbar({
   onPeriodSelect: (value: string) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3 xl:flex-row xl:items-center" aria-label="Фільтри замовлень постачальнику">
-      <div className="toolbar-search w-full xl:max-w-[272px] xl:flex-none">
-        <Search size={15} />
-        <input
-          className={query ? "!pr-9" : ""}
-          aria-label="Пошук за номером SO або артикулом"
-          placeholder="Пошук за номером SO, артикулом..."
+    <AdminToolbar
+      search={(
+        <AdminSearchField
           value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
+          onValueChange={onQueryChange}
+          label="Пошук за номером SO або артикулом"
+          placeholder="Пошук за номером SO, артикулом..."
         />
-        {query ? (
-          <button
-            type="button"
-            aria-label="Очистити пошук"
-            className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]"
-            onClick={() => onQueryChange("")}
-          >
-            <X size={14} />
-          </button>
-        ) : null}
-      </div>
-
-      <PeriodPicker
-        open={periodOpen}
-        start={periodStart}
-        end={periodEnd}
-        onToggle={onPeriodToggle}
-        onSelect={onPeriodSelect}
-      />
-
-      <label className="relative min-w-0 xl:w-[190px]">
-        <span className="sr-only">Сортування замовлень постачальнику</span>
-        <select
-          className="h-10 w-full appearance-none rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 pr-9 text-[13px] outline-none focus:border-[var(--orange)]"
-          value={sort}
-          onChange={(event) => onSortChange(event.target.value as SupplierOrdersSort)}
-        >
-          {supplierOrderSortOptions.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
-          ))}
-        </select>
-        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
-      </label>
-    </section>
+      )}
+      filters={(
+        <>
+          <PeriodPicker
+            open={periodOpen}
+            start={periodStart}
+            end={periodEnd}
+            onToggle={onPeriodToggle}
+            onSelect={onPeriodSelect}
+          />
+          <label className="relative min-w-[190px]">
+            <span className="sr-only">Сортування замовлень постачальнику</span>
+            <select
+              className="h-10 w-full appearance-none rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 pr-9 text-[13px] outline-none focus:border-[var(--orange)]"
+              value={sort}
+              onChange={(event) => onSortChange(event.target.value as SupplierOrdersSort)}
+            >
+              {supplierOrderSortOptions.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
+          </label>
+        </>
+      )}
+    />
   );
 }
 
@@ -258,26 +253,20 @@ function SupplierOrderTabs({ active, onChange }: {
   onChange: (tab: SupplierOrdersTab) => void;
 }) {
   return (
-    <div className="flex max-w-full gap-1 overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-1" role="tablist" aria-label="Стан замовлень постачальнику">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-selected={active === tab.id}
-          onClick={() => onChange(tab.id)}
-          className={`min-h-9 shrink-0 rounded-md px-3 text-[11px] transition-colors ${active === tab.id ? "bg-[var(--orange-soft)] font-medium text-[var(--orange)]" : "text-[var(--muted-foreground)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"}`}
-        >
-          {tab.id === "exceptions" ? <AlertTriangle size={13} className="mr-1.5 inline" /> : null}
-          {tab.label}
-          {tab.id === "exceptions" ? (
-            <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 text-[9px] text-[var(--muted-foreground)]">
-              2
-            </span>
-          ) : null}
-        </button>
-      ))}
-    </div>
+    <AdminTabs<SupplierOrdersTab>
+      items={tabs.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        mobileLabel: tab.label,
+        count: tab.id === "exceptions" ? 2 : undefined,
+        icon: tab.id === "exceptions" ? <AlertTriangle size={13} /> : undefined,
+        panelId: `supplier-orders-${tab.id}-panel`,
+      }))}
+      value={active}
+      onValueChange={onChange}
+      label="Стан замовлень постачальнику"
+      mobileSelectLabel="Стан замовлень"
+    />
   );
 }
 
@@ -331,7 +320,7 @@ function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSor
   }, [filter, query, showClosed, sort]);
 
   return (
-    <div role="tabpanel" className="grid gap-3">
+    <div className="grid gap-3">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Фільтри винятків">
         <button
           type="button"
@@ -422,32 +411,29 @@ export function AdminSupplierOrdersPage() {
 
   const hasSourceOrders = sourceSupplierOrders.length > 0;
   const hasSourceBackorders = sourceSupplierBackorders.length > 0;
+  const activePanelId = `supplier-orders-${activeTab}-panel`;
 
   return (
-    <main className="page page-narrow">
-      <header className="mb-6 flex min-w-0 items-center gap-3">
-        <span className="page-header-icon shrink-0"><FileText size={20} /></span>
-        <h1 className="min-w-0 truncate text-[28px] font-bold leading-[33.6px] tracking-[-0.02em] max-sm:text-2xl">
-          Замовлення постачальнику
-        </h1>
-      </header>
-      <div className="grid gap-5">
-        <KpiGrid selected={selectedKpi} onSelect={setSelectedKpi} />
-
-        <SearchToolbar
-          query={query}
-          sort={sort}
-          periodOpen={periodOpen}
-          periodStart={periodStart}
-          periodEnd={periodEnd}
-          onQueryChange={setQuery}
-          onSortChange={setSort}
-          onPeriodToggle={() => setPeriodOpen((current) => !current)}
-          onPeriodSelect={selectPeriodDate}
-        />
-
-        <SupplierOrderTabs active={activeTab} onChange={setActiveTab} />
-
+    <AdminPage>
+      <AdminPageHeader icon={<FileText size={20} />} title="Замовлення постачальнику" />
+      <KpiGrid selected={selectedKpi} onSelect={setSelectedKpi} />
+      <SupplierOrderTabs active={activeTab} onChange={setActiveTab} />
+      <SearchToolbar
+        query={query}
+        sort={sort}
+        periodOpen={periodOpen}
+        periodStart={periodStart}
+        periodEnd={periodEnd}
+        onQueryChange={setQuery}
+        onSortChange={setSort}
+        onPeriodToggle={() => setPeriodOpen((current) => !current)}
+        onPeriodSelect={selectPeriodDate}
+      />
+      <section
+        id={activePanelId}
+        role="tabpanel"
+        aria-labelledby={`${activePanelId}-tab`}
+      >
         {activeTab === "all" ? (
           hasSourceOrders ? null : <EmptyOrders />
         ) : activeTab === "backorders" ? (
@@ -455,7 +441,7 @@ export function AdminSupplierOrdersPage() {
         ) : (
           <ExceptionsTab query={query} sort={sort} />
         )}
-      </div>
-    </main>
+      </section>
+    </AdminPage>
   );
 }

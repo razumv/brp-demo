@@ -223,4 +223,5 @@ Captured at 1440px/light:
 
 - Preserve the source-proven process logic, density and tables, but render the six-process navigation with shared `AdminTabs` and its mobile select fallback.
 - Replace route-local search and segmented controls incrementally with `AdminSearchField`, `AdminToolbar` and `AdminSegmentedControl` so Warehouse matches Ocean Freight without flattening process-specific content.
+- In the Receiving toolbar, keep `Постачання` as the shipment select's accessible name but visually hide the stacked field label so the select and disabled action buttons share one 40px control axis.
 - No receipt, scan, inventory, pagination or placement behavior changes are authorized by this visual migration.

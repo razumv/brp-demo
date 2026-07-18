@@ -13,10 +13,13 @@ import {
   LockKeyhole,
   MessageSquare,
   Plus,
-  Search,
   TriangleAlert,
-  X,
 } from "lucide-react";
+import {
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
 import {
@@ -202,8 +205,8 @@ function CalendarMonth({ title, days, selected, onSelect }: { title: string; day
 function PeriodPopover({ open, selected, onSelect, onClose, onClear }: { open: boolean; selected: readonly string[]; onSelect: (id: string) => void; onClose: () => void; onClear: () => void }) {
   if (!open) return null;
   return (
-    <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[min(700px,calc(100vw-32px))] rounded-md border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-menu)]" role="dialog" aria-label="Період замовлень">
-      <div className="grid gap-6 p-4 sm:grid-cols-2">
+    <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[min(700px,calc(100vw-32px))] rounded-md border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-menu)] sm:right-0 sm:left-auto sm:w-[340px] lg:w-[520px] xl:w-[700px]" role="dialog" aria-label="Період замовлень">
+      <div className="grid gap-6 p-4 lg:grid-cols-2">
         <CalendarMonth title="July 2026" days={julyDays} selected={selected} onSelect={onSelect} />
         <CalendarMonth title="August 2026" days={augustDays} selected={selected} onSelect={onSelect} />
       </div>
@@ -523,24 +526,37 @@ export function AdminOrderPipeline() {
           <button type="button" className={styles.readonlyPill} disabled title="Демо: призупинення вимкнене"><LockKeyhole size={14} /> Призупинити</button>
         </Panel>
 
-        <div className={styles.pipelineToolbar}>
-          <div className={`toolbar-search ${styles.pipelineToolbarSearch}`}>
-            <Search size={15} />
-            <input aria-label="Пошук замовлень" placeholder="Пошук замовлень, запчастин, замовлення постачальнику#, трекінг..." value={query} onChange={(event) => changeQuery(event.target.value)} />
-            {query ? <button type="button" className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md border-0 bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" aria-label="Очистити пошук" onClick={() => changeQuery("")}><X size={14} /></button> : null}
-          </div>
-          <div className="relative" onKeyDown={(event) => { if (event.key === "Escape") setPeriodOpen(false); }}>
-            <ToolbarButton active={periodOpen || periodSelection.length > 0} expanded={periodOpen} onClick={() => setPeriodOpen((current) => !current)}><CalendarDays size={15} /> Період</ToolbarButton>
-            <PeriodPopover open={periodOpen} selected={periodSelection} onSelect={selectPeriodDay} onClose={() => setPeriodOpen(false)} onClear={() => setPeriodSelection([])} />
-          </div>
-          <ToolbarButton active={notificationsOnly} onClick={toggleNotifications}><TriangleAlert size={15} /> Сповіщення</ToolbarButton>
-          <ToolbarButton active={unreadOnly} onClick={toggleUnread}><MessageSquare size={15} /> 2 непрочитаних</ToolbarButton>
-          <span className={styles.toolbarSpacer} />
-          <div className="segmented" aria-label="Вигляд замовлень">
-            <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")} aria-label="Список"><List size={16} /></button>
-            <button type="button" aria-pressed={view === "kanban"} onClick={() => setView("kanban")} aria-label="Канбан"><Columns3 size={16} /></button>
-          </div>
-        </div>
+        <AdminToolbar
+          search={(
+            <AdminSearchField
+              value={query}
+              onValueChange={changeQuery}
+              label="Пошук замовлень"
+              placeholder="Пошук замовлень, запчастин, замовлення постачальнику#, трекінг..."
+            />
+          )}
+          filters={(
+            <>
+              <div className="relative" onKeyDown={(event) => { if (event.key === "Escape") setPeriodOpen(false); }}>
+                <ToolbarButton active={periodOpen || periodSelection.length > 0} expanded={periodOpen} onClick={() => setPeriodOpen((current) => !current)}><CalendarDays size={15} /> Період</ToolbarButton>
+                <PeriodPopover open={periodOpen} selected={periodSelection} onSelect={selectPeriodDay} onClose={() => setPeriodOpen(false)} onClear={() => setPeriodSelection([])} />
+              </div>
+              <ToolbarButton active={notificationsOnly} onClick={toggleNotifications}><TriangleAlert size={15} /> Сповіщення</ToolbarButton>
+              <ToolbarButton active={unreadOnly} onClick={toggleUnread}><MessageSquare size={15} /> 2 непрочитаних</ToolbarButton>
+            </>
+          )}
+          view={(
+            <AdminSegmentedControl<PipelineView>
+              items={[
+                { id: "list", label: "Список", icon: <List size={15} /> },
+                { id: "kanban", label: "Канбан", icon: <Columns3 size={15} /> },
+              ]}
+              value={view}
+              onValueChange={setView}
+              label="Вигляд замовлень"
+            />
+          )}
+        />
 
         <SummaryCards counts={summaryCounts} />
         {view === "list" ? (

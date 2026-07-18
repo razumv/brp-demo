@@ -138,5 +138,6 @@ In the local clone the sync action must either be hard-disabled or open a read-o
 ## User refinement lock — 2026-07-18
 
 - Replace the detached category buttons, underline state tabs and free-form filter grid with the shared Ocean Freight control grammar.
-- Use `AdminPageHeader`, `AdminTabs`, `AdminToolbar`, `AdminSearchField` and `AdminSegmentedControl`; keep period/model/shipped-date selects in the same bounded toolbar.
+- Use `AdminPageHeader`, `AdminTabs`, `AdminToolbar` and `AdminSearchField`; replace the six category buttons with one native single-select labelled `Тип техніки`, whose all-state copy is `Усі типи`. Keep period/model/shipped-date selects in the same bounded toolbar.
+- Changing the type select resets pagination and closes any expanded VIN row, but does not clear the independent search, period, model or shipped-date filters. The explicit `Скинути` action remains the only full-filter reset.
 - Date-window metadata and the disabled BossWeb sync stay in the header action region. Table columns, pagination and VIN disclosure behavior do not change.

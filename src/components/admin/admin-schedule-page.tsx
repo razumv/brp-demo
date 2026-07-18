@@ -448,7 +448,6 @@ function Deliveries({
             onValueChange={updateQuery}
             label="Пошук SKU або моделі"
             placeholder="Пошук SKU або моделі..."
-            maxWidth={420}
           />
         )}
         filters={(

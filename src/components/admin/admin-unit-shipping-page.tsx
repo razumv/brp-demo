@@ -17,7 +17,6 @@ import {
   AdminPage,
   AdminPageHeader,
   AdminSearchField,
-  AdminSegmentedControl,
   AdminTabs,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
@@ -139,10 +138,6 @@ export function AdminUnitShippingPage() {
   };
 
   const selectCategory = (nextCategory: UnitShippingCategory) => {
-    if (nextCategory === "Всі") {
-      resetFilters();
-      return;
-    }
     setCategory(nextCategory);
     setPage(1);
     setExpandedOrderId(null);
@@ -215,7 +210,6 @@ export function AdminUnitShippingPage() {
         className="grid gap-4"
       >
         <AdminToolbar
-          className="flex-wrap"
           search={(
             <AdminSearchField
               value={query}
@@ -226,17 +220,22 @@ export function AdminUnitShippingPage() {
               }}
               label="Пошук замовлення або моделі"
               placeholder="Пошук замовлення, моделі..."
-              maxWidth={420}
             />
           )}
           filters={(
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <AdminSegmentedControl<UnitShippingCategory>
-                items={UNIT_SHIPPING_CATEGORIES.map((item) => ({ id: item, label: item }))}
+              <select
+                className="select !w-auto min-w-[150px] max-w-full"
+                aria-label="Тип техніки"
                 value={category}
-                onValueChange={selectCategory}
-                label="Категорії техніки"
-              />
+                onChange={(event) => selectCategory(event.target.value as UnitShippingCategory)}
+              >
+                {UNIT_SHIPPING_CATEGORIES.map((item) => (
+                  <option key={item} value={item}>
+                    {item === "Всі" ? "Усі типи" : item}
+                  </option>
+                ))}
+              </select>
               <select
                 className="select !w-auto min-w-[140px]"
                 aria-label="Період доставки"

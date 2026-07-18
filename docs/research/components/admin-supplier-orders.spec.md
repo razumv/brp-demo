@@ -123,3 +123,9 @@ Captured computed values at 1440px/dark:
 - Preserve the source-zero KPI values, three distinct empty/exception states, exact exception cards, working tabs/search/sort/period/filter controls and exception navigation.
 - Do not fabricate a populated supplier-order source view. Typed local-demo supplier-order models are allowed only with an explicit demo label and must remain read-only.
 - No reducer, store action or callback may mutate supplier-order, shipment, PDF-link or operational status. Upload/create/save/send/receive actions are hard-disabled.
+
+## User refinement lock — 2026-07-18
+
+- Render the three real route sections with shared `AdminTabs` and explicit tab/tabpanel relationships; keep inactive exception content unmounted so its existing local reset behavior is preserved.
+- Compose search, period and sort through shared `AdminToolbar` and `AdminSearchField`. Search owns the remaining row width, while period and localized sort controls stay naturally sized at the trailing edge.
+- Preserve the four interactive KPI controls and every source-zero/exception state; the visual migration does not authorize generic KPI cards or new supplier-order data.
