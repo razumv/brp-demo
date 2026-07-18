@@ -32,6 +32,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:pages": "DEPLOY_TARGET=github-pages PWA_BASE_PATH=/brp-demo next build && npm run pwa:generate && npm run pwa:validate",
+    "pwa:generate": "node scripts/generate-pwa.mjs",
+    "pwa:validate": "node scripts/validate-pwa.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -57,6 +60,7 @@
     "eslint-config-next": "16.2.10",
     "shadcn": "^4.1.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "workbox-build": "^7.4.1"
   }
 }

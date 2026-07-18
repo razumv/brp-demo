@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BRP">
+  <rect width="512" height="512" fill="#090d12" />
+  <path fill="#f97316" d="M144 80h96l16 16v96h96l16 16v80l-16 16h-96v96l-16 16h-96l-16-16v-80l16-16h96V192h-96l-16-16V96l16-16Z" />
+</svg>
