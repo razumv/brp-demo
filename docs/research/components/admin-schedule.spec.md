@@ -34,6 +34,17 @@ Status: source-observed on 2026-07-18 under strict read-only rules. Excel open/e
 
 `Хронологія доставок` shows legend `Прибуло`, `В дорозі`, `Майбутні`, a Jan-Sep 2026 axis and `Сьогодні` marker. Visible quantity labels include ATV 33, SSV 2, PWC 36, ATV 16, SSV x2 / 9, ATV 38, PWC 24, ATV 36, SSV 8, PWC x3 / 38, ATV 10, SSV x2 / 4 and ATV 8.
 
+### Chronology refinement lock (2026-07-18)
+
+- Source captures remain the structural authority: chronology is a page-level overview after KPI and before tabs, so search, pagination, category filters, slot selection and the Stock tab do not replace or filter it.
+- Primary visual direction: Refero Orderful `9c657624-4aa8-4688-a6be-4eb3d6f2ce57` — white operational canvas, thin borders and restrained orange emphasis.
+- Secondary craft: shadcn `c14c0a94-1037-449e-bf5b-4cb972656ac7` for compact 8px rhythm; Operate `a0f473eb-0310-4df5-b5f6-5bc124ad5954` for a light ledger/grid treatment.
+- Concrete timeline patterns: Fibery `720d9d4a-426e-4a16-b9b3-30663429bd81` and Wrike `bda83b6e-42ea-47e1-b247-e5ac3250b71f` — even temporal divisions, compact markers and a single current-date line.
+- Default context is six months before and two months after the reference current month. Compact steppers independently adjust past context from 1–12 months and future context from 0–6 months; labels and the current-date marker update immediately.
+- Wide desktop spreads all 13 source-observed groups across the usable width in two readable lanes with category, slot count, unit count and status; there is no ellipsis, overlap or horizontal clipping. The source fixture preserves group order but does not claim exact dates for every group.
+- Mobile uses a readable two-column marker summary because the source's scaled-down plot made labels illegible.
+- Timeline events are a dedicated typed source fixture. They intentionally do not infer exact dates from the partial 14-of-23 detailed slot fixture.
+
 ## Deliveries tab
 
 - Category filters: `Усі`, `PWC`, `ATV`, `SSV`, `3WV`.
@@ -112,6 +123,7 @@ Safe: tabs, category filters, slot selection, both paginations, search, responsi
 ## Clone acceptance
 
 - Dedicated route component and typed slot, slot-line, chronology-event and stock models.
+- Chronology remains visible and unchanged above both tabs, including search hit/miss and paginated states.
 - Category filters, search hit/miss, slot selection, main/detail pagination and stock tab work locally.
 - Exact KPI/footer counts and representative data are preserved.
 - Excel/sync actions are hard-disabled and there is no network request or operational mutation path.

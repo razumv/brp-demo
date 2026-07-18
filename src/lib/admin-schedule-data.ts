@@ -2,6 +2,15 @@ export type ScheduleTab = "deliveries" | "stock";
 export type ScheduleCategory = "PWC" | "ATV" | "SSV" | "3WV";
 export type ScheduleSlotStatus = "arrived" | "in-transit" | "future";
 
+export interface ScheduleTimelineEvent {
+  readonly id: string;
+  readonly category: ScheduleCategory;
+  readonly slotCount: number;
+  readonly quantity: number;
+  readonly status: ScheduleSlotStatus;
+  readonly evidence: "source-observed";
+}
+
 export interface ScheduleKpi {
   readonly id: "arriving" | "overdue" | "units" | "stock";
   readonly label: string;
@@ -63,6 +72,22 @@ export const scheduleKpis = [
   { id: "units", label: "Усього одиниць у графіку", value: 356, helper: "14 вільно", tone: "green" },
   { id: "stock", label: "На складі зараз", value: 33, helper: "од.", tone: "orange" },
 ] as const satisfies readonly ScheduleKpi[];
+
+export const scheduleTimelineEvents = [
+  { id: "timeline-atv-33", category: "ATV", slotCount: 1, quantity: 33, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-ssv-2", category: "SSV", slotCount: 1, quantity: 2, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-pwc-36", category: "PWC", slotCount: 1, quantity: 36, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-atv-16", category: "ATV", slotCount: 1, quantity: 16, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-ssv-9", category: "SSV", slotCount: 2, quantity: 9, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-atv-38", category: "ATV", slotCount: 1, quantity: 38, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-pwc-24", category: "PWC", slotCount: 1, quantity: 24, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-atv-36", category: "ATV", slotCount: 1, quantity: 36, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-ssv-8", category: "SSV", slotCount: 1, quantity: 8, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-pwc-38", category: "PWC", slotCount: 3, quantity: 38, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-atv-10", category: "ATV", slotCount: 1, quantity: 10, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-ssv-4", category: "SSV", slotCount: 2, quantity: 4, status: "arrived", evidence: "source-observed" },
+  { id: "timeline-atv-8", category: "ATV", slotCount: 1, quantity: 8, status: "arrived", evidence: "source-observed" },
+] as const satisfies readonly ScheduleTimelineEvent[];
 
 const pwcMarchLines = [
   { id: "pwc-mar-23tb", sku: "23TB", model: "RXP X 325 - Gulfstream Blue Premium", total: 5, free: 0, evidence: "source-observed" },

@@ -10,10 +10,13 @@ import {
   CreditCard,
   ExternalLink,
   LockKeyhole,
+  Minus,
   Package,
+  Plus,
   RefreshCw,
   Search,
   Ship,
+  SlidersHorizontal,
   Warehouse,
 } from "lucide-react";
 import {
@@ -33,6 +36,7 @@ import {
   scheduleSlots,
   scheduleSourceTotals,
   scheduleStockRows,
+  scheduleTimelineEvents,
   type ScheduleCategory,
   type ScheduleSlot,
   type ScheduleSlotStatus,
@@ -50,8 +54,42 @@ const categoryFilters = [
   { id: "3WV", label: "3WV" },
 ] as const;
 
-const monthLabels = ["СІЧ", "ЛЮТ", "БЕР", "КВІ", "ТРА", "ЧЕР", "ЛИП", "СЕР", "ВЕР", "ЖОВ", "ЛИС", "ГРУ"] as const;
-const dayMs = 86_400_000;
+const timelineMonthNames = [
+  { short: "СІЧ", long: "січень" },
+  { short: "ЛЮТ", long: "лютий" },
+  { short: "БЕР", long: "березень" },
+  { short: "КВІ", long: "квітень" },
+  { short: "ТРА", long: "травень" },
+  { short: "ЧЕР", long: "червень" },
+  { short: "ЛИП", long: "липень" },
+  { short: "СЕР", long: "серпень" },
+  { short: "ВЕР", long: "вересень" },
+  { short: "ЖОВ", long: "жовтень" },
+  { short: "ЛИС", long: "листопад" },
+  { short: "ГРУ", long: "грудень" },
+] as const;
+
+const timelineReferenceDate = { year: 2026, month: 6, day: 18 } as const;
+const defaultPastMonths = 6;
+const defaultFutureMonths = 2;
+
+function buildTimelineMonths(pastMonths: number, futureMonths: number) {
+  const start = new Date(Date.UTC(timelineReferenceDate.year, timelineReferenceDate.month - pastMonths, 1));
+  return Array.from({ length: pastMonths + futureMonths + 1 }, (_, index) => {
+    const date = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + index, 1));
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const monthName = timelineMonthNames[month];
+    const includeYear = index === 0 || month === 0;
+    return {
+      id: `${year}-${String(month + 1).padStart(2, "0")}`,
+      label: `${monthName.short}${includeYear ? ` ’${String(year).slice(-2)}` : ""}`,
+      longLabel: monthName.long,
+      year,
+      current: year === timelineReferenceDate.year && month === timelineReferenceDate.month,
+    };
+  });
+}
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
@@ -95,159 +133,122 @@ function ScheduleKpis() {
   );
 }
 
-type TimelineBucket = {
-  id: string;
-  date: string;
-  dateMs: number;
-  categoryLabel: string;
-  quantity: number;
-  status: ScheduleSlotStatus;
-  lane: 0 | 1 | 2;
-};
-
-type TimelineDay = {
-  id: string;
-  bucket?: TimelineBucket;
-  isToday: boolean;
-  monthLabel?: string;
-};
-
-function parseIsoDate(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  return Date.UTC(year, month - 1, day);
-}
-
-function isoDate(value: number) {
-  return new Date(value).toISOString().slice(0, 10);
-}
-
-function startOfMonth(value: number) {
-  const date = new Date(value);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
-}
-
-function endOfMonth(value: number) {
-  const date = new Date(value);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0);
-}
-
-function deriveTimeline(category: ScheduleCategoryFilter, query: string) {
-  const normalizedQuery = normalize(query);
-  const matchingSearchSlotIds = new Set(scheduleSearchResults
-    .filter((result) => normalize(`${result.sku} ${result.model} ${result.slotName}`).includes(normalizedQuery))
-    .map((result) => result.slotId));
-  const filteredSlots = scheduleSlots.filter((slot) => {
-    if (category !== "all" && slot.category !== category) return false;
-    if (!normalizedQuery) return true;
-    return matchingSearchSlotIds.has(slot.id) || normalize(`${slot.name} ${slot.detailTitle}`).includes(normalizedQuery);
-  });
-
-  const grouped = new Map<string, ScheduleSlot[]>();
-  filteredSlots.forEach((slot) => grouped.set(slot.arrivalDate, [...(grouped.get(slot.arrivalDate) ?? []), slot]));
-
-  const laneLastDates = [-Infinity, -Infinity, -Infinity];
-  const buckets: TimelineBucket[] = [...grouped.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([date, slots]) => {
-      const dateMs = parseIsoDate(date);
-      let lane = laneLastDates.findIndex((lastDate) => dateMs - lastDate >= 5 * dayMs);
-      if (lane === -1) lane = laneLastDates.indexOf(Math.min(...laneLastDates));
-      laneLastDates[lane] = dateMs;
-
-      const categories = new Map<ScheduleCategory, { count: number; quantity: number }>();
-      slots.forEach((slot) => {
-        const current = categories.get(slot.category) ?? { count: 0, quantity: 0 };
-        categories.set(slot.category, { count: current.count + 1, quantity: current.quantity + slot.total });
-      });
-      const statuses = new Set(slots.map((slot) => slot.status));
-      const status: ScheduleSlotStatus = statuses.size === 1
-        ? slots[0].status
-        : statuses.has("in-transit") ? "in-transit" : statuses.has("future") ? "future" : "arrived";
-
-      return {
-        id: `timeline-${date}`,
-        date,
-        dateMs,
-        categoryLabel: [...categories.entries()]
-          .map(([slotCategory, values]) => `${slotCategory}${values.count > 1 ? ` ×${values.count}` : ""}`)
-          .join(" · "),
-        quantity: slots.reduce((total, slot) => total + slot.total, 0),
-        status,
-        lane: lane as 0 | 1 | 2,
-      };
-    });
-
-  if (!buckets.length) return { buckets, days: [] as TimelineDay[], label: "Немає подій у вибраному фільтрі" };
-
-  const firstEvent = buckets[0].dateMs;
-  const lastEvent = buckets[buckets.length - 1].dateMs;
-  const now = new Date();
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayRelevant = today >= firstEvent - 31 * dayMs && today <= lastEvent + 45 * dayMs;
-  const rangeStart = startOfMonth(todayRelevant ? Math.min(firstEvent, today) : firstEvent);
-  const rangeEnd = endOfMonth(todayRelevant ? Math.max(lastEvent, today) : lastEvent);
-  const bucketsByDate = new Map(buckets.map((bucket) => [bucket.date, bucket]));
-  const days: TimelineDay[] = [];
-
-  for (let current = rangeStart; current <= rangeEnd; current += dayMs) {
-    const date = new Date(current);
-    const monthStart = date.getUTCDate() === 1;
-    days.push({
-      id: isoDate(current),
-      bucket: bucketsByDate.get(isoDate(current)),
-      isToday: todayRelevant && current === today,
-      monthLabel: monthStart ? `${monthLabels[date.getUTCMonth()]} ${date.getUTCFullYear()}` : undefined,
-    });
-  }
-
-  const label = `${buckets[0].date.split("-").reverse().join(".")} — ${buckets[buckets.length - 1].date.split("-").reverse().join(".")}`;
-  return { buckets, days, label };
-}
-
 function eventToneClass(status: ScheduleSlotStatus) {
   if (status === "in-transit") return styles.eventTransit;
   if (status === "future") return styles.eventFuture;
   return styles.eventArrived;
 }
 
-function Chronology({ category, query }: { category: ScheduleCategoryFilter; query: string }) {
-  const timeline = useMemo(() => deriveTimeline(category, query), [category, query]);
+function timelineStatusLabel(status: ScheduleSlotStatus) {
+  if (status === "in-transit") return "В дорозі";
+  if (status === "future") return "Майбутня";
+  return "Прибуло";
+}
+
+function timelineSlotLabel(slotCount: number) {
+  return slotCount === 1 ? "1 слот" : `${slotCount} слоти`;
+}
+
+function timelineLaneClass(index: number) {
+  return index % 2 === 0 ? styles.timelineLaneHigh : styles.timelineLaneLow;
+}
+
+function Chronology() {
+  const [pastMonths, setPastMonths] = useState(defaultPastMonths);
+  const [futureMonths, setFutureMonths] = useState(defaultFutureMonths);
+  const timelineMonths = useMemo(() => buildTimelineMonths(pastMonths, futureMonths), [futureMonths, pastMonths]);
+  const firstMonth = timelineMonths[0];
+  const lastMonth = timelineMonths[timelineMonths.length - 1];
+  const rangeLabel = `${firstMonth.longLabel} ${firstMonth.year} — ${lastMonth.longLabel} ${lastMonth.year}`;
 
   return (
     <Panel className="overflow-hidden p-4 shadow-none">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="m-0 flex items-center gap-2 text-[13px] font-semibold"><span aria-hidden="true" className="text-[var(--muted-foreground)]">┊┊</span> Хронологія доставок</h2>
-        <div className="flex flex-wrap items-center gap-4 text-[9px] text-[var(--muted-foreground)]" aria-label="Легенда хронології">
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--green)]" />Прибуло</span>
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--blue)]" />В дорозі</span>
-          <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--faint)]" />Майбутні</span>
-        </div>
-      </div>
-
-      {timeline.days.length ? (
-        <div className={styles.timelineViewport} role="img" aria-label={`Хронологія доставок ${timeline.label}`} tabIndex={0}>
-          <div className={styles.timelineTrack}>
-            {timeline.days.map((day) => (
-              <div key={day.id} className={`${styles.timelineDay} ${day.isToday ? styles.timelineToday : ""}`}>
-                {day.bucket ? (
-                  <div
-                    className={`${styles.timelineEvent} ${styles[`lane${day.bucket.lane}`]} ${eventToneClass(day.bucket.status)}`}
-                    title={`${day.bucket.categoryLabel}: ${day.bucket.quantity} · ${day.bucket.date.split("-").reverse().join(".")}`}
-                  >
-                    <span>{day.bucket.categoryLabel}</span>
-                    <strong>{day.bucket.quantity}</strong>
-                    <small>{day.bucket.date.slice(8, 10)}.{day.bucket.date.slice(5, 7)}</small>
-                  </div>
-                ) : null}
-                {day.isToday ? <span className={styles.todayLabel}>Сьогодні</span> : null}
-                {day.monthLabel ? <span className={styles.monthLabel}>{day.monthLabel}</span> : null}
+      <figure className="m-0" aria-labelledby="schedule-timeline-title" aria-describedby="schedule-timeline-caption">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 id="schedule-timeline-title" className="m-0 flex items-center gap-2 text-[13px] font-semibold"><CalendarDays size={14} className="text-[var(--muted-foreground)]" /> Хронологія доставок</h2>
+            <p className="mb-0 mt-1 text-[9px] text-[var(--muted-foreground)]">13 груп доставок · {rangeLabel}</p>
+          </div>
+          <div className={styles.timelineHeaderTools}>
+            <div className="flex flex-wrap items-center gap-4 text-[9px] text-[var(--muted-foreground)]" aria-label="Легенда хронології">
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--green)]" />Прибуло</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--blue)]" />В дорозі</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--faint)]" />Майбутні</span>
+            </div>
+            <div className={styles.timelineRangeControls} aria-label="Налаштування видимого періоду">
+              <SlidersHorizontal size={13} aria-hidden="true" />
+              <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в минулому">
+                <span>Назад</span>
+                <button type="button" aria-label="Зменшити кількість минулих місяців" disabled={pastMonths === 1} onClick={() => setPastMonths((value) => Math.max(1, value - 1))}><Minus size={12} /></button>
+                <output aria-live="polite">{pastMonths} міс.</output>
+                <button type="button" aria-label="Збільшити кількість минулих місяців" disabled={pastMonths === 12} onClick={() => setPastMonths((value) => Math.min(12, value + 1))}><Plus size={12} /></button>
               </div>
-            ))}
+              <span className={styles.timelineRangeDivider} aria-hidden="true" />
+              <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в майбутньому">
+                <span>Вперед</span>
+                <button type="button" aria-label="Зменшити кількість майбутніх місяців" disabled={futureMonths === 0} onClick={() => setFutureMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
+                <output aria-live="polite">{futureMonths} міс.</output>
+                <button type="button" aria-label="Збільшити кількість майбутніх місяців" disabled={futureMonths === 6} onClick={() => setFutureMonths((value) => Math.min(6, value + 1))}><Plus size={12} /></button>
+              </div>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className={styles.timelineEmpty}>{timeline.label}</div>
-      )}
+
+        <div className={styles.timelineViewport} role="region" aria-label={`Хронологія доставок: ${rangeLabel}`} tabIndex={0}>
+          <div className={styles.timelineTrack}>
+            <div className={styles.timelineAxis} aria-hidden="true" />
+            <div className={styles.timelineMonths}>
+              {timelineMonths.map((month) => (
+                <span key={month.id} className={month.current ? styles.timelineCurrentMonth : ""} aria-current={month.current ? "date" : undefined}>
+                  <span>{month.label}</span>
+                  {month.current ? <span className={styles.timelineToday} aria-hidden="true"><span>Сьогодні</span></span> : null}
+                </span>
+              ))}
+            </div>
+            <ol className={styles.timelineEvents} aria-label="Групи доставок">
+              {scheduleTimelineEvents.map((event, index) => {
+                const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
+                const status = timelineStatusLabel(event.status);
+                return (
+                  <li
+                    key={event.id}
+                    className={`${styles.timelineEvent} ${timelineLaneClass(index)} ${eventToneClass(event.status)}`}
+                    aria-label={`${label}, ${event.quantity} одиниць, ${status.toLocaleLowerCase("uk-UA")}`}
+                    title={`${label} · ${event.quantity} од. · ${status}`}
+                  >
+                    <span className={styles.timelineEventCard}>
+                      <span className={styles.timelineEventHeading}>
+                        <strong>{label}</strong>
+                        <small>{timelineSlotLabel(event.slotCount)}</small>
+                      </span>
+                      <span className={styles.timelineEventQuantity}>{event.quantity} <small>од.</small></span>
+                      <span className={styles.timelineEventStatus}><span aria-hidden="true" />{status}</span>
+                    </span>
+                    <span className={styles.timelineEventStem} aria-hidden="true" />
+                    <span className={styles.timelineEventDot} aria-hidden="true" />
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+        <ol className={styles.timelineMobileList} aria-label="Групи доставок">
+          {scheduleTimelineEvents.map((event) => {
+            const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
+            return (
+              <li key={`mobile-${event.id}`}>
+                <span className={`${styles.timelineMobileDot} ${eventToneClass(event.status)}`} aria-hidden="true" />
+                <span className={styles.timelineMobileCopy}>
+                  <strong>{label}</strong>
+                  <small>{timelineSlotLabel(event.slotCount)} · {timelineStatusLabel(event.status)}</small>
+                </span>
+                <span className={styles.timelineMobileQuantity}><strong>{event.quantity}</strong><small>од.</small></span>
+              </li>
+            );
+          })}
+        </ol>
+        <figcaption id="schedule-timeline-caption" className="sr-only">Глобальний огляд груп доставок у налаштованому видимому періоді. Пошук, категорія та вибрана вкладка не змінюють хронологію.</figcaption>
+      </figure>
     </Panel>
   );
 }
@@ -459,7 +460,6 @@ function Deliveries({
           />
         )}
       />
-      <Chronology category={category} query={query} />
       {normalize(query) ? (
         <SearchResults query={query} category={category} />
       ) : (
@@ -516,6 +516,7 @@ export function AdminSchedulePage() {
         )}
       />
       <ScheduleKpis />
+      <Chronology />
       <AdminTabs<ScheduleTab>
         items={[
           { id: "deliveries", label: "Доставки", panelId: "schedule-deliveries-panel" },

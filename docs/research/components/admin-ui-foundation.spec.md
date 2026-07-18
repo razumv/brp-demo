@@ -314,6 +314,6 @@ Modal framing remains in the shared `Modal`, while sections use a consistent hea
 | Search inside a common toolbar/input boundary | user captures + Resend screen | working-context control | fixes displaced icons/inputs and stabilizes responsive wrapping |
 | Permission matrices for both access routes | source Permissions + user request + Tango screen | comparison/readability | one object per row is faster to scan than a long repeated policy list |
 | One BL-level Ocean receipt action | source spec + user evidence | group-level operation | matches the domain object and prevents per-container duplication |
-| Data-bounded Schedule timeline | user request + Wrike screen | temporal focus | eliminates meaningless empty months while preserving chronology |
+| Source-aligned global Schedule chronology | source captures + user review + Fibery/Wrike screens | page-level temporal overview | restores the intended Jan-Sep axis and all 13 source markers without coupling the overview to partial filtered rows |
 | Lucide icon-only dense row actions | user request + existing icon system | compact row actions | reduces table noise while keeping names available to assistive tech/tooltips |
 | Existing safety boundary survives all visual work | every route spec | operational actions | deployment must remain a non-mutating demo |
