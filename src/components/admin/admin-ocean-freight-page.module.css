@@ -1,0 +1,651 @@
+.containerRow {
+  cursor: pointer;
+}
+
+.containerRowSelected td {
+  background: color-mix(in srgb, var(--orange-soft) 56%, var(--surface));
+}
+
+.containerRowSelected td:first-child {
+  box-shadow: inset 3px 0 0 var(--orange);
+}
+
+.containerTrigger,
+.billTrigger,
+.cardContainerTrigger {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.containerTrigger,
+.billTrigger {
+  padding: 0;
+}
+
+.containerTrigger:hover,
+.billTrigger:hover {
+  color: var(--orange);
+}
+
+.containerTrigger:focus-visible,
+.billTrigger:focus-visible,
+.cardContainerTrigger:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.disclosureChevron {
+  flex: 0 0 auto;
+  transition: transform 140ms ease;
+}
+
+.disclosureChevronOpen {
+  transform: rotate(180deg);
+}
+
+.disclosureRow:hover {
+  background: transparent !important;
+}
+
+.disclosureCell {
+  padding: 0 !important;
+  background: var(--surface) !important;
+}
+
+.inlineDetail {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.inlineHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.inlineHeaderMeta {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.inlineGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr);
+  min-width: 0;
+}
+
+.unitRegion {
+  min-width: 0;
+  padding: 13px 14px 14px;
+}
+
+.unitRegionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.unitTableWrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.unitTable {
+  min-width: 930px;
+}
+
+.unitTable th,
+.unitTable td {
+  padding: 8px 9px !important;
+  font-size: 10px;
+}
+
+.unitTable th {
+  font-size: 8px;
+}
+
+.unitCards {
+  display: none;
+}
+
+.unitCode {
+  margin-right: 7px;
+  color: var(--blue);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+}
+
+.factsRail {
+  min-width: 0;
+  padding: 13px 14px;
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-subtle) 58%, var(--surface));
+}
+
+.sectionEyebrow {
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.factList {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.2fr);
+  gap: 9px 12px;
+  margin: 0;
+  font-size: 10px;
+}
+
+.factList dt {
+  color: var(--muted-foreground);
+}
+
+.factList dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.evidenceSummary {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.summaryFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summaryFact,
+.metricCard {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.summaryFact span,
+.metricCard span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.summaryFact strong,
+.metricCard strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.cardBillTrigger {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.cardBillTrigger:hover {
+  color: var(--orange);
+}
+
+.cardContainerList {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+
+.cardContainer {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.cardContainerSelected {
+  border-color: color-mix(in srgb, var(--orange) 52%, var(--border));
+  box-shadow: inset 3px 0 0 var(--orange);
+}
+
+.cardContainerTrigger {
+  width: 100%;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.cardContainerMain {
+  min-width: 0;
+  flex: 1;
+}
+
+.cardDisclosure {
+  border-top: 1px solid var(--border);
+}
+
+.billModal {
+  width: calc(100vw - 48px) !important;
+  max-width: none !important;
+  height: calc(100dvh - 48px);
+  max-height: calc(100dvh - 48px) !important;
+}
+
+.billModal :global(.modal-header) {
+  align-items: center;
+  min-height: 58px;
+  padding: 10px 14px;
+}
+
+.billModal :global(.modal-header-heading h2) {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 15px;
+}
+
+.billModalBody {
+  max-height: none !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.billHeaderMeta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 10px;
+}
+
+.billHeaderRoute {
+  color: var(--muted-foreground);
+  font-weight: 650;
+}
+
+.headerActionLabel {
+  display: inline;
+}
+
+.billLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.billMain,
+.billRail {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.billMain {
+  background: var(--surface-subtle);
+}
+
+.billRail {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.detailSection {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.detailSectionHeader {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.detailSectionHeader span {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.billContainerList {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  background: var(--surface-subtle);
+}
+
+.billContainer {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.billContainerSummary {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 0;
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+}
+
+.billContainerSummary:hover {
+  background: var(--surface-subtle);
+}
+
+.billContainerSummaryMeta {
+  min-width: 0;
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.billContainerBody {
+  border-top: 1px solid var(--border);
+}
+
+.proformaList,
+.documentList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proformaRow,
+.documentRow {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 10px;
+}
+
+.proformaRow {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.documentRow {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.proformaRow:last-child,
+.documentRow:last-child {
+  border-bottom: 0;
+}
+
+.railSection {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.receiptState {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--green) 34%, var(--border));
+  border-radius: 6px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 10px;
+}
+
+.receiptState strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.metricCard {
+  text-align: center;
+}
+
+.metricCard strong {
+  font-size: 17px;
+}
+
+.documentStatus {
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.documentUploaded {
+  color: var(--green);
+}
+
+.documentAwaiting {
+  color: var(--amber);
+}
+
+.documentMissing {
+  color: var(--red);
+}
+
+.timeline {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone {
+  position: relative;
+  min-height: 38px;
+  padding: 0 0 12px 20px;
+  font-size: 10px;
+}
+
+.milestone::before {
+  position: absolute;
+  top: 4px;
+  left: 3px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--muted-foreground);
+  border-radius: 50%;
+  background: var(--surface);
+  content: "";
+}
+
+.milestone:not(:last-child)::after {
+  position: absolute;
+  top: 13px;
+  bottom: 0;
+  left: 6px;
+  width: 1px;
+  background: var(--border);
+  content: "";
+}
+
+.milestoneComplete::before {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.milestoneCurrent {
+  color: var(--orange);
+  font-weight: 700;
+}
+
+.milestoneCurrent::before {
+  border-color: var(--orange);
+  background: var(--orange);
+}
+
+.milestoneDetail {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+@media (max-width: 960px) {
+  .inlineGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .factsRail {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .billModalBody {
+    overflow: auto !important;
+  }
+
+  .billLayout {
+    display: block;
+    height: auto;
+  }
+
+  .billMain,
+  .billRail {
+    overflow: visible;
+  }
+
+  .billRail {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .summaryFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unitTableWrap {
+    display: none;
+  }
+
+  .unitCards {
+    display: grid;
+    gap: 7px;
+  }
+
+  .unitCard {
+    display: grid;
+    gap: 7px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 10px;
+  }
+
+  .unitCardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .unitCardMeta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9px;
+  }
+
+  .billModal {
+    width: 100% !important;
+    height: 100%;
+    max-height: 100% !important;
+  }
+
+  .billModal :global(.modal-header) {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 9px 12px;
+  }
+
+  .billModal :global(.modal-header-meta) {
+    order: 3;
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+
+  .billModal :global(.modal-header-actions) {
+    gap: 4px;
+  }
+
+  .headerActionLabel {
+    display: none;
+  }
+
+  .billContainerList,
+  .unitRegion,
+  .railSection {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .proformaRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .proformaRow > :nth-child(2) {
+    display: none;
+  }
+}

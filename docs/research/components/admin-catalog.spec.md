@@ -146,3 +146,10 @@ Safe: tabs, search, filters, row menu preview, debug query, history expansion an
 - All three primary tabs, category/search/filter states, row-menu preview, debug query, history and pagination work locally.
 - Exact global KPI and representative source rows are preserved; large datasets are explicitly marked representative.
 - Edit/delete/recalculate/import/sync controls are hard-disabled and have no operational callback, reducer or external request.
+
+## User refinement lock — 2026-07-18
+
+- Keep the current shared primary tabs, search fields, category segmented controls and end-of-row ellipsis menu.
+- Move the vehicle category/SKU/name/colour/engine/model-year/production-year fine filters out of the table `<thead>` into a compact, collapsible advanced-filter surface adjacent to the shared toolbar.
+- The table header becomes one clean semantic row. Advanced-filter logic, zero-result behavior and KPI recomputation remain unchanged.
+- Preserve the source-observed pricing multipliers (`EUR/USD 1.20`, `Expense 0.50`) and the exact read-only debug calculation. Recalculate/import/sync and edit/delete remain hard-disabled.

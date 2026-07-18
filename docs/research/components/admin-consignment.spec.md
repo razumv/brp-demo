@@ -134,3 +134,10 @@ Captured at 1440px/light:
 - Preserve source counts and representative rows; do not pretend the local representative fixture contains all 1246 records.
 - Label a representative subset in the clone while retaining source totals.
 - Export/refresh and all transfer/approval/rejection/cancellation actions are hard-disabled and have no effect, request, reducer or callback that mutates operational state.
+
+## User refinement lock — 2026-07-18
+
+- Replace the route-local underline tab strip and detached search with the shared Ocean Freight control grammar.
+- On desktop, search and `Весь склад / Мережа / Заявки` occupy one contained `AdminToolbar`; narrow layouts may wrap without changing order.
+- Use `AdminSearchField`, compact `AdminTabs` and `AdminSegmentedControl` for request statuses.
+- Preserve all existing counts, filters, horizontal matrix behavior and safety boundaries. This is a presentation migration, not a change to consignment logic.

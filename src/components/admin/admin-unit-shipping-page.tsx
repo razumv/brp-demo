@@ -9,10 +9,18 @@ import {
   Clock3,
   LockKeyhole,
   RefreshCw,
-  Search,
   SearchX,
+  Truck,
   X,
 } from "lucide-react";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { Panel, StatusBadge } from "@/components/shared/ui";
 import {
   REMAINING_UNIT_SHIPMENTS,
@@ -117,6 +125,7 @@ export function AdminUnitShippingPage() {
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const activePanelId = `unit-shipping-${activeTab}-panel`;
 
   const resetFilters = () => {
     setQuery("");
@@ -146,21 +155,21 @@ export function AdminUnitShippingPage() {
   };
 
   return (
-    <main className="page page-narrow">
-      <div className="space-y-6">
-        <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="min-w-0">
-            <h1 className="page-title page-title-admin">Відвантаження техніки</h1>
-            <p className="page-description">Інформація про відвантаження з BossWeb</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
-              <span className="inline-flex items-center gap-1.5"><Clock3 size={13} /> Остання синхр.: 28 May 2026, 15:36</span>
-              <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-0.5 font-semibold text-[var(--foreground)]">
-                До відвантаження: 34 / Відвантажено: 84
-              </span>
-            </div>
+    <AdminPage>
+      <AdminPageHeader
+        icon={<Truck size={20} />}
+        title="Відвантаження техніки"
+        description="Інформація про відвантаження з BossWeb"
+        meta={(
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5"><Clock3 size={13} /> Остання синхр.: 28 May 2026, 15:36</span>
+            <span className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-0.5 font-semibold text-[var(--foreground)]">
+              До відвантаження: 34 / Відвантажено: 84
+            </span>
           </div>
-
-          <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
+        )}
+        actions={(
+          <div className="grid w-full gap-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <label className="field min-w-0 sm:w-[145px]">
                 <span>Shipped: з</span>
@@ -185,120 +194,112 @@ export function AdminUnitShippingPage() {
               <LockKeyhole size={12} /> Дати змінюються лише локально; зовнішня синхронізація заблокована.
             </p>
           </div>
-        </section>
+        )}
+      />
 
-        <section className="pt-3 lg:pt-8" aria-label="Категорії техніки">
-          <div className="flex flex-wrap gap-2">
-            {UNIT_SHIPPING_CATEGORIES.map((item) => (
-              <button
-                type="button"
-                key={item}
-                aria-pressed={category === item}
-                className={`button ${category === item ? "button-primary" : "button-outline"}`}
-                onClick={() => selectCategory(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </section>
+      <AdminTabs<UnitShippingTab>
+        items={[
+          { id: "remaining", label: "Залишок до відвантаження", count: remainingFiltered.length, panelId: "unit-shipping-remaining-panel" },
+          { id: "shipped", label: "Відвантажені замовлення", count: shippedFiltered.length, panelId: "unit-shipping-shipped-panel" },
+        ]}
+        value={activeTab}
+        onValueChange={selectTab}
+        label="Стан відвантаження"
+        mobileSelectLabel="Стан відвантаження"
+      />
 
-        <section>
-          <div className="flex max-w-full overflow-x-auto border-b border-[var(--border)]" role="tablist" aria-label="Стан відвантаження">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "remaining"}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${activeTab === "remaining" ? "border-orange-600 text-[var(--foreground)]" : "border-transparent text-[var(--muted-foreground)]"}`}
-              onClick={() => selectTab("remaining")}
-            >
-              Залишок до відвантаження ({remainingFiltered.length})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "shipped"}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${activeTab === "shipped" ? "border-orange-600 text-[var(--foreground)]" : "border-transparent text-[var(--muted-foreground)]"}`}
-              onClick={() => selectTab("shipped")}
-            >
-              Відвантажені замовлення ({shippedFiltered.length})
-            </button>
-          </div>
-
-          <div className={`mt-2 grid grid-cols-2 gap-2 ${activeTab === "shipped" ? "lg:grid-cols-[minmax(240px,1fr)_140px_150px_140px_140px_auto]" : "lg:grid-cols-[minmax(260px,1fr)_160px_180px_auto]"}`}>
-            <label className="input-with-icon col-span-2 lg:col-span-1">
-              <Search size={15} />
-              <input
-                className="input"
-                aria-label="Пошук замовлення або моделі"
-                placeholder="Пошук замовлення, моделі..."
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                  setExpandedOrderId(null);
-                }}
+      <section
+        id={activePanelId}
+        role="tabpanel"
+        aria-labelledby={`${activePanelId}-tab`}
+        className="grid gap-4"
+      >
+        <AdminToolbar
+          className="flex-wrap"
+          search={(
+            <AdminSearchField
+              value={query}
+              onValueChange={(value) => {
+                setQuery(value);
+                setPage(1);
+                setExpandedOrderId(null);
+              }}
+              label="Пошук замовлення або моделі"
+              placeholder="Пошук замовлення, моделі..."
+              maxWidth={420}
+            />
+          )}
+          filters={(
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <AdminSegmentedControl<UnitShippingCategory>
+                items={UNIT_SHIPPING_CATEGORIES.map((item) => ({ id: item, label: item }))}
+                value={category}
+                onValueChange={selectCategory}
+                label="Категорії техніки"
               />
-            </label>
-            <select
-              className="select"
-              aria-label="Період доставки"
-              value={period}
-              onChange={(event) => {
-                setPeriod(event.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Всі періоди</option>
-              {periods.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <select
-              className="select"
-              aria-label="Модель"
-              value={modelNumber}
-              onChange={(event) => {
-                setModelNumber(event.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Всі моделі</option>
-              {models.map((model) => <option key={model.number} value={model.number}>{model.number} · {model.description}</option>)}
-            </select>
-            {activeTab === "shipped" ? (
-              <>
-                <label>
-                  <span className="sr-only">Дата відвантаження з</span>
-                  <input
-                    className="input"
-                    aria-label="Дата відвантаження з"
-                    type="date"
-                    value={shippedFrom}
-                    onChange={(event) => {
-                      setShippedFrom(event.target.value);
-                      setPage(1);
-                    }}
-                  />
-                </label>
-                <label>
-                  <span className="sr-only">Дата відвантаження по</span>
-                  <input
-                    className="input"
-                    aria-label="Дата відвантаження по"
-                    type="date"
-                    value={shippedTo}
-                    onChange={(event) => {
-                      setShippedTo(event.target.value);
-                      setPage(1);
-                    }}
-                  />
-                </label>
-              </>
-            ) : null}
-            <button type="button" className="button button-ghost justify-self-start whitespace-nowrap" onClick={resetFilters}>
+              <select
+                className="select !w-auto min-w-[140px]"
+                aria-label="Період доставки"
+                value={period}
+                onChange={(event) => {
+                  setPeriod(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="">Всі періоди</option>
+                {periods.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+              <select
+                className="select !w-auto min-w-[180px] max-w-[260px]"
+                aria-label="Модель"
+                value={modelNumber}
+                onChange={(event) => {
+                  setModelNumber(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="">Всі моделі</option>
+                {models.map((model) => <option key={model.number} value={model.number}>{model.number} · {model.description}</option>)}
+              </select>
+              {activeTab === "shipped" ? (
+                <>
+                  <label>
+                    <span className="sr-only">Дата відвантаження з</span>
+                    <input
+                      className="input w-[150px]"
+                      aria-label="Дата відвантаження з"
+                      type="date"
+                      value={shippedFrom}
+                      onChange={(event) => {
+                        setShippedFrom(event.target.value);
+                        setPage(1);
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span className="sr-only">Дата відвантаження по</span>
+                    <input
+                      className="input w-[150px]"
+                      aria-label="Дата відвантаження по"
+                      type="date"
+                      value={shippedTo}
+                      onChange={(event) => {
+                        setShippedTo(event.target.value);
+                        setPage(1);
+                      }}
+                    />
+                  </label>
+                </>
+              ) : null}
+            </div>
+          )}
+          actions={(
+            <button type="button" className="button button-ghost whitespace-nowrap" onClick={resetFilters}>
               <X size={14} /> Скинути
             </button>
-          </div>
-        </section>
+          )}
+          meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
+        />
 
         <Panel className="overflow-hidden">
           <div className="data-table-wrap" role="region" aria-label="Таблиця відвантажень" tabIndex={0}>
@@ -458,7 +459,7 @@ export function AdminUnitShippingPage() {
             </div>
           </footer>
         </Panel>
-      </div>
-    </main>
+      </section>
+    </AdminPage>
   );
 }

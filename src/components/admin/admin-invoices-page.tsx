@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   Archive,
@@ -23,12 +23,21 @@ import {
   Pencil,
   Plus,
   RotateCcw,
-  Search,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
-import { EmptyState, Modal, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import {
+  AdminIconAction,
+  AdminKpiGrid,
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminTableShell,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
+import { EmptyState, InlineNotice, Modal, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   formedInvoices,
   invoiceAppendices,
@@ -42,8 +51,13 @@ import {
   invoiceShipmentGroups,
   invoiceShipmentSourceCounts,
   type AppendixPreview,
+  type FormedInvoice,
+  type InvoiceAppendix,
+  type InvoiceContract,
+  type InvoiceCostCard,
   type InvoiceCostMonthId,
   type InvoiceCostView,
+  type InvoiceShipmentGroup,
   type InvoiceShipmentFilter,
   type InvoiceTabId,
 } from "@/lib/admin-invoices-data";
@@ -61,19 +75,16 @@ const uploadLabels: Partial<Record<InvoiceTabId, string>> = {
   cost: "Завантажити документи",
 };
 
-const kpiToneClasses = {
-  neutral: "bg-[var(--surface-subtle)] text-[var(--muted-foreground)]",
-  amber: "bg-[var(--amber-soft)] text-[var(--amber)]",
-  red: "bg-[var(--red-soft)] text-[var(--red)]",
-  green: "bg-[var(--green-soft)] text-[var(--green)]",
-} as const;
-
 const pageKpiIcons = {
   shipments: FileText,
   ready: Clock3,
   missing: AlertTriangle,
   formed: CheckCircle2,
 } as const;
+
+function normalize(value: string) {
+  return value.trim().toLocaleLowerCase("uk-UA");
+}
 
 function LockedButton({ children, className = "", title }: {
   children: ReactNode;
@@ -96,55 +107,36 @@ function LockedButton({ children, className = "", title }: {
 
 function RepresentativeNotice({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
-    <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
+    <span>
       Репрезентативна source-вибірка: показано {shown} з {total} {noun}. Загальні лічильники збережені точно.
-    </p>
+    </span>
   );
 }
 
 function PageKpis() {
   return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Показники інвойсів">
-      {invoicePageKpis.map((item) => {
+    <AdminKpiGrid
+      label="Показники інвойсів"
+      items={invoicePageKpis.map((item) => {
         const Icon = pageKpiIcons[item.id];
-        return (
-          <Panel key={item.id} className="flex min-h-20 items-center gap-3 p-4 shadow-none">
-            <span className={`grid size-9 shrink-0 place-items-center rounded-md ${kpiToneClasses[item.tone]}`}>
-              <Icon size={17} />
-            </span>
-            <span>
-              <span className="block text-[10px] font-bold uppercase tracking-[0.035em] text-[var(--muted-foreground)]">{item.label}</span>
-              <strong className={`mt-1 block text-[23px] leading-none tabular-nums ${item.tone === "neutral" ? "" : kpiToneClasses[item.tone].split(" ")[1]}`}>
-                {item.value}
-              </strong>
-            </span>
-          </Panel>
-        );
+        return { ...item, icon: <Icon size={17} /> };
       })}
-    </section>
+    />
   );
 }
 
 function InvoiceTabs({ active, onChange }: { active: InvoiceTabId; onChange: (tab: InvoiceTabId) => void }) {
   return (
-    <div className="flex w-full gap-1 overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] p-1 sm:w-fit" role="tablist" aria-label="Інвойси та документи">
-      {tabItems.map((item) => {
+    <AdminTabs
+      items={tabItems.map((item) => {
         const Icon = item.icon;
-        const selected = active === item.id;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => onChange(item.id)}
-            className={`button min-h-9 shrink-0 border-0 px-3 text-[11px] ${selected ? "bg-[var(--orange-soft)] text-[var(--orange)] shadow-[inset_0_-2px_var(--orange)]" : "text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]"}`}
-          >
-            <Icon size={14} /> {item.label}
-          </button>
-        );
+        return { id: item.id, label: item.label, icon: <Icon size={14} />, panelId: `invoices-${item.id}-panel` };
       })}
-    </div>
+      value={active}
+      onValueChange={onChange}
+      label="Інвойси та документи"
+      mobileSelectLabel="Розділ документів"
+    />
   );
 }
 
@@ -206,43 +198,106 @@ function NewContractPreview({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ContractsTab() {
-  const [creating, setCreating] = useState(false);
+function ContractDetailModal({ contract, onClose }: { contract: InvoiceContract | null; onClose: () => void }) {
+  if (!contract) return null;
 
-  if (creating) return <NewContractPreview onClose={() => setCreating(false)} />;
+  const fields = [
+    ["Короткий номер", contract.shortNumber],
+    ["Повний номер", contract.detail.fullNumber],
+    ["Дата контракту", contract.detail.contractDate],
+    ["Постачальник", contract.supplier],
+    ["Представник", contract.detail.representative],
+    ["Адреса постачальника", contract.detail.supplierAddress],
+    ["Вантажовідправник", contract.detail.shipper],
+    ["ІПН", contract.detail.taxId],
+    ["Покупець", contract.buyer],
+    ["Умови поставки", contract.detail.deliveryTerms],
+    ["Валюта", contract.detail.currency],
+    ["Країна походження", [contract.detail.originEn, contract.detail.originUa].filter(Boolean).join(" / ") || null],
+  ] as const;
 
   return (
-    <section role="tabpanel" className="grid gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="m-0 text-[16px] font-semibold">Контракти</h2>
-          <p className="mb-0 mt-1 text-[12px] text-[var(--muted-foreground)]">Дані постачальника/покупця для генерації інвойсів та додатків</p>
-        </div>
-        <button type="button" className="button button-primary self-start" onClick={() => setCreating(true)}>
-          <Plus size={15} /> Новий контракт
-        </button>
+    <Modal
+      open
+      onClose={onClose}
+      title={`Контракт ${contract.shortNumber}`}
+      description="Безпечний перегляд source-summary контракту"
+      className="!w-[min(860px,100%)]"
+      footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}
+    >
+      <div className="grid gap-4">
+        <InlineNotice>Source підтверджує номер картки, постачальника та покупця. Реквізити з форми нового контракту або окремих додатків не приписуються збереженому контракту; непідтверджені поля позначені «—».</InlineNotice>
+        <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
+          {fields.map(([label, value]) => (
+            <div key={label} className="bg-[var(--surface)] p-3">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.035em] text-[var(--muted-foreground)]">{label}</dt>
+              <dd className="mb-0 mt-1 text-[12px] font-medium">{value || "—"}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Modal>
+  );
+}
+
+function ContractsTab() {
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selectedContract, setSelectedContract] = useState<InvoiceContract | null>(null);
+
+  const visibleContracts = useMemo(() => {
+    const needle = normalize(query);
+    if (!needle) return invoiceContracts;
+    return invoiceContracts.filter((contract) => normalize(`${contract.shortNumber} ${contract.supplier} ${contract.buyer}`).includes(needle));
+  }, [query]);
+
+  if (creating) {
+    return (
+      <section id="invoices-contracts-panel" role="tabpanel" aria-labelledby="invoices-contracts-panel-tab">
+        <NewContractPreview onClose={() => setCreating(false)} />
+      </section>
+    );
+  }
+
+  return (
+    <section id="invoices-contracts-panel" role="tabpanel" aria-labelledby="invoices-contracts-panel-tab" className="grid gap-4">
+      <div>
+        <h2 className="m-0 text-[16px] font-semibold">Контракти</h2>
+        <p className="mb-0 mt-1 text-[12px] text-[var(--muted-foreground)]">Дані постачальника/покупця для генерації інвойсів та додатків</p>
       </div>
 
+      <AdminToolbar
+        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук контрактів" placeholder="Пошук номера, постачальника або покупця..." />}
+        actions={<button type="button" className="button button-primary" onClick={() => setCreating(true)}><Plus size={15} /> Новий контракт</button>}
+        meta={`${visibleContracts.length} з ${invoiceContracts.length}`}
+      />
+
       <div className="grid gap-3">
-        {invoiceContracts.map((contract) => (
+        {visibleContracts.map((contract) => (
           <Panel key={contract.id} as="article" className="flex min-h-[74px] flex-col gap-3 border-[#b7dfbf] bg-[var(--green-soft)] p-4 shadow-none sm:flex-row sm:items-center">
-            <ChevronRight size={15} className="shrink-0 text-[var(--muted-foreground)]" />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <strong className="text-[14px]">{contract.shortNumber}</strong>
-                <StatusBadge tone="green">Активний</StatusBadge>
-              </div>
-              <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">{contract.supplier} → {contract.buyer}</p>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:justify-end" aria-label={`Заблоковані дії контракту ${contract.shortNumber}`}>
-              <LockedButton title="Деактивація контракту вимкнена"><Eye size={14} /><span className="sr-only">Деактивувати</span></LockedButton>
-              <LockedButton title="Редагування контракту вимкнене"><Pencil size={14} /><span className="sr-only">Редагувати</span></LockedButton>
-              <LockedButton title="Дублювання контракту вимкнене"><Copy size={14} /><span className="sr-only">Дублювати</span></LockedButton>
-              <LockedButton title="Видалення контракту вимкнене"><Trash2 size={14} /><span className="sr-only">Видалити</span></LockedButton>
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => setSelectedContract(contract)} aria-haspopup="dialog">
+              <ChevronRight size={15} className="shrink-0 text-[var(--muted-foreground)]" />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-2">
+                  <strong className="text-[14px]">{contract.shortNumber}</strong>
+                  <StatusBadge tone="green">Активний</StatusBadge>
+                </span>
+                <span className="mt-1 block text-[11px] text-[var(--muted-foreground)]">{contract.supplier} → {contract.buyer}</span>
+              </span>
+            </button>
+            <div className="flex flex-wrap gap-1 sm:justify-end" aria-label={`Дії контракту ${contract.shortNumber}`}>
+              <AdminIconAction label={`Переглянути контракт ${contract.shortNumber}`} tooltip="Безпечний перегляд реквізитів" icon={<Eye size={14} />} tone="primary" onClick={() => setSelectedContract(contract)} />
+              <AdminIconAction label={`Редагувати контракт ${contract.shortNumber}`} tooltip="Редагування вимкнене у read-only клоні" icon={<Pencil size={14} />} disabled />
+              <AdminIconAction label={`Дублювати контракт ${contract.shortNumber}`} tooltip="Дублювання вимкнене у read-only клоні" icon={<Copy size={14} />} disabled />
+              <AdminIconAction label={`Видалити контракт ${contract.shortNumber}`} tooltip="Видалення вимкнене у read-only клоні" icon={<Trash2 size={14} />} tone="danger" disabled />
             </div>
           </Panel>
         ))}
+        {visibleContracts.length === 0 ? (
+          <EmptyState compact title="Контрактів не знайдено" description="Змініть номер, постачальника або покупця у пошуку." icon={<FileText size={24} />} />
+        ) : null}
       </div>
+      <ContractDetailModal contract={selectedContract} onClose={() => setSelectedContract(null)} />
     </section>
   );
 }
@@ -287,7 +342,9 @@ function AppendixPreviewModal({ preview, onClose }: { preview: AppendixPreview |
           </header>
 
           <div className="overflow-hidden rounded-md border border-[var(--border)]">
-            <RepresentativeNotice shown={preview.representativeLines.length} total={preview.totalSourceRows} noun="рядків документа" />
+            <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
+              <RepresentativeNotice shown={preview.representativeLines.length} total={preview.totalSourceRows} noun="рядків документа" />
+            </p>
             <div className="data-table-wrap" tabIndex={0} role="region" aria-label="Рядки попереднього перегляду">
               <table className="data-table min-w-[760px]">
                 <thead><tr><th>Description / Опис</th><th className="text-right">Qty</th><th className="text-right">Price, {preview.currency}</th><th className="text-right">Amount, {preview.currency}</th></tr></thead>
@@ -316,6 +373,11 @@ function AppendixPreviewModal({ preview, onClose }: { preview: AppendixPreview |
   );
 }
 
+function AppendixDetailModal({ appendix, onClose }: { appendix: InvoiceAppendix | null; onClose: () => void }) {
+  if (!appendix?.preview) return null;
+  return <AppendixPreviewModal preview={appendix.preview} onClose={onClose} />;
+}
+
 function AppendixKpis() {
   const items = [
     { label: "Додатки", value: invoiceAppendixSourceTotals.appendices, icon: FileText, color: "text-[var(--blue)] bg-[var(--blue-soft)]" },
@@ -335,19 +397,35 @@ function AppendixKpis() {
 }
 
 function AppendicesTab() {
-  const [preview, setPreview] = useState<AppendixPreview | null>(null);
+  const [query, setQuery] = useState("");
+  const [selectedAppendix, setSelectedAppendix] = useState<InvoiceAppendix | null>(null);
+  const visibleAppendices = useMemo(() => {
+    const needle = normalize(query);
+    if (!needle) return invoiceAppendices;
+    return invoiceAppendices.filter((appendix) => normalize(`${appendix.name} ${appendix.date} ${appendix.composition} ${appendix.shipment} ${appendix.contractNumber} ${appendix.amount}`).includes(needle));
+  }, [query]);
+
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section id="invoices-appendices-panel" role="tabpanel" aria-labelledby="invoices-appendices-panel-tab" className="grid gap-4">
       <AppendixKpis />
-      <Panel className="overflow-hidden shadow-none">
-        <RepresentativeNotice shown={invoiceAppendices.length} total={invoiceAppendixSourceTotals.appendices} noun="додатків" />
-        <div className="data-table-wrap" tabIndex={0} role="region" aria-label="Додатки">
+      <AdminToolbar
+        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук додатків" placeholder="Пошук додатка, відправки або контракту..." />}
+        meta={`${visibleAppendices.length} з ${invoiceAppendixSourceTotals.appendices}`}
+      />
+      <AdminTableShell
+        notice={<RepresentativeNotice shown={visibleAppendices.length} total={invoiceAppendixSourceTotals.appendices} noun="додатків" />}
+        scrollLabel="Додатки"
+      >
           <table className="data-table min-w-[1050px]">
             <thead><tr><th>Додаток</th><th>Дата</th><th>Склад</th><th>Відправка</th><th>ETA</th><th>Контракт</th><th className="text-right">Сума</th><th>Дії</th></tr></thead>
             <tbody>
-              {invoiceAppendices.map((appendix) => (
+              {visibleAppendices.map((appendix) => (
                 <tr key={appendix.id}>
-                  <td><strong>{appendix.name}</strong></td>
+                  <td>
+                    {appendix.preview ? (
+                      <button type="button" className="font-semibold text-[var(--blue)] hover:underline" onClick={() => setSelectedAppendix(appendix)} aria-haspopup="dialog">{appendix.name}</button>
+                    ) : <strong className="font-semibold">{appendix.name}</strong>}
+                  </td>
                   <td>{appendix.date}</td>
                   <td>{appendix.composition}</td>
                   <td className="font-medium text-[var(--blue)]">{appendix.shipment}</td>
@@ -356,19 +434,19 @@ function AppendicesTab() {
                   <td className="text-right font-semibold text-[var(--green)]">{appendix.amount}</td>
                   <td>
                     <div className="flex min-w-max items-center gap-1">
-                      <button type="button" className="button button-ghost min-h-8 px-2 text-[10px]" disabled={!appendix.preview} title={appendix.preview ? "Відкрити безпечний попередній перегляд" : "Для цього додатка окремий preview не зафіксований"} onClick={appendix.preview ? () => setPreview(appendix.preview ?? null) : undefined}><Eye size={13} /> Просмотр</button>
-                      <LockedButton title="Генерація митного документа вимкнена"><Download size={13} /> Таможня</LockedButton>
-                      <LockedButton title="Генерація банківського документа вимкнена"><Landmark size={13} /> Банк</LockedButton>
-                      <LockedButton title="Видалення додатка вимкнене"><Trash2 size={13} /><span className="sr-only">Видалити</span></LockedButton>
+                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити підтверджений документ" : "Повний preview не зафіксовано у source"} icon={<Eye size={13} />} tone="primary" onClick={() => setSelectedAppendix(appendix)} disabled={!appendix.preview} />
+                      <AdminIconAction label={`Митний документ ${appendix.name}`} tooltip="Генерація митного документа вимкнена" icon={<Download size={13} />} disabled />
+                      <AdminIconAction label={`Банківський документ ${appendix.name}`} tooltip="Генерація банківського документа вимкнена" icon={<Landmark size={13} />} disabled />
+                      <AdminIconAction label={`Видалити ${appendix.name}`} tooltip="Видалення додатка вимкнене" icon={<Trash2 size={13} />} tone="danger" disabled />
                     </div>
                   </td>
                 </tr>
               ))}
+              {visibleAppendices.length === 0 ? <tr><td colSpan={8} className="py-12 text-center text-[var(--muted-foreground)]">Додатків не знайдено.</td></tr> : null}
             </tbody>
           </table>
-        </div>
-      </Panel>
-      <AppendixPreviewModal preview={preview} onClose={() => setPreview(null)} />
+      </AdminTableShell>
+      <AppendixDetailModal appendix={selectedAppendix} onClose={() => setSelectedAppendix(null)} />
     </section>
   );
 }
@@ -379,69 +457,101 @@ const invoiceFilters: ReadonlyArray<{ id: InvoiceShipmentFilter; label: string; 
   { id: "arrived", label: "Прибув", count: invoiceShipmentSourceCounts.arrived },
 ];
 
+type InvoiceSummaryPreview =
+  | { kind: "shipment"; item: InvoiceShipmentGroup }
+  | { kind: "formed"; item: FormedInvoice }
+  | null;
+
+function InvoiceSummaryModal({ preview, onClose }: { preview: InvoiceSummaryPreview; onClose: () => void }) {
+  if (!preview) return null;
+
+  const isShipment = preview.kind === "shipment";
+  const title = isShipment ? `BL ${preview.item.billOfLading}` : `Інвойс ${preview.item.invoiceNumber}`;
+  const fields = isShipment
+    ? [
+        ["Контейнери", String(preview.item.containerCount)],
+        ["Одиниці", String(preview.item.unitCount)],
+        ["Готовність", preview.item.readiness],
+        ["ETA", `${preview.item.eta} (${preview.item.visibleStatusLabel})`],
+      ]
+    : [
+        ["Контейнер", preview.item.containerNumber],
+        ["Одиниці", String(preview.item.unitCount)],
+        ["Сума", preview.item.total],
+        ["Дата", preview.item.date],
+      ];
+
+  return (
+    <Modal open onClose={onClose} title={title} description="Безпечний перегляд source-summary" className="!w-[min(680px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+      <div className="grid gap-4">
+        <InlineNotice>Source не підтверджує глибші рядки цього розкриття. Preview показує тільки факти, вже наявні у картці, та не формує й не завантажує документ.</InlineNotice>
+        <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
+          {fields.map(([label, value]) => <div key={label} className="bg-[var(--surface)] p-3"><dt className="text-[10px] font-semibold uppercase text-[var(--muted-foreground)]">{label}</dt><dd className="mb-0 mt-1 text-[13px] font-medium">{value}</dd></div>)}
+        </dl>
+      </div>
+    </Modal>
+  );
+}
+
 function InvoicesTab() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<InvoiceShipmentFilter>("all");
+  const [preview, setPreview] = useState<InvoiceSummaryPreview>(null);
   const normalizedQuery = query.trim().toLocaleLowerCase("uk-UA");
   const visibleGroups = useMemo(() => invoiceShipmentGroups.filter((group) => {
     const filterMatch = filter === "all" || group.filterState === filter;
     const queryMatch = !normalizedQuery || group.billOfLading.toLocaleLowerCase("uk-UA").includes(normalizedQuery);
     return filterMatch && queryMatch;
   }), [filter, normalizedQuery]);
+  const visibleFormedInvoices = useMemo(() => formedInvoices.filter((invoice) => (
+    !normalizedQuery || normalize(`${invoice.invoiceNumber} ${invoice.containerNumber} ${invoice.total} ${invoice.date}`).includes(normalizedQuery)
+  )), [normalizedQuery]);
   const sourceGroupedCount = filter === "all" ? invoiceShipmentSourceCounts.groupedAll : filter === "in-transit" ? invoiceShipmentSourceCounts.groupedInTransit : invoiceShipmentSourceCounts.groupedArrived;
 
   return (
-    <section role="tabpanel" className="grid gap-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <label className="input-with-icon min-w-0 flex-1 lg:max-w-[420px]">
-          <span className="sr-only">Пошук інвойсів</span><Search size={15} />
-          <input className="input pr-9" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Пошук інвойсів..." autoComplete="off" />
-          {query ? <button type="button" className="input-trailing" onClick={() => setQuery("")} aria-label="Очистити пошук"><X size={14} /></button> : null}
-        </label>
-        <div className="segmented max-w-full overflow-x-auto" aria-label="Статус відвантажень">
-          {invoiceFilters.map((item) => <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label} ({item.count})</button>)}
-        </div>
-      </div>
+    <section id="invoices-invoices-panel" role="tabpanel" aria-labelledby="invoices-invoices-panel-tab" className="grid gap-4">
+      <AdminToolbar
+        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук інвойсів" placeholder="Пошук інвойсів..." />}
+        filters={<AdminSegmentedControl items={invoiceFilters.map((item) => ({ id: item.id, label: item.label, count: item.count }))} value={filter} onValueChange={setFilter} label="Статус відвантажень" />}
+        meta={`${visibleGroups.length} BL · ${visibleFormedInvoices.length} інвойсів`}
+      />
 
-      <Panel className="overflow-hidden shadow-none">
+      <AdminTableShell notice={visibleGroups.length ? <RepresentativeNotice shown={visibleGroups.length} total={sourceGroupedCount} noun="згрупованих BL" /> : undefined} scrollLabel="Відвантаження для інвойсів">
         {visibleGroups.length ? (
-          <>
-            <RepresentativeNotice shown={visibleGroups.length} total={sourceGroupedCount} noun="згрупованих BL" />
-            <div className="data-table-wrap" role="region" aria-label="Відвантаження для інвойсів" tabIndex={0}>
               <table className="data-table min-w-[1120px]">
                 <thead><tr><th>Контейнер</th><th>Назва</th><th>Проформа</th><th>Одиниці</th><th>EUR</th><th>Готовність</th><th>Контракт</th><th>Додаток</th><th>Інвойс</th><th>Сума</th><th>Дії</th></tr></thead>
                 <tbody>{visibleGroups.map((group) => (
                   <tr key={group.id}>
-                    <td><strong className="font-mono text-[var(--orange)]">BL {group.billOfLading}</strong></td>
+                    <td><button type="button" className="font-mono font-semibold text-[var(--orange)] hover:underline" onClick={() => setPreview({ kind: "shipment", item: group })} aria-haspopup="dialog">BL {group.billOfLading}</button></td>
                     <td>{group.containerCount} контейнер{group.containerCount === 1 ? "" : "и"}</td>
                     <td>—</td>
                     <td className="tabular-nums">{group.unitCount}</td>
                     <td>—</td>
                     <td><div className="flex flex-wrap gap-1"><StatusBadge tone="amber">{group.readiness}</StatusBadge><StatusBadge tone="green">ETA: {group.eta} ({group.visibleStatusLabel})</StatusBadge></div></td>
                     <td>—</td><td>—</td><td>—</td><td>—</td>
-                    <td><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></td>
+                    <td><div className="flex min-w-max items-center gap-1"><AdminIconAction label={`Переглянути BL ${group.billOfLading}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => setPreview({ kind: "shipment", item: group })} /><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></div></td>
                   </tr>
                 ))}</tbody>
               </table>
-            </div>
-          </>
         ) : <EmptyState compact title="Відвантажень не знайдено" description="Змініть пошуковий запит або статусний фільтр." />}
-      </Panel>
+      </AdminTableShell>
 
-      <Panel className="overflow-hidden shadow-none">
-        <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3"><CheckCircle2 size={15} className="text-[var(--green)]" /><h2 className="m-0 text-[13px] font-semibold">Сформовані інвойси</h2><StatusBadge>{60}</StatusBadge></div>
-        <RepresentativeNotice shown={formedInvoices.length} total={60} noun="сформованих інвойсів" />
-        <div className="divide-y divide-[var(--border)]">
-          {formedInvoices.map((invoice) => (
+      <AdminTableShell title="Сформовані інвойси" actions={<StatusBadge>{60}</StatusBadge>} notice={visibleFormedInvoices.length ? <RepresentativeNotice shown={visibleFormedInvoices.length} total={60} noun="сформованих інвойсів" /> : undefined}>
+        {visibleFormedInvoices.length ? (
+          <div className="divide-y divide-[var(--border)]">
+          {visibleFormedInvoices.map((invoice) => (
             <article key={invoice.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
               <FileText size={16} className="shrink-0 text-[var(--blue)]" />
-              <div className="min-w-0 flex-1"><strong className="block font-mono text-[12px]">{invoice.invoiceNumber}</strong><span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{invoice.containerNumber} · {invoice.unitCount} од. · {invoice.total}</span></div>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPreview({ kind: "formed", item: invoice })} aria-haspopup="dialog"><strong className="block font-mono text-[12px] text-[var(--blue)] hover:underline">{invoice.invoiceNumber}</strong><span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{invoice.containerNumber} · {invoice.unitCount} од. · {invoice.total}</span></button>
               <time className="text-[10px] text-[var(--muted-foreground)]">{invoice.date}</time>
-              <LockedButton title="Завантаження DOCX вимкнене"><Download size={13} /> DOCX</LockedButton>
+              <AdminIconAction label={`Переглянути інвойс ${invoice.invoiceNumber}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => setPreview({ kind: "formed", item: invoice })} />
+              <AdminIconAction label={`Завантажити DOCX ${invoice.invoiceNumber}`} tooltip="Завантаження DOCX вимкнене" icon={<Download size={13} />} disabled />
             </article>
           ))}
-        </div>
-      </Panel>
+          </div>
+        ) : <EmptyState compact title="Сформованих інвойсів не знайдено" description="Змініть пошуковий запит або очистьте поле пошуку." />}
+      </AdminTableShell>
+      <InvoiceSummaryModal preview={preview} onClose={() => setPreview(null)} />
     </section>
   );
 }
@@ -458,83 +568,136 @@ function CostKpis({ view }: { view: InvoiceCostView }) {
   return <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Підсумки собівартості">{items.map((item) => { const Icon = item.icon; return <Panel key={item.label} className="flex min-h-20 items-center gap-3 p-4 shadow-none"><span className={`grid size-9 shrink-0 place-items-center rounded-md ${item.color}`}><Icon size={17} /></span><span className="min-w-0"><span className="block text-[9px] font-bold uppercase text-[var(--muted-foreground)]">{item.label}</span><strong className="mt-1 block truncate text-[20px] leading-none">{item.value}</strong></span></Panel>; })}</section>;
 }
 
-function MonthMenu({ open, selected, onToggleOpen, onToggleMonth, onAll, onReset }: {
+function MonthMenu({ open, selected, onToggleOpen, onClose, onToggleMonth, onAll, onReset }: {
   open: boolean;
   selected: readonly InvoiceCostMonthId[];
   onToggleOpen: () => void;
+  onClose: () => void;
   onToggleMonth: (month: InvoiceCostMonthId) => void;
   onAll: () => void;
   onReset: () => void;
 }) {
   const allSelected = selected.length === invoiceCostMonths.length;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onClose();
+      triggerRef.current?.focus();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [onClose, open]);
+
   return (
-    <div className="relative">
-      <button type="button" className="button button-ghost" aria-expanded={open} aria-haspopup="menu" onClick={onToggleOpen}>
+    <div ref={rootRef} className="relative">
+      <button ref={triggerRef} type="button" className="button button-ghost" aria-expanded={open} aria-controls="invoice-cost-month-filter" onClick={onToggleOpen}>
         {allSelected ? "Всі місяці" : selected.length ? `Місяців: ${selected.length}` : "Місяці не обрані"}<ChevronDown size={13} />
       </button>
       {open ? (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-56 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-menu)]" role="menu" aria-label="Фільтр за місяцем">
+        <div id="invoice-cost-month-filter" className="absolute left-0 top-[calc(100%+4px)] z-30 w-56 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface-raised)] shadow-[var(--shadow-menu)]" role="group" aria-label="Фільтр за місяцем">
           <div className="flex border-b border-[var(--border)] px-2 py-1.5"><button type="button" className="button button-ghost min-h-7 px-2 text-[10px]" onClick={onAll}>Обрати всі</button><button type="button" className="button button-ghost min-h-7 px-2 text-[10px]" onClick={onReset}>Скинути</button></div>
-          <div className="p-1">{invoiceCostMonths.map((month) => <button key={month.id} type="button" role="menuitemcheckbox" aria-checked={selected.includes(month.id)} onClick={() => onToggleMonth(month.id)} className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-[11px] hover:bg-[var(--surface-subtle)]"><span className={`grid size-4 place-items-center rounded border ${selected.includes(month.id) ? "border-[var(--orange)] bg-[var(--orange)] text-white" : "border-[var(--border)]"}`}>{selected.includes(month.id) ? "✓" : ""}</span><span className="flex-1">{month.label}</span><span className="text-[var(--muted-foreground)]">{month.sourceCount}</span></button>)}</div>
+          <div className="p-1">{invoiceCostMonths.map((month) => <button key={month.id} type="button" aria-pressed={selected.includes(month.id)} onClick={() => onToggleMonth(month.id)} className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-[11px] hover:bg-[var(--surface-subtle)]"><span className={`grid size-4 place-items-center rounded border ${selected.includes(month.id) ? "border-[var(--orange)] bg-[var(--orange)] text-white" : "border-[var(--border)]"}`}>{selected.includes(month.id) ? "✓" : ""}</span><span className="flex-1">{month.label}</span><span className="text-[var(--muted-foreground)]">{month.sourceCount}</span></button>)}</div>
         </div>
       ) : null}
     </div>
   );
 }
 
+function CostDetailModal({ card, onClose }: { card: InvoiceCostCard | null; onClose: () => void }) {
+  if (!card) return null;
+
+  const fields = [
+    ["Відправка", card.shipmentLabel],
+    ["ETA / прибуття", card.eta ?? "—"],
+    ["Товар EUR", card.goodsEur],
+    ["Товар USD", `${card.goodsUsd} @${card.exchangeRate.toFixed(2)}`],
+    ["Фрахт", card.freight],
+    ["Митниця", card.customs],
+    ["Брокер", card.broker],
+    ["Готівка", card.cash],
+    ["Всього витрат", card.total],
+    ["Собівартість", card.costPercent],
+  ] as const;
+
+  return (
+    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Read-only розшифровка source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+      <div className="grid gap-4">
+        <InlineNotice tone={card.incomplete ? "warning" : "info"}>
+          {card.incomplete ? "У source-картці є незаповнені витрати; вони залишені як «—». " : ""}Перегляд не архівує BL і не змінює курс або суми.
+        </InlineNotice>
+        <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
+          {fields.map(([label, value]) => <div key={label} className="bg-[var(--surface)] p-3"><dt className="text-[10px] font-semibold uppercase text-[var(--muted-foreground)]">{label}</dt><dd className="mb-0 mt-1 text-[13px] font-semibold">{value}</dd></div>)}
+        </dl>
+      </div>
+    </Modal>
+  );
+}
+
 function CostTab() {
   const [view, setView] = useState<InvoiceCostView>("active");
+  const [query, setQuery] = useState("");
   const [monthMenuOpen, setMonthMenuOpen] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<readonly InvoiceCostMonthId[]>(invoiceCostMonths.map((month) => month.id));
+  const [selectedCard, setSelectedCard] = useState<InvoiceCostCard | null>(null);
   const visibleCards = useMemo(() => invoiceCostCards.filter((card) => {
     const viewMatch = view === "archive" ? card.archived : view === "incomplete" ? !card.archived && card.incomplete : !card.archived;
     const allMonthsSelected = selectedMonths.length === invoiceCostMonths.length;
     const monthMatch = card.month ? selectedMonths.includes(card.month) : allMonthsSelected;
-    return viewMatch && monthMatch;
-  }), [selectedMonths, view]);
+    const queryMatch = !normalize(query) || normalize(`${card.billOfLading} ${card.shipmentLabel}`).includes(normalize(query));
+    return viewMatch && monthMatch && queryMatch;
+  }), [query, selectedMonths, view]);
   const sourceCount = invoiceCostSourceCounts[view];
 
   const toggleMonth = (month: InvoiceCostMonthId) => setSelectedMonths((current) => current.includes(month) ? current.filter((item) => item !== month) : [...current, month]);
 
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section id="invoices-cost-panel" role="tabpanel" aria-labelledby="invoices-cost-panel-tab" className="grid gap-4">
       <CostKpis view={view} />
-      <Panel className="overflow-visible shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-3 xl:flex-row xl:items-center">
-          <div className="flex min-w-0 flex-wrap items-center gap-2"><DollarSign size={15} /><h2 className="m-0 text-[13px] font-semibold">Дані собівартості за коносаментом</h2><LockedButton title="Експорт Excel вимкнений"><Download size={13} /> Експорт Excel</LockedButton><MonthMenu open={monthMenuOpen} selected={selectedMonths} onToggleOpen={() => setMonthMenuOpen((value) => !value)} onToggleMonth={toggleMonth} onAll={() => setSelectedMonths(invoiceCostMonths.map((month) => month.id))} onReset={() => setSelectedMonths([])} /></div>
-          <div className="segmented ml-auto max-w-full overflow-x-auto" aria-label="Стан даних собівартості">
-            <button type="button" aria-pressed={view === "active"} onClick={() => setView("active")}>Активні</button>
-            <button type="button" aria-pressed={view === "archive"} onClick={() => setView("archive")}>Архів</button>
-            <button type="button" aria-pressed={view === "incomplete"} onClick={() => setView("incomplete")}>Незаповнені</button>
-          </div>
-        </div>
+      <AdminToolbar
+        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук собівартості" placeholder="Пошук BL або відправки..." />}
+        filters={<MonthMenu open={monthMenuOpen} selected={selectedMonths} onToggleOpen={() => setMonthMenuOpen((value) => !value)} onClose={() => setMonthMenuOpen(false)} onToggleMonth={toggleMonth} onAll={() => setSelectedMonths(invoiceCostMonths.map((month) => month.id))} onReset={() => setSelectedMonths([])} />}
+        view={<AdminSegmentedControl items={[{ id: "active", label: "Активні" }, { id: "archive", label: "Архів" }, { id: "incomplete", label: "Незаповнені" }]} value={view} onValueChange={setView} label="Стан даних собівартості" />}
+        actions={<AdminIconAction label="Експорт Excel" tooltip="Експорт Excel вимкнений" icon={<Download size={14} />} disabled />}
+        meta={`${visibleCards.length} BL`}
+      />
+      <AdminTableShell title="Дані собівартості за коносаментом" notice={visibleCards.length ? <RepresentativeNotice shown={visibleCards.length} total={sourceCount} noun="BL-карток" /> : undefined}>
         {visibleCards.length ? (
-          <>
-            <RepresentativeNotice shown={visibleCards.length} total={sourceCount} noun="BL-карток" />
             <div className="grid gap-2 p-3">
               {visibleCards.map((card) => (
                 <article key={card.id} className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
-                  <div className="grid min-w-[1020px] grid-cols-[28px_90px_72px_132px_150px_repeat(4,105px)_112px_70px_42px] items-center gap-2 px-3 py-3 text-[10px]">
-                    <ChevronRight size={14} className="text-[var(--muted-foreground)]" />
-                    <strong className="font-mono text-[12px] text-[var(--blue)]">BL {card.billOfLading}</strong>
+                  <div className="grid min-w-[1050px] grid-cols-[28px_90px_72px_132px_150px_repeat(4,105px)_112px_70px_72px] items-center gap-2 px-3 py-3 text-[10px]">
+                    <button type="button" className="grid size-7 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" onClick={() => setSelectedCard(card)} aria-label={`Переглянути BL ${card.billOfLading}`} aria-haspopup="dialog"><ChevronRight size={14} /></button>
+                    <button type="button" className="font-mono text-left text-[12px] font-semibold text-[var(--blue)] hover:underline" onClick={() => setSelectedCard(card)} aria-haspopup="dialog">BL {card.billOfLading}</button>
                     <span className="text-[var(--muted-foreground)]">{card.shipmentLabel}</span>
                     {card.eta ? <StatusBadge tone="green">ETA: {card.eta}</StatusBadge> : <span className="text-[var(--muted-foreground)]">ETA: —</span>}
-                    <span className="text-[var(--green)]">Товар: <strong>{card.goodsEur}</strong> <span className="text-[var(--muted-foreground)]">({card.goodsUsd}) @1.08</span></span>
+                    <span className="text-[var(--green)]">Товар: <strong>{card.goodsEur}</strong> <span className="text-[var(--muted-foreground)]">({card.goodsUsd}) @{card.exchangeRate.toFixed(2)}</span></span>
                     <span className="text-[var(--blue)]">Фрахт:<strong className="mt-1 block">{card.freight}</strong></span>
                     <span className="text-[var(--green)]">Митниця:<strong className="mt-1 block">{card.customs}</strong></span>
                     <span className="text-[var(--orange)]">Брокер:<strong className="mt-1 block">{card.broker}</strong></span>
                     <span className="text-[var(--purple)]">Гот.:<strong className="mt-1 block">{card.cash}</strong></span>
                     <span className="text-[var(--amber)]">Всього:<strong className="mt-1 block text-[12px]">{card.total}</strong></span>
                     <span className="text-[var(--muted-foreground)]">Собів.:<strong className="mt-1 block text-[var(--foreground)]">{card.costPercent}</strong></span>
-                    <LockedButton title={card.archived ? "Відновлення BL вимкнене" : "Архівація BL вимкнена"}>{card.archived ? <RotateCcw size={13} /> : <Archive size={13} />}<span className="sr-only">{card.archived ? "Відновити цей BL" : "Архівувати цей BL"}</span></LockedButton>
+                    <span className="flex items-center gap-1"><AdminIconAction label={`Переглянути BL ${card.billOfLading}`} tooltip="Безпечний перегляд собівартості" icon={<Eye size={13} />} tone="primary" onClick={() => setSelectedCard(card)} /><AdminIconAction label={card.archived ? `Відновити BL ${card.billOfLading}` : `Архівувати BL ${card.billOfLading}`} tooltip={card.archived ? "Відновлення BL вимкнене" : "Архівація BL вимкнена"} icon={card.archived ? <RotateCcw size={13} /> : <Archive size={13} />} disabled /></span>
                   </div>
                   {view === "incomplete" ? <div className="border-t border-[var(--border)] bg-[var(--amber-soft)] px-3 py-2 text-[10px] text-[var(--amber)]"><AlertTriangle size={13} className="mr-1 inline" />Є незаповнені витрати</div> : null}
                 </article>
               ))}
             </div>
-          </>
         ) : <EmptyState compact title="Даних за обраними місяцями немає" description="Оберіть інший місяць або поверніть фільтр «Всі місяці»." />}
-      </Panel>
+      </AdminTableShell>
+      <CostDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />
     </section>
   );
 }
@@ -544,12 +707,12 @@ export function AdminInvoicesPage() {
   const uploadLabel = uploadLabels[tab];
 
   return (
-    <main className="page page-narrow">
-      <PageHeader
-        admin
+    <AdminPage>
+      <AdminPageHeader
+        icon={<FileText size={20} />}
         title="Інвойси та документи"
         description="Керування інвойсами, контрактами та митними документами"
-        action={uploadLabel ? <LockedButton title={`${uploadLabel} вимкнене у read-only клоні`}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
+        actions={uploadLabel ? <LockedButton title={`${uploadLabel} вимкнене у read-only клоні`}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
       />
       <div className="grid gap-5">
         <PageKpis />
@@ -559,6 +722,6 @@ export function AdminInvoicesPage() {
         {tab === "invoices" ? <InvoicesTab /> : null}
         {tab === "cost" ? <CostTab /> : null}
       </div>
-    </main>
+    </AdminPage>
   );
 }

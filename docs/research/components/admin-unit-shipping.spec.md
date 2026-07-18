@@ -134,3 +134,9 @@ In the local clone the sync action must either be hard-disabled or open a read-o
 - Working tabs, search, category, period/model/date filters, reset, page size, pagination, and inline VIN expansion.
 - Preserve the observed fields and representative records. `Всі` should reliably restore 34/84 after a no-result state.
 - `Синхр. з BossWeb` cannot send a request and cannot mutate state.
+
+## User refinement lock — 2026-07-18
+
+- Replace the detached category buttons, underline state tabs and free-form filter grid with the shared Ocean Freight control grammar.
+- Use `AdminPageHeader`, `AdminTabs`, `AdminToolbar`, `AdminSearchField` and `AdminSegmentedControl`; keep period/model/shipped-date selects in the same bounded toolbar.
+- Date-window metadata and the disabled BossWeb sync stay in the header action region. Table columns, pagination and VIN disclosure behavior do not change.

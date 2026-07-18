@@ -115,6 +115,9 @@ export function Modal({
   children,
   footer,
   className,
+  bodyClassName,
+  headerMeta,
+  headerActions,
 }: {
   open: boolean;
   onClose: () => void;
@@ -123,6 +126,9 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  bodyClassName?: string;
+  headerMeta?: ReactNode;
+  headerActions?: ReactNode;
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -195,13 +201,17 @@ export function Modal({
         tabIndex={-1}
       >
         <header className="modal-header">
-          <div>
+          <div className="modal-header-heading">
             <h2 id={titleId}>{title}</h2>
             {description ? <p id={descriptionId}>{description}</p> : null}
           </div>
-          <button ref={closeRef} type="button" className="icon-button" aria-label="Закрити" onClick={onClose}><X size={18} /></button>
+          {headerMeta ? <div className="modal-header-meta">{headerMeta}</div> : null}
+          <div className="modal-header-actions">
+            {headerActions}
+            <button ref={closeRef} type="button" className="icon-button" aria-label="Закрити" onClick={onClose}><X size={18} /></button>
+          </div>
         </header>
-        <div className="modal-body">{children}</div>
+        <div className={cn("modal-body", bodyClassName)}>{children}</div>
         {footer ? <footer className="modal-footer">{footer}</footer> : null}
       </section>
     </div>

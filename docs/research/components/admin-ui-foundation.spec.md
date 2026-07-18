@@ -1,6 +1,6 @@
 # Admin UI Foundation — reference lock and component contract
 
-Status: approved for direct implementation on 2026-07-18. This specification standardizes visual composition only. Route data, interaction semantics, URL behavior and the strict read-only safety boundary remain owned by each route-specific specification.
+Status: approved for direct implementation on 2026-07-18 and refined after the user review on 2026-07-18. This specification standardizes visual composition only. Route data, interaction semantics, URL behavior and the strict read-only safety boundary remain owned by each route-specific specification.
 
 ## Design brief
 
@@ -9,7 +9,7 @@ Designing a consistent, data-dense administrative workspace for BRP operations s
 - Goal: make route changes feel like one product by standardizing page geometry, tabs, search, filters, KPI cards, table boundaries and icon actions without flattening route-specific behavior.
 - Tone: precise, operational and calm; compact enough for large datasets, but never visually cramped.
 - Main risk: a cosmetic abstraction that hides different route states, couples business logic, or creates one inflexible mega-component.
-- Must remember: Warehouse is the user-selected visual benchmark; orange is navigation/action emphasis, not decoration.
+- Must remember: Ocean Freight is the user-selected benchmark for page controls; Warehouse remains the density benchmark for tables and process-heavy content. Orange is navigation/action emphasis, not decoration.
 - Constraints: preserve Inter, existing BRP/GitHub-like tokens, Ukrainian source copy, desktop/tablet/mobile, light/dark, local-only interactions and hard-disabled final operational actions.
 - Research: styles + product screens + user/source screenshots. No new journey logic is introduced.
 - Path: direct build against the locked existing product direction.
@@ -25,7 +25,7 @@ Designing a consistent, data-dense administrative workspace for BRP operations s
 
 ### Primary direction
 
-Warehouse owns page density, selected-tab treatment, compact control height, horizontal overflow behavior and the relationship between page heading, process navigation, toolbar and bordered data panels.
+Ocean Freight owns the control composition and visual rhythm: page header, primary pill tabs, KPI cards, one contained search/filter/view/action toolbar and a bordered data shell. Warehouse owns only dense-table rhythm, horizontal overflow and process-heavy content behavior.
 
 Preserve:
 
@@ -64,6 +64,20 @@ Reject:
 - full-width sparse panels on ultra-wide displays;
 - duplicating a BL-level operational preview on every Ocean container row;
 - hiding route-specific filters merely to make all pages look identical.
+
+### User refinement lock — control grammar
+
+All migrated admin routes use the following grammar unless source evidence requires a narrower variant:
+
+1. `AdminPageHeader` for the title, helper, metadata and safe/disabled actions.
+2. `AdminTabs` for primary route sections; no route-local underline tabs or inset orange bottom shadows.
+3. `AdminKpiGrid` immediately after tabs when the route has KPI.
+4. `AdminToolbar` as the single bounded row for `AdminSearchField`, selects, `AdminSegmentedControl`, view toggles, safe actions and result metadata.
+5. `AdminTableShell` or an equivalent bounded route-specific data surface below the toolbar.
+
+Search and primary tabs may share one `AdminToolbar` when the route is compact and the user explicitly requested a single row, as on Consignment. Responsive wrapping is allowed; controls must keep their order and remain keyboard accessible.
+
+The contract is compositional, not cosmetic: route logic and state stay local, final operational actions remain hard-disabled, and filters are never hidden merely to create a visually empty toolbar.
 
 ### Token commitments
 

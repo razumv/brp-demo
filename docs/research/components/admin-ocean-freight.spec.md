@@ -22,6 +22,8 @@ Status: source-observed on 2026-07-18. The page was researched with strict no-fi
   - `docs/design-references/source-admin-ocean-parts-receipt-tab-check.png`
   - `docs/design-references/source-admin-ocean-parts-receipt-tab-price.png`
 - User clarification for BL-level receipt placement: `docs/design-references/user-source-ocean-bl-receipt-action.jpg`.
+- User-observed expanded container state: `docs/design-references/user-source-ocean-container-expanded.png`.
+- User-observed BL detail modal: `docs/design-references/user-source-ocean-bl-detail-modal.png`.
 - Ambiguous ETA/date-chip region: `docs/design-references/source-admin-ocean-eta-control.png`.
 - Mobile, tablet, dark: `source-admin-ocean-freight-mobile.png`, `source-admin-ocean-freight-tablet.png`, `source-admin-ocean-freight-dark.png`.
 
@@ -65,6 +67,31 @@ Toolbar:
 Observed BL groups include `252108428`, `252108537`, `252108627`, `262102753`, `262102785`, `260101267`, `262102090` and others. Group badges include `Прибув`, `В дорозі`, and `Змішаний`. Container rows expose container number, `Units` or `Parts`, proforma, EUR value, assigned/total count, a read-only receipt/posting status, arrival/ETA, and status. The actionable receipt/posting preview belongs to the BL/коносамент group header, not to each container. This placement is an explicit user requirement backed by the supplied full-table capture.
 
 Card view presents the same data as BL cards with status, container count, carrier/route information, and ETA.
+
+### Container disclosure
+
+The container row and the BL header are separate interaction targets:
+
+- selecting a container row expands that container directly below the row without leaving the page;
+- the selected row uses a pale orange background and a narrow orange leading edge;
+- the disclosure header identifies the container, shipment label, and status;
+- the left region is a unit table with `#`, model/code, EUR, VIN, engine number, dealer, status, and invoice;
+- the right region shows container number, shipment type/name, BL number, proforma, weight, and ETA;
+- selecting the same row again collapses it; selecting another container moves the disclosure;
+- receipt/posting remains a BL-level action and is never repeated in the expanded container content.
+
+The supplied evidence for container `UACU5875229` confirms eight units, total EUR 104,240, proforma `1031954548`, BL `252108428`, weight `4 400,5 kg`, and ETA `2026-01-29`. All eight units are unassigned and have no invoice.
+
+### BL detail modal
+
+Selecting the BL number/header opens a wide, centered read-only detail modal while preserving the collection state behind a dim overlay. The modal contains:
+
+- header: BL number, route placeholder, ETA, shipment status, disabled `Оновити ETA` and document-upload actions, and close control;
+- main region: container accordions; each container exposes size/seal/load status and a unit table with code, model, EUR, VIN, engine, and assignment;
+- related proformas with proforma number, unit count, and EUR total;
+- right rail: BL facts, receipt/1C status, shipment summary, document inventory, and tracking chronology.
+
+For BL `252108428`, the evidence confirms one container, eight units, `4 400,5 kg`, ETA `29 Jan 2026`, one posted 1C receipt, `0` assigned, `8` unassigned, `0` free-stock units, and `8` total units. The document inventory contains the bill of lading, packing list, customs declaration, CMR invoice, and insurance certificate. The tracking chronology has confirmed booking, loaded containers, departure, in-transit, arrival, current customs clearance, and pending warehouse delivery states.
 
 ## Dialog and detail fields
 
@@ -126,6 +153,8 @@ Card view presents the same data as BL cards with status, container count, carri
 | Ocean/table | 32 BLs, 71 containers, grouped rows | desktop, mobile, tablet |
 | Ocean/cards | BL cards with route/status/ETA | cards |
 | Grouped by BL | Group headers plus nested containers | desktop DOM |
+| Container/expanded | Inline unit table plus container facts; one disclosure at a time | user-source-ocean-container-expanded |
+| BL/detail | Wide modal with containers, proformas, facts, 1C state, documents, and timeline | user-source-ocean-bl-detail-modal |
 | Status filter | Five values available | DOM inventory |
 | Document preview | PDF dropzone, no upload | upload preview |
 | Ground/empty | No ground shipments | ground preview |
@@ -155,12 +184,15 @@ Safe and observed:
 - opening document, ground-delivery, equipment-receipt, and parts-receipt previews;
 - closing with Cancel/X/Close without final submission;
 - responsive and theme controls.
+- opening and closing a container disclosure;
+- opening a BL detail modal and its container accordion;
 
 Unsafe:
 
 - every ETA/date/status chip, including `Jun 8 (Arrived)`, because the first click can execute directly;
 - `Оновити ETA`;
 - selecting/uploading a file;
+- every action rendered inside BL detail (`Оновити ETA`, upload/download where an external document request could occur, missing-document upload, receipt/posting);
 - `Підтвердити та створити`, `Створити постачання`, post/check/create/transfer in 1C;
 - any Save, Apply, Sync, Send, Approve, Cancel, Delete, Change status, receipt, warehouse, or shipment operation.
 
@@ -171,6 +203,7 @@ The local clone may open all previews, but final CTAs are hard-disabled and no h
 - Desktop 1440: 1184px main region with persistent sidebar.
 - Tablet 768: sidebar collapses to `Меню`; global search is a button; main content uses the full viewport.
 - Mobile 390: compact BRP wordmark, no persistent sidebar, stacked actions/tabs/KPIs. The grouped container collection renders as BL cards rather than an unreadable desktop table.
+- Mobile BL details use a full-height modal with one scrolling column; the facts rail follows containers and proformas. Container content remains a compact disclosure/card instead of forcing the desktop unit table into the viewport.
 - Dark mode uses `html.dark`, surface `#0d1117`, primary text `#e6edf3`.
 
 ## Exact visual tokens
@@ -188,6 +221,9 @@ The local clone may open all previews, but final CTAs are hard-disabled and no h
 - Implement a dedicated `AdminOceanFreightPage` with typed BL, container, equipment, document, manifest and receipt-preview models.
 - Working tabs, search, status filter, group toggle, table/card switch, dealer filters, and modal previews.
 - Render one receipt/posting preview action beside the relevant BL/коносамент heading. Container rows may display status only and must not duplicate the action.
+- Container rows open a real inline accordion. BL headers open a separate wide detail modal. Neither interaction changes operational state.
+- Use exact source-backed unit rows for `UACU5875229`. Other containers may show a clearly labelled evidence-limited summary and must not invent VINs, engines, documents, or milestones.
+- BL detail actions, document actions, ETA updates, receipt/posting, assignment, and status changes are hard-disabled. The modal may only change local disclosure/visibility state.
 - Keep the implementation evidence lock `32 / 36 / 71 / 35`; retain both the original incident and the later live `32 / 35 / 71 / 36` drift in documentation rather than silently rewriting historical captures.
 - No ETA/date/status button may mutate state. A local click can at most open a disabled informational preview.
 - Receipt and upload dialogs must expose the observed data and keep every final operational control disabled.

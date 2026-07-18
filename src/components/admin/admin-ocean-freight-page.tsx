@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -33,6 +33,10 @@ import {
   StatusBadge,
 } from "@/components/shared/ui";
 import {
+  OceanBillDetailModal,
+  OceanContainerDisclosure,
+} from "@/components/admin/admin-ocean-detail";
+import {
   OCEAN_KPIS,
   OCEAN_RESEARCH_COVERAGE,
   dealerEquipment,
@@ -49,6 +53,7 @@ import {
   type OceanReceiptPreviewKind,
   type OceanStatus,
 } from "@/lib/admin-ocean-freight-data";
+import styles from "./admin-ocean-freight-page.module.css";
 
 type PageTab = "ocean" | "ground" | "equipment";
 type ViewMode = "table" | "cards";
@@ -57,10 +62,12 @@ type PreviewState =
   | { type: "upload" }
   | { type: "ground" }
   | { type: "eta" }
+  | { type: "bill-detail"; billId: string }
   | { type: "receipt"; billId: string; receiptKind: OceanReceiptPreviewKind }
   | null;
 type PartsTab = "composition" | "blocked" | "link" | "create" | "transfer" | "check" | "price";
 type OpenReceiptPreview = (billId: string, kind: OceanReceiptPreviewKind) => void;
+type OpenBillDetail = (billId: string) => void;
 
 const oceanTabs: Array<{ id: PageTab; label: string }> = [
   { id: "ocean", label: "Морські перевезення" },
@@ -123,12 +130,23 @@ function PageTabs({ active, onChange }: { active: PageTab; onChange: (tab: PageT
 }
 
 function receiptStateLabel(bill: OceanBillOfLading) {
-  return bill.receipt.state === "created-unposted"
-    ? `${bill.receipt.documentNumber} · не проведена`
-    : "Прибуткову не створено";
+  if (bill.receipt.state === "created-unposted") {
+    return `${bill.receipt.documentNumber} · не проведена`;
+  }
+  if (bill.receipt.state === "posted") return "Техніка · проведена";
+  return "Прибуткову не створено";
 }
 
 function ReceiptPreviewButton({ bill, onOpen }: { bill: OceanBillOfLading; onOpen: OpenReceiptPreview }) {
+  if (bill.receipt.state === "posted") {
+    return (
+      <span className="inline-flex min-h-8 items-center gap-1 rounded-full border border-[#a9d5b2] bg-[var(--green-soft)] px-3 text-[10px] font-semibold text-[var(--green)]">
+        <CheckCircle2 size={13} />
+        Техніка · проведена
+      </span>
+    );
+  }
+
   const label = bill.receipt.state === "created-unposted" ? "Провести ПН" : "Створити прибуткову";
 
   return (
@@ -149,7 +167,10 @@ function EtaChip({ container, onOpen }: { container: OceanContainer; onOpen: () 
   return (
     <button
       type="button"
-      onClick={onOpen}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen();
+      }}
       title="Безпечний локальний перегляд: ETA не змінюється"
       className="inline-flex min-h-7 items-center gap-1 rounded-full border-0 bg-[var(--green-soft)] px-2 text-[10px] text-[var(--green)] hover:ring-1 hover:ring-[var(--orange)]"
     >
@@ -159,33 +180,85 @@ function EtaChip({ container, onOpen }: { container: OceanContainer; onOpen: () 
   );
 }
 
-function ContainerTable({ bills, grouped, onPreview, onEta }: {
+function ContainerTable({
+  bills,
+  grouped,
+  expandedContainerId,
+  onContainerToggle,
+  onPreview,
+  onBillOpen,
+  onEta,
+}: {
   bills: OceanBillOfLading[];
   grouped: boolean;
+  expandedContainerId: string | null;
+  onContainerToggle: (id: string) => void;
   onPreview: OpenReceiptPreview;
+  onBillOpen: OpenBillDetail;
   onEta: () => void;
 }) {
-  const renderContainerRow = (container: OceanContainer, bill: OceanBillOfLading) => (
-    <tr key={container.id}>
-      <td>
-        <span className="font-medium">{container.name}</span>
-        {!grouped ? <span className={`block text-[10px] ${mutedText}`}>BL {bill.id}</span> : null}
-      </td>
-      <td className="font-mono font-semibold">{container.number}</td>
-      <td><StatusBadge tone="blue">{container.cargoType === "units" ? "Одиниці" : "Запчастини"}</StatusBadge></td>
-      <td className="font-mono text-[11px]">{container.proforma}</td>
-      <td>{formatEur(container.eur)}</td>
-      <td><strong>{container.assigned}/{container.total}</strong></td>
-      <td>
-        <span className={`block text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : mutedText}`}>
-          {receiptStateLabel(bill)}
-        </span>
-        <span className={`block text-[9px] ${mutedText}`}>Дія на рівні BL</span>
-      </td>
-      <td><EtaChip container={container} onOpen={onEta} /></td>
-      <td><StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge></td>
-    </tr>
-  );
+  const renderContainerRows = (container: OceanContainer, bill: OceanBillOfLading) => {
+    const isExpanded = expandedContainerId === container.id;
+    const disclosureId = `ocean-table-container-${container.id}`;
+
+    return (
+      <Fragment key={container.id}>
+        <tr
+          className={`${styles.containerRow} ${isExpanded ? styles.containerRowSelected : ""}`}
+          onClick={() => onContainerToggle(container.id)}
+        >
+          <td>
+            <button
+              type="button"
+              className={styles.containerTrigger}
+              aria-expanded={isExpanded}
+              aria-controls={disclosureId}
+              onClick={(event) => {
+                event.stopPropagation();
+                onContainerToggle(container.id);
+              }}
+            >
+              <ChevronDown size={13} className={`${styles.disclosureChevron} ${isExpanded ? styles.disclosureChevronOpen : ""}`} />
+              <span className="font-medium">{container.name}</span>
+            </button>
+            {!grouped ? (
+              <button
+                type="button"
+                className={`${styles.billTrigger} mt-1 text-[10px] text-[var(--muted-foreground)]`}
+                aria-haspopup="dialog"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onBillOpen(bill.id);
+                }}
+              >
+                BL {bill.id}
+              </button>
+            ) : null}
+          </td>
+          <td className="font-mono font-semibold">{container.number}</td>
+          <td><StatusBadge tone="blue">{container.cargoType === "units" ? "Одиниці" : "Запчастини"}</StatusBadge></td>
+          <td className="font-mono text-[11px]">{container.proforma}</td>
+          <td>{formatEur(container.eur)}</td>
+          <td><strong>{container.assigned}/{container.total}</strong></td>
+          <td>
+            <span className={`block text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : bill.receipt.state === "posted" ? "text-[var(--green)]" : mutedText}`}>
+              {receiptStateLabel(bill)}
+            </span>
+            <span className={`block text-[9px] ${mutedText}`}>Дія на рівні BL</span>
+          </td>
+          <td><EtaChip container={container} onOpen={onEta} /></td>
+          <td><StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge></td>
+        </tr>
+        {isExpanded ? (
+          <tr className={styles.disclosureRow}>
+            <td colSpan={9} className={styles.disclosureCell}>
+              <OceanContainerDisclosure bill={bill} container={container} id={disclosureId} onOpenBill={() => onBillOpen(bill.id)} />
+            </td>
+          </tr>
+        ) : null}
+      </Fragment>
+    );
+  };
 
   return (
     <AdminTableShell scrollLabel="Контейнери морських перевезень">
@@ -195,57 +268,76 @@ function ContainerTable({ bills, grouped, onPreview, onEta }: {
           </thead>
           <tbody>
             {grouped ? bills.map((bill) => (
-              <GroupRows key={bill.id} bill={bill} onPreview={onPreview}>{bill.containers.map((container) => renderContainerRow(container, bill))}</GroupRows>
-            )) : bills.flatMap((bill) => bill.containers.map((container) => renderContainerRow(container, bill)))}
+              <Fragment key={bill.id}>
+                <tr className="bg-[var(--surface-subtle)]">
+                  <td colSpan={9} className="!py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className={styles.billTrigger}
+                        aria-haspopup="dialog"
+                        onClick={() => onBillOpen(bill.id)}
+                      >
+                        <FileText size={15} className="text-[var(--blue)]" />
+                        <strong className="font-mono">{bill.id}</strong>
+                      </button>
+                      <StatusBadge tone={statusMeta[bill.status].tone}>{statusMeta[bill.status].label}</StatusBadge>
+                      <span className={mutedText}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span>
+                      <span className={`text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : bill.receipt.state === "posted" ? "text-[var(--green)]" : mutedText}`}>{receiptStateLabel(bill)}</span>
+                      <span className="ml-auto"><ReceiptPreviewButton bill={bill} onOpen={onPreview} /></span>
+                    </div>
+                  </td>
+                </tr>
+                {bill.containers.map((container) => renderContainerRows(container, bill))}
+              </Fragment>
+            )) : bills.flatMap((bill) => bill.containers.map((container) => renderContainerRows(container, bill)))}
           </tbody>
       </table>
     </AdminTableShell>
   );
 }
 
-function GroupRows({ bill, children, onPreview }: { bill: OceanBillOfLading; children: ReactNode; onPreview: OpenReceiptPreview }) {
-  const meta = statusMeta[bill.status];
-  return (
-    <>
-      <tr className="bg-[var(--surface-subtle)]">
-        <td colSpan={9} className="!py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <FileText size={15} className="text-[var(--blue)]" />
-            <strong className="font-mono">{bill.id}</strong>
-            <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
-            <span className={mutedText}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span>
-            <span className={`text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : mutedText}`}>{receiptStateLabel(bill)}</span>
-            <span className="ml-auto"><ReceiptPreviewButton bill={bill} onOpen={onPreview} /></span>
-          </div>
-        </td>
-      </tr>
-      {children}
-    </>
-  );
-}
-
-function BillCards({ bills, grouped, expanded, onExpand, onPreview, onEta }: {
+function BillCards({
+  bills,
+  grouped,
+  expandedContainerId,
+  onContainerToggle,
+  onPreview,
+  onBillOpen,
+  onEta,
+}: {
   bills: OceanBillOfLading[];
   grouped: boolean;
-  expanded: string | null;
-  onExpand: (id: string) => void;
+  expandedContainerId: string | null;
+  onContainerToggle: (id: string) => void;
   onPreview: OpenReceiptPreview;
+  onBillOpen: OpenBillDetail;
   onEta: () => void;
 }) {
   if (!grouped) {
     return (
       <div className="grid gap-3 md:grid-cols-2">
-        {bills.flatMap((bill) => bill.containers.map((container) => (
-          <article key={container.id} className={`${surfaceCard} p-4`}>
-            <div className="flex items-start justify-between gap-3">
-              <div><strong className="font-mono">{container.number}</strong><span className={`mt-1 block text-[10px] ${mutedText}`}>BL {bill.id} · {container.proforma}</span></div>
-              <StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-[11px]"><span className={mutedText}>Вартість</span><strong className="text-right">{formatEur(container.eur)}</strong><span className={mutedText}>Одиниці</span><strong className="text-right">{container.assigned}/{container.total}</strong></div>
-            <div className="mt-3 rounded-md bg-[var(--surface-subtle)] px-3 py-2 text-[10px]"><span className={mutedText}>Прихід на рівні BL: </span><strong>{receiptStateLabel(bill)}</strong></div>
-            <div className="mt-4 flex flex-wrap gap-2"><EtaChip container={container} onOpen={onEta} /></div>
-          </article>
-        )))}
+        {bills.flatMap((bill) => bill.containers.map((container) => {
+          const isExpanded = expandedContainerId === container.id;
+          const contentId = `ocean-card-container-${container.id}`;
+          return (
+            <article key={container.id} className={`${styles.cardContainer} ${isExpanded ? styles.cardContainerSelected : ""}`}>
+              <button type="button" className={styles.cardContainerTrigger} aria-expanded={isExpanded} aria-controls={contentId} onClick={() => onContainerToggle(container.id)}>
+                <span className={styles.cardContainerMain}>
+                  <strong className="font-mono">{container.number}</strong>
+                  <span className={`mt-1 block text-[10px] ${mutedText}`}>BL {bill.id} · {container.proforma}</span>
+                </span>
+                <StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge>
+                <ChevronDown size={15} className={`${styles.disclosureChevron} ${isExpanded ? styles.disclosureChevronOpen : ""}`} />
+              </button>
+              <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] px-3 py-2">
+                <button type="button" className={`${styles.billTrigger} text-[10px] text-[var(--blue)]`} aria-haspopup="dialog" onClick={() => onBillOpen(bill.id)}>Деталі BL {bill.id}</button>
+                <span className="ml-auto"><EtaChip container={container} onOpen={onEta} /></span>
+              </div>
+              {isExpanded ? <div className={styles.cardDisclosure}><OceanContainerDisclosure bill={bill} container={container} id={contentId} onOpenBill={() => onBillOpen(bill.id)} /></div> : null}
+            </article>
+          );
+        }))}
       </div>
     );
   }
@@ -254,24 +346,41 @@ function BillCards({ bills, grouped, expanded, onExpand, onPreview, onEta }: {
     <div className="grid gap-3">
       {bills.map((bill) => {
         const meta = statusMeta[bill.status];
-        const isExpanded = expanded === bill.id;
         return (
           <article key={bill.id} className={`${surfaceCard} overflow-hidden`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <button type="button" className="flex min-w-0 flex-1 items-center gap-3 px-5 py-4 text-left" aria-expanded={isExpanded} onClick={() => onExpand(bill.id)}>
+              <button type="button" className={`${styles.cardBillTrigger} px-5 py-4`} aria-haspopup="dialog" onClick={() => onBillOpen(bill.id)}>
                 <Ship size={18} className="shrink-0 text-[var(--blue)]" />
-                <span className="min-w-0 flex-1"><strong className="font-mono">{bill.id}</strong><span className={`ml-2 ${mutedText}`}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span><span className={`mt-1 block text-[10px] ${mutedText}`}>{bill.carrier ? `${bill.carrier} · ` : ""}{bill.route ? `${bill.route} · ` : ""}ETA: {bill.eta}</span></span>
+                <span className="min-w-0 flex-1">
+                  <strong className="font-mono">{bill.id}</strong>
+                  <span className={`ml-2 ${mutedText}`}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span>
+                  <span className={`mt-1 block text-[10px] ${mutedText}`}>{bill.carrier ? `${bill.carrier} · ` : ""}{bill.route ? `${bill.route} · ` : ""}ETA: {bill.eta}</span>
+                </span>
                 <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
-                <ChevronDown size={16} className={`shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
               </button>
               <div className="px-5 pb-4 sm:py-0 sm:pl-0 sm:pr-4"><ReceiptPreviewButton bill={bill} onOpen={onPreview} /></div>
             </div>
-            {isExpanded ? <div className="grid gap-3 border-t border-[var(--border)] bg-[var(--surface-subtle)] p-4">{bill.containers.map((container) => (
-              <div key={container.id} className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
-                <div className="flex flex-wrap items-start justify-between gap-2"><div><strong>{container.name}</strong><span className={`ml-2 font-mono text-[11px] ${mutedText}`}>{container.number}</span><span className={`mt-1 block text-[10px] ${mutedText}`}>PRF {container.proforma} · {formatEur(container.eur)} · {container.assigned}/{container.total}</span></div><StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge></div>
-                <div className="mt-3 flex flex-wrap gap-2"><EtaChip container={container} onOpen={onEta} /></div>
-              </div>
-            ))}</div> : null}
+            <div className={styles.cardContainerList}>
+              {bill.containers.map((container) => {
+                const isExpanded = expandedContainerId === container.id;
+                const contentId = `ocean-grouped-card-container-${container.id}`;
+                return (
+                  <div key={container.id} className={`${styles.cardContainer} ${isExpanded ? styles.cardContainerSelected : ""}`}>
+                    <button type="button" className={styles.cardContainerTrigger} aria-expanded={isExpanded} aria-controls={contentId} onClick={() => onContainerToggle(container.id)}>
+                      <span className={styles.cardContainerMain}>
+                        <strong>{container.name}</strong>
+                        <span className={`ml-2 font-mono text-[11px] ${mutedText}`}>{container.number}</span>
+                        <span className={`mt-1 block text-[10px] ${mutedText}`}>PRF {container.proforma} · {formatEur(container.eur)} · {container.assigned}/{container.total}</span>
+                      </span>
+                      <StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge>
+                      <ChevronDown size={15} className={`${styles.disclosureChevron} ${isExpanded ? styles.disclosureChevronOpen : ""}`} />
+                    </button>
+                    <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] px-3 py-2"><EtaChip container={container} onOpen={onEta} /></div>
+                    {isExpanded ? <div className={styles.cardDisclosure}><OceanContainerDisclosure bill={bill} container={container} id={contentId} onOpenBill={() => onBillOpen(bill.id)} /></div> : null}
+                  </div>
+                );
+              })}
+            </div>
           </article>
         );
       })}
@@ -279,12 +388,20 @@ function BillCards({ bills, grouped, expanded, onExpand, onPreview, onEta }: {
   );
 }
 
-function OceanTab({ onReceiptPreview, onEta }: { onReceiptPreview: OpenReceiptPreview; onEta: () => void }) {
+function OceanTab({
+  onReceiptPreview,
+  onBillOpen,
+  onEta,
+}: {
+  onReceiptPreview: OpenReceiptPreview;
+  onBillOpen: OpenBillDetail;
+  onEta: () => void;
+}) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [grouped, setGrouped] = useState(true);
   const [view, setView] = useState<ViewMode>("table");
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedContainerId, setExpandedContainerId] = useState<string | null>(null);
 
   const filteredBills = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("uk");
@@ -302,6 +419,7 @@ function OceanTab({ onReceiptPreview, onEta }: { onReceiptPreview: OpenReceiptPr
   const visibleCount = filteredBills.reduce((count, bill) => count + bill.containers.length, 0);
   const visibleBillCount = filteredBills.length;
   const showCards = view === "cards";
+  const toggleContainer = (id: string) => setExpandedContainerId((current) => current === id ? null : id);
 
   return (
     <div
@@ -351,11 +469,11 @@ function OceanTab({ onReceiptPreview, onEta }: { onReceiptPreview: OpenReceiptPr
       {filteredBills.length === 0 ? (
         <Panel><EmptyState compact title="Контейнери не знайдено" description="Змініть пошуковий запит або статус." /></Panel>
       ) : showCards ? (
-        <BillCards bills={filteredBills} grouped={grouped} expanded={expanded} onExpand={(id) => setExpanded((current) => current === id ? null : id)} onPreview={onReceiptPreview} onEta={onEta} />
+        <BillCards bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} />
       ) : (
         <>
-          <div className="hidden md:block"><ContainerTable bills={filteredBills} grouped={grouped} onPreview={onReceiptPreview} onEta={onEta} /></div>
-          <div className="md:hidden"><BillCards bills={filteredBills} grouped expanded={expanded} onExpand={(id) => setExpanded((current) => current === id ? null : id)} onPreview={onReceiptPreview} onEta={onEta} /></div>
+          <div className="hidden md:block"><ContainerTable bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} /></div>
+          <div className="md:hidden"><BillCards bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} /></div>
         </>
       )}
     </div>
@@ -643,6 +761,9 @@ export function AdminOceanFreightPage() {
   const [preview, setPreview] = useState<PreviewState>(null);
   const closePreview = () => setPreview(null);
   const receiptPreview = preview?.type === "receipt" ? preview : null;
+  const detailBill = preview?.type === "bill-detail"
+    ? oceanBillsOfLading.find((bill) => bill.id === preview.billId) ?? null
+    : null;
 
   return (
     <AdminPage>
@@ -656,6 +777,7 @@ export function AdminOceanFreightPage() {
       {tab === "ocean" ? (
         <OceanTab
           onReceiptPreview={(billId, receiptKind) => setPreview({ type: "receipt", billId, receiptKind })}
+          onBillOpen={(billId) => setPreview({ type: "bill-detail", billId })}
           onEta={() => setPreview({ type: "eta" })}
         />
       ) : null}
@@ -665,6 +787,7 @@ export function AdminOceanFreightPage() {
       <UploadPreview open={preview?.type === "upload"} onClose={closePreview} />
       <GroundPreview open={preview?.type === "ground"} onClose={closePreview} />
       <ReceiptPreviewModal preview={receiptPreview} onClose={closePreview} />
+      {detailBill ? <OceanBillDetailModal bill={detailBill} open onClose={closePreview} /> : null}
       <EtaSafetyPreview open={preview?.type === "eta"} onClose={closePreview} />
     </AdminPage>
   );

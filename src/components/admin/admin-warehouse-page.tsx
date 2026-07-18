@@ -26,6 +26,14 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { EmptyState, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   receiptSummaryMetrics,
@@ -122,63 +130,24 @@ function KpiGrid({ items }: {
   );
 }
 
-function SearchField({ value, onChange, placeholder, label = placeholder }: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  label?: string;
-}) {
-  return (
-    <label className="input-with-icon w-full min-w-0 md:max-w-[360px]">
-      <span className="sr-only">{label}</span>
-      <Search size={15} />
-      <input
-        className="input h-10 pr-9"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        autoComplete="off"
-      />
-      {value ? (
-        <button type="button" className="input-trailing" aria-label="Очистити пошук" onClick={() => onChange("")}>
-          <X size={14} />
-        </button>
-      ) : null}
-    </label>
-  );
-}
-
 function ProcessNavigation({ active, onChange }: {
   active: WarehouseProcessId;
   onChange: (process: WarehouseProcessId) => void;
 }) {
   return (
-    <>
-      <label className="field sm:hidden">
-        <span>Процес складу</span>
-        <select value={active} onChange={(event) => onChange(event.target.value as WarehouseProcessId)}>
-          {warehouseProcessTabs.map((tab) => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
-        </select>
-      </label>
-      <div
-        className="hidden max-w-full gap-1 overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] p-1 sm:flex"
-        role="tablist"
-        aria-label="Процеси складу"
-      >
-        {warehouseProcessTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={active === tab.id}
-            onClick={() => onChange(tab.id)}
-            className={`min-h-9 shrink-0 rounded-md px-3 text-[11px] font-medium transition-colors ${active === tab.id ? "bg-[var(--orange-soft)] text-[var(--orange)]" : "text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]"}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-    </>
+    <AdminTabs<WarehouseProcessId>
+      items={warehouseProcessTabs.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        mobileLabel: tab.label,
+        panelId: `warehouse-${tab.id}-panel`,
+      }))}
+      value={active}
+      onValueChange={onChange}
+      label="Процеси складу"
+      mobileSelectLabel="Процес складу"
+      size="compact"
+    />
   );
 }
 
@@ -195,9 +164,9 @@ function ReceivingTab() {
   const shipment = warehouseShipments.find((item) => item.id === shipmentId) ?? warehouseShipments[0];
 
   return (
-    <section role="tabpanel" className="grid gap-4">
-      <Panel className="p-4 shadow-none">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <section className="grid gap-4">
+      <AdminToolbar
+        filters={(
           <label className="field w-full lg:max-w-[460px]">
             <span>Постачання</span>
             <select
@@ -211,7 +180,9 @@ function ReceivingTab() {
               ))}
             </select>
           </label>
-          <div className="flex flex-wrap gap-2">
+        )}
+        actions={(
+          <>
             <LockedButton title="Приймання всіх позицій є операційною дією і вимкнене">
               <PackageCheck size={14} /> Прийняти все
             </LockedButton>
@@ -221,9 +192,9 @@ function ReceivingTab() {
             <LockedButton title="Приймання в 1С є операційною дією і вимкнене">
               <CheckCircle2 size={14} /> Прийняти (вже в 1С)
             </LockedButton>
-          </div>
-        </div>
-      </Panel>
+          </>
+        )}
+      />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -320,26 +291,7 @@ function ReceiptSummaryTab() {
   }), [filter, query, shipment]);
 
   return (
-    <section role="tabpanel" className="grid gap-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="segmented w-fit max-w-full overflow-x-auto" role="group" aria-label="Вигляд зведення приймання">
-          <button type="button" aria-pressed={view === "parts"} onClick={() => setView("parts")}>За артикулами</button>
-          <button type="button" aria-pressed={view === "shipments"} onClick={() => setView("shipments")}>До відвантаження</button>
-        </div>
-        <label className="field w-full xl:max-w-[300px]">
-          <span className="sr-only">Постачання</span>
-          <select value={shipment} onChange={(event) => setShipment(event.target.value)}>
-            <option value="all">Усі відвантаження</option>
-            {warehouseShipments.map((item) => <option key={item.id} value={item.shipmentNumber}>{item.proforma} · {item.shipmentNumber}</option>)}
-          </select>
-        </label>
-        <span className="hidden flex-1 xl:block" />
-        <div className="flex flex-wrap gap-2">
-          <LockedButton title="Оновлення може змінювати зовнішній стан і вимкнене"><RefreshCw size={14} /> Оновити</LockedButton>
-          <LockedButton title="Експорт не запускається у read-only клоні"><Download size={14} /> Експорт</LockedButton>
-        </div>
-      </div>
-
+    <section className="grid gap-4">
       <KpiGrid items={[
         { label: "Артикулів", value: receiptSummaryMetrics.parts, icon: <Package size={17} />, tone: "blue" },
         { label: "CRM", value: receiptSummaryMetrics.crm, icon: <ClipboardList size={17} />, tone: "green" },
@@ -347,20 +299,57 @@ function ReceiptSummaryTab() {
         { label: "Недоотримано", value: receiptSummaryMetrics.missing, icon: <AlertTriangle size={17} />, tone: "orange" },
       ]} />
 
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук за артикулом"
+            placeholder="Пошук за артикулом…"
+            maxWidth={320}
+          />
+        )}
+        filters={(
+          <>
+            <label className="field w-full max-w-[230px]">
+              <span className="sr-only">Постачання</span>
+              <select value={shipment} onChange={(event) => setShipment(event.target.value)}>
+                <option value="all">Усі відвантаження</option>
+                {warehouseShipments.map((item) => <option key={item.id} value={item.shipmentNumber}>{item.proforma} · {item.shipmentNumber}</option>)}
+              </select>
+            </label>
+            <AdminSegmentedControl<ReceiptSummaryFilter>
+              items={[
+                { id: "all", label: "Усі" },
+                { id: "crm", label: "CRM" },
+                { id: "legacy", label: "Legacy" },
+              ]}
+              value={filter}
+              onValueChange={setFilter}
+              label="Джерело приймання"
+            />
+          </>
+        )}
+        view={(
+          <AdminSegmentedControl<ReceiptSummaryView>
+            items={[
+              { id: "parts", label: "За артикулами" },
+              { id: "shipments", label: "До відвантаження" },
+            ]}
+            value={view}
+            onValueChange={setView}
+            label="Вигляд зведення приймання"
+          />
+        )}
+        actions={(
+          <>
+            <LockedButton title="Оновлення може змінювати зовнішній стан і вимкнене"><RefreshCw size={14} /> Оновити</LockedButton>
+            <LockedButton title="Експорт не запускається у read-only клоні"><Download size={14} /> Експорт</LockedButton>
+          </>
+        )}
+      />
+
       <Panel className="overflow-hidden shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 lg:flex-row lg:items-center">
-          <SearchField value={query} onChange={setQuery} placeholder="Пошук за артикулом…" />
-          <div className="segmented w-fit" role="group" aria-label="Джерело приймання">
-            {([
-              ["all", "Усі"],
-              ["crm", "CRM"],
-              ["legacy", "Legacy"],
-            ] as const).map(([id, label]) => (
-              <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
-            ))}
-          </div>
-          <span className="ml-auto text-[10px] text-[var(--muted-foreground)]">{view === "parts" ? "За артикулами" : "До відвантаження"}</span>
-        </div>
         {visibleRows.length === 0 ? (
           <EmptyState compact title="Поки немає прийнятого товару" description="Приймання у source не запускалося; усі показники дорівнюють нулю." icon={<PackageCheck size={28} />} />
         ) : null}
@@ -396,7 +385,7 @@ function ShortagesTab() {
   }, [query, view]);
 
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section className="grid gap-4">
       <KpiGrid items={[
         { label: "Очікують", value: warehouseShortageMetrics.waiting, icon: <History size={17} />, tone: "amber" },
         { label: "Пошкоджені", value: warehouseShortageMetrics.damaged, icon: <AlertTriangle size={17} />, tone: "orange" },
@@ -404,19 +393,28 @@ function ShortagesTab() {
         { label: "Надлишок", value: warehouseShortageMetrics.surplus, icon: <Boxes size={17} />, tone: "blue" },
       ]} />
 
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук за артикулом або постачанням"
+            placeholder="Пошук за артикулом або постачанням..."
+            maxWidth={360}
+          />
+        )}
+        filters={(
+          <AdminSegmentedControl<WarehouseShortageView>
+            items={shortageViews.map((item) => ({ id: item.id, label: item.label, count: item.count }))}
+            value={view}
+            onValueChange={setView}
+            label="Стани нестач"
+          />
+        )}
+        actions={<LockedButton title="Оновлення нестач вимкнене у read-only клоні"><RefreshCw size={14} /> Оновити</LockedButton>}
+      />
+
       <Panel className="overflow-hidden shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 xl:flex-row xl:items-center">
-          <SearchField value={query} onChange={setQuery} placeholder="Пошук за артикулом або постачанням..." />
-          <div className="segmented w-fit max-w-full overflow-x-auto" role="tablist" aria-label="Стани нестач">
-            {shortageViews.map((item) => (
-              <button key={item.id} type="button" role="tab" aria-selected={view === item.id} onClick={() => setView(item.id)}>
-                {item.label} {item.count}
-              </button>
-            ))}
-          </div>
-          <span className="hidden flex-1 xl:block" />
-          <LockedButton title="Оновлення нестач вимкнене у read-only клоні" className="w-fit"><RefreshCw size={14} /> Оновити</LockedButton>
-        </div>
         <div className="border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-3">
           <h2 className="m-0 text-[12px] font-semibold">{activeView.heading}</h2>
         </div>
@@ -471,7 +469,7 @@ function FulfillmentTab() {
   }, [filter, query]);
 
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section className="grid gap-4">
       <KpiGrid items={[
         { label: "Всього замовлень", value: warehouseFulfillmentMetrics.totalOrders, icon: <ClipboardList size={17} />, tone: "blue" },
         { label: "Відправлено", value: warehouseFulfillmentMetrics.shipped, icon: <Truck size={17} /> },
@@ -479,21 +477,39 @@ function FulfillmentTab() {
         { label: "Бекордер", value: warehouseFulfillmentMetrics.backorder, icon: <History size={17} />, tone: "amber" },
       ]} />
 
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук замовлень"
+            placeholder="Пошук замовлень..."
+            maxWidth={360}
+          />
+        )}
+        filters={(
+          <AdminSegmentedControl<WarehouseFulfillmentFilter>
+            items={fulfillmentFilters}
+            value={filter}
+            onValueChange={setFilter}
+            label="Статус виконання"
+          />
+        )}
+        view={(
+          <AdminSegmentedControl<WarehouseFulfillmentView>
+            items={[
+              { id: "list", label: "Список", icon: <LayoutList size={15} /> },
+              { id: "kanban", label: "Kanban", icon: <Grid2X2 size={15} /> },
+            ]}
+            value={view}
+            onValueChange={setView}
+            label="Вигляд виконання"
+          />
+        )}
+        actions={<LockedButton title="Перезіставлення є операційною дією і вимкнене"><RefreshCw size={14} /> Перезіставити</LockedButton>}
+      />
+
       <Panel className="overflow-hidden shadow-none">
-        <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 xl:flex-row xl:items-center">
-          <SearchField value={query} onChange={setQuery} placeholder="Пошук замовлень..." />
-          <div className="segmented w-fit max-w-full overflow-x-auto" role="group" aria-label="Статус виконання">
-            {fulfillmentFilters.map((item) => (
-              <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label}</button>
-            ))}
-          </div>
-          <span className="hidden flex-1 xl:block" />
-          <LockedButton title="Перезіставлення є операційною дією і вимкнене"><RefreshCw size={14} /> Перезіставити</LockedButton>
-          <div className="segmented w-fit" role="group" aria-label="Вигляд виконання">
-            <button type="button" aria-label="Список" aria-pressed={view === "list"} onClick={() => setView("list")}><LayoutList size={15} /></button>
-            <button type="button" aria-label="Kanban" aria-pressed={view === "kanban"} onClick={() => setView("kanban")}><Grid2X2 size={15} /></button>
-          </div>
-        </div>
         {view === "list" ? (
           visibleOrders.length === 0 ? <EmptyState compact title="Немає замовлень постачальнику" description="У source зафіксовано порожній список виконання." icon={<ClipboardList size={28} />} /> : null
         ) : <FulfillmentKanban />}
@@ -598,7 +614,7 @@ function InventorySummaryTab() {
   const [shipmentFilter, setShipmentFilter] = useState<WarehousePartsShipmentFilter>("all");
 
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section className="grid gap-4">
       <KpiGrid items={[
         { label: "Всього деталей", value: warehouseInventoryTotals.parts, icon: <Package size={17} />, tone: "blue" },
         { label: "Відправлено", value: warehouseInventoryTotals.shipped, icon: <Truck size={17} /> },
@@ -606,33 +622,48 @@ function InventorySummaryTab() {
         { label: "Всього EUR", value: formatEur(warehouseInventoryTotals.totalEur), icon: <FileSpreadsheet size={17} />, tone: "amber" },
       ]} />
 
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-        <SearchField value={query} onChange={setQuery} placeholder="Пошук артикулу..." />
-        <label className="field w-full xl:max-w-[300px]">
-          <span>Постачання</span>
-          <select value={shipmentFilter} onChange={(event) => setShipmentFilter(event.target.value as WarehousePartsShipmentFilter)}>
-            {warehousePartsShipmentFilters.map((item) => <option key={item} value={item}>{item === "all" ? "Всі постачання" : item}</option>)}
-            <option disabled>34 ocean identifiers · назви не зафіксовано у spec</option>
-          </select>
-        </label>
-        <label className="field w-full xl:max-w-[300px]">
-          <span>Дилер</span>
-          <select defaultValue="all">
-            <option value="all">Всі дилери</option>
-            <option disabled>20 дилерів · назви не зафіксовано у spec</option>
-          </select>
-        </label>
-        <span className="hidden flex-1 xl:block" />
-        <LockedButton title="Excel-експорт не запускається у read-only клоні" className="shrink-0"><Download size={14} /> Експорт Excel</LockedButton>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="segmented w-fit" role="group" aria-label="Вигляд складського зведення">
-          <button type="button" aria-pressed={view === "parts"} onClick={() => setView("parts")}>За деталями</button>
-          <button type="button" aria-pressed={view === "shipments"} onClick={() => setView("shipments")}>За постачаннями</button>
-        </div>
-        <p className="m-0 text-[10px] text-[var(--muted-foreground)]">Фільтри працюють по доказовій вибірці; KPI зберігають повні source totals.</p>
-      </div>
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук артикулу"
+            placeholder="Пошук артикулу..."
+            maxWidth={280}
+          />
+        )}
+        filters={(
+          <>
+            <label className="field w-full max-w-[190px]">
+              <span className="sr-only">Постачання</span>
+              <select value={shipmentFilter} onChange={(event) => setShipmentFilter(event.target.value as WarehousePartsShipmentFilter)}>
+                {warehousePartsShipmentFilters.map((item) => <option key={item} value={item}>{item === "all" ? "Всі постачання" : item}</option>)}
+                <option disabled>34 ocean identifiers · назви не зафіксовано у spec</option>
+              </select>
+            </label>
+            <label className="field w-full max-w-[170px]">
+              <span className="sr-only">Дилер</span>
+              <select defaultValue="all">
+                <option value="all">Всі дилери</option>
+                <option disabled>20 дилерів · назви не зафіксовано у spec</option>
+              </select>
+            </label>
+          </>
+        )}
+        view={(
+          <AdminSegmentedControl<InventorySummaryView>
+            items={[
+              { id: "parts", label: "За деталями" },
+              { id: "shipments", label: "За постачаннями" },
+            ]}
+            value={view}
+            onValueChange={setView}
+            label="Вигляд складського зведення"
+          />
+        )}
+        actions={<LockedButton title="Excel-експорт не запускається у read-only клоні"><Download size={14} /> Експорт Excel</LockedButton>}
+      />
+      <p className="m-0 text-[10px] text-[var(--muted-foreground)]">Фільтри працюють по доказовій вибірці; KPI зберігають повні source totals.</p>
 
       {view === "parts"
         ? <InventoryPartsTable query={query} shipmentFilter={shipmentFilter} />
@@ -732,21 +763,30 @@ function PlacementTab() {
   };
 
   return (
-    <section role="tabpanel" className="grid gap-4">
+    <section className="grid gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="m-0 text-[20px] font-semibold">Розміщення на складі</h2>
         <p className="m-0 text-[11px] text-[var(--muted-foreground)]">{warehousePlacementSummary.total} позицій · source Excel</p>
       </div>
 
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <SearchField value={query} onChange={changeQuery} placeholder="Пошук: артикул, комірка, зона…" />
-        <span className="hidden flex-1 xl:block" />
-        <div className="flex flex-wrap gap-2">
-          <LockedButton title="Оновлення складських даних вимкнене"><RefreshCw size={14} /> Оновити</LockedButton>
-          <LockedButton title="Експорт складських даних вимкнений"><Download size={14} /> Експорт</LockedButton>
-          <LockedButton title="Upload/import Excel є операційною дією і вимкнений"><Upload size={14} /> Завантажити Excel</LockedButton>
-        </div>
-      </div>
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={changeQuery}
+            label="Пошук за артикулом, коміркою або зоною"
+            placeholder="Пошук: артикул, комірка, зона…"
+            maxWidth={360}
+          />
+        )}
+        actions={(
+          <>
+            <LockedButton title="Оновлення складських даних вимкнене"><RefreshCw size={14} /> Оновити</LockedButton>
+            <LockedButton title="Експорт складських даних вимкнений"><Download size={14} /> Експорт</LockedButton>
+            <LockedButton title="Upload/import Excel є операційною дією і вимкнений"><Upload size={14} /> Завантажити Excel</LockedButton>
+          </>
+        )}
+      />
 
       <Panel className="overflow-hidden shadow-none">
         <RepresentativeNotice shown={visibleRows.length} total={warehousePlacementSummary.total} noun="позицій" />
@@ -807,22 +847,23 @@ function PlacementTab() {
 
 export function AdminWarehousePage() {
   const [activeProcess, setActiveProcess] = useState<WarehouseProcessId>("receiving");
+  const activePanelId = `warehouse-${activeProcess}-panel`;
 
   return (
-    <div className="page page-narrow">
-      <div className="grid gap-5">
-        <header>
-          <div className="flex items-center gap-3">
-            <span className="page-header-icon shrink-0"><Warehouse size={20} /></span>
-            <h1 className="page-title page-title-admin">Склад</h1>
-          </div>
-          <p className="page-description">
-            Приймайте постачання, розбирайте нестачі, керуйте виконанням і контролюйте готовність складу в одному процесі.
-          </p>
-        </header>
+    <AdminPage>
+      <AdminPageHeader
+        icon={<Warehouse size={20} />}
+        title="Склад"
+        description="Приймайте постачання, розбирайте нестачі, керуйте виконанням і контролюйте готовність складу в одному процесі."
+      />
 
-        <ProcessNavigation active={activeProcess} onChange={setActiveProcess} />
+      <ProcessNavigation active={activeProcess} onChange={setActiveProcess} />
 
+      <div
+        id={activePanelId}
+        role="tabpanel"
+        aria-labelledby={`${activePanelId}-tab`}
+      >
         {activeProcess === "receiving" ? <ReceivingTab /> : null}
         {activeProcess === "receipt-summary" ? <ReceiptSummaryTab /> : null}
         {activeProcess === "shortages" ? <ShortagesTab /> : null}
@@ -830,6 +871,6 @@ export function AdminWarehousePage() {
         {activeProcess === "inventory-summary" ? <InventorySummaryTab /> : null}
         {activeProcess === "placement" ? <PlacementTab /> : null}
       </div>
-    </div>
+    </AdminPage>
   );
 }

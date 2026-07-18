@@ -3,10 +3,10 @@
 ## Overview
 - Target file: `src/components/AdminOverview.tsx`
 - Screenshots: `admin-overview-desktop.png`, `admin-overview-mobile.png`
-- Interaction model: search-filtered shortcuts
+- Interaction model: KPI/status summaries and read-only order navigation; the former shortcut search is intentionally removed.
 
 ## DOM Structure
-Title block -> shortcut card -> KPI grid -> queue card -> redistribution card -> recent orders.
+Title block -> KPI grid -> queue card -> redistribution card -> recent orders.
 
 ## Computed Styles
 - Content: desktop padding 32px, mobile 16px, max usable width fills main.
@@ -18,13 +18,13 @@ Title block -> shortcut card -> KPI grid -> queue card -> redistribution card ->
 - Recent table: 100% width, ~271px high on desktop; stacked rows on mobile.
 
 ## States & Behaviors
-- Search input filters shortcut names and group labels; exact captured example `Склад` leaves one tile.
-- Hover: tile background becomes muted and border strengthens; 100ms.
+- The `Робочі переходи` shortcut/search panel is removed by explicit user request. Navigation remains in the persistent admin sidebar and global search.
+- KPI, queue, distribution and recent-order links retain their existing local behavior.
 
 ## Text Content
-Use the captured Ukrainian shortcut labels, KPI values `$42,914.61`, `123`, `20`, `74`, queue values, and five recent orders.
+Use the captured KPI values `$42,914.61`, `123`, `20`, `74`, queue values, and five recent orders. Do not restore the former shortcut labels or shortcut search panel.
 
 ## Responsive
-- >=1024: 4-column shortcuts with sidebar.
-- 768: sidebar hidden, 2-column shortcuts.
-- 390: single column, 16px content padding, recent orders stack.
+- >=1024: four-column KPI row with sidebar.
+- 768: sidebar hidden and KPI/cards use two columns.
+- 390: single-column content, 16px content padding, recent orders stack.

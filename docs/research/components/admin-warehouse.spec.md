@@ -218,3 +218,9 @@ Captured at 1440px/light:
 - Tabs, shipment selection, summary view, search/filter, list/Kanban, pagination and inline preview work entirely locally.
 - Preserve source totals and representative rows while explicitly labelling local representative subsets.
 - `Прийняти все`, `Почати приймання`, legacy receipt, scan mutation, remap, export/download, upload/import and location commit are hard-disabled and have no handler/request/reducer capable of changing operational state.
+
+## User refinement lock — 2026-07-18
+
+- Preserve the source-proven process logic, density and tables, but render the six-process navigation with shared `AdminTabs` and its mobile select fallback.
+- Replace route-local search and segmented controls incrementally with `AdminSearchField`, `AdminToolbar` and `AdminSegmentedControl` so Warehouse matches Ocean Freight without flattening process-specific content.
+- No receipt, scan, inventory, pagination or placement behavior changes are authorized by this visual migration.

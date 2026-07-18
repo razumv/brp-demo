@@ -18,6 +18,15 @@ export type OceanReceiptState =
       kind: "existing-equipment" | "parts";
       evidence: "exact";
       documentNumber: string;
+    }
+  | {
+      state: "posted";
+      kind: "existing-equipment";
+      evidence: "exact";
+      documentNumber: string | null;
+      documentCount: number;
+      postedCount: number;
+      postedAt: string;
     };
 
 export type DealerEquipmentType = "ATV" | "SSV" | "PWC" | "3WV";
@@ -54,6 +63,65 @@ export interface OceanEquipment {
   eur: number;
 }
 
+export interface OceanContainerUnit {
+  id: string;
+  number: number;
+  code: string;
+  model: string;
+  vin: string;
+  engine: string;
+  eur: number;
+  dealer: string | null;
+  assignmentStatus: "unassigned" | "assigned";
+  invoiceNumber: string | null;
+}
+
+export interface OceanContainerDetail {
+  evidence: "exact";
+  isoType: string;
+  seal: string;
+  loadingState: "loaded";
+  weightKg: number;
+  etaIso: string;
+  units: OceanContainerUnit[];
+}
+
+export interface OceanBillDocumentItem {
+  id: string;
+  kind:
+    | "bill-of-lading"
+    | "packing-list"
+    | "customs-declaration"
+    | "cmr"
+    | "insurance-certificate";
+  label: string;
+  state: "uploaded" | "awaiting" | "missing";
+  action: "download" | "upload" | "none";
+}
+
+export interface OceanTrackingMilestone {
+  id: string;
+  label: string;
+  date?: string;
+  state: "complete" | "current" | "pending";
+}
+
+export interface OceanBillDetail {
+  evidence: "exact";
+  modalEtaLabel: string;
+  vessel: string | null;
+  etd: string | null;
+  daysInTransit: number | null;
+  freeWarehouseUnits: number;
+  oneCReceipt: {
+    documentCount: number;
+    postedCount: number;
+    postedAt: string;
+  };
+  documents: OceanBillDocumentItem[];
+  milestones: OceanTrackingMilestone[];
+}
+
 export interface OceanContainer {
   id: string;
   name: string;
@@ -66,6 +134,7 @@ export interface OceanContainer {
   arrivalLabel: string;
   eta?: string;
   status: Exclude<OceanStatus, "mixed">;
+  detail?: OceanContainerDetail;
 }
 
 export interface OceanBillOfLading {
@@ -76,6 +145,7 @@ export interface OceanBillOfLading {
   eta: string;
   receipt: OceanReceiptState;
   containers: OceanContainer[];
+  detail?: OceanBillDetail;
 }
 
 export interface OceanManifest {
@@ -184,10 +254,76 @@ export const oceanBillsOfLading: OceanBillOfLading[] = [
     id: "252108428",
     status: "arrived",
     eta: "Jan 29, 2026",
-    receipt: { state: "available", kind: "new-equipment", evidence: "summary" },
+    receipt: {
+      state: "posted",
+      kind: "existing-equipment",
+      evidence: "exact",
+      documentNumber: null,
+      documentCount: 1,
+      postedCount: 1,
+      postedAt: "22.05.2026 12:59:17",
+    },
     containers: [
-      { id: "c-252108428-1", name: "MEX 570", number: "UACU5875229", cargoType: "units", proforma: "1031954548", eur: 104240, assigned: 0, total: 8, arrivalLabel: "Jan 29 (Arrived)", status: "arrived" },
+      {
+        id: "c-252108428-1",
+        name: "MEX 570",
+        number: "UACU5875229",
+        cargoType: "units",
+        proforma: "1031954548",
+        eur: 104240,
+        assigned: 0,
+        total: 8,
+        arrivalLabel: "Jan 29 (Arrived)",
+        status: "arrived",
+        detail: {
+          evidence: "exact",
+          isoType: "40' HC",
+          seal: "SL875229",
+          loadingState: "loaded",
+          weightKg: 4400.5,
+          etaIso: "2026-01-29T00:00:00.000Z",
+          units: [
+            { id: "252108428-u-1", number: 1, code: "4VTP", model: "ATV OUTL MAX XTP 1000R GY SAS", vin: "3JB3PA773TJ000193", engine: "MR800841", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-2", number: 2, code: "4VTP", model: "ATV OUTL MAX XTP 1000R GY SAS", vin: "3JB3PA771TJ000175", engine: "MR799544", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-3", number: 3, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA771TJ000120", engine: "MR801750", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-4", number: 4, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA773TJ000121", engine: "MR802024", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-5", number: 5, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA777TJ000123", engine: "MR802319", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-6", number: 6, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA774TJ000130", engine: "MR803130", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-7", number: 7, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA776TJ000131", engine: "MR803136", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+            { id: "252108428-u-8", number: 8, code: "4WTJ", model: "ATV OUTL MAX LTD 1000R BE SAS", vin: "3JB3VA771TJ000117", engine: "MR801529", eur: 13030, dealer: null, assignmentStatus: "unassigned", invoiceNumber: null },
+          ],
+        },
+      },
     ],
+    detail: {
+      evidence: "exact",
+      modalEtaLabel: "29 Jan 2026",
+      vessel: null,
+      etd: null,
+      daysInTransit: null,
+      freeWarehouseUnits: 0,
+      oneCReceipt: {
+        documentCount: 1,
+        postedCount: 1,
+        postedAt: "22.05.2026 12:59:17",
+      },
+      documents: [
+        { id: "bl", kind: "bill-of-lading", label: "Коносамент", state: "uploaded", action: "download" },
+        { id: "packing-list", kind: "packing-list", label: "Пакувальний лист", state: "uploaded", action: "download" },
+        { id: "customs-declaration", kind: "customs-declaration", label: "Митна декларація", state: "awaiting", action: "none" },
+        { id: "cmr", kind: "cmr", label: "CMR накладна", state: "missing", action: "upload" },
+        { id: "insurance-certificate", kind: "insurance-certificate", label: "Страховий сертифікат", state: "uploaded", action: "download" },
+      ],
+      milestones: [
+        { id: "booking-confirmed", label: "Бронювання підтверджено", state: "complete" },
+        { id: "containers-loaded", label: "Контейнери завантажені", state: "complete" },
+        { id: "shipped", label: "Відправлено з —", state: "complete" },
+        { id: "in-transit", label: "В дорозі", state: "complete" },
+        { id: "arrived", label: "Прибуття до —", state: "complete", date: "29 Jan 2026" },
+        { id: "customs-clearance", label: "Митне оформлення", state: "current" },
+        { id: "warehouse-delivery", label: "Доставлено на склад", state: "pending" },
+      ],
+    },
   },
   {
     id: "252108537",
@@ -454,7 +590,7 @@ export function oceanResearchCoverageIsConsistent(): boolean {
     OCEAN_RESEARCH_COVERAGE.billsOfLading === 11 &&
     OCEAN_RESEARCH_COVERAGE.containers === 26 &&
     OCEAN_RESEARCH_COVERAGE.receiptEntries === 11 &&
-    OCEAN_RESEARCH_COVERAGE.receiptBills === 3 &&
+    OCEAN_RESEARCH_COVERAGE.receiptBills === 4 &&
     OCEAN_RESEARCH_COVERAGE.existingEquipment.evidencedRows === 10 &&
     OCEAN_RESEARCH_COVERAGE.existingEquipment.sourceTotal === 16 &&
     OCEAN_RESEARCH_COVERAGE.newEquipment.evidencedRows === 6 &&

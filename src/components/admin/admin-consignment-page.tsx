@@ -5,9 +5,15 @@ import {
   Download,
   LockKeyhole,
   RefreshCw,
-  Search,
-  X,
 } from "lucide-react";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { Panel } from "@/components/shared/ui";
 import {
   CONSIGNMENT_SOURCE_TOTALS,
@@ -177,30 +183,29 @@ function NetworkTable({ positions }: { positions: readonly ConsignmentStockPosit
 function RequestsView({
   status,
   onStatusChange,
+  query,
 }: {
   status: ConsignmentRequestFilter;
   onStatusChange: (status: ConsignmentRequestFilter) => void;
+  query: string;
 }) {
-  const requests = status === "all"
+  const statusRequests = status === "all"
     ? consignmentRequests
     : consignmentRequests.filter((request) => request.status === status);
+  const normalizedQuery = normalize(query);
+  const requests = normalizedQuery
+    ? statusRequests.filter((request) => normalize(`${request.id} ${request.dealer} ${request.partNumber} ${request.oneCReference ?? ""}`).includes(normalizedQuery))
+    : statusRequests;
 
   return (
     <Panel className="overflow-hidden shadow-none">
       <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Статус заявки">
-          {consignmentRequestFilters.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              aria-pressed={status === filter.id}
-              className={`button min-h-8 px-3 text-[11px] ${status === filter.id ? "button-primary" : "button-outline"}`}
-              onClick={() => onStatusChange(filter.id)}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        <AdminSegmentedControl
+          items={consignmentRequestFilters}
+          value={status}
+          onValueChange={onStatusChange}
+          label="Статус заявки"
+        />
         <button
           type="button"
           className="button button-outline shrink-0"
@@ -214,7 +219,9 @@ function RequestsView({
       </div>
       <div className="grid min-h-52 place-items-center px-6 py-12 text-center" aria-live="polite">
         {requests.length === 0 ? (
-          <p className="m-0 text-sm text-[var(--muted-foreground)]">Немає заявок з цим статусом.</p>
+          <p className="m-0 text-sm text-[var(--muted-foreground)]">
+            {normalizedQuery ? "Заявок за пошуком не знайдено." : "Немає заявок з цим статусом."}
+          </p>
         ) : null}
       </div>
     </Panel>
@@ -240,93 +247,90 @@ export function AdminConsignmentPage() {
     : "Фільтр за артикулом або описом…";
 
   return (
-    <main className="page page-narrow">
-      <div className="space-y-6">
-        <header>
-          <h1 className="page-title page-title-admin">Консигнація</h1>
-          <p className="page-description">Складські залишки по мережі, заявки дилерів, переміщення 1С</p>
-        </header>
+    <AdminPage>
+      <AdminPageHeader
+        title="Консигнація"
+        description="Складські залишки по мережі, заявки дилерів, переміщення 1С"
+      />
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <label className="input-with-icon w-full lg:max-w-[340px]">
-            <Search size={15} />
-            <input
-              className="input h-9 pr-9"
-              aria-label={searchPlaceholder}
-              placeholder={searchPlaceholder}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            {query ? (
-              <button
-                type="button"
-                aria-label="Очистити пошук"
-                className="absolute right-1.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]"
-                onClick={() => setQuery("")}
-              >
-                <X size={14} />
-              </button>
-            ) : null}
-          </label>
-        </div>
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label={searchPlaceholder}
+            placeholder={searchPlaceholder}
+          />
+        )}
+        filters={(
+          <AdminTabs
+            items={views.map((view) => ({
+              ...view,
+              panelId: `consignment-${view.id}-panel`,
+            }))}
+            value={activeView}
+            onValueChange={setActiveView}
+            label="Розділи консигнації"
+            size="compact"
+          />
+        )}
+      />
 
-        <div className="flex max-w-full overflow-x-auto border-b border-[var(--border)]" role="tablist" aria-label="Розділи консигнації">
-          {views.map((view) => (
-            <button
-              key={view.id}
-              type="button"
-              role="tab"
-              aria-selected={activeView === view.id}
-              className={`h-9 shrink-0 border-b-2 px-3 text-[12px] font-medium ${activeView === view.id ? "border-[var(--orange)] text-[var(--foreground)]" : "border-transparent text-[var(--muted-foreground)]"}`}
-              onClick={() => setActiveView(view.id)}
-            >
-              {view.label}
-            </button>
-          ))}
-        </div>
-
-        {activeView === "warehouse" ? (
-          <section role="tabpanel" className="grid gap-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div aria-live="polite">
-                <strong className="text-sm">{warehouseCount} запчастин · {CONSIGNMENT_SOURCE_TOTALS.dealers} дилерів</strong>
-                <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
-                  Репрезентативна вибірка: {filteredPositions.length} з {hasQuery ? "результатів локальної вибірки" : CONSIGNMENT_SOURCE_TOTALS.parts}.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="button button-outline shrink-0 self-start"
-                disabled
-                title="Експорт вимкнено у read-only демонстрації"
-              >
-                <LockKeyhole size={13} />
-                <Download size={14} />
-                Експорт CSV
-              </button>
-            </div>
-            <WarehouseMatrix positions={filteredPositions} />
-          </section>
-        ) : null}
-
-        {activeView === "network" ? (
-          <section role="tabpanel" className="grid gap-3">
+      {activeView === "warehouse" ? (
+        <section
+          id="consignment-warehouse-panel"
+          role="tabpanel"
+          aria-labelledby="consignment-warehouse-panel-tab"
+          className="grid gap-3"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div aria-live="polite">
-              <strong className="text-sm">{networkCount} позицій · {networkUnits} од.</strong>
+              <strong className="text-sm">{warehouseCount} запчастин · {CONSIGNMENT_SOURCE_TOTALS.dealers} дилерів</strong>
               <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
-                Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. Репрезентативна локальна вибірка: {filteredPositions.length} рядків.
+                Репрезентативна вибірка: {filteredPositions.length} з {hasQuery ? "результатів локальної вибірки" : CONSIGNMENT_SOURCE_TOTALS.parts}.
               </p>
             </div>
-            <NetworkTable positions={filteredPositions} />
-          </section>
-        ) : null}
+            <button
+              type="button"
+              className="button button-outline shrink-0 self-start"
+              disabled
+              title="Експорт вимкнено у read-only демонстрації"
+            >
+              <LockKeyhole size={13} />
+              <Download size={14} />
+              Експорт CSV
+            </button>
+          </div>
+          <WarehouseMatrix positions={filteredPositions} />
+        </section>
+      ) : null}
 
-        {activeView === "requests" ? (
-          <section role="tabpanel">
-            <RequestsView status={requestStatus} onStatusChange={setRequestStatus} />
-          </section>
-        ) : null}
-      </div>
-    </main>
+      {activeView === "network" ? (
+        <section
+          id="consignment-network-panel"
+          role="tabpanel"
+          aria-labelledby="consignment-network-panel-tab"
+          className="grid gap-3"
+        >
+          <div aria-live="polite">
+            <strong className="text-sm">{networkCount} позицій · {networkUnits} од.</strong>
+            <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
+              Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. Репрезентативна локальна вибірка: {filteredPositions.length} рядків.
+            </p>
+          </div>
+          <NetworkTable positions={filteredPositions} />
+        </section>
+      ) : null}
+
+      {activeView === "requests" ? (
+        <section
+          id="consignment-requests-panel"
+          role="tabpanel"
+          aria-labelledby="consignment-requests-panel-tab"
+        >
+          <RequestsView status={requestStatus} onStatusChange={setRequestStatus} query={query} />
+        </section>
+      ) : null}
+    </AdminPage>
   );
 }

@@ -6,9 +6,14 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
-  Search,
-  X,
 } from "lucide-react";
+import {
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { Modal, Panel } from "@/components/shared/ui";
 import {
   adminReturnStatusFilters,
@@ -199,27 +204,13 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
                 </p>
               </div>
               {dealer.eligibleLineCount > 0 ? (
-                <label className="input-with-icon w-full sm:max-w-[360px]">
-                  <span className="sr-only">Пошук позицій до повернення</span>
-                  <Search size={15} />
-                  <input
-                    className="input h-9 pr-9"
-                    value={lineQuery}
-                    onChange={(event) => setLineQuery(event.target.value)}
-                    placeholder="Пошук за замовленням, артикулом або описом..."
-                    autoComplete="off"
-                  />
-                  {lineQuery ? (
-                    <button
-                      type="button"
-                      className="input-trailing"
-                      aria-label="Очистити пошук позицій"
-                      onClick={() => setLineQuery("")}
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : null}
-                </label>
+                <AdminSearchField
+                  value={lineQuery}
+                  onValueChange={setLineQuery}
+                  label="Пошук позицій до повернення"
+                  placeholder="Пошук за замовленням, артикулом або описом..."
+                  maxWidth={360}
+                />
               ) : null}
             </div>
 
@@ -343,95 +334,74 @@ export function AdminReturnsPage() {
     return sourceAdminReturns.filter((item) => {
       if (status !== "all" && item.status !== status) return false;
       if (!normalizedQuery) return true;
-      return normalize(`${item.number} ${item.orderNumber} ${item.note ?? ""}`).includes(normalizedQuery);
+      const dealer = returnDealers.find((candidate) => candidate.id === item.dealerId);
+      return normalize(`${item.number} ${item.orderNumber} ${dealer?.name ?? ""} ${dealer?.code ?? ""} ${item.note ?? ""}`).includes(normalizedQuery);
     });
   }, [query, status]);
 
   return (
-    <main className="page page-narrow">
-      <div className="space-y-6">
-        <header className="page-header !mb-0">
-          <div className="min-w-0">
-            <h1 className="m-0 text-[28px] font-bold leading-[33.6px] tracking-[-0.02em]">Повернення</h1>
-            <p className="page-description">
-              Товар, який дилери фізично повернули — оформлення, затвердження, синхронізація з 1С.
-            </p>
-          </div>
-          <div className="shrink-0">
-            <button
-              type="button"
-              className="button button-primary !min-h-8 px-4 text-xs font-medium max-sm:w-full"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus size={14} />
-              Оформити повернення
-            </button>
-          </div>
-        </header>
+    <AdminPage>
+      <AdminPageHeader
+        icon={<RotateCcw size={20} />}
+        title="Повернення"
+        description="Товар, який дилери фізично повернули — оформлення, затвердження, синхронізація з 1С."
+        actions={(
+          <button
+            type="button"
+            className="button button-primary px-4"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus size={14} />
+            Оформити повернення
+          </button>
+        )}
+      />
 
-        <Panel className="overflow-hidden shadow-none">
-          <div className="space-y-3 border-b border-[var(--border)] p-4">
-            <label className="input-with-icon w-full lg:max-w-[520px]">
-              <span className="sr-only">Пошук повернень</span>
-              <Search size={15} />
-              <input
-                className="input h-9 pr-9"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Пошук за поверненням, дилером, замовленням, нотаткою..."
-                autoComplete="off"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  className="input-trailing"
-                  aria-label="Очистити пошук повернень"
-                  onClick={() => setQuery("")}
-                >
-                  <X size={14} />
-                </button>
-              ) : null}
-            </label>
+      <AdminToolbar
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук повернень"
+            placeholder="Пошук за поверненням, дилером, замовленням, нотаткою..."
+            maxWidth={520}
+          />
+        )}
+        filters={(
+          <AdminSegmentedControl
+            items={adminReturnStatusFilters}
+            value={status}
+            onValueChange={setStatus}
+            label="Статус повернення"
+          />
+        )}
+        actions={(
+          <button
+            type="button"
+            className="button button-outline shrink-0"
+            disabled
+            title="Оновлення вимкнено у read-only демонстрації"
+          >
+            <LockKeyhole size={13} />
+            <RefreshCw size={14} />
+            Оновити
+          </button>
+        )}
+        meta={`${visibleReturns.length} повернень`}
+      />
 
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex max-w-full gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Статус повернення">
-                {adminReturnStatusFilters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    aria-pressed={status === filter.id}
-                    onClick={() => setStatus(filter.id)}
-                    className={`button !min-h-8 shrink-0 px-3 text-[11px] ${status === filter.id ? "button-primary" : "button-outline"}`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="button button-outline shrink-0"
-                disabled
-                title="Оновлення вимкнено у read-only демонстрації"
-              >
-                <LockKeyhole size={13} />
-                <RefreshCw size={14} />
-                Оновити
-              </button>
+      <Panel className="overflow-hidden shadow-none">
+        <div className="grid min-h-[270px] place-items-center px-5 py-12 text-center" aria-live="polite">
+          {visibleReturns.length === 0 ? (
+            <div>
+              <RotateCcw size={46} strokeWidth={1.6} className="mx-auto text-[var(--faint)]" />
+              <p className="mt-4 text-[14px] text-[var(--muted-foreground)]">Повернень не знайдено.</p>
             </div>
-          </div>
-
-          <div className="grid min-h-[270px] place-items-center px-5 py-12 text-center" aria-live="polite">
-            {visibleReturns.length === 0 ? (
-              <div>
-                <RotateCcw size={46} strokeWidth={1.6} className="mx-auto text-[var(--faint)]" />
-                <p className="mt-4 text-[14px] text-[var(--muted-foreground)]">Повернень не знайдено.</p>
-              </div>
-            ) : null}
-          </div>
-        </Panel>
-      </div>
+          ) : null}
+        </div>
+      </Panel>
 
       <CreateReturnDialog open={createOpen} onClose={() => setCreateOpen(false)} />
-    </main>
+    </AdminPage>
   );
 }

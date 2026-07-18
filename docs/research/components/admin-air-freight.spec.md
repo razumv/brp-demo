@@ -144,3 +144,9 @@ The local clone may open a faithful upload preview, but the file input and final
 - Preserve the seven-step counts, KPI, attention copy, event feed, empty Shipments tab, working tabs/search/filter controls, and the exact read-only upload preview.
 - Model the empty source honestly. Any representative local shipment fixture must be explicitly labelled local-demo data and cannot be asserted as source evidence.
 - Final file/upload and all operational actions are hard-disabled and have no status-mutating reducer/callback.
+
+## User refinement lock — 2026-07-18
+
+- Replace the custom inset-underline `Огляд / Постачання` control with shared `AdminTabs` matching Ocean Freight.
+- Replace the shipment search/status/view/action row with one contained `AdminToolbar` using `AdminSearchField` and `AdminSegmentedControl`.
+- Use the shared page header and KPI cards while preserving the workflow strip, attention panel, event feed and read-only upload preview.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Box,
   Bug,
@@ -15,6 +15,7 @@ import {
   EllipsisVertical,
   History,
   Link2,
+  ListFilter,
   LockKeyhole,
   Monitor,
   Package,
@@ -186,6 +187,29 @@ function VehicleCatalog() {
   const [modelYearFilter, setModelYearFilter] = useState("");
   const [productionYearFilter, setProductionYearFilter] = useState("");
   const [openMenuSku, setOpenMenuSku] = useState<string | null>(null);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const menuRootRefs = useRef(new Map<string, HTMLTableCellElement>());
+  const menuTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
+
+  useEffect(() => {
+    if (!openMenuSku) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpenMenuSku(null);
+      menuTriggerRefs.current.get(openMenuSku)?.focus();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = menuRootRefs.current.get(openMenuSku);
+      if (event.target instanceof Node && !root?.contains(event.target)) setOpenMenuSku(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [openMenuSku]);
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -236,9 +260,29 @@ function VehicleCatalog() {
     ? catalogVehicleSourceCounts.total
     : catalogVehicleSourceCounts[effectiveCategory];
   const isTrueNoResult = hasFineFilter && visibleProducts.length === 0;
+  const advancedFilterCount = [
+    columnCategory !== "all",
+    Boolean(normalize(skuFilter)),
+    Boolean(normalize(nameFilter)),
+    Boolean(normalize(colorFilter)),
+    Boolean(normalize(engineFilter)),
+    Boolean(modelYearFilter),
+    Boolean(productionYearFilter),
+  ].filter(Boolean).length;
 
   const updateCategory = (next: VehicleCategoryFilter) => {
     setCategory(next);
+    setOpenMenuSku(null);
+  };
+
+  const clearAdvancedFilters = () => {
+    setColumnCategory("all");
+    setSkuFilter("");
+    setNameFilter("");
+    setColorFilter("");
+    setEngineFilter("");
+    setModelYearFilter("");
+    setProductionYearFilter("");
     setOpenMenuSku(null);
   };
 
@@ -264,7 +308,57 @@ function VehicleCatalog() {
             label="Категорії транспортних засобів"
           />
         )}
+        actions={(
+          <button
+            type="button"
+            className="button button-outline"
+            aria-expanded={advancedFiltersOpen}
+            aria-controls="catalog-vehicle-advanced-filters"
+            onClick={() => setAdvancedFiltersOpen((current) => !current)}
+          >
+            <ListFilter size={14} />
+            Детальні фільтри
+            {advancedFilterCount ? <StatusBadge tone="orange">{advancedFilterCount}</StatusBadge> : null}
+            {advancedFiltersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        )}
       />
+
+      {advancedFiltersOpen ? (
+        <div id="catalog-vehicle-advanced-filters">
+          <Panel className="grid gap-3 p-4 shadow-none">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="m-0 text-[12px] font-semibold">Детальні фільтри каталогу</h2>
+                <p className="mb-0 mt-1 text-[10px] text-[var(--muted-foreground)]">Фільтри винесені з шапки таблиці та комбінуються з пошуком і категоріями вище.</p>
+              </div>
+              <button type="button" className="button button-ghost self-start" disabled={!advancedFilterCount} onClick={clearAdvancedFilters}>
+                Скинути детальні
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+              <label className="field">
+                <span>Категорія таблиці</span>
+                <select value={columnCategory} onChange={(event) => setColumnCategory(event.target.value as VehicleCategoryFilter)}>
+                  <option value="all">All</option><option value="3WV">3WV</option><option value="ATV">ATV</option><option value="SSV">SSV</option><option value="PWC">PWC</option>
+                </select>
+              </label>
+              <label className="field"><span>SKU</span><input placeholder="SKU..." value={skuFilter} onChange={(event) => setSkuFilter(event.target.value)} /></label>
+              <label className="field"><span>Назва</span><input placeholder="Назва..." value={nameFilter} onChange={(event) => setNameFilter(event.target.value)} /></label>
+              <label className="field"><span>Колір</span><input placeholder="Колір..." value={colorFilter} onChange={(event) => setColorFilter(event.target.value)} /></label>
+              <label className="field"><span>Двигун</span><input placeholder="Двигун..." value={engineFilter} onChange={(event) => setEngineFilter(event.target.value)} /></label>
+              <label className="field">
+                <span>Модельний рік</span>
+                <select value={modelYearFilter} onChange={(event) => setModelYearFilter(event.target.value)}><option value="">All</option><option value="2025">2025</option><option value="2026">2026</option></select>
+              </label>
+              <label className="field">
+                <span>Рік виробництва</span>
+                <select value={productionYearFilter} onChange={(event) => setProductionYearFilter(event.target.value)}><option value="">All</option><option value="2025">2025</option><option value="2026">2026</option></select>
+              </label>
+            </div>
+          </Panel>
+        </div>
+      ) : null}
 
       <Panel className="overflow-visible shadow-none">
         <RepresentativeNotice shown={visibleProducts.length} total={sourceTotalForCurrentCategory} noun="продуктів у source" />
@@ -273,20 +367,6 @@ function VehicleCatalog() {
             <thead>
               <tr>
                 <th>Категорія</th><th>SKU</th><th>Назва</th><th>Колір</th><th>Двигун</th><th>Модельний рік</th><th>Рік вир.</th><th>Ціна USD</th><th>Ціна EUR</th><th>Статус</th><th><span className="sr-only">Дії</span></th>
-              </tr>
-              <tr>
-                <th>
-                  <select aria-label="Фільтр категорії" className="input min-h-8 py-1 text-[10px] normal-case" value={columnCategory} onChange={(event) => setColumnCategory(event.target.value as VehicleCategoryFilter)}>
-                    <option value="all">All</option><option value="3WV">3WV</option><option value="ATV">ATV</option><option value="SSV">SSV</option><option value="PWC">PWC</option>
-                  </select>
-                </th>
-                <th><input aria-label="Фільтр SKU" className="input min-h-8 py-1 text-[10px] normal-case" placeholder="SKU..." value={skuFilter} onChange={(event) => setSkuFilter(event.target.value)} /></th>
-                <th><input aria-label="Фільтр назви" className="input min-h-8 py-1 text-[10px] normal-case" placeholder="Назва..." value={nameFilter} onChange={(event) => setNameFilter(event.target.value)} /></th>
-                <th><input aria-label="Фільтр кольору" className="input min-h-8 py-1 text-[10px] normal-case" placeholder="Колір..." value={colorFilter} onChange={(event) => setColorFilter(event.target.value)} /></th>
-                <th><input aria-label="Фільтр двигуна" className="input min-h-8 py-1 text-[10px] normal-case" placeholder="Двигун..." value={engineFilter} onChange={(event) => setEngineFilter(event.target.value)} /></th>
-                <th><select aria-label="Фільтр модельного року" className="input min-h-8 py-1 text-[10px] normal-case" value={modelYearFilter} onChange={(event) => setModelYearFilter(event.target.value)}><option value="">All</option><option value="2025">2025</option><option value="2026">2026</option></select></th>
-                <th><select aria-label="Фільтр року виробництва" className="input min-h-8 py-1 text-[10px] normal-case" value={productionYearFilter} onChange={(event) => setProductionYearFilter(event.target.value)}><option value="">All</option><option value="2025">2025</option><option value="2026">2026</option></select></th>
-                <th colSpan={4} aria-hidden="true" />
               </tr>
             </thead>
             <tbody>
@@ -302,14 +382,31 @@ function VehicleCatalog() {
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceUsd, "USD")}</td>
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceEur, "EUR")}</td>
                   <td><StatusBadge tone="green">Активний</StatusBadge></td>
-                  <td className="relative text-right">
-                    <button type="button" className="icon-button icon-button-small" aria-label={`Меню продукту ${product.sku}`} aria-haspopup="menu" aria-expanded={openMenuSku === product.sku} onClick={() => setOpenMenuSku((current) => current === product.sku ? null : product.sku)}>
+                  <td
+                    ref={(node) => {
+                      if (node) menuRootRefs.current.set(product.sku, node);
+                      else menuRootRefs.current.delete(product.sku);
+                    }}
+                    className="relative text-right"
+                  >
+                    <button
+                      ref={(node) => {
+                        if (node) menuTriggerRefs.current.set(product.sku, node);
+                        else menuTriggerRefs.current.delete(product.sku);
+                      }}
+                      type="button"
+                      className="icon-button icon-button-small"
+                      aria-label={`Меню продукту ${product.sku}`}
+                      aria-expanded={openMenuSku === product.sku}
+                      aria-controls={`catalog-product-actions-${product.id}`}
+                      onClick={() => setOpenMenuSku((current) => current === product.sku ? null : product.sku)}
+                    >
                       <EllipsisVertical size={16} />
                     </button>
                     {openMenuSku === product.sku ? (
-                      <div role="menu" aria-label={`Дії продукту ${product.sku}`} className="absolute right-2 top-10 z-20 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]">
-                        <button type="button" role="menuitem" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
-                        <button type="button" role="menuitem" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
+                      <div id={`catalog-product-actions-${product.id}`} role="group" aria-label={`Дії продукту ${product.sku}`} className="absolute right-2 top-10 z-20 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]">
+                        <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
+                        <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
                       </div>
                     ) : null}
                   </td>
@@ -438,7 +535,9 @@ function DebugPricing() {
               <details open className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
                 <summary className="cursor-pointer text-[12px] font-semibold">🧮 Calculation (step-by-step)</summary>
                 <div className="mt-3 grid gap-1 font-mono text-[11px]">
-                  <p className="m-0 text-[var(--muted-foreground)]">Settings: eur_usd = 1.2, expense_pct = 0.5 (50%)</p>
+                  <p className="m-0 text-[var(--muted-foreground)]">
+                    Settings: eur_usd = {catalogPricingDebugResult.settings.eurUsd}, expense_pct = {catalogPricingDebugResult.settings.expensePercent} ({catalogPricingDebugResult.settings.expensePercent * 100}%)
+                  </p>
                   {catalogPricingDebugResult.calculationSteps.map((step) => <p key={step} className="m-0">{step}</p>)}
                 </div>
               </details>
@@ -550,8 +649,8 @@ function PartsCatalog() {
       <Panel className="flex flex-col gap-3 p-4 shadow-none lg:flex-row lg:items-center">
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
           <span className="inline-flex items-center gap-2 text-[13px]"><Calculator size={15} /> Pricing:</span>
-          <label className="inline-flex items-center gap-2 text-[var(--muted-foreground)]">EUR/USD <input className="input h-9 w-20 text-center text-[var(--foreground)]" value="1.20" readOnly aria-readonly="true" /></label>
-          <label className="inline-flex items-center gap-2 text-[var(--muted-foreground)]">Expense % <input className="input h-9 w-20 text-center text-[var(--foreground)]" value="0.50" readOnly aria-readonly="true" /></label>
+          <label className="inline-flex items-center gap-2 text-[var(--muted-foreground)]">EUR/USD <input className="input h-9 w-20 text-center text-[var(--foreground)]" value={catalogPricingDebugResult.settings.eurUsd.toFixed(2)} readOnly aria-readonly="true" /></label>
+          <label className="inline-flex items-center gap-2 text-[var(--muted-foreground)]">Expense % <input className="input h-9 w-20 text-center text-[var(--foreground)]" value={catalogPricingDebugResult.settings.expensePercent.toFixed(2)} readOnly aria-readonly="true" /></label>
           <LockedButton title="Перерахунок цін є операційною дією і вимкнений" className="!border-[color-mix(in_srgb,var(--green)_24%,var(--border))] !bg-[var(--green-soft)] !text-[var(--green)]"><Calculator size={14} /> Перерахувати ціни</LockedButton>
         </div>
         <span className="text-[11px] text-[var(--muted-foreground)] lg:ml-auto">148 671 parts with prices</span>

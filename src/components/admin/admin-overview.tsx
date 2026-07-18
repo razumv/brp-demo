@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Boxes,
@@ -8,12 +7,10 @@ import {
   CircleDollarSign,
   Clock3,
   PackageSearch,
-  Search,
   ShoppingCart,
 } from "lucide-react";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { PageHeader, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
-import { adminNav } from "@/components/shell/nav-data";
 import { adminSampleOrders, formatMoney, orderTotal } from "@/lib/mock-data";
 import { adminOrderHref } from "@/lib/order-route-hrefs";
 import styles from "./admin.module.css";
@@ -34,18 +31,6 @@ const distribution = [
 
 export function AdminOverview() {
   const { state } = useDemoStore();
-  const [query, setQuery] = useState("");
-
-  const shortcuts = useMemo(() => adminNav.flatMap((group) => group.items.map((item) => ({
-    ...item,
-    group: group.label || "Огляд",
-  }))), []);
-
-  const visibleShortcuts = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase("uk");
-    if (!normalized) return shortcuts;
-    return shortcuts.filter((item) => `${item.label} ${item.group}`.toLocaleLowerCase("uk").includes(normalized));
-  }, [query, shortcuts]);
 
   const localRevenue = state.orders.reduce((total, order) => total + orderTotal(order.lines), 0);
   const openLocal = state.orders.filter((order) => !["done", "cancelled"].includes(order.status)).length;
@@ -82,39 +67,6 @@ export function AdminOverview() {
           title="Огляд панелі"
           description="Ласкаво просимо до панелі адміністратора. Ось зведення по системі."
         />
-
-        <Panel className={styles.shortcutPanel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Робочі переходи</h2>
-              <p className={styles.sectionCopy}>Знайдіть або відкрийте потрібний розділ адмінки без зайвого скролу.</p>
-            </div>
-            <div className={`toolbar-search ${styles.shortcutSearch}`}>
-              <Search size={15} />
-              <input
-                aria-label="Пошук розділів адмінки"
-                placeholder="Пошук розділів адмінки"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </div>
-          </div>
-          <div className={styles.shortcutGrid}>
-            {visibleShortcuts.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.href} href={item.href} className={styles.shortcut}>
-                  <span className={styles.shortcutIcon}><Icon size={17} strokeWidth={1.7} /></span>
-                  <span>
-                    <strong>{item.label}</strong>
-                    <small>{item.group}</small>
-                  </span>
-                </Link>
-              );
-            })}
-            {visibleShortcuts.length === 0 ? <div className={styles.noShortcuts}>Розділів не знайдено</div> : null}
-          </div>
-        </Panel>
 
         <section className={styles.statGrid} aria-label="Ключові показники">
           <StatCard label="Загальна виручка" value={formatMoney(revenue)} helper="Включно з локальними демо-замовленнями" icon={<CircleDollarSign size={18} />} tone="green" />

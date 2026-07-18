@@ -13,6 +13,18 @@ export type InvoiceContract = {
   readonly supplier: string;
   readonly buyer: string;
   readonly status: "active";
+  readonly detail: {
+    readonly fullNumber: string | null;
+    readonly contractDate: string | null;
+    readonly representative: string | null;
+    readonly supplierAddress: string | null;
+    readonly shipper: string | null;
+    readonly taxId: string | null;
+    readonly deliveryTerms: string | null;
+    readonly currency: string | null;
+    readonly originEn: string | null;
+    readonly originUa: string | null;
+  };
 };
 
 export type AppendixDocumentLine = {
@@ -103,6 +115,7 @@ export type InvoiceCostCard = {
   readonly incomplete: boolean;
   readonly goodsEur: string;
   readonly goodsUsd: string;
+  readonly exchangeRate: number;
   readonly freight: string;
   readonly customs: string;
   readonly broker: string;
@@ -125,6 +138,18 @@ export const invoiceContracts = [
     supplier: "CREATIVE TRADE GROUP",
     buyer: "ПП «ДНЕПРМАРИН СПОРТ»",
     status: "active",
+    detail: {
+      fullNumber: null,
+      contractDate: null,
+      representative: null,
+      supplierAddress: null,
+      shipper: null,
+      taxId: null,
+      deliveryTerms: null,
+      currency: null,
+      originEn: null,
+      originUa: null,
+    },
   },
   {
     id: "da-w-1",
@@ -132,6 +157,18 @@ export const invoiceContracts = [
     supplier: "DIGITAL ADAMS LTD",
     buyer: "ТОВ ВАТЕРВЕЙЗ",
     status: "active",
+    detail: {
+      fullNumber: null,
+      contractDate: null,
+      representative: null,
+      supplierAddress: null,
+      shipper: null,
+      taxId: null,
+      deliveryTerms: null,
+      currency: null,
+      originEn: null,
+      originUa: null,
+    },
   },
 ] as const satisfies readonly InvoiceContract[];
 
@@ -250,9 +287,9 @@ export const invoiceCostSourceCounts = {
 } as const;
 
 export const invoiceCostCards = [
-  { id: "cost-260101069", billOfLading: "260101069", shipmentLabel: "PAC 01", eta: "Mar 31 (прибув)", month: "mar-2026", archived: false, incomplete: true, goodsEur: "€65,815", goodsUsd: "$71,080", freight: "—", customs: "—", broker: "—", cash: "$5,500.00", total: "$5,500.00", costPercent: "7.7%" },
-  { id: "cost-262100299", billOfLading: "262100299", shipmentLabel: "PWC 09-10", eta: null, month: null, archived: false, incomplete: false, goodsEur: "€273,970", goodsUsd: "$295,888", freight: "$22,690.81", customs: "$44,790.88", broker: "$270.42", cash: "$10,000.00", total: "$77,752.11", costPercent: "26.3%" },
-  { id: "cost-262100398", billOfLading: "262100398", shipmentLabel: "PWC 07-08", eta: null, month: null, archived: false, incomplete: false, goodsEur: "€284,980", goodsUsd: "$307,778", freight: "$20,754.06", customs: "$46,071.28", broker: "$271.26", cash: "$10,000.00", total: "$77,096.60", costPercent: "25.0%" },
-  { id: "cost-archive-252108428", billOfLading: "252108428", shipmentLabel: "MEX 570", eta: "Jan 29 (прибув)", month: "jan-2026", archived: true, incomplete: false, goodsEur: "€104,240", goodsUsd: "$112,579", freight: "—", customs: "—", broker: "$208.62", cash: "$5,000.00", total: "$28,674.71", costPercent: "25.5%" },
-  { id: "cost-archive-252108918", billOfLading: "252108918", shipmentLabel: "MEX 574-576", eta: "Feb 15 (прибув)", month: "feb-2026", archived: true, incomplete: false, goodsEur: "€265,490", goodsUsd: "$286,729", freight: "$31,446.22", customs: "$33,666.54", broker: "$477.09", cash: "$15,000.00", total: "$80,589.85", costPercent: "28.1%" },
+  { id: "cost-260101069", billOfLading: "260101069", shipmentLabel: "PAC 01", eta: "Mar 31 (прибув)", month: "mar-2026", archived: false, incomplete: true, goodsEur: "€65,815", goodsUsd: "$71,080", exchangeRate: 1.08, freight: "—", customs: "—", broker: "—", cash: "$5,500.00", total: "$5,500.00", costPercent: "7.7%" },
+  { id: "cost-262100299", billOfLading: "262100299", shipmentLabel: "PWC 09-10", eta: null, month: null, archived: false, incomplete: false, goodsEur: "€273,970", goodsUsd: "$295,888", exchangeRate: 1.08, freight: "$22,690.81", customs: "$44,790.88", broker: "$270.42", cash: "$10,000.00", total: "$77,752.11", costPercent: "26.3%" },
+  { id: "cost-262100398", billOfLading: "262100398", shipmentLabel: "PWC 07-08", eta: null, month: null, archived: false, incomplete: false, goodsEur: "€284,980", goodsUsd: "$307,778", exchangeRate: 1.08, freight: "$20,754.06", customs: "$46,071.28", broker: "$271.26", cash: "$10,000.00", total: "$77,096.60", costPercent: "25.0%" },
+  { id: "cost-archive-252108428", billOfLading: "252108428", shipmentLabel: "MEX 570", eta: "Jan 29 (прибув)", month: "jan-2026", archived: true, incomplete: false, goodsEur: "€104,240", goodsUsd: "$112,579", exchangeRate: 1.08, freight: "—", customs: "—", broker: "$208.62", cash: "$5,000.00", total: "$28,674.71", costPercent: "25.5%" },
+  { id: "cost-archive-252108918", billOfLading: "252108918", shipmentLabel: "MEX 574-576", eta: "Feb 15 (прибув)", month: "feb-2026", archived: true, incomplete: false, goodsEur: "€265,490", goodsUsd: "$286,729", exchangeRate: 1.08, freight: "$31,446.22", customs: "$33,666.54", broker: "$477.09", cash: "$15,000.00", total: "$80,589.85", costPercent: "28.1%" },
 ] as const satisfies readonly InvoiceCostCard[];

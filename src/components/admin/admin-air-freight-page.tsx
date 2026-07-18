@@ -18,6 +18,15 @@ import {
   Upload,
   Warehouse,
 } from "lucide-react";
+import {
+  AdminKpiGrid,
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminSegmentedControl,
+  AdminTabs,
+  AdminToolbar,
+} from "@/components/admin/admin-ui";
 import { EmptyState, Modal, Panel } from "@/components/shared/ui";
 import {
   airFreightEvents,
@@ -114,26 +123,26 @@ function HeaderActions({ onShowShipments }: { onShowShipments: () => void }) {
 
 function AirFreightTabs({ active, onChange }: { active: AirFreightTab; onChange: (tab: AirFreightTab) => void }) {
   return (
-    <div className="flex min-h-11 w-full gap-1 overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] p-1 xl:w-fit" role="tablist" aria-label="Air Freight">
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active === "overview"}
-        onClick={() => onChange("overview")}
-        className={`button min-h-9 border-0 px-3 text-[11px] ${active === "overview" ? "bg-[var(--orange-soft)] text-[var(--orange)] shadow-[inset_0_-2px_var(--orange)]" : "text-[var(--muted-foreground)]"}`}
-      >
-        <Grid2X2 size={14} /> Огляд
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active === "shipments"}
-        onClick={() => onChange("shipments")}
-        className={`button min-h-9 border-0 px-3 text-[11px] ${active === "shipments" ? "bg-[var(--orange-soft)] text-[var(--orange)] shadow-[inset_0_-2px_var(--orange)]" : "text-[var(--muted-foreground)]"}`}
-      >
-        <Package size={14} /> Постачання
-      </button>
-    </div>
+    <AdminTabs
+      items={[
+        {
+          id: "overview",
+          label: "Огляд",
+          icon: <Grid2X2 size={14} />,
+          panelId: "air-freight-overview-panel",
+        },
+        {
+          id: "shipments",
+          label: "Постачання",
+          icon: <Package size={14} />,
+          panelId: "air-freight-shipments-panel",
+        },
+      ]}
+      value={active}
+      onValueChange={onChange}
+      label="Air Freight"
+      mobileSelectLabel="Розділ Air Freight"
+    />
   );
 }
 
@@ -226,7 +235,12 @@ function AttentionAndEvents() {
 
 function OverviewTab() {
   return (
-    <div role="tabpanel" className="grid gap-4">
+    <div
+      id="air-freight-overview-panel"
+      role="tabpanel"
+      aria-labelledby="air-freight-overview-panel-tab"
+      className="grid gap-4"
+    >
       <WorkflowStrip />
       <OverviewKpis />
       <AttentionAndEvents />
@@ -236,18 +250,20 @@ function OverviewTab() {
 
 function ShipmentMetrics() {
   return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Показники постачань">
-      {airFreightShipmentMetrics.map((metric) => {
+    <AdminKpiGrid
+      label="Показники постачань"
+      items={airFreightShipmentMetrics.map((metric) => {
         const Icon = shipmentMetricIcons[metric.id];
-        const tone = toneClasses[metric.tone];
-        return (
-          <Panel key={metric.id} className="flex min-h-20 items-center gap-3 p-4">
-            <span className={`grid size-9 shrink-0 place-items-center rounded-md ${tone.soft} ${tone.text}`}><Icon size={17} /></span>
-            <span><span className="block text-[10px] font-bold uppercase tracking-[0.035em] text-[var(--muted-foreground)]">{metric.label}</span><strong className={`mt-1 block text-2xl leading-none ${tone.text}`}>{metric.value}</strong></span>
-          </Panel>
-        );
+        const tone = metric.tone === "purple" ? "neutral" : metric.tone;
+        return {
+          id: metric.id,
+          label: metric.label,
+          value: metric.value,
+          icon: <Icon size={17} />,
+          tone,
+        };
       })}
-    </section>
+    />
   );
 }
 
@@ -266,32 +282,48 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
   }, [filter, query]);
 
   return (
-    <div role="tabpanel" className="grid gap-4">
+    <div
+      id="air-freight-shipments-panel"
+      role="tabpanel"
+      aria-labelledby="air-freight-shipments-panel-tab"
+      className="grid gap-4"
+    >
       <ShipmentMetrics />
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="toolbar-search w-full xl:w-[340px] xl:min-w-[340px]">
-          <Search size={15} />
-          <input
-            aria-label="Пошук постачань"
-            placeholder="Пошук AWB, проформа, номер постачання..."
+      <AdminToolbar
+        search={(
+          <AdminSearchField
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onValueChange={setQuery}
+            label="Пошук постачань"
+            placeholder="Пошук AWB, проформа, номер постачання..."
           />
-        </div>
-        <div className="segmented shrink-0" role="group" aria-label="Статус постачання">
-          {shipmentFilters.map((item) => (
-            <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label}</button>
-          ))}
-        </div>
-        <span className="hidden flex-1 xl:block" />
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="button button-primary" onClick={onCreate}><Plus size={15} /> Нове постачання</button>
-          <div className="segmented" role="group" aria-label="Вигляд постачань">
-            <button type="button" aria-label="Список" aria-pressed={view === "list"} onClick={() => setView("list")}><LayoutList size={15} /></button>
-            <button type="button" aria-label="Таблиця" aria-pressed={view === "table"} onClick={() => setView("table")}><Grid2X2 size={15} /></button>
-          </div>
-        </div>
-      </div>
+        )}
+        filters={(
+          <AdminSegmentedControl
+            items={shipmentFilters}
+            value={filter}
+            onValueChange={setFilter}
+            label="Статус постачання"
+          />
+        )}
+        view={(
+          <AdminSegmentedControl
+            items={[
+              { id: "list", label: "Список", icon: <LayoutList size={15} /> },
+              { id: "table", label: "Таблиця", icon: <Grid2X2 size={15} /> },
+            ]}
+            value={view}
+            onValueChange={setView}
+            label="Вигляд постачань"
+          />
+        )}
+        actions={(
+          <button type="button" className="button button-primary" onClick={onCreate}>
+            <Plus size={15} /> Нове постачання
+          </button>
+        )}
+        meta={`${filteredShipments.length} з ${airFreightShipments.length} постачань`}
+      />
       <Panel>
         {filteredShipments.length === 0 ? (
           <EmptyState title="Немає постачань" description={query.trim() || filter !== "all" ? "Для вибраного пошуку та статусу постачань не знайдено." : ""} icon={<Boxes size={30} />} />
@@ -323,27 +355,17 @@ export function AdminAirFreightPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
-    <main className="page page-narrow">
-      <div className="grid gap-4">
-        <header>
-          <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-[var(--muted-foreground)]">Огляд</span>
-          <div className="mt-2 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="min-w-0">
-              <h1 className="flex items-center gap-3 text-[30px] font-bold leading-9 tracking-[-0.02em] max-sm:text-2xl">
-                <Plane size={25} className="shrink-0 text-[var(--blue)]" /> Air Freight
-              </h1>
-              <p className="mt-1 max-w-[800px] text-[15px] leading-[1.45] text-[var(--muted-foreground)] max-sm:text-[13px]">
-                Контролюйте замовлення постачальникам, постачання, приймання на склад, нестачі та передачу дилерам в одному робочому екрані.
-              </p>
-            </div>
-            <HeaderActions onShowShipments={() => setTab("shipments")} />
-          </div>
-        </header>
+    <AdminPage>
+      <AdminPageHeader
+        icon={<Plane size={21} />}
+        title="Air Freight"
+        description="Контролюйте замовлення постачальникам, постачання, приймання на склад, нестачі та передачу дилерам в одному робочому екрані."
+        actions={<HeaderActions onShowShipments={() => setTab("shipments")} />}
+      />
 
-        <AirFreightTabs active={tab} onChange={setTab} />
-        {tab === "overview" ? <OverviewTab /> : <ShipmentsTab onCreate={() => setCreateOpen(true)} />}
-      </div>
+      <AirFreightTabs active={tab} onChange={setTab} />
+      {tab === "overview" ? <OverviewTab /> : <ShipmentsTab onCreate={() => setCreateOpen(true)} />}
       <NewShipmentPreview open={createOpen} onClose={() => setCreateOpen(false)} />
-    </main>
+    </AdminPage>
   );
 }

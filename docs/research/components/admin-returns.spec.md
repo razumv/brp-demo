@@ -139,3 +139,9 @@ Captured at 1440px/dark:
 - Keep the source list honestly empty in all six statuses.
 - Support safe form preview, dealer selection, line search/selection, quantity and condition UI locally, while keeping `Створити чернетку` hard-disabled at all times.
 - No callback, reducer, store action or request may create a return, alter inventory, synchronize 1C or change any operational status.
+
+## User refinement lock — 2026-07-18
+
+- Treat the Ocean Freight control composition as the admin benchmark.
+- Render list search, six status filters, result count and disabled refresh in one contained desktop toolbar; responsive wrapping remains allowed below the shared breakpoint.
+- Use the shared admin page/header/search/segmented primitives without changing the six honest empty states or the safe create-return preview.

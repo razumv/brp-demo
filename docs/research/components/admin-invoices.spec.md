@@ -212,3 +212,10 @@ Hard-blocked locally and never invoked in source:
 - Preserve exact KPI, representative source rows, the 60-document count and source-visible status inconsistency.
 - New-contract and document previews close without mutation.
 - Every upload/generate/download/delete/save/archive/restore/export/assignment control is hard-disabled and has no operational callback, reducer or external request.
+
+## User refinement lock — 2026-07-18
+
+- Replace the route-local primary tabs and filter strips with `AdminTabs`, `AdminToolbar`, `AdminSearchField` and `AdminSegmentedControl` matching Ocean Freight.
+- Every primary tab gets a local search surface appropriate to its evidenced fields: contracts, appendices, invoice/BL rows and cost/BL cards.
+- Contract cards, appendices with observed preview data, grouped invoice rows, formed invoices and cost cards may open read-only detail previews. Preview entry points must be visually distinct from disabled mutation/download controls.
+- Preview close must leave contracts, assignments, counts, totals, status, archive state and external data unchanged. Create/edit/copy/delete/download/generate/archive/restore/upload remain hard-disabled.
