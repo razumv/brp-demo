@@ -32,7 +32,7 @@ Status: source-observed on 2026-07-18 under strict read-only rules. Excel open/e
 
 ## Chronology
 
-`Хронологія доставок` shows legend `Прибуло`, `В дорозі`, `Майбутні`, a Jan-Sep 2026 axis and `Сьогодні` marker. Visible quantity labels include ATV 33, SSV 2, PWC 36, ATV 16, SSV x2 / 9, ATV 38, PWC 24, ATV 36, SSV 8, PWC x3 / 38, ATV 10, SSV x2 / 4 and ATV 8.
+`Хронологія доставок` shows legend `Прибуло`, `В дорозі`, `Майбутні`, a configurable month axis and `Сьогодні` marker. The source-observed dated groups are: Jun 3 ATV 33 and SSV 2; Jun 5 PWC 36 and ATV 16; Jun 8 SSV x2 / 9 and ATV 38; Jun 12 PWC 24; Jun 15 ATV 36, SSV 8 and PWC x3 / 38; Jun 21 ATV 10 and SSV x2 / 4; Jun 28 ATV 8.
 
 ### Chronology refinement lock (2026-07-18)
 
@@ -40,10 +40,10 @@ Status: source-observed on 2026-07-18 under strict read-only rules. Excel open/e
 - Primary visual direction: Refero Orderful `9c657624-4aa8-4688-a6be-4eb3d6f2ce57` — white operational canvas, thin borders and restrained orange emphasis.
 - Secondary craft: shadcn `c14c0a94-1037-449e-bf5b-4cb972656ac7` for compact 8px rhythm; Operate `a0f473eb-0310-4df5-b5f6-5bc124ad5954` for a light ledger/grid treatment.
 - Concrete timeline patterns: Fibery `720d9d4a-426e-4a16-b9b3-30663429bd81` and Wrike `bda83b6e-42ea-47e1-b247-e5ac3250b71f` — even temporal divisions, compact markers and a single current-date line.
-- Default context is six months before and two months after the reference current month. Compact steppers independently adjust past context from 1–12 months and future context from 0–6 months; labels and the current-date marker update immediately.
-- Wide desktop spreads all 13 source-observed groups across the usable width in two readable lanes with category, slot count, unit count and status; there is no ellipsis, overlap or horizontal clipping. The source fixture preserves group order but does not claim exact dates for every group.
+- Default context is six months before and two months after the reference current month. A collapsed `Період` control immediately beside the title opens compact steppers for past context from 0–12 months and future context from 0–6 months.
+- Wide desktop spreads only the groups whose exact arrival dates fall inside the chosen interval across the usable width in two readable lanes. Each connector terminates at its real date marker; changing the period therefore moves the scale and adds or removes cards together.
 - Mobile uses a readable two-column marker summary because the source's scaled-down plot made labels illegible.
-- Timeline events are a dedicated typed source fixture. They intentionally do not infer exact dates from the partial 14-of-23 detailed slot fixture.
+- Timeline events are a dedicated typed source fixture derived from all 23 source rows across both delivery pages. The six future rows without an arrival date are intentionally excluded from the dated chronology until the source supplies a date.
 
 ## Deliveries tab
 

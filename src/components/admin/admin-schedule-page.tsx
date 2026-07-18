@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Box,
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -72,6 +73,8 @@ const timelineMonthNames = [
 const timelineReferenceDate = { year: 2026, month: 6, day: 18 } as const;
 const defaultPastMonths = 6;
 const defaultFutureMonths = 2;
+const timelinePlotStart = 3;
+const timelinePlotWidth = 94;
 
 function buildTimelineMonths(pastMonths: number, futureMonths: number) {
   const start = new Date(Date.UTC(timelineReferenceDate.year, timelineReferenceDate.month - pastMonths, 1));
@@ -86,9 +89,20 @@ function buildTimelineMonths(pastMonths: number, futureMonths: number) {
       label: `${monthName.short}${includeYear ? ` ’${String(year).slice(-2)}` : ""}`,
       longLabel: monthName.long,
       year,
+      month,
       current: year === timelineReferenceDate.year && month === timelineReferenceDate.month,
     };
   });
+}
+
+function timelineDateValue(value: `${number}-${number}-${number}`) {
+  const [year, month, day] = value.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+function formatTimelineDate(value: `${number}-${number}-${number}`) {
+  const [year, month, day] = value.split("-");
+  return `${day}.${month}.${year}`;
 }
 
 function normalize(value: string) {
@@ -160,37 +174,68 @@ function Chronology() {
   const firstMonth = timelineMonths[0];
   const lastMonth = timelineMonths[timelineMonths.length - 1];
   const rangeLabel = `${firstMonth.longLabel} ${firstMonth.year} — ${lastMonth.longLabel} ${lastMonth.year}`;
+  const timelineWindow = useMemo(() => ({
+    start: Date.UTC(firstMonth.year, firstMonth.month, 1),
+    end: Date.UTC(lastMonth.year, lastMonth.month + 1, 1),
+  }), [firstMonth.month, firstMonth.year, lastMonth.month, lastMonth.year]);
+  const visibleTimelineEvents = useMemo(
+    () => scheduleTimelineEvents.filter((event) => {
+      const date = timelineDateValue(event.arrivalDate);
+      return date >= timelineWindow.start && date < timelineWindow.end;
+    }),
+    [timelineWindow.end, timelineWindow.start],
+  );
+  const timelineMetrics = useMemo(() => visibleTimelineEvents.map((event, index) => {
+    const dateProgress = (timelineDateValue(event.arrivalDate) - timelineWindow.start) / (timelineWindow.end - timelineWindow.start);
+    return {
+      event,
+      cardPosition: timelinePlotStart + ((index + 0.5) / visibleTimelineEvents.length) * timelinePlotWidth,
+      markerPosition: timelinePlotStart + Math.max(0, Math.min(1, dateProgress)) * timelinePlotWidth,
+    };
+  }), [timelineWindow.end, timelineWindow.start, visibleTimelineEvents]);
+  const timelineDateMarkers = useMemo(() => Array.from(
+    new Map(timelineMetrics.map((metric) => [metric.event.arrivalDate, metric])).values(),
+  ), [timelineMetrics]);
 
   return (
     <Panel className="overflow-hidden p-4 shadow-none">
       <figure className="m-0" aria-labelledby="schedule-timeline-title" aria-describedby="schedule-timeline-caption">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h2 id="schedule-timeline-title" className="m-0 flex items-center gap-2 text-[13px] font-semibold"><CalendarDays size={14} className="text-[var(--muted-foreground)]" /> Хронологія доставок</h2>
-            <p className="mb-0 mt-1 text-[9px] text-[var(--muted-foreground)]">13 груп доставок · {rangeLabel}</p>
+            <div className={styles.timelineTitleRow}>
+              <h2 id="schedule-timeline-title" className="m-0 flex items-center gap-2 text-[13px] font-semibold"><CalendarDays size={14} className="text-[var(--muted-foreground)]" /> Хронологія доставок</h2>
+              <details className={styles.timelineRangeDetails}>
+                <summary aria-label="Налаштувати видимий період">
+                  <SlidersHorizontal size={12} aria-hidden="true" />
+                  <span>Період</span>
+                  <ChevronDown size={12} className={styles.timelineRangeChevron} aria-hidden="true" />
+                </summary>
+                <div className={styles.timelineRangePopover}>
+                  <div className={styles.timelineRangeControls} aria-label="Налаштування видимого періоду">
+                    <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в минулому">
+                      <span>Назад</span>
+                      <button type="button" aria-label="Зменшити кількість минулих місяців" disabled={pastMonths === 0} onClick={() => setPastMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
+                      <output aria-live="polite">{pastMonths} міс.</output>
+                      <button type="button" aria-label="Збільшити кількість минулих місяців" disabled={pastMonths === 12} onClick={() => setPastMonths((value) => Math.min(12, value + 1))}><Plus size={12} /></button>
+                    </div>
+                    <span className={styles.timelineRangeDivider} aria-hidden="true" />
+                    <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в майбутньому">
+                      <span>Вперед</span>
+                      <button type="button" aria-label="Зменшити кількість майбутніх місяців" disabled={futureMonths === 0} onClick={() => setFutureMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
+                      <output aria-live="polite">{futureMonths} міс.</output>
+                      <button type="button" aria-label="Збільшити кількість майбутніх місяців" disabled={futureMonths === 6} onClick={() => setFutureMonths((value) => Math.min(6, value + 1))}><Plus size={12} /></button>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <p className="mb-0 mt-1 text-[9px] text-[var(--muted-foreground)]">{visibleTimelineEvents.length} з {scheduleTimelineEvents.length} груп у періоді · {rangeLabel}</p>
           </div>
-          <div className={styles.timelineHeaderTools}>
-            <div className="flex flex-wrap items-center gap-4 text-[9px] text-[var(--muted-foreground)]" aria-label="Легенда хронології">
-              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--green)]" />Прибуло</span>
-              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--blue)]" />В дорозі</span>
-              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--faint)]" />Майбутні</span>
-            </div>
-            <div className={styles.timelineRangeControls} aria-label="Налаштування видимого періоду">
-              <SlidersHorizontal size={13} aria-hidden="true" />
-              <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в минулому">
-                <span>Назад</span>
-                <button type="button" aria-label="Зменшити кількість минулих місяців" disabled={pastMonths === 1} onClick={() => setPastMonths((value) => Math.max(1, value - 1))}><Minus size={12} /></button>
-                <output aria-live="polite">{pastMonths} міс.</output>
-                <button type="button" aria-label="Збільшити кількість минулих місяців" disabled={pastMonths === 12} onClick={() => setPastMonths((value) => Math.min(12, value + 1))}><Plus size={12} /></button>
-              </div>
-              <span className={styles.timelineRangeDivider} aria-hidden="true" />
-              <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в майбутньому">
-                <span>Вперед</span>
-                <button type="button" aria-label="Зменшити кількість майбутніх місяців" disabled={futureMonths === 0} onClick={() => setFutureMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
-                <output aria-live="polite">{futureMonths} міс.</output>
-                <button type="button" aria-label="Збільшити кількість майбутніх місяців" disabled={futureMonths === 6} onClick={() => setFutureMonths((value) => Math.min(6, value + 1))}><Plus size={12} /></button>
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center gap-4 text-[9px] text-[var(--muted-foreground)]" aria-label="Легенда хронології">
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--green)]" />Прибуло</span>
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--blue)]" />В дорозі</span>
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-[var(--faint)]" />Майбутні</span>
+            <span className={styles.timelineConnectionHint}><span aria-hidden="true" />Картка → дата</span>
           </div>
         </div>
 
@@ -205,49 +250,84 @@ function Chronology() {
                 </span>
               ))}
             </div>
+            <svg className={styles.timelineConnectors} viewBox="0 0 1000 158" preserveAspectRatio="none" aria-hidden="true">
+              {timelineMetrics.map((metric, index) => (
+                <g key={`connector-${metric.event.id}`} className={eventToneClass(metric.event.status)}>
+                  <line
+                    className={styles.timelineConnector}
+                    x1={metric.cardPosition * 10}
+                    y1={index % 2 === 0 ? 66 : 140}
+                    x2={metric.markerPosition * 10}
+                    y2="154"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    className={styles.timelineCardAnchor}
+                    cx={metric.cardPosition * 10}
+                    cy={index % 2 === 0 ? 66 : 140}
+                    r="2.5"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </g>
+              ))}
+              {timelineDateMarkers.map((metric) => (
+                <circle
+                  key={`marker-${metric.event.arrivalDate}`}
+                  className={`${styles.timelineDateMarker} ${eventToneClass(metric.event.status)}`}
+                  cx={metric.markerPosition * 10}
+                  cy="154"
+                  r="4"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+            </svg>
             <ol className={styles.timelineEvents} aria-label="Групи доставок">
-              {scheduleTimelineEvents.map((event, index) => {
+              {visibleTimelineEvents.map((event, index) => {
                 const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
                 const status = timelineStatusLabel(event.status);
                 return (
                   <li
                     key={event.id}
                     className={`${styles.timelineEvent} ${timelineLaneClass(index)} ${eventToneClass(event.status)}`}
-                    aria-label={`${label}, ${event.quantity} одиниць, ${status.toLocaleLowerCase("uk-UA")}`}
-                    title={`${label} · ${event.quantity} од. · ${status}`}
+                    aria-label={`${formatTimelineDate(event.arrivalDate)}: ${label}, ${event.quantity} одиниць, ${event.free} вільно, ${status.toLocaleLowerCase("uk-UA")}`}
+                    title={`${formatTimelineDate(event.arrivalDate)} · ${label} · ${event.quantity} од. · ${status}`}
                   >
                     <span className={styles.timelineEventCard}>
                       <span className={styles.timelineEventHeading}>
                         <strong>{label}</strong>
-                        <small>{timelineSlotLabel(event.slotCount)}</small>
+                        <time dateTime={event.arrivalDate}>{formatTimelineDate(event.arrivalDate).slice(0, 5)}</time>
                       </span>
                       <span className={styles.timelineEventQuantity}>{event.quantity} <small>од.</small></span>
-                      <span className={styles.timelineEventStatus}><span aria-hidden="true" />{status}</span>
+                      <span className={styles.timelineEventMeta}>
+                        <span className={styles.timelineEventStatus}><span aria-hidden="true" />{status}</span>
+                        <span className={styles.timelineEventFacts}>Вільно: {event.free}</span>
+                      </span>
                     </span>
-                    <span className={styles.timelineEventStem} aria-hidden="true" />
-                    <span className={styles.timelineEventDot} aria-hidden="true" />
                   </li>
                 );
               })}
             </ol>
+            {visibleTimelineEvents.length === 0 ? <p className={styles.timelineEmpty}>У цьому періоді немає доставок</p> : null}
           </div>
         </div>
-        <ol className={styles.timelineMobileList} aria-label="Групи доставок">
-          {scheduleTimelineEvents.map((event) => {
-            const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
-            return (
-              <li key={`mobile-${event.id}`}>
-                <span className={`${styles.timelineMobileDot} ${eventToneClass(event.status)}`} aria-hidden="true" />
-                <span className={styles.timelineMobileCopy}>
-                  <strong>{label}</strong>
-                  <small>{timelineSlotLabel(event.slotCount)} · {timelineStatusLabel(event.status)}</small>
-                </span>
-                <span className={styles.timelineMobileQuantity}><strong>{event.quantity}</strong><small>од.</small></span>
-              </li>
-            );
-          })}
-        </ol>
-        <figcaption id="schedule-timeline-caption" className="sr-only">Глобальний огляд груп доставок у налаштованому видимому періоді. Пошук, категорія та вибрана вкладка не змінюють хронологію.</figcaption>
+        {visibleTimelineEvents.length > 0 ? (
+          <ol className={styles.timelineMobileList} aria-label="Групи доставок">
+            {visibleTimelineEvents.map((event) => {
+              const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
+              return (
+                <li key={`mobile-${event.id}`}>
+                  <span className={`${styles.timelineMobileDot} ${eventToneClass(event.status)}`} aria-hidden="true" />
+                  <span className={styles.timelineMobileCopy}>
+                    <strong>{label}</strong>
+                    <small>{formatTimelineDate(event.arrivalDate)} · {timelineSlotLabel(event.slotCount)} · {timelineStatusLabel(event.status)}</small>
+                  </span>
+                  <span className={styles.timelineMobileQuantity}><strong>{event.quantity}</strong><small>од.</small></span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : <p className={styles.timelineMobileEmpty}>У цьому періоді немає доставок</p>}
+        <figcaption id="schedule-timeline-caption" className="sr-only">Глобальний огляд датованих груп доставок у налаштованому видимому періоді. Зміна періоду переміщує шкалу та додає або прибирає групи за датою прибуття.</figcaption>
       </figure>
     </Panel>
   );
