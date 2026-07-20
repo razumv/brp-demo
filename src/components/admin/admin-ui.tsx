@@ -17,7 +17,14 @@ import {
   useState,
 } from "react";
 import { cn } from "@/lib/utils";
+import {
+  getDisclosedToolbarSections,
+  type AdminToolbarMobileDisclosure,
+  type AdminToolbarSection,
+} from "./admin-toolbar-disclosure";
 import styles from "./admin-ui.module.css";
+
+export type { AdminToolbarMobileDisclosure } from "./admin-toolbar-disclosure";
 
 export type AdminTone = "neutral" | "orange" | "green" | "blue" | "amber" | "red";
 
@@ -75,14 +82,6 @@ export type AdminTabItem<T extends string> = {
   icon?: ReactNode;
   disabled?: boolean;
   panelId?: string;
-};
-
-type AdminToolbarSection = "filters" | "view" | "actions";
-
-export type AdminToolbarMobileDisclosure = {
-  readonly sections?: readonly AdminToolbarSection[];
-  readonly activeCount?: number;
-  readonly label?: string;
 };
 
 export function AdminTabs<T extends string>({
@@ -225,16 +224,15 @@ export function AdminToolbar({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const disclosureId = `admin-toolbar-${useId().replaceAll(":", "")}`;
-  const disclosed = new Set(mobileDisclosure?.sections ?? ["filters"]);
-  const hasDisclosedControls = Boolean(
-    mobileDisclosure
-    && ((filters && disclosed.has("filters")) || (view && disclosed.has("view")) || (actions && disclosed.has("actions"))),
+  const disclosedSections = getDisclosedToolbarSections(
+    { filters: Boolean(filters), view: Boolean(view), actions: Boolean(actions) },
+    mobileDisclosure,
   );
-  const firstDisclosedSection = (["filters", "view", "actions"] as const)
-    .find((section) => disclosed.has(section));
+  const hasDisclosedControls = Boolean(mobileDisclosure && disclosedSections.length);
+  const firstDisclosedSection = disclosedSections[0];
 
   const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
-    if (!control || (hasDisclosedControls && disclosed.has(section))) return null;
+    if (!control || disclosedSections.includes(section)) return null;
     return <div className={className}>{control}</div>;
   };
 
@@ -245,9 +243,9 @@ export function AdminToolbar({
       data-mobile-disclosure-panel
       data-mobile-open={mobileOpen}
     >
-      {filters && disclosed.has("filters") ? <div className={styles.toolbarFilters}>{filters}</div> : null}
-      {view && disclosed.has("view") ? <div className={styles.toolbarView}>{view}</div> : null}
-      {actions && disclosed.has("actions") ? <div className={styles.toolbarActions}>{actions}</div> : null}
+      {disclosedSections.includes("filters") ? <div className={styles.toolbarFilters}>{filters}</div> : null}
+      {disclosedSections.includes("view") ? <div className={styles.toolbarView}>{view}</div> : null}
+      {disclosedSections.includes("actions") ? <div className={styles.toolbarActions}>{actions}</div> : null}
     </div>
   ) : null;
 

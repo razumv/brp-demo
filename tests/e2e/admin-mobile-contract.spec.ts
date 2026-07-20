@@ -114,6 +114,21 @@ test("mobile tab select takes over at the 767px breakpoint", async ({ page }) =>
   await expect(page.getByRole("tablist", { name: "Стан відвантаження" })).toBeVisible();
 });
 
+test("Unit Shipping only counts shipped-date filters on the shipped tab", async ({ page }) => {
+  await openAdminRoute(page, "/admin/unit-shipping", 390);
+  const filters = page.getByRole("button", { name: /^Фільтри/ });
+  const tabs = page.getByRole("combobox", { name: "Стан відвантаження" });
+
+  await filters.click();
+  await tabs.selectOption("shipped");
+  await page.getByLabel("Дата відвантаження з").fill("2026-05-01");
+  await page.getByLabel("Дата відвантаження по").fill("2026-05-31");
+  await expect(filters).toContainText("2");
+
+  await tabs.selectOption("remaining");
+  await expect(filters).not.toContainText("2");
+});
+
 test("users expose mobile cards and preserve desktop grid", async ({ page }) => {
   const mobileCards = page.locator('ul[aria-label="Активні користувачі"]');
   const desktopGrid = page.locator('[role="grid"][aria-label="Активні користувачі"]');

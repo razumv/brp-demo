@@ -695,6 +695,13 @@
   .mobileDisclosurePanel {
     display: contents;
   }
+
+  .toolbarWithMobileDisclosure .toolbarSearch { order: 0; }
+  .toolbarWithMobileDisclosure .toolbarFilters { order: 1; }
+  .toolbarWithMobileDisclosure .toolbarSpacer { order: 2; }
+  .toolbarWithMobileDisclosure .toolbarView { order: 3; }
+  .toolbarWithMobileDisclosure .toolbarActions { order: 4; }
+  .toolbarWithMobileDisclosure .toolbarMeta { order: 5; }
 }
 
 @media (max-width: 640px) {
