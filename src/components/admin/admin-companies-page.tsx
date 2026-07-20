@@ -98,10 +98,17 @@ function CompanyKpis() {
   );
 }
 
-function SearchToolbar({ query, onQueryChange, onCreate }: {
+type CompanyProfileFilter = "all" | CompanyProfileStatus;
+type CompanyManagerFilter = "all" | "assigned" | "unassigned";
+
+function SearchToolbar({ query, onQueryChange, onCreate, profileStatus, managerState, onProfileStatusChange, onManagerStateChange }: {
   query: string;
   onQueryChange: (value: string) => void;
   onCreate: () => void;
+  profileStatus: CompanyProfileFilter;
+  managerState: CompanyManagerFilter;
+  onProfileStatusChange: (value: CompanyProfileFilter) => void;
+  onManagerStateChange: (value: CompanyManagerFilter) => void;
 }) {
   return (
     <AdminToolbar
@@ -114,12 +121,33 @@ function SearchToolbar({ query, onQueryChange, onCreate }: {
           clearLabel="Очистити пошук компаній"
         />
       )}
+      filters={(
+        <>
+          <label className="field min-w-0">
+            <span className="sr-only">Стан профілю компанії</span>
+            <select value={profileStatus} onChange={(event) => onProfileStatusChange(event.target.value as CompanyProfileFilter)} aria-label="Стан профілю компанії">
+              <option value="all">Усі профілі</option>
+              <option value="complete">Профіль заповнений</option>
+              <option value="incomplete">Профіль неповний</option>
+            </select>
+          </label>
+          <label className="field min-w-0">
+            <span className="sr-only">Стан менеджера компанії</span>
+            <select value={managerState} onChange={(event) => onManagerStateChange(event.target.value as CompanyManagerFilter)} aria-label="Стан менеджера компанії">
+              <option value="all">Усі менеджери</option>
+              <option value="assigned">Менеджер призначений</option>
+              <option value="unassigned">Менеджер не призначений</option>
+            </select>
+          </label>
+        </>
+      )}
       actions={(
         <button type="button" className="button button-primary min-h-10 px-5" onClick={onCreate}>
           <Plus size={15} />
           Нова компанія
         </button>
       )}
+      mobileDisclosure={{ sections: ["filters"], activeCount: Number(profileStatus !== "all") + Number(managerState !== "all"), iconOnly: true }}
     />
   );
 }
@@ -546,12 +574,17 @@ export function AdminCompaniesPage() {
   const [query, setQuery] = useState("");
   const [openEmployeesId, setOpenEmployeesId] = useState<string | null>(null);
   const [dialog, setDialog] = useState<CompanyDialog>(null);
+  const [profileStatus, setProfileStatus] = useState<CompanyProfileFilter>("all");
+  const [managerState, setManagerState] = useState<CompanyManagerFilter>("all");
 
   const visibleCompanies = useMemo(() => {
     const needle = normalize(query);
-    if (!needle) return adminCompanies;
-    return adminCompanies.filter((company) => normalize(company.name).includes(needle));
-  }, [query]);
+    return adminCompanies.filter((company) => (
+      (!needle || normalize(company.name).includes(needle))
+      && (profileStatus === "all" || company.profileStatus === profileStatus)
+      && (managerState === "all" || (managerState === "assigned" ? Boolean(company.managerSummary) : !company.managerSummary))
+    ));
+  }, [managerState, profileStatus, query]);
 
   const updateQuery = (value: string) => {
     setQuery(value);
@@ -575,7 +608,15 @@ export function AdminCompaniesPage() {
         description="Створюйте компанії та призначайте працівників. Працівники заповнюють дані профілю у своєму порталі."
       />
 
-      <SearchToolbar query={query} onQueryChange={updateQuery} onCreate={() => openDialog({ mode: "create" })} />
+      <SearchToolbar
+        query={query}
+        onQueryChange={updateQuery}
+        onCreate={() => openDialog({ mode: "create" })}
+        profileStatus={profileStatus}
+        managerState={managerState}
+        onProfileStatusChange={setProfileStatus}
+        onManagerStateChange={setManagerState}
+      />
 
       <CompanyTable
         companies={visibleCompanies}

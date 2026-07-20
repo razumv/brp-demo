@@ -180,15 +180,7 @@ function NetworkTable({ positions }: { positions: readonly ConsignmentStockPosit
   );
 }
 
-function RequestsView({
-  status,
-  onStatusChange,
-  query,
-}: {
-  status: ConsignmentRequestFilter;
-  onStatusChange: (status: ConsignmentRequestFilter) => void;
-  query: string;
-}) {
+function RequestsView({ status, query }: { status: ConsignmentRequestFilter; query: string }) {
   const statusRequests = status === "all"
     ? consignmentRequests
     : consignmentRequests.filter((request) => request.status === status);
@@ -200,12 +192,7 @@ function RequestsView({
   return (
     <Panel className="overflow-hidden shadow-none">
       <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 lg:flex-row lg:items-center lg:justify-between">
-        <AdminSegmentedControl
-          items={consignmentRequestFilters}
-          value={status}
-          onValueChange={onStatusChange}
-          label="Статус заявки"
-        />
+        <span className="text-[11px] text-[var(--muted-foreground)]">Статус заявки обирається у фільтрах.</span>
         <button
           type="button"
           className="button button-outline shrink-0"
@@ -232,10 +219,13 @@ export function AdminConsignmentPage() {
   const [activeView, setActiveView] = useState<ConsignmentView>("warehouse");
   const [query, setQuery] = useState("");
   const [requestStatus, setRequestStatus] = useState<ConsignmentRequestFilter>("waiting");
+  const [holder, setHolder] = useState<ConsignmentHolderId | "all">("all");
 
   const filteredPositions = useMemo(
-    () => consignmentStockPositions.filter((position) => matchesPosition(position, query)),
-    [query],
+    () => consignmentStockPositions.filter((position) => (
+      matchesPosition(position, query) && (holder === "all" || holderQuantity(position, holder) > 0)
+    )),
+    [holder, query],
   );
   const hasQuery = normalize(query).length > 0;
   const filteredUnits = filteredPositions.reduce((sum, position) => sum + position.total, 0);
@@ -272,8 +262,30 @@ export function AdminConsignmentPage() {
             onValueChange={setActiveView}
             label="Розділи консигнації"
             size="compact"
+            mobileFullWidth
           />
         )}
+        actions={activeView === "requests" ? (
+          <AdminSegmentedControl
+            items={consignmentRequestFilters}
+            value={requestStatus}
+            onValueChange={setRequestStatus}
+            label="Статус заявки"
+          />
+        ) : (
+          <label className="field min-w-0">
+            <span className="sr-only">Тримач консигнації</span>
+            <select value={holder} onChange={(event) => setHolder(event.target.value as ConsignmentHolderId | "all")} aria-label="Тримач консигнації">
+              <option value="all">Усі тримачі</option>
+              {consignmentHolders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+        )}
+        mobileDisclosure={{
+          sections: ["actions"],
+          activeCount: activeView === "requests" ? Number(requestStatus !== "waiting") : Number(holder !== "all"),
+          iconOnly: true,
+        }}
       />
 
       {activeView === "warehouse" ? (
@@ -328,7 +340,7 @@ export function AdminConsignmentPage() {
           role="tabpanel"
           aria-labelledby="consignment-requests-panel-tab"
         >
-          <RequestsView status={requestStatus} onStatusChange={setRequestStatus} query={query} />
+          <RequestsView status={requestStatus} query={query} />
         </section>
       ) : null}
     </AdminPage>

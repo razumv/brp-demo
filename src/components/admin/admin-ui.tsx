@@ -91,6 +91,7 @@ export function AdminTabs<T extends string>({
   label,
   mobileSelectLabel,
   size = "default",
+  mobileFullWidth = false,
   className,
 }: {
   items: readonly AdminTabItem<T>[];
@@ -99,6 +100,7 @@ export function AdminTabs<T extends string>({
   label: string;
   mobileSelectLabel?: string;
   size?: "compact" | "default";
+  mobileFullWidth?: boolean;
   className?: string;
 }) {
   const selected = items.find((item) => item.id === value);
@@ -127,7 +129,14 @@ export function AdminTabs<T extends string>({
   };
 
   return (
-    <div className={cn(styles.tabsRoot, mobileSelectLabel && styles.tabsWithMobileSelect, className)}>
+    <div
+      className={cn(
+        styles.tabsRoot,
+        mobileSelectLabel && styles.tabsWithMobileSelect,
+        mobileFullWidth && styles.tabsRootMobileFullWidth,
+        className,
+      )}
+    >
       {mobileSelectLabel ? (
         <label className={styles.mobileTabSelect}>
           <span>{mobileSelectLabel}</span>
@@ -142,7 +151,7 @@ export function AdminTabs<T extends string>({
         </label>
       ) : null}
       <div
-        className={cn(styles.tabs, size === "compact" && styles.tabsCompact)}
+        className={cn(styles.tabs, size === "compact" && styles.tabsCompact, mobileFullWidth && styles.tabsMobileFullWidth)}
         role="tablist"
         aria-label={label}
         data-active-tab={selected?.id}
@@ -176,16 +185,18 @@ export function AdminSegmentedControl<T extends string>({
   value,
   onValueChange,
   label,
+  mobileFullWidth = false,
   className,
 }: {
   items: readonly AdminTabItem<T>[];
   value: T;
   onValueChange: (value: T) => void;
   label: string;
+  mobileFullWidth?: boolean;
   className?: string;
 }) {
   return (
-    <div className={cn(styles.segmented, className)} role="group" aria-label={label}>
+    <div className={cn(styles.segmented, mobileFullWidth && styles.segmentedMobileFullWidth, className)} role="group" aria-label={label}>
       {items.map((item) => (
         <button
           key={item.id}
@@ -230,6 +241,17 @@ export function AdminToolbar({
   );
   const hasDisclosedControls = Boolean(mobileDisclosure && disclosedSections.length);
   const firstDisclosedSection = disclosedSections[0];
+  const mobileDisclosureLabel = mobileDisclosure?.label ?? "Фільтри";
+  const isIconOnlyMobileDisclosure = mobileDisclosure?.iconOnly !== false;
+  const isControlledMobileDisclosure = Boolean(
+    mobileDisclosure?.controlsId && mobileDisclosure.onExpandedChange,
+  );
+  const mobileExpanded = isControlledMobileDisclosure
+    ? Boolean(mobileDisclosure?.expanded)
+    : mobileOpen;
+  const mobileControlsId = isControlledMobileDisclosure
+    ? mobileDisclosure?.controlsId
+    : disclosureId;
 
   const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
     if (!control || disclosedSections.includes(section)) return null;
@@ -238,10 +260,13 @@ export function AdminToolbar({
 
   const disclosurePanel = mobileDisclosure && hasDisclosedControls ? (
     <div
-      id={disclosureId}
-      className={styles.mobileDisclosurePanel}
+      id={isControlledMobileDisclosure ? undefined : disclosureId}
+      className={cn(
+        styles.mobileDisclosurePanel,
+        isControlledMobileDisclosure && styles.mobileDisclosurePanelControlled,
+      )}
       data-mobile-disclosure-panel
-      data-mobile-open={mobileOpen}
+      data-mobile-open={mobileExpanded}
     >
       {disclosedSections.includes("filters") ? <div className={styles.toolbarFilters}>{filters}</div> : null}
       {disclosedSections.includes("view") ? <div className={styles.toolbarView}>{view}</div> : null}
@@ -255,15 +280,22 @@ export function AdminToolbar({
       {mobileDisclosure && hasDisclosedControls ? (
         <button
           type="button"
-          className={styles.mobileDisclosureTrigger}
-          aria-expanded={mobileOpen}
-          aria-controls={disclosureId}
-          onClick={() => setMobileOpen((current) => !current)}
+          className={cn(styles.mobileDisclosureTrigger, isIconOnlyMobileDisclosure && styles.mobileDisclosureTriggerIconOnly)}
+          aria-expanded={mobileExpanded}
+          aria-controls={mobileControlsId}
+          aria-label={isIconOnlyMobileDisclosure ? mobileDisclosureLabel : undefined}
+          onClick={() => {
+            if (isControlledMobileDisclosure) {
+              mobileDisclosure?.onExpandedChange?.(!mobileExpanded);
+              return;
+            }
+            setMobileOpen((current) => !current);
+          }}
         >
           <Filter size={16} aria-hidden="true" />
-          <span>{mobileDisclosure.label ?? "Фільтри"}</span>
+          {isIconOnlyMobileDisclosure ? null : <span className={styles.mobileDisclosureText}>{mobileDisclosureLabel}</span>}
           {mobileDisclosure.activeCount ? <span className={styles.mobileDisclosureCount}>{mobileDisclosure.activeCount}</span> : null}
-          <ChevronDown size={14} aria-hidden="true" />
+          {isIconOnlyMobileDisclosure ? null : <ChevronDown className={styles.mobileDisclosureChevron} size={14} aria-hidden="true" />}
         </button>
       ) : null}
       {firstDisclosedSection === "filters" ? disclosurePanel : null}

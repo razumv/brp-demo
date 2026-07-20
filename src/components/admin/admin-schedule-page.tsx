@@ -118,13 +118,14 @@ function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
-function LockedButton({ children, title, className = "" }: {
+function LockedButton({ children, title, className = "", describedBy }: {
   children: ReactNode;
   title: string;
   className?: string;
+  describedBy?: string;
 }) {
   return (
-    <button type="button" disabled aria-disabled="true" title={title} className={`button button-outline ${className}`}>
+    <button type="button" disabled aria-disabled="true" aria-describedby={describedBy} title={title} className={`button button-outline ${className}`}>
       <LockKeyhole size={13} /> {children}
     </button>
   );
@@ -607,9 +608,12 @@ export function AdminSchedulePage() {
         icon={<CalendarDays size={20} />}
         title="Графік доставки"
         actions={(
-          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto">
-            <LockedButton title="Відкриття або експорт Excel вимкнені у read-only клоні"><ExternalLink size={14} /> Відкрити Excel</LockedButton>
-            <LockedButton title="Синхронізація вимкнена у read-only клоні" className="!border-[var(--orange)] !bg-[var(--orange)] !text-white"><RefreshCw size={14} /> Синхронізувати</LockedButton>
+          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto" data-schedule-actions>
+            <LockedButton describedBy="schedule-actions-safety" title="Відкриття або експорт Excel вимкнені у read-only клоні"><ExternalLink size={14} /> Відкрити Excel</LockedButton>
+            <LockedButton describedBy="schedule-actions-safety" title="Синхронізація вимкнена у read-only клоні" className="!border-[var(--orange)] !bg-[var(--orange)] !text-white"><RefreshCw size={14} /> Синхронізувати</LockedButton>
+            <p id="schedule-actions-safety" className="col-span-2 m-0 text-[11px] text-[var(--muted-foreground)] md:hidden">
+              Відкриття Excel і синхронізація вимкнені у read-only клоні.
+            </p>
           </div>
         )}
       />

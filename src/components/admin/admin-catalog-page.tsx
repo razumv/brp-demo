@@ -351,6 +351,7 @@ function VehicleCatalog() {
             value={category}
             onValueChange={updateCategory}
             label="Категорії транспортних засобів"
+            mobileFullWidth
           />
         )}
         actions={(
@@ -367,6 +368,15 @@ function VehicleCatalog() {
             {advancedFiltersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         )}
+        mobileDisclosure={{
+          sections: ["actions"],
+          label: "Детальні фільтри",
+          activeCount: advancedFilterCount,
+          iconOnly: true,
+          expanded: advancedFiltersOpen,
+          controlsId: "catalog-vehicle-advanced-filters",
+          onExpandedChange: setAdvancedFiltersOpen,
+        }}
       />
 
       {advancedFiltersOpen ? (

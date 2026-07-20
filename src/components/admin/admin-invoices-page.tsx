@@ -270,7 +270,7 @@ function ContractsTab() {
       <AdminToolbar
         search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук контрактів" placeholder="Пошук номера, постачальника або покупця..." />}
         actions={<button type="button" className="button button-primary" onClick={() => setCreating(true)}><Plus size={15} /> Новий контракт</button>}
-        meta={`${visibleContracts.length} з ${invoiceContracts.length}`}
+        meta={<span className="hidden md:inline">{visibleContracts.length} з {invoiceContracts.length}</span>}
       />
 
       <div className="grid gap-3">
@@ -411,7 +411,7 @@ function AppendicesTab() {
       <AppendixKpis />
       <AdminToolbar
         search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук додатків" placeholder="Пошук додатка, відправки або контракту..." />}
-        meta={`${visibleAppendices.length} з ${invoiceAppendixSourceTotals.appendices}`}
+        meta={<span className="hidden md:inline">{visibleAppendices.length} з {invoiceAppendixSourceTotals.appendices}</span>}
       />
       <AdminTableShell
         notice={<RepresentativeNotice shown={visibleAppendices.length} total={invoiceAppendixSourceTotals.appendices} noun="додатків" />}

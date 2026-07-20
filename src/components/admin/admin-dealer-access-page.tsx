@@ -41,6 +41,52 @@ function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
+type TeamAccessFilter = "all" | "with-access" | "without-access";
+type PolicyStateFilter = "all" | "on" | "off";
+
+function DealerAccessFilterControls({
+  teamAccess,
+  policyState,
+  onTeamAccessChange,
+  onPolicyStateChange,
+}: {
+  teamAccess: TeamAccessFilter;
+  policyState: PolicyStateFilter;
+  onTeamAccessChange: (value: TeamAccessFilter) => void;
+  onPolicyStateChange: (value: PolicyStateFilter) => void;
+}) {
+  return (
+    <div className="grid w-full min-w-0 gap-2 md:grid-cols-2">
+      <label className="grid gap-1">
+        <span className="text-[10px] font-[680] uppercase tracking-[.035em] text-[var(--muted-foreground)]">Стан доступу команди</span>
+        <select
+          className="min-h-11 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] text-[var(--foreground)] outline-none focus:border-[var(--orange)] focus:ring-1 focus:ring-[var(--orange)]"
+          aria-label="Стан доступу команди"
+          value={teamAccess}
+          onChange={(event) => onTeamAccessChange(event.target.value as TeamAccessFilter)}
+        >
+          <option value="all">Уся команда</option>
+          <option value="with-access">Профіль Full Access</option>
+          <option value="without-access">Без доступу</option>
+        </select>
+      </label>
+      <label className="grid gap-1">
+        <span className="text-[10px] font-[680] uppercase tracking-[.035em] text-[var(--muted-foreground)]">Стан політики компанії</span>
+        <select
+          className="min-h-11 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] text-[var(--foreground)] outline-none focus:border-[var(--orange)] focus:ring-1 focus:ring-[var(--orange)]"
+          aria-label="Стан політики компанії"
+          value={policyState}
+          onChange={(event) => onPolicyStateChange(event.target.value as PolicyStateFilter)}
+        >
+          <option value="all">Усі об&apos;єкти політики</option>
+          <option value="on">Є увімкнені права</option>
+          <option value="off">Є вимкнені права</option>
+        </select>
+      </label>
+    </div>
+  );
+}
+
 function CompanySelector({
   selectedCompany,
   onSelect,
@@ -207,29 +253,41 @@ function DealerAccessContent({
   onCompanySelect: (company: DealerCompanyOption) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [teamAccess, setTeamAccess] = useState<TeamAccessFilter>("all");
+  const [policyState, setPolicyState] = useState<PolicyStateFilter>("all");
 
   const visibleMembers = useMemo(() => {
     const needle = normalize(query);
-    if (!needle) return dealerTeamSummaries;
-    return dealerTeamSummaries.filter((member) => normalize([
+    return dealerTeamSummaries.filter((member) => {
+      const matchesQuery = !needle || normalize([
       member.displayName,
       member.accountLabel,
       member.role,
       member.profile,
       member.accessStatus,
-    ].join(" ")).includes(needle));
-  }, [query]);
+      ].join(" ")).includes(needle);
+      const matchesAccess = teamAccess === "all"
+        || (teamAccess === "with-access" && member.profile === "Full Access")
+        || (teamAccess === "without-access" && member.profile === "Без доступу");
+      return matchesQuery && matchesAccess;
+    });
+  }, [query, teamAccess]);
 
   const visiblePermissionGroups = useMemo(() => {
     const needle = normalize(query);
-    if (!needle) return dealerPermissionGroups;
-    return dealerPermissionGroups
+    const matchingGroups = !needle ? dealerPermissionGroups : dealerPermissionGroups
       .map((group) => ({
         ...group,
         permissions: group.permissions.filter((permission) => normalize(`${group.command} ${permission.action}`).includes(needle)),
       }))
       .filter((group) => group.permissions.length > 0);
-  }, [query]);
+    if (policyState === "all") return matchingGroups;
+    return matchingGroups.filter((group) => group.permissions.some((permission) => (
+      policyState === "on" ? permission.enabled : !permission.enabled
+    )));
+  }, [policyState, query]);
+
+  const activeFilterCount = Number(teamAccess !== "all") + Number(policyState !== "all");
 
   return (
     <AdminPage>
@@ -250,6 +308,15 @@ function DealerAccessContent({
             clearLabel="Очистити пошук доступів"
           />
         )}
+        filters={(
+          <DealerAccessFilterControls
+            teamAccess={teamAccess}
+            policyState={policyState}
+            onTeamAccessChange={setTeamAccess}
+            onPolicyStateChange={setPolicyState}
+          />
+        )}
+        mobileDisclosure={{ sections: ["filters"], label: "Фільтри доступу", activeCount: activeFilterCount }}
       />
 
       <DealerTeamPanel members={visibleMembers} />

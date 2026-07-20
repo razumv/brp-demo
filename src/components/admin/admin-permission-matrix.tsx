@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 import { AdminTableShell } from "./admin-ui";
 import styles from "./admin-permission-matrix.module.css";
 
@@ -86,6 +87,9 @@ export function AdminPermissionMatrix<TAction extends string>({
   description?: ReactNode;
   emptyCopy?: string;
 }) {
+  const [expandedRowIds, setExpandedRowIds] = useState<ReadonlySet<string>>(() => new Set());
+  const idPrefix = useId().replaceAll(":", "");
+
   return (
     <AdminTableShell title={title} description={description} scrollLabel={ariaLabel}>
       <table className={styles.desktopTable} aria-label={ariaLabel}>
@@ -106,29 +110,82 @@ export function AdminPermissionMatrix<TAction extends string>({
 
       <div className={styles.mobileList} aria-label={ariaLabel}>
         {rows.map((row) => (
-          <div key={row.id} className={styles.mobileGroup}>
-            {row.sectionBefore ? <div className={styles.sectionLabel}>{row.sectionBefore}</div> : null}
-            <article className={styles.mobileCard}>
-              <header><RowLabel row={row} /></header>
-              <div className={styles.mobilePermissions}>
-                {actions.map((action) => {
-                  const state = row.permissions[action.id];
-                  if (!state) return null;
-                  return (
-                    <div key={action.id} className={styles.mobilePermissionRow}>
-                      <ActionLabel action={action} />
-                      <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} />
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
-          </div>
+          <MobileMatrixRow
+            key={row.id}
+            row={row}
+            actions={actions}
+            expanded={expandedRowIds.has(row.id)}
+            summaryButtonId={`permission-summary-${idPrefix}-${row.id}`}
+            regionId={`permission-actions-${idPrefix}-${row.id}`}
+            onToggle={() => {
+              setExpandedRowIds((current) => {
+                const next = new Set(current);
+                if (next.has(row.id)) next.delete(row.id);
+                else next.add(row.id);
+                return next;
+              });
+            }}
+          />
         ))}
       </div>
 
       {!rows.length && emptyCopy ? <div className={styles.emptyState}>{emptyCopy}</div> : null}
     </AdminTableShell>
+  );
+}
+
+function MobileMatrixRow<TAction extends string>({
+  row,
+  actions,
+  expanded,
+  summaryButtonId,
+  regionId,
+  onToggle,
+}: {
+  row: PermissionMatrixRow<TAction>;
+  actions: readonly PermissionMatrixAction<TAction>[];
+  expanded: boolean;
+  summaryButtonId: string;
+  regionId: string;
+  onToggle: () => void;
+}) {
+  const applicableActions = actions.filter((action) => row.permissions[action.id] !== undefined);
+  const enabledCount = applicableActions.filter((action) => row.permissions[action.id] === "on").length;
+  const summary = `${enabledCount}/${applicableActions.length} увімкнено`;
+
+  return (
+    <div className={styles.mobileGroup}>
+      {row.sectionBefore ? <div className={styles.sectionLabel}>{row.sectionBefore}</div> : null}
+      <article className={styles.mobileCard}>
+        <button
+          id={summaryButtonId}
+          type="button"
+          className={styles.mobileSummary}
+          aria-label={`${row.label} — ${summary}`}
+          aria-expanded={expanded}
+          aria-controls={regionId}
+          onClick={onToggle}
+        >
+          <RowLabel row={row} />
+          <span className={styles.mobileSummaryCount}>{summary}</span>
+          <ChevronDown className={styles.mobileSummaryChevron} size={16} aria-hidden="true" />
+        </button>
+        {expanded ? (
+          <div id={regionId} role="region" aria-labelledby={summaryButtonId} className={styles.mobilePermissions}>
+            {applicableActions.map((action) => {
+              const state = row.permissions[action.id];
+              if (!state) return null;
+              return (
+                <div key={action.id} className={styles.mobilePermissionRow}>
+                  <ActionLabel action={action} />
+                  <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} />
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </article>
+    </div>
   );
 }
 
