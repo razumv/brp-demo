@@ -38,7 +38,7 @@ export function AdminPage({
   className?: string;
 }) {
   return (
-    <div className={cn("page", styles.page, width === "wide" && styles.pageWide, className)}>
+    <div className={cn("page", styles.adminPage, styles.page, width === "wide" && styles.pageWide, className)}>
       {children}
     </div>
   );

@@ -109,14 +109,14 @@ function RoleBadge({ role }: { role: AdminUserRole }) {
   );
 }
 
-function UserIdentity({ user }: { user: AdminUserRecord }) {
+function UserIdentity({ user, titleId }: { user: AdminUserRecord; titleId?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] text-[10px] font-semibold text-[var(--muted-foreground)]" aria-hidden="true">
         {user.displayName.slice(-2)}
       </span>
       <span className="min-w-0">
-        <strong className="block truncate text-[12px] font-semibold">{user.displayName}</strong>
+        <strong id={titleId} className="block truncate text-[12px] font-semibold">{user.displayName}</strong>
         <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">{user.accountLabel}</span>
       </span>
     </div>
@@ -166,7 +166,7 @@ function ActiveUsersGrid({ users, resultCount, onEdit }: {
   onEdit: (user: AdminUserRecord) => void;
 }) {
   return (
-    <div role="grid" aria-label="Активні користувачі" className="max-md:hidden">
+    <div role="grid" aria-label="Активні користувачі" className="min-w-0 max-md:hidden">
       <AdminTableShell
         scrollLabel="Активні користувачі"
         footer={<span className="text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</span>}
@@ -214,10 +214,10 @@ function ActiveUsersCards({ users, resultCount, onEdit }: {
 }) {
   return (
     <div className="grid gap-3 md:hidden">
-      <ul aria-label="Активні користувачі" className="grid gap-3 p-0">
+      <ul aria-label="Активні користувачі" className="grid gap-3 p-0 md:hidden">
         {users.map((user) => (
-          <li key={user.id} data-record-id={user.id} className="grid gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
-            <UserIdentity user={user} />
+          <li key={user.id} data-record-id={user.id} aria-labelledby={`admin-user-${user.id}-title`} className="grid gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+            <UserIdentity user={user} titleId={`admin-user-${user.id}-title`} />
             <Contact user={user} />
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[10px]">
               <div><dt className="text-[var(--muted-foreground)]">Компанія</dt><dd className="mt-0.5 font-medium"><Building2 size={12} className="mr-1 inline text-[var(--muted-foreground)]" />{user.company}</dd></div>
@@ -531,7 +531,7 @@ export function AdminUsersPage() {
         )}
       />
 
-      <section id={`admin-users-${tab}-panel`} role="tabpanel" aria-labelledby={`admin-users-${tab}-panel-tab`}>
+      <section id={`admin-users-${tab}-panel`} role="tabpanel" aria-labelledby={`admin-users-${tab}-panel-tab`} className="min-w-0">
         {tab === "active" && visibleUsers.length ? (
           <>
             <ActiveUsersGrid users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />

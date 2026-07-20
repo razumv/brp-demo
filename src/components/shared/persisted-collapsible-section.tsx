@@ -19,6 +19,7 @@ export interface PersistedCollapsibleSectionProps {
   readonly headingId?: string;
   readonly headingLevel?: CollapsibleHeadingLevel;
   readonly icon?: ReactNode;
+  readonly titleContent?: ReactNode;
   readonly titleAccessory?: ReactNode;
   readonly summary?: ReactNode;
   readonly actions?: ReactNode;
@@ -29,6 +30,8 @@ export interface PersistedCollapsibleSectionProps {
   readonly hiddenUntilFound?: boolean;
   readonly keepMounted?: boolean;
   readonly collapseMode?: CollapseMode;
+  readonly hideActionsWhenMobileClosed?: boolean;
+  readonly dataComponent?: string;
   readonly onOpenChange?: (open: boolean) => void;
 }
 
@@ -40,6 +43,7 @@ export function PersistedCollapsibleSection({
   headingId,
   headingLevel = "h2",
   icon,
+  titleContent,
   titleAccessory,
   summary,
   actions,
@@ -50,6 +54,8 @@ export function PersistedCollapsibleSection({
   hiddenUntilFound = true,
   keepMounted = false,
   collapseMode = "always",
+  hideActionsWhenMobileClosed = false,
+  dataComponent,
   onOpenChange,
 }: PersistedCollapsibleSectionProps) {
   const generatedId = useId().replaceAll(":", "");
@@ -73,6 +79,9 @@ export function PersistedCollapsibleSection({
       className={cn(styles.root, className)}
       data-collapse-mode={collapseMode}
       data-can-collapse={canCollapse}
+      data-effective-open={effectiveOpen}
+      data-hide-actions-mobile-when-closed={hideActionsWhenMobileClosed}
+      data-component={dataComponent}
     >
       <div className={cn(styles.header, headerClassName)}>
         <div className={styles.headingBlock}>
@@ -83,7 +92,7 @@ export function PersistedCollapsibleSection({
                 aria-label={title}
               >
                 {icon ? <span className={styles.icon} aria-hidden="true">{icon}</span> : null}
-                <span>{title}</span>
+                <span>{titleContent ?? title}</span>
                 <ChevronDown className={styles.chevron} size={14} aria-hidden="true" />
               </Collapsible.Trigger>
             </Heading>

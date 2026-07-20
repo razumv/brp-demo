@@ -260,14 +260,14 @@ function ProfileBadge({ status, compact = false }: { status: CompanyProfileStatu
   );
 }
 
-function CompanyIdentity({ company }: { company: AdminCompany }) {
+function CompanyIdentity({ company, titleId }: { company: AdminCompany; titleId?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <span className="grid size-10 shrink-0 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--muted-foreground)]">
         <Building2 size={18} />
       </span>
       <span className="min-w-0">
-        <strong className="block text-[13px] leading-snug">{company.name}</strong>
+        <strong id={titleId} className="block text-[13px] leading-snug">{company.name}</strong>
         {company.managerSummary ? (
           <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">Менеджер: демо-профіль</span>
         ) : null}
@@ -381,9 +381,9 @@ function CompanyCards({ companies, openEmployeesId, onToggleEmployees, onCloseEm
   return (
     <Panel className={`divide-y divide-[var(--border)] overflow-visible shadow-none md:hidden ${styles.companyCards}`}>
       {companies.map((company) => (
-        <article key={company.id} className={styles.companyCard}>
+        <article key={company.id} aria-labelledby={`admin-company-${company.id.replace(/^company-/, "")}-title`} className={styles.companyCard}>
           <div className="flex min-w-0 items-start gap-2">
-            <div className="min-w-0 flex-1"><CompanyIdentity company={company} /></div>
+            <div className="min-w-0 flex-1"><CompanyIdentity company={company} titleId={`admin-company-${company.id.replace(/^company-/, "")}-title`} /></div>
             <EmployeePopover
               company={company}
               open={openEmployeesId === company.id}

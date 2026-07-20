@@ -336,7 +336,7 @@ function VehicleCatalog() {
       id="catalog-vehicles-panel"
       role="tabpanel"
       aria-labelledby="catalog-vehicles-panel-tab"
-      className="grid gap-5"
+      className="grid min-w-0 gap-5"
     >
       <p className="m-0 text-[15px] text-[var(--muted-foreground)]">
         Управління каталогом транспортних засобів для інвойсів та ціноутворення
@@ -405,13 +405,13 @@ function VehicleCatalog() {
         </div>
       ) : null}
 
-      <Panel className="overflow-visible shadow-none">
+      <Panel className="min-w-0 overflow-visible shadow-none">
         <RepresentativeNotice shown={visibleProducts.length} total={sourceTotalForCurrentCategory} noun="продуктів у source" />
         <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Товари каталогу">
           {visibleProducts.map((product) => (
-            <li key={product.id} data-record-id={product.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+            <li key={product.id} data-record-id={product.id} aria-labelledby={`catalog-vehicles-${product.id}-title`} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
               <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
+                <div id={`catalog-vehicles-${product.id}-title`} className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2"><StatusBadge>{product.category}</StatusBadge><StatusBadge tone="green">Активний</StatusBadge></div>
                   <strong className="mt-2 block font-mono text-[13px] text-[var(--blue)]">{product.sku}</strong>
                   <span className="mt-1 block text-[12px] font-medium leading-snug">{product.name}</span>
@@ -430,7 +430,7 @@ function VehicleCatalog() {
           {isTrueNoResult ? <li><EmptyState compact icon={<Package size={22} />} title="Продуктів ще немає" description="Товари з'являться тут, коли дані каталогу будуть доступні." /></li> : null}
           {!isTrueNoResult && visibleProducts.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає рядків цієї категорії. Точний загальний лічильник показано вище.</li> : null}
         </ul>
-        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця товарів каталогу" tabIndex={0}>
+        <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця товарів каталогу" tabIndex={0}>
           <table className="data-table min-w-[1120px]">
             <thead>
               <tr>
@@ -490,7 +490,7 @@ function DistributorPrices() {
       id="catalog-distributor-panel"
       role="tabpanel"
       aria-labelledby="catalog-distributor-panel-tab"
-      className="grid gap-5"
+      className="grid min-w-0 gap-5"
     >
       <div className="hidden md:block">
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Показники цін дистриб'ютора">
@@ -512,13 +512,13 @@ function DistributorPrices() {
         )}
       />
 
-      <Panel className="overflow-hidden shadow-none">
+      <Panel className="min-w-0 overflow-hidden shadow-none">
         <RepresentativeNotice shown={visibleRows.length} total={distributorSourceCounts[category]} noun={`цін категорії ${category} у source`} />
         <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Ціни дистриб’ютора">
           {visibleRows.map((row) => (
-            <li key={row.id} data-record-id={row.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+            <li key={row.id} data-record-id={row.id} aria-labelledby={`catalog-distributor-${row.id}-title`} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{row.sku}</strong><span className="mt-1 block text-[12px] font-medium">{row.family} · {row.trim}</span><span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{row.engine} · MY {row.modelYear}</span></div>
+                <div id={`catalog-distributor-${row.id}-title`} className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{row.sku}</strong><span className="mt-1 block text-[12px] font-medium">{row.family} · {row.trim}</span><span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{row.engine} · MY {row.modelYear}</span></div>
                 <StatusBadge>{row.homologation}</StatusBadge>
               </div>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
@@ -531,7 +531,7 @@ function DistributorPrices() {
           ))}
           {visibleRows.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає відповідних рядків. Точний загальний лічильник збережено.</li> : null}
         </ul>
-        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця цін дистриб’ютора" tabIndex={0}>
+        <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця цін дистриб’ютора" tabIndex={0}>
           <table className="data-table min-w-[1160px]">
             <thead><tr><th>SKU</th><th>Сімейство</th><th>Комплектація</th><th>Двигун</th><th>Колір</th><th>Колір UA</th><th aria-label="Display"><Monitor size={13} /></th><th aria-label="Service"><Wrench size={13} /></th><th>Омологація</th><th>MY</th><th>Ex-Works EUR</th><th>Ex-DC EUR</th></tr></thead>
             <tbody>
@@ -702,7 +702,7 @@ function PartsCatalog() {
       id="catalog-parts-panel"
       role="tabpanel"
       aria-labelledby="catalog-parts-panel-tab"
-      className="grid gap-4"
+      className="grid min-w-0 gap-4"
     >
       <DebugPricing />
 
@@ -737,12 +737,12 @@ function PartsCatalog() {
         meta={`${formatInteger(sourceResultsLabel)} результатів`}
       />
 
-      <Panel className="overflow-hidden shadow-none">
+      <Panel className="min-w-0 overflow-hidden shadow-none">
         <RepresentativeNotice shown={visibleRows.length} total={hasFilters ? visibleRows.length : catalogPartsSourceTotal} noun="рядків каталогу" />
         <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Каталог запчастин">
           {visibleRows.map((part) => (
-            <li key={part.id} data-record-id={part.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
-              <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{part.sku}</strong><span className="mt-1 block text-[12px] font-medium">{part.description}</span></div><div className="flex flex-wrap justify-end gap-1"><StatusBadge tone={part.fullType === "Sea-Doo Parts" ? "blue" : part.fullType === "SSV Parts" ? "green" : part.fullType === "Spyder Parts" ? "purple" : "neutral"}>{part.fullType}</StatusBadge><StatusBadge tone={part.status === "active" ? "green" : part.status === "obsolete" ? "red" : "amber"}>{part.status === "active" ? "Active" : part.status === "obsolete" ? "Obsolete" : "Substituted"}</StatusBadge></div></div>
+            <li key={part.id} data-record-id={part.id} aria-labelledby={`catalog-parts-${part.id}-title`} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+              <div className="flex flex-wrap items-start justify-between gap-2"><div id={`catalog-parts-${part.id}-title`} className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{part.sku}</strong><span className="mt-1 block text-[12px] font-medium">{part.description}</span></div><div className="flex flex-wrap justify-end gap-1"><StatusBadge tone={part.fullType === "Sea-Doo Parts" ? "blue" : part.fullType === "SSV Parts" ? "green" : part.fullType === "Spyder Parts" ? "purple" : "neutral"}>{part.fullType}</StatusBadge><StatusBadge tone={part.status === "active" ? "green" : part.status === "obsolete" ? "red" : "amber"}>{part.status === "active" ? "Active" : part.status === "obsolete" ? "Obsolete" : "Substituted"}</StatusBadge></div></div>
               <dl className="grid grid-cols-3 gap-x-2 gap-y-2 text-[11px]">
                 <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Дист. EUR</dt><dd className="m-0 font-mono tabular-nums">{formatDecimal(part.distributorEur, "EUR")}</dd></div>
                 <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Дилер USD</dt><dd className="m-0 font-mono tabular-nums text-[var(--amber)]">{formatDecimal(part.dealerUsd, "USD")}</dd></div>
@@ -756,7 +756,7 @@ function PartsCatalog() {
           {exactNoResult ? <li className="px-3 py-10 text-center text-[var(--muted-foreground)]">Нічого не знайдено.</li> : null}
           {!hasFilters && !fixturePageCovered ? <li className="px-3 py-10 text-center text-[11px] text-[var(--muted-foreground)]">Сторінку {page} можна переглянути у локальній пагінації, але її рядки не входять до репрезентативного source fixture.</li> : null}
         </ul>
-        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця каталогу запчастин" tabIndex={0}>
+        <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця каталогу запчастин" tabIndex={0}>
           <table className="data-table min-w-[1040px]">
             <thead><tr><th>SKU</th><th>Опис</th><th>Повний тип</th><th>Дист. EUR</th><th>Дилер USD</th><th>Розд. USD</th><th>МОЗ</th><th>К-ть</th><th>Статус</th><th>→ Активна запчастина</th></tr></thead>
             <tbody>
