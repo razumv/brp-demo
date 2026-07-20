@@ -111,7 +111,7 @@ function KpiGrid({ items }: {
   }>;
 }) {
   return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Показники складу">
+    <section className="grid grid-cols-1 gap-3 max-md:hidden sm:grid-cols-2 xl:grid-cols-4" aria-label="Показники складу">
       {items.map((item) => (
         <Panel key={item.label} className="flex min-h-20 items-start gap-3 p-4 shadow-none">
           <span className={`grid size-9 shrink-0 place-items-center rounded-md ${kpiToneClasses[item.tone ?? "neutral"]}`}>
@@ -166,11 +166,12 @@ function ReceivingTab() {
   return (
     <section className="grid gap-4">
       <AdminToolbar
+        mobileDisclosure={{ sections: [] }}
         filters={(
-          <label className="field w-full lg:max-w-[460px]">
+          <label className="field min-w-[220px]">
             <span className="sr-only">Постачання</span>
             <select
-              className="h-10"
+              className="h-11 md:h-10"
               value={shipmentId}
               onChange={(event) => setShipmentId(event.target.value as (typeof warehouseShipments)[number]["id"])}
             >
@@ -184,13 +185,13 @@ function ReceivingTab() {
         )}
         actions={(
           <>
-            <LockedButton title="Приймання всіх позицій є операційною дією і вимкнене">
+            <LockedButton className="!min-h-11 md:!min-h-10" title="Приймання всіх позицій є операційною дією і вимкнене">
               <PackageCheck size={14} /> Прийняти все
             </LockedButton>
-            <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
+            <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-11 md:!min-h-10 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
               <ScanLine size={14} /> Почати приймання
             </LockedButton>
-            <LockedButton title="Приймання в 1С є операційною дією і вимкнене">
+            <LockedButton className="!min-h-11 md:!min-h-10" title="Приймання в 1С є операційною дією і вимкнене">
               <CheckCircle2 size={14} /> Прийняти (вже в 1С)
             </LockedButton>
           </>
@@ -347,6 +348,10 @@ function ReceiptSummaryTab() {
             <LockedButton title="Експорт не запускається у read-only клоні"><Download size={14} /> Експорт</LockedButton>
           </>
         )}
+        mobileDisclosure={{
+          sections: ["filters", "actions"],
+          activeCount: Number(shipment !== "all") + Number(filter !== "all"),
+        }}
       />
 
       <Panel className="overflow-hidden shadow-none">
@@ -411,6 +416,7 @@ function ShortagesTab() {
           />
         )}
         actions={<LockedButton title="Оновлення нестач вимкнене у read-only клоні"><RefreshCw size={14} /> Оновити</LockedButton>}
+        mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(view !== "active") }}
       />
 
       <Panel className="overflow-hidden shadow-none">
@@ -505,6 +511,7 @@ function FulfillmentTab() {
           />
         )}
         actions={<LockedButton title="Перезіставлення є операційною дією і вимкнене"><RefreshCw size={14} /> Перезіставити</LockedButton>}
+        mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(filter !== "all") }}
       />
 
       <Panel className="overflow-hidden shadow-none">
@@ -659,6 +666,7 @@ function InventorySummaryTab() {
           />
         )}
         actions={<LockedButton title="Excel-експорт не запускається у read-only клоні"><Download size={14} /> Експорт Excel</LockedButton>}
+        mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(shipmentFilter !== "all") }}
       />
       <p className="m-0 text-[10px] text-[var(--muted-foreground)]">Фільтри працюють по доказовій вибірці; KPI зберігають повні source totals.</p>
 
