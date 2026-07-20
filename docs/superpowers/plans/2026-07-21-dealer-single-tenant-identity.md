@@ -352,6 +352,8 @@ git add docs/superpowers/specs/2026-07-21-dealer-single-tenant-frontend-design.m
 git commit -m "docs: record dealer identity implementation"
 ```
 
-- [ ] **Step 5: Request an independent code review**
+- [x] **Step 5: Request an independent code review**
 
 Review must verify spec coverage, password non-persistence, current marker compatibility, no session schema change, no unintended dealer workflow changes, and the evidence from Steps 1-3.
+
+Completed by the final whole-branch review of `3bbe94d..c833351`: ready to merge with 0 Critical, 0 Important, and 0 Minor findings.

@@ -1,7 +1,7 @@
 # Dealer single-tenant frontend identity design
 
 **Date:** 2026-07-21
-**Status:** Proposed for implementation
+**Status:** Implemented
 **Scope:** Login/session identity only; dealer workflow parity is handled separately.
 
 ## Goal
