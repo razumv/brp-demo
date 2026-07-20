@@ -37,7 +37,7 @@ if (!iconPurposes.has("any") || !iconPurposes.has("maskable")) {
 const serviceWorker = await readFile(path.join(outputDirectory, "sw.js"), "utf8");
 const precacheUrls = [...serviceWorker.matchAll(/\{url:"([^"]+)",revision:"[^"]+"\}/g)].map((match) => match[1]);
 const scopedNavigationRoute = serviceWorker.match(
-  /"navigate"===\w+\.mode&&\w+\.href\.startsWith\(self\.registration\.scope\),new class extends \w+\{([\s\S]*?)\}\),"GET"\),self\.__WB_DISABLE_DEV_LOGS/,
+  /"navigate"===\w+\.mode&&\w+\.href\.startsWith\(self\.registration\.scope\),([\s\S]*?),"GET"\),self\.__WB_DISABLE_DEV_LOGS/,
 );
 
 if (precacheUrls.length === 0) {
