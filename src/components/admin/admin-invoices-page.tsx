@@ -117,6 +117,7 @@ function PageKpis() {
   return (
     <AdminKpiGrid
       label="Показники інвойсів"
+      hideOnMobile
       items={invoicePageKpis.map((item) => {
         const Icon = pageKpiIcons[item.id];
         return { ...item, icon: <Icon size={17} /> };
@@ -387,7 +388,7 @@ function AppendixKpis() {
     { label: "Найближчий ETA", value: invoiceAppendixSourceTotals.nearestEta, icon: CalendarDays, color: "text-[var(--purple)] bg-[var(--purple-soft)]" },
   ] as const;
   return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Показники додатків">
+    <section className="grid grid-cols-1 gap-3 max-md:hidden sm:grid-cols-2 xl:grid-cols-5" aria-label="Показники додатків">
       {items.map((item) => {
         const Icon = item.icon;
         return <Panel key={item.label} className="flex min-h-20 items-center gap-3 p-4 shadow-none"><span className={`grid size-9 shrink-0 place-items-center rounded-md ${item.color}`}><Icon size={18} /></span><span><span className="block text-[10px] text-[var(--muted-foreground)]">{item.label}</span><strong className="mt-1 block text-[20px] leading-none tabular-nums">{item.value}</strong></span></Panel>;
@@ -514,6 +515,7 @@ function InvoicesTab() {
         search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук інвойсів" placeholder="Пошук інвойсів..." />}
         filters={<AdminSegmentedControl items={invoiceFilters.map((item) => ({ id: item.id, label: item.label, count: item.count }))} value={filter} onValueChange={setFilter} label="Статус відвантажень" />}
         meta={`${visibleGroups.length} BL · ${visibleFormedInvoices.length} інвойсів`}
+        mobileDisclosure={{ sections: ["filters"], activeCount: Number(filter !== "all") }}
       />
 
       <AdminTableShell notice={visibleGroups.length ? <RepresentativeNotice shown={visibleGroups.length} total={sourceGroupedCount} noun="згрупованих BL" /> : undefined} scrollLabel="Відвантаження для інвойсів">
@@ -565,7 +567,7 @@ function CostKpis({ view }: { view: InvoiceCostView }) {
     { label: "Всього готівка", value: kpis.cash, icon: DollarSign, color: "text-[var(--purple)] bg-[var(--purple-soft)]" },
     { label: "Всього витрати", value: kpis.total, icon: CircleDollarSign, color: "text-[var(--amber)] bg-[var(--amber-soft)]" },
   ] as const;
-  return <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Підсумки собівартості">{items.map((item) => { const Icon = item.icon; return <Panel key={item.label} className="flex min-h-20 items-center gap-3 p-4 shadow-none"><span className={`grid size-9 shrink-0 place-items-center rounded-md ${item.color}`}><Icon size={17} /></span><span className="min-w-0"><span className="block text-[9px] font-bold uppercase text-[var(--muted-foreground)]">{item.label}</span><strong className="mt-1 block truncate text-[20px] leading-none">{item.value}</strong></span></Panel>; })}</section>;
+  return <section className="grid grid-cols-1 gap-3 max-md:hidden sm:grid-cols-2 xl:grid-cols-5" aria-label="Підсумки собівартості">{items.map((item) => { const Icon = item.icon; return <Panel key={item.label} className="flex min-h-20 items-center gap-3 p-4 shadow-none"><span className={`grid size-9 shrink-0 place-items-center rounded-md ${item.color}`}><Icon size={17} /></span><span className="min-w-0"><span className="block text-[9px] font-bold uppercase text-[var(--muted-foreground)]">{item.label}</span><strong className="mt-1 block truncate text-[20px] leading-none">{item.value}</strong></span></Panel>; })}</section>;
 }
 
 function MonthMenu({ open, selected, onToggleOpen, onClose, onToggleMonth, onAll, onReset }: {
@@ -671,6 +673,10 @@ function CostTab() {
         view={<AdminSegmentedControl items={[{ id: "active", label: "Активні" }, { id: "archive", label: "Архів" }, { id: "incomplete", label: "Незаповнені" }]} value={view} onValueChange={setView} label="Стан даних собівартості" />}
         actions={<AdminIconAction label="Експорт Excel" tooltip="Експорт Excel вимкнений" icon={<Download size={14} />} disabled />}
         meta={`${visibleCards.length} BL`}
+        mobileDisclosure={{
+          sections: ["filters", "actions"],
+          activeCount: Number(selectedMonths.length !== invoiceCostMonths.length),
+        }}
       />
       <AdminTableShell title="Дані собівартості за коносаментом" notice={visibleCards.length ? <RepresentativeNotice shown={visibleCards.length} total={sourceCount} noun="BL-карток" /> : undefined}>
         {visibleCards.length ? (
