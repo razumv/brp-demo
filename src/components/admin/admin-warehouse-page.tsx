@@ -171,7 +171,7 @@ function ReceivingTab() {
           <label className="field min-w-[220px]">
             <span className="sr-only">Постачання</span>
             <select
-              className="h-10"
+              className="h-11 md:h-10"
               value={shipmentId}
               onChange={(event) => setShipmentId(event.target.value as (typeof warehouseShipments)[number]["id"])}
             >
@@ -185,13 +185,13 @@ function ReceivingTab() {
         )}
         actions={(
           <>
-            <LockedButton className="!min-h-10" title="Приймання всіх позицій є операційною дією і вимкнене">
+            <LockedButton className="!min-h-11 md:!min-h-10" title="Приймання всіх позицій є операційною дією і вимкнене">
               <PackageCheck size={14} /> Прийняти все
             </LockedButton>
-            <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-10 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
+            <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-11 md:!min-h-10 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
               <ScanLine size={14} /> Почати приймання
             </LockedButton>
-            <LockedButton className="!min-h-10" title="Приймання в 1С є операційною дією і вимкнене">
+            <LockedButton className="!min-h-11 md:!min-h-10" title="Приймання в 1С є операційною дією і вимкнене">
               <CheckCircle2 size={14} /> Прийняти (вже в 1С)
             </LockedButton>
           </>

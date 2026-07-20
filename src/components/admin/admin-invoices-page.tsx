@@ -682,7 +682,7 @@ function CostTab() {
         {visibleCards.length ? (
             <div className="grid gap-2 p-3">
               {visibleCards.map((card) => (
-                <article key={card.id} className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
+                <article key={card.id} className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]" role="region" aria-label={`Картка собівартості BL ${card.billOfLading}`} tabIndex={0}>
                   <div className="grid min-w-[1050px] grid-cols-[28px_90px_72px_132px_150px_repeat(4,105px)_112px_70px_72px] items-center gap-2 px-3 py-3 text-[10px]">
                     <button type="button" className="grid size-7 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" onClick={() => setSelectedCard(card)} aria-label={`Переглянути BL ${card.billOfLading}`} aria-haspopup="dialog"><ChevronRight size={14} /></button>
                     <button type="button" className="font-mono text-left text-[12px] font-semibold text-[var(--blue)] hover:underline" onClick={() => setSelectedCard(card)} aria-haspopup="dialog">BL {card.billOfLading}</button>

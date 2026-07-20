@@ -33,8 +33,16 @@ test("warehouse keeps its process and supply controls while hiding every process
   const supply = page.getByRole("combobox", { name: "Постачання" });
   const action = page.getByRole("button", { name: "Прийняти все" });
   const [supplyBox, actionBox] = await Promise.all([supply.boundingBox(), action.boundingBox()]);
-  expect(supplyBox?.height ?? 0).toBeGreaterThanOrEqual(40);
-  expect(actionBox?.height ?? 0).toBeGreaterThanOrEqual(40);
+  expect(supplyBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  expect(actionBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+  await openAdminRoute(page, "/admin/warehouse", 767);
+  const [tabletSupplyBox, tabletActionBox] = await Promise.all([
+    page.getByRole("combobox", { name: "Постачання" }).boundingBox(),
+    page.getByRole("button", { name: "Прийняти все" }).boundingBox(),
+  ]);
+  expect(tabletSupplyBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  expect(tabletActionBox?.height ?? 0).toBeGreaterThanOrEqual(44);
 
   await openAdminRoute(page, "/admin/warehouse", 768);
   await expect(page.getByRole("combobox", { name: "Постачання" })).toBeVisible();
@@ -109,5 +117,10 @@ test("invoice secondary filters disclose once and keep horizontal tables labelle
   const shipments = page.getByRole("region", { name: "Відвантаження для інвойсів" });
   await expect(shipments).toHaveAttribute("tabindex", "0");
   expect(await shipments.evaluate((region) => region.scrollWidth > region.clientWidth)).toBe(true);
+
+  await sections.selectOption("cost");
+  const costScroller = page.locator('[role="region"][aria-label^="Картка собівартості BL"]').first();
+  await expect(costScroller).toHaveAttribute("tabindex", "0");
+  expect(await costScroller.evaluate((region) => region.scrollWidth > region.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
