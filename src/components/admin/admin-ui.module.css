@@ -677,6 +677,10 @@
     flex: 1 1 auto;
   }
 
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel :is(button, select, input) {
+    min-height: 44px !important;
+  }
+
   .segmented {
     min-height: 44px;
   }

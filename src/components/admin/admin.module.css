@@ -183,6 +183,10 @@
   min-width: 0;
 }
 
+.mobileHiddenOnMobile {
+  min-width: 0;
+}
+
 .statusGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(130px, 1fr));
@@ -991,5 +995,9 @@
 
   .unitShippingFilters > :nth-child(3) {
     grid-column: 1 / -1;
+  }
+
+  .unitSerialScroller {
+    max-width: calc(100vw - 64px);
   }
 }

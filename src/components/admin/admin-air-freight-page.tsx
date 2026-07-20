@@ -150,24 +150,26 @@ function AirFreightTabs({ active, onChange }: { active: AirFreightTab; onChange:
 function WorkflowStrip() {
   return (
     <div className={styles.mobileHiddenOnMobile} data-mobile-surface="air-workflow">
-      <Panel className="overflow-x-auto p-5">
-        <div className="flex min-w-[790px] items-start">
-          {airFreightWorkflowSteps.map((step, index) => {
-            const tone = toneClasses[step.tone];
-            return (
-              <div key={step.id} className="contents">
-                <div className="flex min-w-[86px] flex-1 flex-col items-center text-center">
-                  <span className={`grid size-11 place-items-center rounded-full border text-base font-bold ${tone.soft} ${tone.text} ${tone.border}`}>
-                    {step.count}
-                  </span>
-                  <span className="mt-2 text-[10px] font-medium text-[var(--muted-foreground)]">{step.label}</span>
+      <Panel className="min-w-0">
+        <div className="min-w-0 overflow-x-auto p-5" role="region" aria-label="Етапи Air Freight" tabIndex={0}>
+          <div className="flex min-w-[790px] items-start">
+            {airFreightWorkflowSteps.map((step, index) => {
+              const tone = toneClasses[step.tone];
+              return (
+                <div key={step.id} className="contents">
+                  <div className="flex min-w-[86px] flex-1 flex-col items-center text-center">
+                    <span className={`grid size-11 place-items-center rounded-full border text-base font-bold ${tone.soft} ${tone.text} ${tone.border}`}>
+                      {step.count}
+                    </span>
+                    <span className="mt-2 text-[10px] font-medium text-[var(--muted-foreground)]">{step.label}</span>
+                  </div>
+                  {index < airFreightWorkflowSteps.length - 1 ? (
+                    <span className={`mt-[21px] h-px min-w-8 flex-1 ${index === 0 ? "bg-[var(--blue)]" : "bg-[var(--border)]"}`} aria-hidden="true" />
+                  ) : null}
                 </div>
-                {index < airFreightWorkflowSteps.length - 1 ? (
-                  <span className={`mt-[21px] h-px min-w-8 flex-1 ${index === 0 ? "bg-[var(--blue)]" : "bg-[var(--border)]"}`} aria-hidden="true" />
-                ) : null}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </Panel>
     </div>

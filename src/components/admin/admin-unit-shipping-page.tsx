@@ -395,7 +395,7 @@ export function AdminUnitShippingPage() {
                                 <span><strong className="text-[var(--foreground)]">Модель №:</strong> {record.model.number}</span>
                                 <span><strong className="text-[var(--foreground)]">Опис:</strong> {record.model.description}</span>
                               </div>
-                              <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                              <div className={`overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] ${styles.unitSerialScroller}`} role="region" aria-label={`Серійні номери замовлення ${orderNumber}`} tabIndex={0}>
                                 <table className="w-full min-w-[620px] border-collapse text-[11px]">
                                   <thead className="bg-[var(--surface-subtle)] text-left text-[var(--muted-foreground)]">
                                     <tr><th className="px-3 py-2 font-medium">Серійний номер (VIN)</th><th className="px-3 py-2 font-medium">Дата відвантаження</th><th className="px-3 py-2 font-medium">#</th></tr>
