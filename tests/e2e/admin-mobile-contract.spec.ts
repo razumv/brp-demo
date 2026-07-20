@@ -54,17 +54,33 @@ test("catalog swaps its desktop table for mobile cards at the exact breakpoint",
 });
 
 test("settlements diagnostic is mobile-persisted and desktop-static", async ({ page }) => {
+  const storageKey = "brp-clone-ui-v1:collapsible:admin.settlements.sync-diagnostic";
   await openAdminRoute(page, "/admin/settlements", 390);
+  await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
+  await page.reload();
   const trigger = page.getByRole("button", { name: "Оновлюється" });
+  const diagnosticPanel = page.locator('[data-collapse-mode="mobile"] [role="region"]');
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expectTouchTarget(trigger);
+  await expect(diagnosticPanel).toHaveCSS("display", "none");
+  await expect(diagnosticPanel).toHaveAttribute("hidden", "");
   await trigger.click();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await page.reload();
-  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "true");
+  await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("1");
 
-  await openAdminRoute(page, "/admin/settlements", 768);
+  await page.setViewportSize({ width: 768, height: 1000 });
   await expect(page.getByText("Остання успішна синхронізація:")).toBeVisible();
   await expect(page.getByRole("button", { name: "Оновлюється" })).toBeDisabled();
+  await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("1");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "true");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "Оновлюється" }).click();
+  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("button", { name: "Оновлюється" }).click();
+  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "true");
 });
 
 test("mobile toolbar discloses filters without resetting them", async ({ page }) => {

@@ -23,7 +23,8 @@ import {
   AdminSegmentedControl,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
-import { Panel, StatusBadge } from "@/components/shared/ui";
+import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
+import { Panel } from "@/components/shared/ui";
 import {
   settlementDealers,
   settlementPeriodPresets,
@@ -55,14 +56,22 @@ function SyncDiagnostic() {
 
   return (
     <Panel className="overflow-hidden shadow-none">
-      <div className="flex flex-col gap-3 border-b border-[var(--border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" aria-hidden="true" />
-          <StatusBadge tone="amber">{diagnostic.stateLabel}</StatusBadge>
-        </div>
+      <PersistedCollapsibleSection
+        persistenceId="admin.settlements.sync-diagnostic"
+        title="Оновлюється"
+        defaultOpen={false}
+        collapseMode="mobile"
+        headingLevel="h2"
+        icon={<span className="size-2 rounded-full bg-[var(--amber)]" />}
+        summary="Стан синхронізації з 1С"
+        headerClassName="border-b border-[var(--border)] px-4 py-3"
+        contentClassName="p-4"
+        hiddenUntilFound={false}
+        keepMounted
+      >
         <button
           type="button"
-          className="button button-outline shrink-0 self-start sm:self-auto"
+          className="button button-outline w-fit"
           disabled
           title="Синхронізація з 1С вимкнена у read-only демонстрації"
         >
@@ -70,33 +79,32 @@ function SyncDiagnostic() {
           <RefreshCw size={14} />
           Оновити з 1С (30 днів)
         </button>
-      </div>
-
-      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
-        <div className="grid content-start gap-2 text-[12px] text-[var(--muted-foreground)]">
-          <p className="m-0">
-            Остання успішна синхронізація: <strong className="text-[var(--foreground)]">{diagnostic.lastSuccessfulSync}</strong>
-          </p>
-          <p className="m-0">
-            Рухи синхронізовано: <strong className="text-[var(--foreground)]">{diagnostic.movementsSyncedAt}</strong>
-          </p>
-          <p className="m-0">{diagnostic.daytimeSchedule} · {diagnostic.nighttimeSchedule}</p>
-          <p className="m-0">{diagnostic.liveBalanceNote}</p>
-        </div>
-
-        <div className="grid content-start gap-2">
-          <p className="m-0 w-fit rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px]">
-            {diagnostic.synchronizedMovementCount} рухів / {diagnostic.mappingCount} маппінгів / {diagnostic.errorCount} помилок
-          </p>
-          <div className="flex min-w-0 items-start gap-2 rounded-md border border-[var(--red)] bg-[var(--red-soft)] px-3 py-2 text-[11px] text-[var(--red)]">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-            <p className="m-0 min-w-0">
-              <span className="font-medium">Остання помилка: </span>
-              <code className="break-all font-mono">{diagnostic.lastError}</code>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
+          <div className="grid content-start gap-2 text-[12px] text-[var(--muted-foreground)]">
+            <p className="m-0">
+              Остання успішна синхронізація: <strong className="text-[var(--foreground)]">{diagnostic.lastSuccessfulSync}</strong>
             </p>
+            <p className="m-0">
+              Рухи синхронізовано: <strong className="text-[var(--foreground)]">{diagnostic.movementsSyncedAt}</strong>
+            </p>
+            <p className="m-0">{diagnostic.daytimeSchedule} · {diagnostic.nighttimeSchedule}</p>
+            <p className="m-0">{diagnostic.liveBalanceNote}</p>
+          </div>
+
+          <div className="grid content-start gap-2">
+            <p className="m-0 w-fit rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px]">
+              {diagnostic.synchronizedMovementCount} рухів / {diagnostic.mappingCount} маппінгів / {diagnostic.errorCount} помилок
+            </p>
+            <div className="flex min-w-0 items-start gap-2 rounded-md border border-[var(--red)] bg-[var(--red-soft)] px-3 py-2 text-[11px] text-[var(--red)]">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+              <p className="m-0 min-w-0">
+                <span className="font-medium">Остання помилка: </span>
+                <code className="break-all font-mono">{diagnostic.lastError}</code>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </PersistedCollapsibleSection>
     </Panel>
   );
 }
@@ -259,6 +267,7 @@ export function AdminSettlementsPage() {
       <AdminKpiGrid
         columns={3}
         label="Показники взаєморозрахунків"
+        hideOnMobile
         items={[
           { id: "dealers", label: "Дилерів", value: visibleKpis.dealers, icon: <Building2 size={18} />, tone: "blue" },
           { id: "mapped", label: "З маппінгом", value: visibleKpis.mappedDealers, icon: <CheckCircle2 size={18} />, tone: "green" },
