@@ -125,6 +125,9 @@ export function AdminUnitShippingPage() {
   const currentPage = Math.min(page, totalPages);
   const pageRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const activePanelId = `unit-shipping-${activeTab}-panel`;
+  const activeFilterCount = [category !== "Всі", Boolean(period), Boolean(modelNumber), Boolean(shippedFrom), Boolean(shippedTo)]
+    .filter(Boolean)
+    .length;
 
   const resetFilters = () => {
     setQuery("");
@@ -298,6 +301,7 @@ export function AdminUnitShippingPage() {
             </button>
           )}
           meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
+          mobileDisclosure={{ activeCount: activeFilterCount }}
         />
 
         <Panel className="overflow-hidden">

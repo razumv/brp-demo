@@ -74,6 +74,7 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   const typeControl = page.locator('select[aria-label="Тип техніки"]');
   const disclosurePanel = page.locator("[data-mobile-disclosure-panel]");
   await expect(filters).toHaveAttribute("aria-expanded", "false");
+  await expectTouchTarget(filters);
   await filters.click();
   await expect(disclosurePanel).toHaveCount(1);
   await expect(typeControl).toHaveCount(1);
@@ -99,6 +100,18 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(filters).toHaveCount(0);
   await expect(typeControl).toHaveCount(1);
   await expect(typeControl).toHaveValue("Гідроцикли");
+});
+
+test("mobile tab select takes over at the 767px breakpoint", async ({ page }) => {
+  await openAdminRoute(page, "/admin/unit-shipping", 767);
+  const mobileTabs = page.getByRole("combobox", { name: "Стан відвантаження" });
+  await expect(mobileTabs).toBeVisible();
+  expect((await mobileTabs.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await expect(page.getByRole("tablist", { name: "Стан відвантаження" })).toBeHidden();
+
+  await openAdminRoute(page, "/admin/unit-shipping", 768);
+  await expect(mobileTabs).toBeHidden();
+  await expect(page.getByRole("tablist", { name: "Стан відвантаження" })).toBeVisible();
 });
 
 test("users expose mobile cards and preserve desktop grid", async ({ page }) => {
