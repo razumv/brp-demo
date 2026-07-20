@@ -36,6 +36,10 @@ test("ordinary credentials create the shared Logos identity without storing the 
     displayName: "Финансы",
     company: "Logos",
   });
+
+  await page.goto("/dealer/orders");
+  await expect(page).toHaveURL(/\/dealer\/orders\/?$/);
+  await expect(page.getByRole("heading", { name: "Мої замовлення" })).toBeVisible();
 });
 
 test("different ordinary emails resolve to the same dealer profile", async ({ page }) => {
