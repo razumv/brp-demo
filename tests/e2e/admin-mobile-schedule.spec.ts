@@ -22,6 +22,16 @@ async function expectNoDocumentOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 }
 
+async function expectNoOperationRequests(page: Page, action: Locator) {
+  const requests: string[] = [];
+  const recordRequest = (request: { url: () => string }) => requests.push(request.url());
+  page.on("request", recordRequest);
+  await action.dispatchEvent("click");
+  await page.waitForTimeout(50);
+  page.off("request", recordRequest);
+  expect(requests).toEqual([]);
+}
+
 test.beforeEach(async ({ page }) => {
   await seedAdminSession(page);
 });
@@ -134,4 +144,35 @@ test("Schedule chronology rail and stock table are bounded labelled scrollers", 
   await page.getByRole("tab", { name: "Складські запаси" }).click();
   await expectScroller(page.getByRole("region", { name: "Складські запаси" }));
   await expectNoDocumentOverflow(page);
+});
+
+test("compact operational Schedule actions remain explained and hard-disabled", async ({ page }) => {
+  for (const width of mobileWidths) {
+    await openAdminRoute(page, "/admin/schedule", width);
+    const actions = page.locator('[data-schedule-actions] button');
+    await expect(actions).toHaveCount(2);
+    const [openExcel, sync] = await Promise.all([actions.nth(0).boundingBox(), actions.nth(1).boundingBox()]);
+    expect(openExcel?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(sync?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(Math.abs((openExcel?.y ?? 0) - (sync?.y ?? 0))).toBeLessThanOrEqual(1);
+    expect(Math.abs((openExcel?.width ?? 0) - (sync?.width ?? 0))).toBeLessThanOrEqual(1);
+    for (const action of [
+      page.getByRole("button", { name: "Відкрити Excel" }),
+      page.getByRole("button", { name: "Синхронізувати" }),
+    ]) {
+      await expect(action).toBeDisabled();
+      await expect(action).toHaveAttribute("aria-describedby", "schedule-actions-safety");
+      await expectNoOperationRequests(page, action);
+    }
+    await expect(page.locator("#schedule-actions-safety")).toBeVisible();
+    await expectNoDocumentOverflow(page);
+  }
+
+  await openAdminRoute(page, "/admin/schedule", 768);
+  const [openExcel, sync] = await Promise.all([
+    page.getByRole("button", { name: "Відкрити Excel" }).boundingBox(),
+    page.getByRole("button", { name: "Синхронізувати" }).boundingBox(),
+  ]);
+  expect(Math.abs((openExcel?.y ?? 0) - (sync?.y ?? 0))).toBeLessThanOrEqual(1);
+  await expect(page.locator('[data-schedule-actions]')).toBeVisible();
 });

@@ -101,6 +101,26 @@ function LockedButton({ children, className = "", title }: {
   );
 }
 
+function MobileReceivingLockedAction({ icon, label, title }: {
+  icon: ReactNode;
+  label: string;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-disabled="true"
+      aria-label={label}
+      aria-describedby="warehouse-receiving-safety"
+      title={title}
+      className="button button-outline w-full justify-center px-0"
+    >
+      {icon}
+    </button>
+  );
+}
+
 function KpiGrid({ items }: {
   items: ReadonlyArray<{
     label: string;
@@ -166,9 +186,10 @@ function ReceivingTab() {
   return (
     <section className="grid gap-4">
       <AdminToolbar
+        className="[&>div:first-child]:w-full [&>div:last-child]:w-full md:[&>div:first-child]:w-auto md:[&>div:last-child]:w-auto"
         mobileDisclosure={{ sections: [] }}
         filters={(
-          <label className="field w-full lg:max-w-[460px]">
+          <label className="field w-full min-w-0 md:w-[460px]">
             <span className="sr-only">Постачання</span>
             <select
               className="h-11 md:h-9"
@@ -184,17 +205,27 @@ function ReceivingTab() {
           </label>
         )}
         actions={(
-          <>
-            <LockedButton className="!min-h-11 md:!min-h-9" title="Приймання всіх позицій є операційною дією і вимкнене">
-              <PackageCheck size={14} /> Прийняти все
-            </LockedButton>
-            <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-11 md:!min-h-9 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
-              <ScanLine size={14} /> Почати приймання
-            </LockedButton>
-            <LockedButton className="!min-h-11 md:!min-h-9" title="Приймання в 1С є операційною дією і вимкнене">
-              <CheckCircle2 size={14} /> Прийняти (вже в 1С)
-            </LockedButton>
-          </>
+          <div className="w-full">
+            <div className="grid w-full grid-cols-3 gap-2 md:hidden" data-mobile-receiving-actions>
+              <MobileReceivingLockedAction icon={<PackageCheck size={16} />} label="Прийняти все" title="Приймання всіх позицій є операційною дією і вимкнене" />
+              <MobileReceivingLockedAction icon={<ScanLine size={16} />} label="Почати приймання" title="Запуск приймання є операційною дією і вимкнений" />
+              <MobileReceivingLockedAction icon={<CheckCircle2 size={16} />} label="Прийняти (вже в 1С)" title="Приймання в 1С є операційною дією і вимкнене" />
+            </div>
+            <div className="hidden flex-wrap gap-2 md:flex" data-desktop-receiving-actions>
+              <LockedButton className="!min-h-9" title="Приймання всіх позицій є операційною дією і вимкнене">
+                <PackageCheck size={14} /> Прийняти все
+              </LockedButton>
+              <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-9 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
+                <ScanLine size={14} /> Почати приймання
+              </LockedButton>
+              <LockedButton className="!min-h-9" title="Приймання в 1С є операційною дією і вимкнене">
+                <CheckCircle2 size={14} /> Прийняти (вже в 1С)
+              </LockedButton>
+            </div>
+            <p id="warehouse-receiving-safety" className="mt-2 mb-0 text-[11px] text-[var(--muted-foreground)] md:hidden">
+              Операції приймання доступні лише для перегляду: приймання, сканування та 1С не запускаються.
+            </p>
+          </div>
         )}
       />
 

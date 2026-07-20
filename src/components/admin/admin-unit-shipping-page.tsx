@@ -175,19 +175,19 @@ export function AdminUnitShippingPage() {
         )}
         actions={(
           <div className="grid w-full gap-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <label className="field min-w-0 sm:w-[145px]">
+            <div className="grid grid-cols-2 gap-2 md:flex md:items-end">
+              <label className="field min-w-0 md:w-[145px]">
                 <span>Shipped: з</span>
                 <input type="date" value={syncFrom} onChange={(event) => setSyncFrom(event.target.value)} />
               </label>
-              <span className="hidden pb-2.5 text-[var(--muted-foreground)] sm:inline">–</span>
-              <label className="field min-w-0 sm:w-[145px]">
+              <span className="hidden pb-2.5 text-[var(--muted-foreground)] md:inline">–</span>
+              <label className="field min-w-0 md:w-[145px]">
                 <span>Shipped: по</span>
                 <input type="date" value={syncTo} onChange={(event) => setSyncTo(event.target.value)} />
               </label>
               <button
                 type="button"
-                className="button button-primary h-9 whitespace-nowrap"
+                className="button button-primary col-span-2 h-11 w-full whitespace-nowrap md:col-auto md:h-9 md:w-auto"
                 disabled
                 aria-describedby="bossweb-sync-safety"
                 title="Синхронізацію вимкнено у read-only демонстрації"

@@ -27,6 +27,29 @@ async function expectNoDocumentOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 }
 
+async function expectEqualColumns(controls: Locator, columns: number) {
+  await expect(controls).toHaveCount(columns);
+  const boxes = await Promise.all(Array.from({ length: columns }, (_, index) => controls.nth(index).boundingBox()));
+  const first = boxes[0];
+  expect(first).not.toBeNull();
+  for (const box of boxes) {
+    expect(box).not.toBeNull();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(Math.abs((box?.y ?? 0) - (first?.y ?? 0))).toBeLessThanOrEqual(1);
+    expect(Math.abs((box?.width ?? 0) - (first?.width ?? 0))).toBeLessThanOrEqual(1);
+  }
+}
+
+async function expectNoOperationRequests(page: Page, action: Locator) {
+  const requests: string[] = [];
+  const recordRequest = (request: { url: () => string }) => requests.push(request.url());
+  page.on("request", recordRequest);
+  await action.dispatchEvent("click");
+  await page.waitForTimeout(50);
+  page.off("request", recordRequest);
+  expect(requests).toEqual([]);
+}
+
 async function expectSurfaceAt(
   page: Page,
   path: string,
@@ -212,4 +235,58 @@ test("operations scrollers are labelled, keyboard-focusable, and contained", asy
   await page.getByRole("button", { name: /Показати або приховати VIN/ }).first().click();
   await expectScroller(page.getByRole("region", { name: /Серійні номери замовлення/ }));
   await expectNoDocumentOverflow(page);
+});
+
+test("compact operational headers preserve the local BossWeb window and locked warehouse actions", async ({ page }) => {
+  for (const width of mobileWidths) {
+    await openAdminRoute(page, "/admin/unit-shipping", width);
+    const syncFrom = page.getByLabel("Shipped: з");
+    const syncTo = page.getByLabel("Shipped: по");
+    const sync = page.getByRole("button", { name: "Синхр. з BossWeb" });
+    const [fromBox, toBox, syncBox] = await Promise.all([syncFrom.boundingBox(), syncTo.boundingBox(), sync.boundingBox()]);
+    expect(Math.abs((fromBox?.y ?? 0) - (toBox?.y ?? 0))).toBeLessThanOrEqual(1);
+    expect(Math.abs((fromBox?.width ?? 0) - (toBox?.width ?? 0))).toBeLessThanOrEqual(1);
+    expect(syncBox?.y ?? 0).toBeGreaterThan((fromBox?.y ?? 0) + (fromBox?.height ?? 0));
+    await expect(sync).toBeDisabled();
+    await expect(sync).toHaveAttribute("aria-describedby", "bossweb-sync-safety");
+    await expect(page.locator("#bossweb-sync-safety")).toBeVisible();
+    await expectNoOperationRequests(page, sync);
+    await expectNoDocumentOverflow(page);
+
+    await openAdminRoute(page, "/admin/warehouse", width);
+    const shipment = page.getByRole("combobox", { name: "Постачання" });
+    const mobileReceivingActions = page.locator('[data-mobile-receiving-actions] button');
+    const receivingNote = page.locator("#warehouse-receiving-safety");
+    await expect(shipment).toBeVisible();
+    const [shipmentBox, shipmentSurfaceBox] = await Promise.all([
+      shipment.boundingBox(),
+      shipment.locator("xpath=../..").boundingBox(),
+    ]);
+    expect(Math.abs((shipmentBox?.width ?? 0) - (shipmentSurfaceBox?.width ?? 0))).toBeLessThanOrEqual(1);
+    await expectEqualColumns(mobileReceivingActions, 3);
+    await expect(receivingNote).toBeVisible();
+    for (const action of [
+      page.getByRole("button", { name: "Прийняти все" }),
+      page.getByRole("button", { name: "Почати приймання" }),
+      page.getByRole("button", { name: "Прийняти (вже в 1С)" }),
+    ]) {
+      await expect(action).toBeDisabled();
+      await expect(action).toHaveAttribute("aria-describedby", "warehouse-receiving-safety");
+      await expectNoOperationRequests(page, action);
+    }
+    await expectNoDocumentOverflow(page);
+  }
+
+  await openAdminRoute(page, "/admin/unit-shipping", 768);
+  const desktopUnitDateBoxes = await Promise.all([
+    page.getByLabel("Shipped: з").boundingBox(),
+    page.getByLabel("Shipped: по").boundingBox(),
+    page.getByRole("button", { name: "Синхр. з BossWeb" }).boundingBox(),
+  ]);
+  expect(desktopUnitDateBoxes[2]?.y ?? 0).toBeLessThanOrEqual((desktopUnitDateBoxes[0]?.y ?? 0) + 1);
+
+  await openAdminRoute(page, "/admin/warehouse", 768);
+  await expect(page.locator('[data-mobile-receiving-actions]')).toHaveCSS("display", "none");
+  await expect(page.locator('[data-desktop-receiving-actions]')).toBeVisible();
+  await expect(page.getByRole("button", { name: "Прийняти все" })).toContainText("Прийняти все");
 });
