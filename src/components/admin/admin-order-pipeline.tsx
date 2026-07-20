@@ -223,8 +223,14 @@ function PeriodPopover({ open, selected, onSelect, onClose, onClear }: { open: b
 
 function SummaryCards({ counts }: { counts: Readonly<Record<AdminOrderStatus, number>> }) {
   return (
-    <div className={styles.statusScroller}>
-      <section className={styles.statusGrid} aria-label="Зведення статусів">
+    <div
+      className={`${styles.statusScroller} ${styles.mobileHiddenOnMobile}`}
+      data-mobile-surface="pipeline-summary"
+      role="region"
+      aria-label="Зведення статусів"
+      tabIndex={0}
+    >
+      <section className={styles.statusGrid}>
         {ADMIN_ORDER_STATUS_ORDER.map((status) => {
           const meta = ADMIN_ORDER_STATUS_META[status];
           const colorClass = toneTextClasses[meta.tone];
@@ -351,7 +357,7 @@ function KanbanCard({ order }: { order: DisplayOrder }) {
 
 function KanbanView({ orders, counts }: { orders: readonly DisplayOrder[]; counts: Readonly<Record<AdminOrderStatus, number>> }) {
   return (
-    <section className="grid grid-flow-col auto-cols-[minmax(230px,1fr)] gap-3 overflow-x-auto pb-2" aria-label="Канбан замовлень">
+    <section className="grid grid-flow-col auto-cols-[minmax(230px,1fr)] gap-3 overflow-x-auto pb-2" role="region" aria-label="Канбан замовлень" tabIndex={0}>
       {ADMIN_ORDER_STATUS_ORDER.map((status) => {
         const meta = ADMIN_ORDER_STATUS_META[status];
         const columnOrders = orders.filter((order) => order.status === status);
@@ -556,6 +562,10 @@ export function AdminOrderPipeline() {
               label="Вигляд замовлень"
             />
           )}
+          mobileDisclosure={{
+            sections: ["filters"],
+            activeCount: Number(periodSelection.length > 0) + Number(notificationsOnly) + Number(unreadOnly),
+          }}
         />
 
         <SummaryCards counts={summaryCounts} />

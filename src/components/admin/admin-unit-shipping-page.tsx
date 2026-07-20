@@ -30,6 +30,7 @@ import {
   type UnitShippingCategory,
   type UnitShippingTab,
 } from "@/lib/admin-unit-shipping-data";
+import styles from "./admin.module.css";
 
 const DEFAULT_SYNC_FROM = "2025-10-18";
 const DEFAULT_SYNC_TO = "2026-07-18";
@@ -232,7 +233,7 @@ export function AdminUnitShippingPage() {
             />
           )}
           filters={(
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className={`flex min-w-0 flex-wrap items-center gap-2 ${styles.unitShippingFilters}`}>
               <select
                 className="select !w-auto min-w-[150px] max-w-full"
                 aria-label="Тип техніки"
@@ -307,7 +308,7 @@ export function AdminUnitShippingPage() {
             </button>
           )}
           meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
-          mobileDisclosure={{ activeCount: activeFilterCount }}
+          mobileDisclosure={{ sections: ["filters", "actions"], activeCount: activeFilterCount }}
         />
 
         <Panel className="overflow-hidden">
@@ -394,7 +395,7 @@ export function AdminUnitShippingPage() {
                                 <span><strong className="text-[var(--foreground)]">Модель №:</strong> {record.model.number}</span>
                                 <span><strong className="text-[var(--foreground)]">Опис:</strong> {record.model.description}</span>
                               </div>
-                              <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                              <div className={`overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] ${styles.unitSerialScroller}`} role="region" aria-label={`Серійні номери замовлення ${orderNumber}`} tabIndex={0}>
                                 <table className="w-full min-w-[620px] border-collapse text-[11px]">
                                   <thead className="bg-[var(--surface-subtle)] text-left text-[var(--muted-foreground)]">
                                     <tr><th className="px-3 py-2 font-medium">Серійний номер (VIN)</th><th className="px-3 py-2 font-medium">Дата відвантаження</th><th className="px-3 py-2 font-medium">#</th></tr>
