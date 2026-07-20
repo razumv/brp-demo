@@ -86,16 +86,18 @@ test("company mobile cards keep their employee and direct actions touch-sized", 
   }
 });
 
-test("permissions keeps primary search and role selection visible while disclosing bulk actions once", async ({ page }) => {
+test("permissions keeps primary search visible while disclosing role controls and bulk actions once", async ({ page }) => {
   await openAdminRoute(page, "/admin/permissions", 390);
   await expect(page.getByRole("textbox", { name: "Пошук за правами, об'єктом або дією" })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Роль доступу" })).toBeVisible();
-  const trigger = page.getByRole("button", { name: "Масові дії" });
+  await expect(page.getByRole("combobox", { name: "Роль доступу" })).toHaveCount(0);
+  const trigger = page.getByRole("button", { name: "Фільтри дозволів" });
   const panel = page.locator("[data-mobile-disclosure-panel]");
   await expectTouchTarget(trigger);
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByRole("button", { name: "Дати читання" })).toHaveCount(0);
   await trigger.click();
+  await expect(panel.getByRole("combobox", { name: "Роль доступу" })).toBeVisible();
+  await expect(panel.getByRole("combobox", { name: "Стан дозволів" })).toBeVisible();
   await expect(panel.getByRole("button", { name: "Дати читання" })).toBeDisabled();
   await expect(panel.getByRole("button", { name: "Дати все" })).toBeDisabled();
   await expect(panel.getByRole("button", { name: "Відкликати все" })).toBeDisabled();

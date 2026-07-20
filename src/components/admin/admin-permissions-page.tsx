@@ -112,6 +112,32 @@ function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
+type PermissionStateFilter = "all" | "on" | "off";
+
+function PermissionStateFilterControl({
+  value,
+  onValueChange,
+}: {
+  value: PermissionStateFilter;
+  onValueChange: (value: PermissionStateFilter) => void;
+}) {
+  return (
+    <label className="grid min-w-0 flex-1 gap-1 md:hidden">
+      <span className="text-[10px] font-[680] uppercase tracking-[.035em] text-[var(--muted-foreground)]">Стан дозволів</span>
+      <select
+        className="min-h-11 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] text-[var(--foreground)] outline-none focus:border-[var(--orange)] focus:ring-1 focus:ring-[var(--orange)]"
+        aria-label="Стан дозволів"
+        value={value}
+        onChange={(event) => onValueChange(event.target.value as PermissionStateFilter)}
+      >
+        <option value="all">Усі об&apos;єкти</option>
+        <option value="on">Є увімкнені дії</option>
+        <option value="off">Є вимкнені дії</option>
+      </select>
+    </label>
+  );
+}
+
 function roleDefinition(role: AdminPermissionRole): AdminPermissionRoleDefinition {
   return adminPermissionRoles.find((item) => item.id === role) ?? adminPermissionRoles[0];
 }
@@ -161,20 +187,22 @@ function ReadOnlyQuickButton({ children, tone = "neutral" }: {
 export function AdminPermissionsPage() {
   const [activeRole, setActiveRole] = useState<AdminPermissionRole>("manager");
   const [query, setQuery] = useState("");
+  const [permissionState, setPermissionState] = useState<PermissionStateFilter>("all");
   const role = roleDefinition(activeRole);
   const normalizedQuery = normalize(query);
 
   const filteredEntities = useMemo(() => {
-    if (!normalizedQuery) return role.entities;
-
     return role.entities.filter((entity) => {
       const searchableActions = role.actions
         .filter((action) => entity.permissions[action] !== undefined)
         .map((action) => adminPermissionActionLabels[action]);
-      return [entity.label, ...searchableActions]
+      const matchesQuery = !normalizedQuery || [entity.label, ...searchableActions]
         .some((value) => normalize(value).includes(normalizedQuery));
+      const permissionStates = Object.values(entity.permissions);
+      const matchesState = permissionState === "all" || permissionStates.includes(permissionState);
+      return matchesQuery && matchesState;
     });
-  }, [normalizedQuery, role]);
+  }, [normalizedQuery, permissionState, role]);
 
   const roleTabs = adminPermissionRoles.map((item) => ({
     id: item.id,
@@ -204,14 +232,17 @@ export function AdminPermissionsPage() {
           />
         )}
         filters={(
-          <AdminTabs
-            items={roleTabs}
-            value={activeRole}
-            onValueChange={setActiveRole}
-            label="Ролі доступу"
-            mobileSelectLabel="Роль доступу"
-            size="compact"
-          />
+          <div className="flex min-w-0 flex-1 flex-wrap items-end gap-2">
+            <AdminTabs
+              items={roleTabs}
+              value={activeRole}
+              onValueChange={setActiveRole}
+              label="Ролі доступу"
+              mobileSelectLabel="Роль доступу"
+              size="compact"
+            />
+            <PermissionStateFilterControl value={permissionState} onValueChange={setPermissionState} />
+          </div>
         )}
         actions={(
           <>
@@ -220,7 +251,7 @@ export function AdminPermissionsPage() {
             <ReadOnlyQuickButton tone="danger"><Trash2 size={14} /> Відкликати все</ReadOnlyQuickButton>
           </>
         )}
-        mobileDisclosure={{ sections: ["actions"], label: "Масові дії" }}
+        mobileDisclosure={{ sections: ["filters", "actions"], label: "Фільтри дозволів" }}
       />
 
       <section

@@ -208,27 +208,111 @@
     background: var(--surface);
   }
 
-  .mobileCard > header {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
+  .mobileSummary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 20px;
+    align-items: center;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 12px;
+    gap: 8px;
+    border: 0;
+    background: var(--surface);
+    color: var(--foreground);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mobileSummary:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--orange);
+    outline-offset: -2px;
+  }
+
+  .mobileSummaryCount {
+    color: var(--muted-foreground);
+    font-size: 10px;
+    font-weight: 620;
+    white-space: nowrap;
+  }
+
+  .mobileSummaryChevron {
+    color: var(--muted-foreground);
+    transition: transform 120ms ease;
+  }
+
+  .mobileSummary[aria-expanded="true"] .mobileSummaryChevron {
+    transform: rotate(180deg);
   }
 
   .mobilePermissions {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--border);
   }
 
   .mobilePermissionRow {
-    display: flex;
+    display: grid;
     align-items: center;
-    justify-content: space-between;
-    min-height: 42px;
-    padding: 8px 12px;
-    gap: 16px;
+    min-width: 0;
+    min-height: 76px;
+    padding: 8px;
+    gap: 4px;
     border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
   }
 
-  .mobilePermissionRow:last-child {
+  .mobilePermissionRow:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .mobilePermissionRow:nth-last-child(-n + 2) {
     border-bottom: 0;
+  }
+
+  .mobilePermissionRow .actionLabel {
+    justify-content: flex-start;
+    white-space: normal;
+  }
+
+  .mobilePermissionRow .permissionSwitch {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+  }
+
+  .mobilePermissionRow .permissionSwitch::before {
+    position: absolute;
+    top: 12px;
+    left: 6px;
+    width: 30px;
+    height: 18px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    content: "";
+  }
+
+  .mobilePermissionRow .permissionSwitch > span {
+    top: 14px;
+    left: 8px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .mobilePermissionRow .permissionSwitch[data-state="checked"] {
+    background: transparent;
+  }
+
+  .mobilePermissionRow .permissionSwitch[data-state="checked"]::before {
+    border-color: var(--green);
+    background: var(--green);
+  }
+
+  .mobilePermissionRow .permissionSwitch[data-state="checked"] > span {
+    left: 20px;
   }
 }
 
