@@ -179,6 +179,10 @@
   padding-bottom: 2px;
 }
 
+.unitShippingFilters {
+  min-width: 0;
+}
+
 .statusGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(130px, 1fr));
@@ -964,6 +968,28 @@
   }
 
   .bossResult > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobileHiddenOnMobile {
+    display: none;
+  }
+
+  .unitShippingFilters {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unitShippingFilters > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .unitShippingFilters > :nth-child(3) {
     grid-column: 1 / -1;
   }
 }

@@ -30,6 +30,7 @@ import {
   type UnitShippingCategory,
   type UnitShippingTab,
 } from "@/lib/admin-unit-shipping-data";
+import styles from "./admin.module.css";
 
 const DEFAULT_SYNC_FROM = "2025-10-18";
 const DEFAULT_SYNC_TO = "2026-07-18";
@@ -232,7 +233,7 @@ export function AdminUnitShippingPage() {
             />
           )}
           filters={(
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className={`flex min-w-0 flex-wrap items-center gap-2 ${styles.unitShippingFilters}`}>
               <select
                 className="select !w-auto min-w-[150px] max-w-full"
                 aria-label="Тип техніки"
@@ -307,7 +308,7 @@ export function AdminUnitShippingPage() {
             </button>
           )}
           meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
-          mobileDisclosure={{ activeCount: activeFilterCount }}
+          mobileDisclosure={{ sections: ["filters", "actions"], activeCount: activeFilterCount }}
         />
 
         <Panel className="overflow-hidden">

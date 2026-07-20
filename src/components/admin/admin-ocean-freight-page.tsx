@@ -114,7 +114,7 @@ function OceanKpis() {
     { id: "arrived", label: "Arrived", value: OCEAN_KPIS.arrived, icon: <CheckCircle2 size={18} />, tone: "green" },
   ] as const;
 
-  return <AdminKpiGrid items={items} label="Показники морських перевезень" />;
+  return <AdminKpiGrid hideOnMobile items={items} label="Показники морських перевезень" />;
 }
 
 function PageTabs({ active, onChange }: { active: PageTab; onChange: (tab: PageTab) => void }) {
@@ -465,6 +465,10 @@ function OceanTab({
             {isFiltered ? " · фільтр активний" : ""}
           </span>
         )}
+        mobileDisclosure={{
+          sections: ["filters", "view", "actions"],
+          activeCount: Number(status !== "all"),
+        }}
       />
       {filteredBills.length === 0 ? (
         <Panel><EmptyState compact title="Контейнери не знайдено" description="Змініть пошуковий запит або статус." /></Panel>

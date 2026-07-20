@@ -223,7 +223,7 @@ function PeriodPopover({ open, selected, onSelect, onClose, onClear }: { open: b
 
 function SummaryCards({ counts }: { counts: Readonly<Record<AdminOrderStatus, number>> }) {
   return (
-    <div className={styles.statusScroller}>
+    <div className={`${styles.statusScroller} ${styles.mobileHiddenOnMobile}`} data-mobile-surface="pipeline-summary">
       <section className={styles.statusGrid} aria-label="Зведення статусів">
         {ADMIN_ORDER_STATUS_ORDER.map((status) => {
           const meta = ADMIN_ORDER_STATUS_META[status];
@@ -556,6 +556,10 @@ export function AdminOrderPipeline() {
               label="Вигляд замовлень"
             />
           )}
+          mobileDisclosure={{
+            sections: ["filters"],
+            activeCount: Number(periodSelection.length > 0) + Number(notificationsOnly) + Number(unreadOnly),
+          }}
         />
 
         <SummaryCards counts={summaryCounts} />
