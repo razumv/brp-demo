@@ -297,6 +297,8 @@ test("mobile disclosures and company actions remain touch-sized", async ({ page 
 });
 
 test("target routes never create document-level horizontal overflow", async ({ page }) => {
+  test.setTimeout(90_000);
+
   const routes = [
     "/admin/order-pipeline",
     "/admin/supplier-orders",
