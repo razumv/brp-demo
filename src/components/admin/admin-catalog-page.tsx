@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Box,
   Bug,
@@ -184,47 +184,60 @@ function VehicleActions({
   productId,
   sku,
   surface,
-  openMenuId,
-  onToggle,
-  menuRootRefs,
-  menuTriggerRefs,
 }: {
   productId: string;
   sku: string;
   surface: "desktop" | "mobile";
-  openMenuId: string | null;
-  onToggle: (menuId: string) => void;
-  menuRootRefs: MutableRefObject<Map<string, HTMLElement>>;
-  menuTriggerRefs: MutableRefObject<Map<string, HTMLButtonElement>>;
 }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = `${surface}-${productId}`;
   const actionsId = `catalog-product-actions-${menuId}`;
-  const isOpen = openMenuId === menuId;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [open]);
+
+  const triggerClassName = surface === "desktop"
+    ? "icon-button icon-button-small"
+    : "inline-flex size-11 min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]";
+  const menuClassName = surface === "desktop"
+    ? "absolute right-2 top-10 z-20 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]"
+    : "absolute right-0 top-full z-20 mt-1 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]";
 
   return (
-    <div
-      ref={(node) => {
-        if (node) menuRootRefs.current.set(menuId, node);
-        else menuRootRefs.current.delete(menuId);
-      }}
-      className="relative"
-    >
+    <div ref={rootRef} className="relative">
       <button
-        ref={(node) => {
-          if (node) menuTriggerRefs.current.set(menuId, node);
-          else menuTriggerRefs.current.delete(menuId);
-        }}
+        ref={triggerRef}
         type="button"
-        className={`inline-flex items-center justify-center rounded-md border border-transparent text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] ${surface === "mobile" ? "size-11 min-h-11 min-w-11" : "size-7"}`}
+        className={triggerClassName}
         aria-label={`Меню продукту ${sku}`}
-        aria-expanded={isOpen}
+        aria-expanded={open}
         aria-controls={actionsId}
-        onClick={() => onToggle(menuId)}
+        onClick={() => setOpen((current) => !current)}
       >
         <EllipsisVertical size={16} />
       </button>
-      {isOpen ? (
-        <div id={actionsId} role="group" aria-label={`Дії продукту ${sku}`} className="absolute right-0 top-full z-20 mt-1 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]">
+      {open ? (
+        <div id={actionsId} role="group" aria-label={`Дії продукту ${sku}`} className={menuClassName}>
           <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
           <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
         </div>
@@ -243,30 +256,7 @@ function VehicleCatalog() {
   const [engineFilter, setEngineFilter] = useState("");
   const [modelYearFilter, setModelYearFilter] = useState("");
   const [productionYearFilter, setProductionYearFilter] = useState("");
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
-  const menuRootRefs = useRef(new Map<string, HTMLElement>());
-  const menuTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
-
-  useEffect(() => {
-    if (!openMenuId) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      setOpenMenuId(null);
-      menuTriggerRefs.current.get(openMenuId)?.focus();
-    };
-    const handlePointerDown = (event: PointerEvent) => {
-      const root = menuRootRefs.current.get(openMenuId);
-      if (event.target instanceof Node && !root?.contains(event.target)) setOpenMenuId(null);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [openMenuId]);
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -329,7 +319,6 @@ function VehicleCatalog() {
 
   const updateCategory = (next: VehicleCategoryFilter) => {
     setCategory(next);
-    setOpenMenuId(null);
   };
 
   const clearAdvancedFilters = () => {
@@ -340,7 +329,6 @@ function VehicleCatalog() {
     setEngineFilter("");
     setModelYearFilter("");
     setProductionYearFilter("");
-    setOpenMenuId(null);
   };
 
   return (
@@ -356,7 +344,7 @@ function VehicleCatalog() {
       <VehicleKpis counts={counts} />
 
       <AdminToolbar
-        search={<SearchField value={query} onChange={(value) => { setQuery(value); setOpenMenuId(null); }} placeholder="Пошук за SKU або назвою..." label="Пошук транспортних засобів" />}
+        search={<SearchField value={query} onChange={setQuery} placeholder="Пошук за SKU або назвою..." label="Пошук транспортних засобів" />}
         filters={(
           <AdminSegmentedControl
             items={vehicleCategoryTabs.map((item) => ({ id: item, label: item === "all" ? "All" : item }))}
@@ -429,7 +417,7 @@ function VehicleCatalog() {
                   <span className="mt-1 block text-[12px] font-medium leading-snug">{product.name}</span>
                   <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{product.nameUa}</span>
                 </div>
-                <VehicleActions productId={product.id} sku={product.sku} surface="mobile" openMenuId={openMenuId} onToggle={(menuId) => setOpenMenuId((current) => current === menuId ? null : menuId)} menuRootRefs={menuRootRefs} menuTriggerRefs={menuTriggerRefs} />
+                <VehicleActions productId={product.id} sku={product.sku} surface="mobile" />
               </div>
               <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
                 <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Колір</dt><dd className="m-0">{product.color}<span className="block text-[10px] text-[var(--muted-foreground)]">{product.colorUa}</span></dd></div>
@@ -462,7 +450,7 @@ function VehicleCatalog() {
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceUsd, "USD")}</td>
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceEur, "EUR")}</td>
                   <td><StatusBadge tone="green">Активний</StatusBadge></td>
-                  <td className="text-right"><VehicleActions productId={product.id} sku={product.sku} surface="desktop" openMenuId={openMenuId} onToggle={(menuId) => setOpenMenuId((current) => current === menuId ? null : menuId)} menuRootRefs={menuRootRefs} menuTriggerRefs={menuTriggerRefs} /></td>
+                  <td className="relative text-right"><VehicleActions productId={product.id} sku={product.sku} surface="desktop" /></td>
                 </tr>
               ))}
               {isTrueNoResult ? (
