@@ -20,6 +20,7 @@ async function expectTouchTarget(control: Locator) {
   await expect(control).toHaveCount(1);
   const box = await control.boundingBox();
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
 }
 
 test.beforeEach(async ({ page }) => loginAsAdmin(page));
@@ -85,7 +86,7 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(disclosurePanel).toHaveCSS("display", "none");
   await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await expect(page.getByRole("combobox", { name: "Тип техніки" })).toHaveCount(0);
-  await expect(page.getByLabel("Тип техніки")).toHaveCount(0);
+  await expect(page.getByLabel("Тип техніки")).toBeHidden();
 
   await filters.click();
   await expect(disclosurePanel).toBeVisible();
