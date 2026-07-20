@@ -16,7 +16,10 @@ export function LoginScreen() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!email || !password) return;
-    const role = email.toLowerCase().includes("dealer") || email.toLowerCase().endsWith("@logos.local") ? "dealer" : "admin";
+    const normalizedEmail = email.trim().toLowerCase();
+    const role = ["admin", "manager", "razumv"].some((marker) => normalizedEmail.includes(marker))
+      ? "admin"
+      : "dealer";
     setSession({
       role,
       email: role === "dealer" ? "dealer.demo@local.invalid" : "admin.demo@local.invalid",
