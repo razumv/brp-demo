@@ -12,7 +12,7 @@ Requirements: Node.js 24 or newer.
 2. Start development with npm run dev.
 3. Open http://localhost:3000/login.
 
-The login form is a presentation-only role switch, not production authentication. A dealer-style address opens the dealer portal; other addresses open the manager portal. Any non-empty password enables the local form and is cleared immediately rather than stored. The GitHub Pages build is therefore a public read-only demo.
+The login form is a presentation-only role switch, not production authentication. Ordinary addresses open the dealer portal; addresses that explicitly contain `admin`, `manager`, or `razumv` open the manager portal. Any non-empty password enables the local form and is cleared immediately rather than stored. The GitHub Pages build is therefore a public read-only demo.
 
 ## Deep demo flows
 
