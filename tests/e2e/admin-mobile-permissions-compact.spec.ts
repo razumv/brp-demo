@@ -61,10 +61,12 @@ test("role filters inside the mobile disclosure narrow permission objects", asyn
 
   await page.getByRole("combobox", { name: "Роль доступу" }).selectOption("manager");
   await page.getByRole("combobox", { name: "Стан дозволів" }).selectOption("off");
+  await expect(trigger).toContainText("1");
   await expect(page.getByRole("button", { name: "Інвойси — 0/4 увімкнено" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Взаєморозрахунки — 1\/1 увімкнено/ })).toHaveCount(0);
 
   await page.getByRole("combobox", { name: "Роль доступу" }).selectOption("dealer");
+  await expect(trigger).toContainText("2");
   await expect(page.getByRole("button", { name: "Команда і доступи — 2/2 увімкнено" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Консигнація — 3/4 увімкнено" })).toBeVisible();
 });

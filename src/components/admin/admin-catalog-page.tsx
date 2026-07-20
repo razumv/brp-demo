@@ -368,7 +368,15 @@ function VehicleCatalog() {
             {advancedFiltersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         )}
-        mobileDisclosure={{ sections: ["actions"], activeCount: advancedFilterCount, iconOnly: true }}
+        mobileDisclosure={{
+          sections: ["actions"],
+          label: "Детальні фільтри",
+          activeCount: advancedFilterCount,
+          iconOnly: true,
+          expanded: advancedFiltersOpen,
+          controlsId: "catalog-vehicle-advanced-filters",
+          onExpandedChange: setAdvancedFiltersOpen,
+        }}
       />
 
       {advancedFiltersOpen ? (

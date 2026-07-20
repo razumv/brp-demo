@@ -189,7 +189,7 @@ function ReceivingTab() {
         className="[&>div:first-child]:w-full [&>div:last-child]:w-full md:[&>div:first-child]:w-auto md:[&>div:last-child]:w-auto"
         mobileDisclosure={{ sections: [] }}
         filters={(
-          <label className="field w-full min-w-0 md:w-[460px]">
+          <label className="field w-full min-w-0 lg:max-w-[460px]">
             <span className="sr-only">Постачання</span>
             <select
               className="h-11 md:h-9"

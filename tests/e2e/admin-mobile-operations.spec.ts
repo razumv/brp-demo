@@ -100,12 +100,13 @@ test("operations secondary controls stay in one mobile disclosure with state-der
   await openAdminRoute(page, "/admin/order-pipeline", 390);
   const pipelineFilters = page.getByRole("button", { name: /^Фільтри/ });
   const pipelinePanel = page.locator("[data-mobile-disclosure-panel]");
-  const pipelineNotifications = pipelinePanel.getByRole("button", { name: "Сповіщення", includeHidden: true });
+  const pipelineUnread = pipelinePanel.getByRole("button", { name: "2 непрочитаних", includeHidden: true });
   await expect(pipelinePanel).toHaveCount(1);
-  await expect(pipelineNotifications).toHaveCount(1);
-  await expect(pipelineNotifications).toBeHidden();
+  await expect(pipelinePanel.getByRole("button", { name: "Сповіщення", includeHidden: true })).toHaveCount(0);
+  await expect(pipelineUnread).toHaveCount(1);
+  await expect(pipelineUnread).toBeHidden();
   await pipelineFilters.click();
-  await pipelineNotifications.click();
+  await pipelineUnread.click();
   await expect(pipelineFilters).toContainText("1");
 
   await openAdminRoute(page, "/admin/supplier-orders", 390);
@@ -186,7 +187,7 @@ test("open mobile disclosures retain one 44px control surface at 390 and 767", a
     await page.getByRole("button", { name: /^Фільтри/ }).click();
     const pipelinePanel = page.locator("[data-mobile-disclosure-panel]");
     await expectTouchTargets(pipelinePanel.locator("button, select, input"));
-    await expect(page.locator("button").filter({ hasText: "Сповіщення" })).toHaveCount(1);
+    await expect(page.locator("button").filter({ hasText: "Сповіщення" })).toHaveCount(0);
     await expectNoDocumentOverflow(page);
 
     await openAdminRoute(page, "/admin/supplier-orders", width);

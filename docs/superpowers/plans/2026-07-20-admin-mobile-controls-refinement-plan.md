@@ -38,7 +38,7 @@ Add assertions showing `undefined => []`, `{}` defaults to `filters`, and `{ sec
 
 - [ ] **Step 2: Run the Node contract test and confirm the prerequisite contract**
 
-Run: `node --test --experimental-strip-types tests/admin-toolbar-disclosure.test.ts`  
+Run: `node --test --experimental-strip-types tests/admin-toolbar-disclosure.test.ts`
 Expected: PASS. This contract was fixed by the preceding density work and is a prerequisite, not the new RED signal for this task.
 
 - [ ] **Step 3: Add failing Playwright coverage for icon geometry and full-width controls**
@@ -59,7 +59,7 @@ Also assert a full-width segmented control's first and last button span the cont
 
 - [ ] **Step 4: Build the baseline and observe the Playwright test fail for the missing mobile contract**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "shared toolbar"`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "shared toolbar"`
 Expected: FAIL because the trigger still contains text/chevron and segmented controls do not distribute evenly.
 
 - [ ] **Step 5: Implement the minimal shared contract**
@@ -119,7 +119,7 @@ Tests must exercise control changes and assert the resulting collection/card ide
 
 - [ ] **Step 2: Run the page tests and observe missing behavior failures**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "page toolbars"`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "page toolbars"`
 Expected: FAIL for absent icon disclosures/full-width controls and unremoved mobile count copy.
 
 - [ ] **Step 3: Wire pipeline, consignment, returns, and ocean controls**
@@ -128,7 +128,7 @@ Use the shared disclosure without moving primary section selectors inside it. Re
 
 - [ ] **Step 4: Run the first page subset to green**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "pipeline|consignment|returns|ocean"`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-control-toolbars.spec.ts --grep "pipeline|consignment|returns|ocean"`
 Expected: PASS.
 
 - [ ] **Step 5: Wire settlements, invoices, catalog, and companies**
@@ -173,7 +173,7 @@ At 390 and 767 assert that each permission object exposes one button with `aria-
 
 - [ ] **Step 2: Run the test and observe the expected tall-card failure**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-permissions-compact.spec.ts`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-permissions-compact.spec.ts`
 Expected: FAIL because current mobile cards render every action row immediately.
 
 - [ ] **Step 3: Implement shared collapsed permission rows**
@@ -186,7 +186,7 @@ Role Permissions disclosure contains role selection, enabled/disabled state filt
 
 - [ ] **Step 5: Run the permission tests to green**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-permissions-compact.spec.ts`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-permissions-compact.spec.ts`
 Expected: PASS at 390, 767, 768, and 1440 with keyboard-operable disclosures and no overflow.
 
 - [ ] **Step 6: Commit permissions work**
@@ -215,7 +215,7 @@ At 390 and 767 assert BossWeb dates share one row, Warehouse receipt actions for
 
 - [ ] **Step 2: Run the focused tests and observe geometry failures**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-operations.spec.ts tests/e2e/admin-mobile-schedule.spec.ts --grep "compact operational"`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-operations.spec.ts tests/e2e/admin-mobile-schedule.spec.ts --grep "compact operational"`
 Expected: FAIL because the current controls stack into separate rows and warehouse actions depend on labels/title.
 
 - [ ] **Step 3: Implement Unit Shipping and Schedule layouts**
@@ -228,7 +228,7 @@ Render three equal icon controls with explicit accessible labels and a touch/key
 
 - [ ] **Step 5: Run operation and schedule tests to green**
 
-Run: `npm run build && npx playwright test tests/e2e/admin-mobile-operations.spec.ts tests/e2e/admin-mobile-schedule.spec.ts`  
+Run: `npm run build && npx playwright test tests/e2e/admin-mobile-operations.spec.ts tests/e2e/admin-mobile-schedule.spec.ts`
 Expected: PASS with zero page requests caused by locked controls.
 
 - [ ] **Step 6: Commit operational header work**

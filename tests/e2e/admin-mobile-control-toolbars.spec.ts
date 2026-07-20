@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { loginAsAdmin, openAdminRoute } from "./support/admin-session";
 
 async function expectToolbarTrigger(page: Page) {
-  const trigger = page.getByRole("button", { name: "Відкрити фільтри" });
+  const trigger = page.getByRole("button", { name: "Фільтри" });
   await expect(trigger).toHaveCount(1);
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   const [searchBox, triggerBox] = await Promise.all([
@@ -27,6 +27,12 @@ async function expectFullWidthSegment(control: Locator) {
   expect((lastBox?.x ?? 0) + (lastBox?.width ?? 0)).toBeGreaterThanOrEqual((groupBox?.x ?? 0) + (groupBox?.width ?? 0) - 5);
 }
 
+async function expectFullWidthTabs(tablist: Locator) {
+  const slot = tablist.locator("xpath=../..");
+  const [tablistBox, slotBox] = await Promise.all([tablist.boundingBox(), slot.boundingBox()]);
+  expect(tablistBox?.width ?? 0).toBeGreaterThanOrEqual((slotBox?.width ?? 0) - 1);
+}
+
 test.beforeEach(async ({ page }) => loginAsAdmin(page));
 
 test("shared toolbar uses an icon-only mobile trigger and full-width segments", async ({ page }) => {
@@ -34,19 +40,24 @@ test("shared toolbar uses an icon-only mobile trigger and full-width segments", 
     await openAdminRoute(page, "/admin/order-pipeline", width);
     const trigger = await expectToolbarTrigger(page);
     await trigger.click();
-    await expect(page.getByRole("button", { name: "Закрити фільтри" })).toHaveCount(1);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
     await expect(page.locator("[data-mobile-disclosure-panel]")).toBeVisible();
     await expectFullWidthSegment(page.getByRole("group", { name: "Вигляд замовлень" }).getByRole("button"));
   }
 
   await openAdminRoute(page, "/admin/order-pipeline", 768);
-  await expect(page.getByRole("button", { name: "Відкрити фільтри" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Фільтри" })).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Вигляд замовлень" })).toBeVisible();
+});
+
+test("shared toolbar defaults every mobile disclosure to the icon trigger", async ({ page }) => {
+  await openAdminRoute(page, "/admin/supplier-orders", 390);
+  await expectToolbarTrigger(page);
 });
 
 test("page toolbars disclose only real mobile controls", async ({ page }) => {
   await openAdminRoute(page, "/admin/consignment", 390);
-  await expectFullWidthSegment(page.getByRole("tablist", { name: "Розділи консигнації" }).getByRole("tab"));
+  await expectFullWidthTabs(page.getByRole("tablist", { name: "Розділи консигнації" }));
   await (await expectToolbarTrigger(page)).click();
   await expect(page.getByRole("combobox", { name: "Тримач консигнації" })).toBeVisible();
   await page.getByRole("combobox", { name: "Тримач консигнації" }).selectOption("vyshgorod");
@@ -73,7 +84,6 @@ test("page toolbars disclose only real mobile controls", async ({ page }) => {
   await openAdminRoute(page, "/admin/catalog", 390);
   await expectFullWidthSegment(page.getByRole("group", { name: "Категорії транспортних засобів" }).getByRole("button"));
   await (await expectToolbarTrigger(page)).click();
-  await page.getByRole("button", { name: /Детальні фільтри/ }).click();
   await page.getByRole("combobox", { name: "Категорія таблиці" }).selectOption("ATV");
   await expect(page.getByRole("list", { name: "Товари каталогу" })).toContainText("ATV");
 

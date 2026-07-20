@@ -251,7 +251,11 @@ export function AdminPermissionsPage() {
             <ReadOnlyQuickButton tone="danger"><Trash2 size={14} /> Відкликати все</ReadOnlyQuickButton>
           </>
         )}
-        mobileDisclosure={{ sections: ["filters", "actions"], label: "Фільтри дозволів" }}
+        mobileDisclosure={{
+          sections: ["filters", "actions"],
+          label: "Фільтри дозволів",
+          activeCount: Number(activeRole !== "manager") + Number(permissionState !== "all"),
+        }}
       />
 
       <section

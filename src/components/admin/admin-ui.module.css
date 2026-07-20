@@ -725,6 +725,10 @@
     display: none;
   }
 
+  .toolbarWithMobileDisclosure .mobileDisclosurePanelControlled {
+    display: none;
+  }
+
   .toolbarWithMobileDisclosure > :is(.toolbarFilters, .toolbarView, .toolbarActions) {
     flex: 1 0 100%;
   }
@@ -752,6 +756,10 @@
 
   .segmentedMobileFullWidth,
   .tabsMobileFullWidth {
+    width: 100%;
+  }
+
+  .tabsRootMobileFullWidth {
     width: 100%;
   }
 

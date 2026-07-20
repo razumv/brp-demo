@@ -7,6 +7,9 @@ export type AdminToolbarMobileDisclosure = {
   readonly activeCount?: number;
   readonly label?: string;
   readonly iconOnly?: boolean;
+  readonly expanded?: boolean;
+  readonly controlsId?: string;
+  readonly onExpandedChange?: (expanded: boolean) => void;
 };
 
 export function getDisclosedToolbarSections(
