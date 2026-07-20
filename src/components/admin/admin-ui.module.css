@@ -141,6 +141,11 @@
   display: none;
 }
 
+.mobileDisclosureText,
+.mobileDisclosureChevron {
+  display: inline-flex;
+}
+
 .mobileDisclosurePanel {
   display: contents;
 }
@@ -657,7 +662,7 @@
   }
 
   .toolbarWithMobileDisclosure .toolbarSearch {
-    flex: 1 1 18rem;
+    flex: 1 1 0;
     min-width: 0;
   }
 
@@ -684,6 +689,29 @@
     transform: rotate(180deg);
   }
 
+  .toolbarWithMobileDisclosure .mobileDisclosureTriggerIconOnly {
+    position: relative;
+    width: 44px;
+    padding: 0;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosureTriggerIconOnly .mobileDisclosureText,
+  .toolbarWithMobileDisclosure .mobileDisclosureTriggerIconOnly .mobileDisclosureChevron {
+    display: none;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosureTriggerIconOnly .mobileDisclosureCount {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    min-height: 16px;
+    padding-inline: 3px;
+    border: 1px solid var(--surface);
+    background: var(--orange);
+    color: white;
+  }
+
   .toolbarWithMobileDisclosure .mobileDisclosurePanel {
     display: flex;
     flex: 1 0 100%;
@@ -695,6 +723,10 @@
 
   .toolbarWithMobileDisclosure .mobileDisclosurePanel[data-mobile-open="false"] {
     display: none;
+  }
+
+  .toolbarWithMobileDisclosure > :is(.toolbarFilters, .toolbarView, .toolbarActions) {
+    flex: 1 0 100%;
   }
 
   .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarFilters,
@@ -716,6 +748,17 @@
 
   .segmented {
     min-height: 44px;
+  }
+
+  .segmentedMobileFullWidth,
+  .tabsMobileFullWidth {
+    width: 100%;
+  }
+
+  .segmentedMobileFullWidth button,
+  .tabsMobileFullWidth .tab {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .kpiGridHideOnMobile {

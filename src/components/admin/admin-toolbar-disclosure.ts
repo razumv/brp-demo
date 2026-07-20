@@ -6,6 +6,7 @@ export type AdminToolbarMobileDisclosure = {
   readonly sections?: readonly AdminToolbarSection[];
   readonly activeCount?: number;
   readonly label?: string;
+  readonly iconOnly?: boolean;
 };
 
 export function getDisclosedToolbarSections(

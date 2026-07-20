@@ -91,6 +91,7 @@ export function AdminTabs<T extends string>({
   label,
   mobileSelectLabel,
   size = "default",
+  mobileFullWidth = false,
   className,
 }: {
   items: readonly AdminTabItem<T>[];
@@ -99,6 +100,7 @@ export function AdminTabs<T extends string>({
   label: string;
   mobileSelectLabel?: string;
   size?: "compact" | "default";
+  mobileFullWidth?: boolean;
   className?: string;
 }) {
   const selected = items.find((item) => item.id === value);
@@ -142,7 +144,7 @@ export function AdminTabs<T extends string>({
         </label>
       ) : null}
       <div
-        className={cn(styles.tabs, size === "compact" && styles.tabsCompact)}
+        className={cn(styles.tabs, size === "compact" && styles.tabsCompact, mobileFullWidth && styles.tabsMobileFullWidth)}
         role="tablist"
         aria-label={label}
         data-active-tab={selected?.id}
@@ -176,16 +178,18 @@ export function AdminSegmentedControl<T extends string>({
   value,
   onValueChange,
   label,
+  mobileFullWidth = false,
   className,
 }: {
   items: readonly AdminTabItem<T>[];
   value: T;
   onValueChange: (value: T) => void;
   label: string;
+  mobileFullWidth?: boolean;
   className?: string;
 }) {
   return (
-    <div className={cn(styles.segmented, className)} role="group" aria-label={label}>
+    <div className={cn(styles.segmented, mobileFullWidth && styles.segmentedMobileFullWidth, className)} role="group" aria-label={label}>
       {items.map((item) => (
         <button
           key={item.id}
@@ -230,6 +234,7 @@ export function AdminToolbar({
   );
   const hasDisclosedControls = Boolean(mobileDisclosure && disclosedSections.length);
   const firstDisclosedSection = disclosedSections[0];
+  const mobileDisclosureLabel = mobileDisclosure?.label ?? "фільтри";
 
   const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
     if (!control || disclosedSections.includes(section)) return null;
@@ -255,15 +260,16 @@ export function AdminToolbar({
       {mobileDisclosure && hasDisclosedControls ? (
         <button
           type="button"
-          className={styles.mobileDisclosureTrigger}
+          className={cn(styles.mobileDisclosureTrigger, mobileDisclosure.iconOnly && styles.mobileDisclosureTriggerIconOnly)}
           aria-expanded={mobileOpen}
           aria-controls={disclosureId}
+          aria-label={mobileDisclosure.iconOnly ? `${mobileOpen ? "Закрити" : "Відкрити"} ${mobileDisclosureLabel}` : undefined}
           onClick={() => setMobileOpen((current) => !current)}
         >
           <Filter size={16} aria-hidden="true" />
-          <span>{mobileDisclosure.label ?? "Фільтри"}</span>
+          {mobileDisclosure.iconOnly ? null : <span className={styles.mobileDisclosureText}>{mobileDisclosure.label ?? "Фільтри"}</span>}
           {mobileDisclosure.activeCount ? <span className={styles.mobileDisclosureCount}>{mobileDisclosure.activeCount}</span> : null}
-          <ChevronDown size={14} aria-hidden="true" />
+          {mobileDisclosure.iconOnly ? null : <ChevronDown className={styles.mobileDisclosureChevron} size={14} aria-hidden="true" />}
         </button>
       ) : null}
       {firstDisclosedSection === "filters" ? disclosurePanel : null}

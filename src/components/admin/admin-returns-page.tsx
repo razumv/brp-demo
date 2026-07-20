@@ -387,6 +387,7 @@ export function AdminReturnsPage() {
           </button>
         )}
         meta={`${visibleReturns.length} повернень`}
+        mobileDisclosure={{ sections: ["filters"], activeCount: Number(status !== "draft"), iconOnly: true }}
       />
 
       <Panel className="overflow-hidden shadow-none">

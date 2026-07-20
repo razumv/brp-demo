@@ -460,7 +460,7 @@ function OceanTab({
           </button>
         )}
         meta={(
-          <span>
+          <span className="hidden md:inline">
             {visibleBillCount}/{OCEAN_RESEARCH_COVERAGE.billsOfLading} BL · {visibleCount}/{OCEAN_RESEARCH_COVERAGE.containers} контейнерів
             {isFiltered ? " · фільтр активний" : ""}
           </span>
@@ -468,6 +468,7 @@ function OceanTab({
         mobileDisclosure={{
           sections: ["filters", "view", "actions"],
           activeCount: Number(status !== "all"),
+          iconOnly: true,
         }}
       />
       {filteredBills.length === 0 ? (

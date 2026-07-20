@@ -51,6 +51,20 @@ function matchesDealer(dealer: SettlementDealer, query: string) {
   ].join(" ")).includes(normalizedQuery);
 }
 
+type SettlementSort = "name" | "movements" | "last-movement";
+
+function parseMovementDate(value: string) {
+  const [day, month, year] = value.split(".").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
+const mostRecentMovementDate = settlementDealers.reduce<string>(
+  (latest, dealer) => parseMovementDate(dealer.movements.lastMovementDate) > parseMovementDate(latest)
+    ? dealer.movements.lastMovementDate
+    : latest,
+  settlementDealers[0].movements.lastMovementDate,
+);
+
 function SyncDiagnostic() {
   const diagnostic = settlementSyncDiagnostic;
 
@@ -239,11 +253,17 @@ function DealerAccordionRow({
 export function AdminSettlementsPage() {
   const [query, setQuery] = useState("");
   const [expandedDealerId, setExpandedDealerId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SettlementSort>("name");
+  const [recentOnly, setRecentOnly] = useState(false);
 
-  const visibleDealers = useMemo(
-    () => settlementDealers.filter((dealer) => matchesDealer(dealer, query)),
-    [query],
-  );
+  const visibleDealers = useMemo(() => settlementDealers
+    .filter((dealer) => matchesDealer(dealer, query))
+    .filter((dealer) => !recentOnly || dealer.movements.lastMovementDate === mostRecentMovementDate)
+    .toSorted((left, right) => {
+      if (sort === "movements") return right.movements.total - left.movements.total || left.name.localeCompare(right.name, "uk-UA");
+      if (sort === "last-movement") return parseMovementDate(right.movements.lastMovementDate) - parseMovementDate(left.movements.lastMovementDate) || left.name.localeCompare(right.name, "uk-UA");
+      return left.name.localeCompare(right.name, "uk-UA");
+    }), [query, recentOnly, sort]);
 
   const visibleKpis = useMemo(() => ({
     dealers: visibleDealers.length,
@@ -290,7 +310,24 @@ export function AdminSettlementsPage() {
             clearLabel="Очистити фільтр взаєморозрахунків"
           />
         )}
-        meta={`${visibleDealers.length} з ${settlementDealers.length} дилерів`}
+        filters={(
+          <>
+            <label className="field min-w-0">
+              <span className="sr-only">Сортування дилерів</span>
+              <select value={sort} onChange={(event) => setSort(event.target.value as SettlementSort)} aria-label="Сортування дилерів">
+                <option value="name">За назвою дилера</option>
+                <option value="movements">За кількістю рухів</option>
+                <option value="last-movement">За датою останнього руху</option>
+              </select>
+            </label>
+            <label className="inline-flex min-h-10 items-center gap-2 text-[11px]">
+              <input type="checkbox" checked={recentOnly} onChange={(event) => setRecentOnly(event.target.checked)} aria-label={`Лише рухи за ${mostRecentMovementDate}`} />
+              Останній рух {mostRecentMovementDate}
+            </label>
+          </>
+        )}
+        meta={<span className="hidden md:inline">{visibleDealers.length} з {settlementDealers.length} дилерів</span>}
+        mobileDisclosure={{ sections: ["filters"], activeCount: Number(sort !== "name") + Number(recentOnly), iconOnly: true }}
       />
 
       <section className="grid gap-2" aria-label="Дилери">

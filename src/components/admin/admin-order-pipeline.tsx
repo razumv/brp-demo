@@ -410,7 +410,6 @@ export function AdminOrderPipeline() {
   const [expanded, setExpanded] = useState<ReadonlySet<AdminOrderStatus>>(() => new Set(["new"]));
   const [periodOpen, setPeriodOpen] = useState(false);
   const [periodSelection, setPeriodSelection] = useState<readonly string[]>([]);
-  const [notificationsOnly, setNotificationsOnly] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
 
   const additionalLocalOrders = useMemo<DisplayOrder[]>(() => state.orders
@@ -445,15 +444,14 @@ export function AdminOrderPipeline() {
     const values = periodSelection.map(calendarDayTimestamp).filter((value): value is number => value !== undefined).sort((a, b) => a - b);
     return values.length === 2 ? { start: values[0], end: values[1] + 86_399_999 } : undefined;
   }, [periodSelection]);
-  const filterActive = Boolean(normalizedQuery || notificationsOnly || unreadOnly || periodBounds);
+  const filterActive = Boolean(normalizedQuery || unreadOnly || periodBounds);
 
   const filteredOrders = useMemo(() => allOrders.filter((order) => {
     if (normalizedQuery && !order.searchIndex.includes(normalizedQuery)) return false;
     if (periodBounds && (!order.orderDate || order.orderDate < periodBounds.start || order.orderDate > periodBounds.end)) return false;
     if (unreadOnly && !order.unread) return false;
-    if (notificationsOnly) return false;
     return true;
-  }), [allOrders, normalizedQuery, notificationsOnly, periodBounds, unreadOnly]);
+  }), [allOrders, normalizedQuery, periodBounds, unreadOnly]);
 
   const pageOrders = useMemo(() => filterActive ? filteredOrders : filteredOrders.filter((order) => order.page === page), [filterActive, filteredOrders, page]);
   const filteredCounts = useMemo(() => countByStatus(filteredOrders), [filteredOrders]);
@@ -499,16 +497,8 @@ export function AdminOrderPipeline() {
     });
   };
 
-  const toggleNotifications = () => {
-    setNotificationsOnly((current) => !current);
-    setUnreadOnly(false);
-    setPage(1);
-    setExpanded(new Set(ADMIN_ORDER_STATUS_ORDER));
-  };
-
   const toggleUnread = () => {
     setUnreadOnly((current) => !current);
-    setNotificationsOnly(false);
     setPage(1);
     setExpanded(new Set(ADMIN_ORDER_STATUS_ORDER));
   };
@@ -547,7 +537,6 @@ export function AdminOrderPipeline() {
                 <ToolbarButton active={periodOpen || periodSelection.length > 0} expanded={periodOpen} onClick={() => setPeriodOpen((current) => !current)}><CalendarDays size={15} /> Період</ToolbarButton>
                 <PeriodPopover open={periodOpen} selected={periodSelection} onSelect={selectPeriodDay} onClose={() => setPeriodOpen(false)} onClear={() => setPeriodSelection([])} />
               </div>
-              <ToolbarButton active={notificationsOnly} onClick={toggleNotifications}><TriangleAlert size={15} /> Сповіщення</ToolbarButton>
               <ToolbarButton active={unreadOnly} onClick={toggleUnread}><MessageSquare size={15} /> 2 непрочитаних</ToolbarButton>
             </>
           )}
@@ -557,14 +546,16 @@ export function AdminOrderPipeline() {
                 { id: "list", label: "Список", icon: <List size={15} /> },
                 { id: "kanban", label: "Канбан", icon: <Columns3 size={15} /> },
               ]}
-              value={view}
-              onValueChange={setView}
-              label="Вигляд замовлень"
-            />
+            value={view}
+            onValueChange={setView}
+            label="Вигляд замовлень"
+            mobileFullWidth
+          />
           )}
           mobileDisclosure={{
             sections: ["filters"],
-            activeCount: Number(periodSelection.length > 0) + Number(notificationsOnly) + Number(unreadOnly),
+            activeCount: Number(periodSelection.length > 0) + Number(unreadOnly),
+            iconOnly: true,
           }}
         />
 
