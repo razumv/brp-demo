@@ -71,18 +71,24 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(page.getByRole("textbox", { name: "Пошук замовлення або моделі" })).toBeVisible();
   const filters = page.getByRole("button", { name: /^Фільтри/ });
   const typeControl = page.locator('select[aria-label="Тип техніки"]');
+  const disclosurePanel = page.locator("[data-mobile-disclosure-panel]");
   await expect(filters).toHaveAttribute("aria-expanded", "false");
   await filters.click();
+  await expect(disclosurePanel).toHaveCount(1);
   await expect(typeControl).toHaveCount(1);
+  await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await typeControl.selectOption({ label: "Гідроцикли" });
   await expect(filters).toContainText("1");
   await filters.click();
   await expect(typeControl).toHaveCount(1);
-  await expect(typeControl).toHaveCSS("display", "none");
+  await expect(disclosurePanel).toHaveCount(1);
+  await expect(disclosurePanel).toHaveCSS("display", "none");
+  await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await expect(page.getByRole("combobox", { name: "Тип техніки" })).toHaveCount(0);
   await expect(page.getByLabel("Тип техніки")).toHaveCount(0);
 
   await filters.click();
+  await expect(disclosurePanel).toBeVisible();
   await expect(typeControl).toHaveCount(1);
   await expect(typeControl).toBeVisible();
   await expect(typeControl).toHaveValue("Гідроцикли");
