@@ -227,6 +227,7 @@ export function AdminPermissionsPage() {
         id={`admin-permissions-${activeRole}-panel`}
         role="tabpanel"
         aria-labelledby={`admin-permissions-${activeRole}-panel-tab`}
+        className="min-w-0"
       >
         <AdminPermissionMatrix
           actions={matrixActions(role)}

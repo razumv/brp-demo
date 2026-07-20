@@ -5,6 +5,10 @@
   gap: 20px;
 }
 
+.adminPage {
+  min-width: 0;
+}
+
 .pageWide {
   width: min(100%, 1560px);
 }
@@ -591,6 +595,35 @@
 }
 
 @media (max-width: 767px) {
+  .adminPage :global(.button) {
+    min-height: 44px;
+  }
+
+  .adminPage :global(.icon-button-small) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .searchField,
+  .searchFieldCompact {
+    height: 44px;
+  }
+
+  .searchField input {
+    min-height: 44px;
+  }
+
+  .searchClear {
+    width: 44px;
+    height: 44px;
+    right: 0;
+  }
+
+  .iconAction {
+    width: 44px;
+    height: 44px;
+  }
+
   .tabsWithMobileSelect .tabs {
     display: none;
   }
@@ -785,11 +818,6 @@
   .tableHeaderActions {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .iconAction {
-    width: 44px;
-    height: 44px;
   }
 
   .formGrid {

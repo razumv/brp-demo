@@ -46,6 +46,23 @@ test("catalog hides global and vehicle KPI groups only below the desktop breakpo
   await expect(vehicleKpis).toBeVisible();
 });
 
+test("every mobile catalog card is labelled by its stable record title", async ({ page }) => {
+  await openAdminRoute(page, "/admin/catalog", 390);
+
+  const cases: readonly [CatalogSection, string][] = [
+    ["vehicles", "Товари каталогу"],
+    ["distributor", "Ціни дистриб’ютора"],
+    ["parts", "Каталог запчастин"],
+  ];
+  for (const [section, listName] of cases) {
+    await selectCatalogSection(page, section, true);
+    const card = page.getByRole("list", { name: listName }).getByRole("listitem").first();
+    const labelledBy = await card.getAttribute("aria-labelledby");
+    expect(labelledBy).toMatch(new RegExp(`^catalog-${section}-`));
+    await expect(page.locator(`#${labelledBy}`)).toHaveText(/\S/);
+  }
+});
+
 test("vehicle records keep one stateful detailed-filter disclosure and isolated mobile menus", async ({ page }) => {
   const mobileList = page.locator('ul[aria-label="Товари каталогу"]');
   const desktopTable = page.locator('[role="region"][aria-label="Таблиця товарів каталогу"]');

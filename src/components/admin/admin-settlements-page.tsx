@@ -24,7 +24,7 @@ import {
   AdminToolbar,
 } from "@/components/admin/admin-ui";
 import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
-import { Panel } from "@/components/shared/ui";
+import { Panel, StatusBadge } from "@/components/shared/ui";
 import {
   settlementDealers,
   settlementPeriodPresets,
@@ -62,24 +62,29 @@ function SyncDiagnostic() {
         defaultOpen={false}
         collapseMode="mobile"
         headingLevel="h2"
-        icon={<span className="size-2 rounded-full bg-[var(--amber)]" />}
-        summary="Стан синхронізації з 1С"
+        icon={<span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" />}
+        titleContent={<span data-settlement-status><StatusBadge tone="amber">{diagnostic.stateLabel}</StatusBadge></span>}
+        actions={(
+          <button
+            type="button"
+            data-settlement-refresh
+            className="button button-outline w-fit"
+            disabled
+            title="Синхронізація з 1С вимкнена у read-only демонстрації"
+          >
+            <LockKeyhole size={13} />
+            <RefreshCw size={14} />
+            Оновити з 1С (30 днів)
+          </button>
+        )}
         headerClassName="border-b border-[var(--border)] px-4 py-3"
         contentClassName="p-4"
         hiddenUntilFound={false}
         keepMounted
+        hideActionsWhenMobileClosed
+        dataComponent="settlements-diagnostic"
       >
-        <button
-          type="button"
-          className="button button-outline w-fit"
-          disabled
-          title="Синхронізація з 1С вимкнена у read-only демонстрації"
-        >
-          <LockKeyhole size={13} />
-          <RefreshCw size={14} />
-          Оновити з 1С (30 днів)
-        </button>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
+        <div data-settlement-diagnostic-grid className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
           <div className="grid content-start gap-2 text-[12px] text-[var(--muted-foreground)]">
             <p className="m-0">
               Остання успішна синхронізація: <strong className="text-[var(--foreground)]">{diagnostic.lastSuccessfulSync}</strong>

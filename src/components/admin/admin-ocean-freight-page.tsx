@@ -424,7 +424,7 @@ function OceanTab({
   return (
     <div
       id="ocean-ocean-panel"
-      className="grid gap-4"
+      className="grid min-w-0 gap-4"
       role="tabpanel"
       aria-labelledby="ocean-ocean-panel-tab"
     >
@@ -476,7 +476,7 @@ function OceanTab({
         <BillCards bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} />
       ) : (
         <>
-          <div className="hidden md:block"><ContainerTable bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} /></div>
+          <div className="hidden min-w-0 md:block"><ContainerTable bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} /></div>
           <div className="md:hidden"><BillCards bills={filteredBills} grouped={grouped} expandedContainerId={expandedContainerId} onContainerToggle={toggleContainer} onPreview={onReceiptPreview} onBillOpen={onBillOpen} onEta={onEta} /></div>
         </>
       )}

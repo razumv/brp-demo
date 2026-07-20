@@ -29,6 +29,8 @@ test("users swap the active-user grid for matching labelled cards at the exact b
   const mobileIds = await recordIds(cards, 'li[data-record-id]');
   expect(mobileIds).toContain("demo-user-03");
   const mobileCard = cards.locator('li[data-record-id="demo-user-03"]');
+  await expect(mobileCard).toHaveAttribute("aria-labelledby", "admin-user-demo-user-03-title");
+  await expect(page.locator("#admin-user-demo-user-03-title")).toHaveText("Демо-користувач 03");
   await expect(mobileCard).toContainText("Демо-користувач 03");
   await expect(mobileCard).toContainText("user03@example.invalid");
   await expect(mobileCard).toContainText("Logos");
@@ -77,6 +79,8 @@ test("company mobile cards keep their employee and direct actions touch-sized", 
     await expectTouchTarget(deleteAction);
     await expect(deleteAction).toHaveAttribute("data-trigger-disabled", "");
     const card = page.locator(`article:has-text("BRP Вышгород")`).first();
+    await expect(card).toHaveAttribute("aria-labelledby", "admin-company-vyshhorod-title");
+    await expect(page.locator("#admin-company-vyshhorod-title")).toHaveText("BRP Вышгород");
     await expect(card).toHaveCSS("padding-top", "12px");
     await expect(card.getByText("Створена Apr 30, 2026")).toBeVisible();
   }

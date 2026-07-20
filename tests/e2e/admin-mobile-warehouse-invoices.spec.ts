@@ -45,11 +45,22 @@ test("warehouse keeps its process and supply controls while hiding every process
   expect(tabletActionBox?.height ?? 0).toBeGreaterThanOrEqual(44);
 
   await openAdminRoute(page, "/admin/warehouse", 768);
-  await expect(page.getByRole("combobox", { name: "Постачання" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Прийняти все" })).toBeVisible();
+  const desktopSupply = page.getByRole("combobox", { name: "Постачання" });
+  const desktopAction = page.getByRole("button", { name: "Прийняти все" });
+  await expect(desktopSupply).toBeVisible();
+  await expect(desktopAction).toBeVisible();
+  expect((await desktopAction.boundingBox())?.height ?? 0).toBe(36);
+  expect(await desktopSupply.locator("xpath=..").evaluate((element) => getComputedStyle(element).maxWidth)).not.toBe("460px");
   const desktopProcesses = page.getByRole("tablist", { name: "Процеси складу" });
   await desktopProcesses.getByRole("tab", { name: "Зведення приймання" }).click();
   await expectDesktopVisible(page, "Показники складу");
+
+  await openAdminRoute(page, "/admin/warehouse", 1440);
+  const wideSupply = page.getByRole("combobox", { name: "Постачання" });
+  const wideAction = page.getByRole("button", { name: "Прийняти все" });
+  expect((await wideAction.boundingBox())?.height ?? 0).toBe(36);
+  expect(await wideSupply.locator("xpath=..").evaluate((element) => getComputedStyle(element).maxWidth)).toBe("460px");
+  expect((await wideSupply.boundingBox())?.width ?? 0).toBeLessThanOrEqual(460);
 });
 
 test("warehouse filters use one reachable mobile disclosure without losing its selected value", async ({ page }) => {
