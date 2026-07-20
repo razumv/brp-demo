@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LockKeyhole, LogIn, Mail } from "lucide-react";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { authenticateCredentials } from "@/lib/authenticate";
 
 export function LoginScreen() {
   const router = useRouter();
@@ -12,24 +13,22 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!email || !password) return;
-    const normalizedEmail = email.trim().toLowerCase();
-    const role = ["admin", "manager", "razumv"].some((marker) => normalizedEmail.includes(marker))
-      ? "admin"
-      : "dealer";
-    setSession({
-      role,
-      email: role === "dealer" ? "dealer.demo@local.invalid" : "admin.demo@local.invalid",
-      displayName: role === "dealer" ? "Финансы" : "Razumv Admin",
-      company: "Logos",
-      remember,
-      expiresAt: remember ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null,
-    });
-    setPassword("");
-    router.push(role === "dealer" ? "/" : "/admin");
+    if (!email.trim() || !password || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const session = await authenticateCredentials({ email, password, remember });
+      if (!session) return;
+      setSession(session);
+      setPassword("");
+      router.push(session.role === "dealer" ? "/" : "/admin");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -64,9 +63,15 @@ export function LoginScreen() {
             <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
             <span>Запам&apos;ятати на 30 днів</span>
           </label>
-          <button type="submit" className="button button-primary button-wide" disabled={!email || !password}>Увійти</button>
+          <button
+            type="submit"
+            className="button button-primary button-wide"
+            disabled={!email.trim() || !password || submitting}
+            aria-busy={submitting}
+          >
+            Увійти
+          </button>
         </div>
-        <footer className="login-footer">Немає акаунту? <button type="button">Зареєструватися</button></footer>
       </form>
     </main>
   );
