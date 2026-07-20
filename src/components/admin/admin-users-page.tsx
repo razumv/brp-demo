@@ -526,6 +526,7 @@ export function AdminUsersPage() {
               setTab(nextTab);
             }}
             label="Стани користувачів"
+            mobileSelectLabel="Стани користувачів"
             size="compact"
           />
         )}

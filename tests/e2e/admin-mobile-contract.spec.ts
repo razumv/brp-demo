@@ -261,6 +261,29 @@ test("users expose mobile cards and preserve desktop grid", async ({ page }) => 
   expect(desktopUserIds).toContain("demo-user-03");
 });
 
+test("users expose status selection on mobile without changing desktop tabs", async ({ page }) => {
+  for (const width of [390, 767] as const) {
+    await openAdminRoute(page, "/admin/users", width);
+    const status = page.getByRole("combobox", { name: "Стани користувачів" });
+    await expect(status).toBeVisible();
+    await expectTouchTarget(status);
+
+    await status.selectOption("pending");
+    const pendingPanel = page.locator("#admin-users-pending-panel");
+    await expect(pendingPanel).toBeVisible();
+    await expect(pendingPanel.getByRole("heading", { name: "Користувачів не знайдено" })).toBeVisible();
+
+    await status.selectOption("deactivated");
+    const deactivatedPanel = page.locator("#admin-users-deactivated-panel");
+    await expect(deactivatedPanel).toBeVisible();
+    await expect(deactivatedPanel.getByRole("heading", { name: "Користувачів не знайдено" })).toBeVisible();
+  }
+
+  await openAdminRoute(page, "/admin/users", 768);
+  await expect(page.getByRole("combobox", { name: "Стани користувачів" })).toBeHidden();
+  await expect(page.getByRole("tablist", { name: "Стани користувачів" })).toBeVisible();
+});
+
 test("mobile disclosures and company actions remain touch-sized", async ({ page }) => {
   await openAdminRoute(page, "/admin/order-pipeline", 390);
   await expectTouchTarget(page.getByRole("button", { name: /^Фільтри/ }));
