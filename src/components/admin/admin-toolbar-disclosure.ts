@@ -12,6 +12,7 @@ export function getDisclosedToolbarSections(
   controls: Readonly<Record<AdminToolbarSection, boolean>>,
   mobileDisclosure?: AdminToolbarMobileDisclosure,
 ) {
+  if (!mobileDisclosure) return [];
   const configured = new Set(mobileDisclosure?.sections ?? ["filters"]);
   return ADMIN_TOOLBAR_SECTIONS.filter((section) => controls[section] && configured.has(section));
 }

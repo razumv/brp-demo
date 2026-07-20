@@ -1,9 +1,33 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { getDisclosedToolbarSections } from "../src/components/admin/admin-toolbar-disclosure";
 
-const { getDisclosedToolbarSections } = await import(
-  new URL("../src/components/admin/admin-toolbar-disclosure.ts", import.meta.url).href,
-);
+test("does not disclose controls when mobile disclosure is omitted", () => {
+  const sections = getDisclosedToolbarSections(
+    { filters: true, view: true, actions: true },
+    undefined,
+  );
+
+  assert.deepEqual(sections, []);
+});
+
+test("defaults an explicit mobile disclosure to filters", () => {
+  const sections = getDisclosedToolbarSections(
+    { filters: true, view: true, actions: true },
+    {},
+  );
+
+  assert.deepEqual(sections, ["filters"]);
+});
+
+test("honors an explicit empty mobile disclosure", () => {
+  const sections = getDisclosedToolbarSections(
+    { filters: true, view: true, actions: true },
+    { sections: [] },
+  );
+
+  assert.deepEqual(sections, []);
+});
 
 test("uses the first configured slot that has a control", () => {
   const sections = getDisclosedToolbarSections(
