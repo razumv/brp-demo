@@ -77,12 +77,21 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await typeControl.selectOption({ label: "Гідроцикли" });
   await expect(filters).toContainText("1");
   await filters.click();
-  await expect(typeControl).toHaveCount(0);
+  await expect(typeControl).toHaveCount(1);
+  await expect(typeControl).toHaveCSS("display", "none");
+  await expect(page.getByRole("combobox", { name: "Тип техніки" })).toHaveCount(0);
+  await expect(page.getByLabel("Тип техніки")).toHaveCount(0);
+
+  await filters.click();
+  await expect(typeControl).toHaveCount(1);
+  await expect(typeControl).toBeVisible();
+  await expect(typeControl).toHaveValue("Гідроцикли");
+  await filters.click();
 
   await page.setViewportSize({ width: 768, height: 1000 });
   await expect(filters).toHaveCount(0);
   await expect(typeControl).toHaveCount(1);
-  await expect(typeControl).toHaveValue("pwc");
+  await expect(typeControl).toHaveValue("Гідроцикли");
 });
 
 test("users expose mobile cards and preserve desktop grid", async ({ page }) => {
