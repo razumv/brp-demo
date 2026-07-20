@@ -60,6 +60,20 @@
   opacity: .55;
 }
 
+.root[data-collapse-mode="mobile"][data-can-collapse="false"] .trigger:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.root[data-collapse-mode="mobile"][data-can-collapse="false"] .trigger:hover {
+  background: transparent;
+  color: var(--foreground);
+}
+
+.root[data-collapse-mode="mobile"][data-can-collapse="false"] .chevron {
+  display: none;
+}
+
 .icon {
   display: inline-grid;
   flex: 0 0 auto;
@@ -119,7 +133,7 @@
   min-width: 0;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .header {
     flex-wrap: wrap;
     gap: 10px;
@@ -132,6 +146,11 @@
   .trigger {
     min-height: 40px;
     margin-block: -8px;
+  }
+
+  .root[data-collapse-mode="mobile"] .trigger {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .actions {

@@ -3,11 +3,13 @@
 import { Collapsible } from "@base-ui/react/collapsible";
 import { ChevronDown } from "lucide-react";
 import { useId, type ReactNode } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePersistedBoolean } from "@/hooks/use-persisted-boolean";
 import { cn } from "@/lib/utils";
 import styles from "./persisted-collapsible-section.module.css";
 
 type CollapsibleHeadingLevel = "h2" | "h3" | "h4";
+type CollapseMode = "always" | "mobile";
 
 export interface PersistedCollapsibleSectionProps {
   readonly persistenceId: string;
@@ -26,6 +28,7 @@ export interface PersistedCollapsibleSectionProps {
   readonly disabled?: boolean;
   readonly hiddenUntilFound?: boolean;
   readonly keepMounted?: boolean;
+  readonly collapseMode?: CollapseMode;
   readonly onOpenChange?: (open: boolean) => void;
 }
 
@@ -46,6 +49,7 @@ export function PersistedCollapsibleSection({
   disabled = false,
   hiddenUntilFound = true,
   keepMounted = false,
+  collapseMode = "always",
   onOpenChange,
 }: PersistedCollapsibleSectionProps) {
   const generatedId = useId().replaceAll(":", "");
@@ -53,16 +57,22 @@ export function PersistedCollapsibleSection({
   const panelId = `collapsible-panel-${generatedId}`;
   const Heading = headingLevel;
   const { value: open, setValue: setOpen } = usePersistedBoolean(persistenceId, defaultOpen);
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const canCollapse = collapseMode === "always" || isMobile;
+  const effectiveOpen = canCollapse ? open : true;
 
   return (
     <Collapsible.Root
-      open={open}
-      disabled={disabled}
+      open={effectiveOpen}
+      disabled={disabled || !canCollapse}
       onOpenChange={(nextOpen) => {
+        if (!canCollapse) return;
         setOpen(nextOpen);
         onOpenChange?.(nextOpen);
       }}
       className={cn(styles.root, className)}
+      data-collapse-mode={collapseMode}
+      data-can-collapse={canCollapse}
     >
       <div className={cn(styles.header, headerClassName)}>
         <div className={styles.headingBlock}>
