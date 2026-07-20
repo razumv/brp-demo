@@ -872,7 +872,7 @@
   }
 
   .orderRow {
-    grid-template-columns: 80px minmax(150px, 1fr) 86px 94px;
+    grid-template-columns: 80px minmax(150px, 1fr) 86px 136px;
   }
 
   .orderRow > :nth-child(3),
