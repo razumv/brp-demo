@@ -1,14 +1,14 @@
 # Dealer single-tenant frontend identity design
 
-**Date:** 2026-07-21  
-**Status:** Proposed for implementation  
+**Date:** 2026-07-21
+**Status:** Proposed for implementation
 **Scope:** Login/session identity only; dealer workflow parity is handled separately.
 
 ## Goal
 
 Keep the current frontend usable with one dealer company (`Logos`) while preserving a clean boundary for later authentication through the existing `brp-dev1` backend.
 
-The interface must look like a normal product interface. It must not mention a demo mode, mocked authentication, local fixtures, localStorage, or the `brp-dev1` environment.
+The login and session UI must look like a normal product interface. This change must not add or depend on visible copy about a demo mode, mocked authentication, localStorage, or the `brp-dev1` environment. Existing fixture copy inside unrelated dealer workflows is outside this identity change.
 
 ## Product contract
 
@@ -17,6 +17,7 @@ The interface must look like a normal product interface. It must not mention a d
   - role: `dealer`;
   - display name: `Финансы`;
   - company: `Logos`.
+- Until `brp-dev1` supplies the authenticated identity, the session email is the normalized email submitted through the login form.
 - Emails containing `admin`, `manager`, or `razumv` keep the existing local admin route and open the admin portal.
 - The current frontend does not promise separate dealer accounts or company isolation.
 - Existing dealer data remains one shared `Logos` dataset, including the current `LOG-*` order numbering.
@@ -27,6 +28,7 @@ The interface must look like a normal product interface. It must not mention a d
 - Preserve the existing source-like login layout and ordinary email/password fields.
 - Do not add banners, helper text, badges, environment names, or notices about temporary behavior.
 - Remove the inert registration action so the interface does not advertise a workflow that does not exist.
+- Remove the dealer-only `Скинути демо-дані` profile action because it is not part of the future backend session contract.
 - Keep standard loading and validation behavior for required fields.
 - Never persist or expose the entered password.
 
@@ -71,7 +73,10 @@ Automated coverage must prove:
 4. an email with an explicit admin marker still opens the admin portal;
 5. the login screen contains no demo-mode or environment disclosure;
 6. the inert registration action is absent;
-7. the entered password is not written into browser storage.
+7. the normalized submitted email is stored as the temporary session email;
+8. the entered password is not written into browser storage;
+9. the dealer profile contains no demo-data reset action;
+10. a backend-shaped stored session can supply the displayed name and company without changing the shell.
 
 The existing dealer login role tests remain the baseline and are extended before implementation code is changed.
 
