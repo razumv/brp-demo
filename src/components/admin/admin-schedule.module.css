@@ -151,10 +151,17 @@
 
 .chronologyRailViewport {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding-bottom: 2px;
   overflow-x: auto;
   scrollbar-color: var(--border) transparent;
   scrollbar-width: thin;
+}
+
+.chronologyPanel {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .chronologyRailViewport:focus-visible {
@@ -411,6 +418,36 @@
   text-align: center;
 }
 
+.slotListScroller {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.stockPanel,
+.stockTable,
+.stockTable > div:last-child {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.slotListHeader,
+.slotRow {
+  display: grid;
+  min-width: 510px;
+  grid-template-columns: minmax(210px, 1.45fr) 90px 100px 62px;
+  gap: 12px;
+}
+
+.slotListHeader {
+  padding: 12px;
+}
+
+.slotRow {
+  width: 100%;
+  padding: 10px 12px;
+  align-items: center;
+}
+
 @media (max-width: 900px) {
   .chronologyDateGroups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -428,5 +465,57 @@
 
   .chronologyDateGroup > ul > li {
     min-height: 46px;
+  }
+}
+
+@media (max-width: 767px) {
+  .timelineRangeDetails > summary {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  .timelineRangeGroup > button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .scheduleToolbar > :first-child {
+    width: 100%;
+    flex: 1 0 100%;
+  }
+
+  .slotListHeader {
+    display: none;
+  }
+
+  .slotRow {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 6px;
+  }
+
+  .slotRow > span:first-child {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .slotRow > span:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .slotRow > span:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .slotRow > span:last-child {
+    grid-column: 3;
+    grid-row: 2;
   }
 }
