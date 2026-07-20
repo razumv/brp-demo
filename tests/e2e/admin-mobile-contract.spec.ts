@@ -212,6 +212,25 @@ test("Unit Shipping only counts shipped-date filters on the shipped tab", async 
   await expect(filters).not.toContainText("2");
 });
 
+test("Unit Shipping pagination is touch-sized below 768px and remains compact on desktop", async ({ page }) => {
+  for (const width of [390, 767] as const) {
+    await openAdminRoute(page, "/admin/unit-shipping", width);
+    await expectTouchTarget(page.getByRole("combobox", { name: "Записів на сторінці" }));
+    await expectTouchTarget(page.getByRole("button", { name: "Попередня сторінка" }));
+    await expectTouchTarget(page.getByRole("button", { name: "Наступна сторінка" }));
+  }
+
+  await openAdminRoute(page, "/admin/unit-shipping", 768);
+  const desktopControls = [
+    { control: page.getByRole("combobox", { name: "Записів на сторінці" }), width: 76 },
+    { control: page.getByRole("button", { name: "Попередня сторінка" }), width: 32 },
+    { control: page.getByRole("button", { name: "Наступна сторінка" }), width: 32 },
+  ];
+  for (const { control, width } of desktopControls) {
+    expect(await control.boundingBox()).toMatchObject({ height: 32, width });
+  }
+});
+
 test("users expose mobile cards and preserve desktop grid", async ({ page }) => {
   const mobileCards = page.locator('ul[aria-label="Активні користувачі"]');
   const desktopGrid = page.locator('[role="grid"][aria-label="Активні користувачі"]');

@@ -429,7 +429,7 @@ export function AdminUnitShippingPage() {
               <label className="inline-flex items-center gap-2">
                 <span>На сторінці</span>
                 <select
-                  className="select !min-h-8 !w-[76px] !py-1"
+                  className="select !min-h-11 !w-[76px] !py-1 md:!min-h-8"
                   aria-label="Записів на сторінці"
                   value={pageSize}
                   onChange={(event) => {
@@ -443,7 +443,7 @@ export function AdminUnitShippingPage() {
               </label>
               <button
                 type="button"
-                className="button button-outline !min-h-8 !px-2"
+                className="button button-outline !min-h-11 !min-w-11 !px-2 md:!min-h-8 md:!min-w-0"
                 aria-label="Попередня сторінка"
                 disabled={currentPage === 1}
                 onClick={() => {
@@ -456,7 +456,7 @@ export function AdminUnitShippingPage() {
               <span className="min-w-14 text-center font-medium text-[var(--foreground)]">{currentPage} / {totalPages}</span>
               <button
                 type="button"
-                className="button button-outline !min-h-8 !px-2"
+                className="button button-outline !min-h-11 !min-w-11 !px-2 md:!min-h-8 md:!min-w-0"
                 aria-label="Наступна сторінка"
                 disabled={currentPage === totalPages}
                 onClick={() => {
