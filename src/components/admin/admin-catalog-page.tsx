@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import {
   Box,
   Bug,
@@ -130,16 +130,18 @@ function RepresentativeNotice({ shown, total, noun }: { shown: number; total: nu
 
 function GlobalKpis() {
   return (
-    <AdminKpiGrid
-      label="Загальні показники каталогу"
-      items={catalogGlobalMetrics.map((metric) => ({
-        id: metric.id,
-        label: metric.label,
-        value: formatInteger(metric.value),
-        icon: <Box size={17} />,
-        tone: metric.tone,
-      }))}
-    />
+    <div className="hidden md:block">
+      <AdminKpiGrid
+        label="Загальні показники каталогу"
+        items={catalogGlobalMetrics.map((metric) => ({
+          id: metric.id,
+          label: metric.label,
+          value: formatInteger(metric.value),
+          icon: <Box size={17} />,
+          tone: metric.tone,
+        }))}
+      />
+    </div>
   );
 }
 
@@ -172,7 +174,62 @@ function VehicleKpis({ counts }: { counts: { total: number; ATV: number; SSV: nu
   ] as const;
 
   return (
-    <AdminKpiGrid label="Показники транспортних засобів" items={items} />
+    <div className="hidden md:block">
+      <AdminKpiGrid label="Показники транспортних засобів" items={items} />
+    </div>
+  );
+}
+
+function VehicleActions({
+  productId,
+  sku,
+  surface,
+  openMenuId,
+  onToggle,
+  menuRootRefs,
+  menuTriggerRefs,
+}: {
+  productId: string;
+  sku: string;
+  surface: "desktop" | "mobile";
+  openMenuId: string | null;
+  onToggle: (menuId: string) => void;
+  menuRootRefs: MutableRefObject<Map<string, HTMLElement>>;
+  menuTriggerRefs: MutableRefObject<Map<string, HTMLButtonElement>>;
+}) {
+  const menuId = `${surface}-${productId}`;
+  const actionsId = `catalog-product-actions-${menuId}`;
+  const isOpen = openMenuId === menuId;
+
+  return (
+    <div
+      ref={(node) => {
+        if (node) menuRootRefs.current.set(menuId, node);
+        else menuRootRefs.current.delete(menuId);
+      }}
+      className="relative"
+    >
+      <button
+        ref={(node) => {
+          if (node) menuTriggerRefs.current.set(menuId, node);
+          else menuTriggerRefs.current.delete(menuId);
+        }}
+        type="button"
+        className={`inline-flex items-center justify-center rounded-md border border-transparent text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] ${surface === "mobile" ? "size-11 min-h-11 min-w-11" : "size-7"}`}
+        aria-label={`Меню продукту ${sku}`}
+        aria-expanded={isOpen}
+        aria-controls={actionsId}
+        onClick={() => onToggle(menuId)}
+      >
+        <EllipsisVertical size={16} />
+      </button>
+      {isOpen ? (
+        <div id={actionsId} role="group" aria-label={`Дії продукту ${sku}`} className="absolute right-0 top-full z-20 mt-1 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]">
+          <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
+          <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -186,22 +243,22 @@ function VehicleCatalog() {
   const [engineFilter, setEngineFilter] = useState("");
   const [modelYearFilter, setModelYearFilter] = useState("");
   const [productionYearFilter, setProductionYearFilter] = useState("");
-  const [openMenuSku, setOpenMenuSku] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
-  const menuRootRefs = useRef(new Map<string, HTMLTableCellElement>());
+  const menuRootRefs = useRef(new Map<string, HTMLElement>());
   const menuTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
 
   useEffect(() => {
-    if (!openMenuSku) return;
+    if (!openMenuId) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      setOpenMenuSku(null);
-      menuTriggerRefs.current.get(openMenuSku)?.focus();
+      setOpenMenuId(null);
+      menuTriggerRefs.current.get(openMenuId)?.focus();
     };
     const handlePointerDown = (event: PointerEvent) => {
-      const root = menuRootRefs.current.get(openMenuSku);
-      if (event.target instanceof Node && !root?.contains(event.target)) setOpenMenuSku(null);
+      const root = menuRootRefs.current.get(openMenuId);
+      if (event.target instanceof Node && !root?.contains(event.target)) setOpenMenuId(null);
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("pointerdown", handlePointerDown);
@@ -209,7 +266,7 @@ function VehicleCatalog() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [openMenuSku]);
+  }, [openMenuId]);
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -272,7 +329,7 @@ function VehicleCatalog() {
 
   const updateCategory = (next: VehicleCategoryFilter) => {
     setCategory(next);
-    setOpenMenuSku(null);
+    setOpenMenuId(null);
   };
 
   const clearAdvancedFilters = () => {
@@ -283,7 +340,7 @@ function VehicleCatalog() {
     setEngineFilter("");
     setModelYearFilter("");
     setProductionYearFilter("");
-    setOpenMenuSku(null);
+    setOpenMenuId(null);
   };
 
   return (
@@ -299,7 +356,7 @@ function VehicleCatalog() {
       <VehicleKpis counts={counts} />
 
       <AdminToolbar
-        search={<SearchField value={query} onChange={(value) => { setQuery(value); setOpenMenuSku(null); }} placeholder="Пошук за SKU або назвою..." label="Пошук транспортних засобів" />}
+        search={<SearchField value={query} onChange={(value) => { setQuery(value); setOpenMenuId(null); }} placeholder="Пошук за SKU або назвою..." label="Пошук транспортних засобів" />}
         filters={(
           <AdminSegmentedControl
             items={vehicleCategoryTabs.map((item) => ({ id: item, label: item === "all" ? "All" : item }))}
@@ -362,7 +419,30 @@ function VehicleCatalog() {
 
       <Panel className="overflow-visible shadow-none">
         <RepresentativeNotice shown={visibleProducts.length} total={sourceTotalForCurrentCategory} noun="продуктів у source" />
-        <div className="data-table-wrap" role="region" aria-label="Каталог транспортних засобів" tabIndex={0}>
+        <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Товари каталогу">
+          {visibleProducts.map((product) => (
+            <li key={product.id} data-record-id={product.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2"><StatusBadge>{product.category}</StatusBadge><StatusBadge tone="green">Активний</StatusBadge></div>
+                  <strong className="mt-2 block font-mono text-[13px] text-[var(--blue)]">{product.sku}</strong>
+                  <span className="mt-1 block text-[12px] font-medium leading-snug">{product.name}</span>
+                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{product.nameUa}</span>
+                </div>
+                <VehicleActions productId={product.id} sku={product.sku} surface="mobile" openMenuId={openMenuId} onToggle={(menuId) => setOpenMenuId((current) => current === menuId ? null : menuId)} menuRootRefs={menuRootRefs} menuTriggerRefs={menuTriggerRefs} />
+              </div>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Колір</dt><dd className="m-0">{product.color}<span className="block text-[10px] text-[var(--muted-foreground)]">{product.colorUa}</span></dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Двигун</dt><dd className="m-0">{product.engine}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Роки</dt><dd className="m-0 tabular-nums">MY {product.modelYear} · {product.productionYear}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Ціни</dt><dd className="m-0 font-mono tabular-nums">{formatVehiclePrice(product.priceUsd, "USD")} · {formatVehiclePrice(product.priceEur, "EUR")}</dd></div>
+              </dl>
+            </li>
+          ))}
+          {isTrueNoResult ? <li><EmptyState compact icon={<Package size={22} />} title="Продуктів ще немає" description="Товари з'являться тут, коли дані каталогу будуть доступні." /></li> : null}
+          {!isTrueNoResult && visibleProducts.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає рядків цієї категорії. Точний загальний лічильник показано вище.</li> : null}
+        </ul>
+        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця товарів каталогу" tabIndex={0}>
           <table className="data-table min-w-[1120px]">
             <thead>
               <tr>
@@ -371,7 +451,7 @@ function VehicleCatalog() {
             </thead>
             <tbody>
               {visibleProducts.map((product) => (
-                <tr key={product.id}>
+                <tr key={product.id} data-record-id={product.id}>
                   <td><StatusBadge>{product.category}</StatusBadge></td>
                   <td className="font-mono font-semibold">{product.sku}</td>
                   <td><strong className="block font-medium">{product.name}</strong><span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{product.nameUa}</span></td>
@@ -382,34 +462,7 @@ function VehicleCatalog() {
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceUsd, "USD")}</td>
                   <td className="font-mono tabular-nums">{formatVehiclePrice(product.priceEur, "EUR")}</td>
                   <td><StatusBadge tone="green">Активний</StatusBadge></td>
-                  <td
-                    ref={(node) => {
-                      if (node) menuRootRefs.current.set(product.sku, node);
-                      else menuRootRefs.current.delete(product.sku);
-                    }}
-                    className="relative text-right"
-                  >
-                    <button
-                      ref={(node) => {
-                        if (node) menuTriggerRefs.current.set(product.sku, node);
-                        else menuTriggerRefs.current.delete(product.sku);
-                      }}
-                      type="button"
-                      className="icon-button icon-button-small"
-                      aria-label={`Меню продукту ${product.sku}`}
-                      aria-expanded={openMenuSku === product.sku}
-                      aria-controls={`catalog-product-actions-${product.id}`}
-                      onClick={() => setOpenMenuSku((current) => current === product.sku ? null : product.sku)}
-                    >
-                      <EllipsisVertical size={16} />
-                    </button>
-                    {openMenuSku === product.sku ? (
-                      <div id={`catalog-product-actions-${product.id}`} role="group" aria-label={`Дії продукту ${product.sku}`} className="absolute right-2 top-10 z-20 grid min-w-36 gap-1 rounded-md border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 text-left shadow-[var(--shadow-menu)]">
-                        <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
-                        <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
-                      </div>
-                    ) : null}
-                  </td>
+                  <td className="text-right"><VehicleActions productId={product.id} sku={product.sku} surface="desktop" openMenuId={openMenuId} onToggle={(menuId) => setOpenMenuId((current) => current === menuId ? null : menuId)} menuRootRefs={menuRootRefs} menuTriggerRefs={menuTriggerRefs} /></td>
                 </tr>
               ))}
               {isTrueNoResult ? (
@@ -451,11 +504,13 @@ function DistributorPrices() {
       aria-labelledby="catalog-distributor-panel-tab"
       className="grid gap-5"
     >
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Показники цін дистриб'ютора">
-        {countCards.map(([label, value, tone]) => (
-          <AdminKpiCard key={label} item={{ id: label, label, value, tone }} />
-        ))}
-      </section>
+      <div className="hidden md:block">
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Показники цін дистриб'ютора">
+          {countCards.map(([label, value, tone]) => (
+            <AdminKpiCard key={label} item={{ id: label, label, value, tone }} />
+          ))}
+        </section>
+      </div>
 
       <AdminToolbar
         search={<SearchField value={query} onChange={setQuery} placeholder="Пошук SKU, модель, колір..." label="Пошук цін дистриб'ютора" />}
@@ -471,12 +526,29 @@ function DistributorPrices() {
 
       <Panel className="overflow-hidden shadow-none">
         <RepresentativeNotice shown={visibleRows.length} total={distributorSourceCounts[category]} noun={`цін категорії ${category} у source`} />
-        <div className="data-table-wrap" role="region" aria-label="Ціни дистриб'ютора" tabIndex={0}>
+        <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Ціни дистриб’ютора">
+          {visibleRows.map((row) => (
+            <li key={row.id} data-record-id={row.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{row.sku}</strong><span className="mt-1 block text-[12px] font-medium">{row.family} · {row.trim}</span><span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">{row.engine} · MY {row.modelYear}</span></div>
+                <StatusBadge>{row.homologation}</StatusBadge>
+              </div>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Колір</dt><dd className="m-0">{row.color}<span className="block text-[10px] text-[var(--muted-foreground)]">{row.colorUa}</span></dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Доступність</dt><dd className="m-0">Display: {row.display ? "так" : "—"}<span className="block">Service: {row.service ? "так" : "—"}</span></dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Ex-Works EUR</dt><dd className="m-0 font-mono tabular-nums">€{row.exWorksEur.toFixed(2)}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Ex-DC EUR</dt><dd className="m-0 font-mono tabular-nums">€{row.exDcEur.toFixed(2)}</dd></div>
+              </dl>
+            </li>
+          ))}
+          {visibleRows.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає відповідних рядків. Точний загальний лічильник збережено.</li> : null}
+        </ul>
+        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця цін дистриб’ютора" tabIndex={0}>
           <table className="data-table min-w-[1160px]">
             <thead><tr><th>SKU</th><th>Сімейство</th><th>Комплектація</th><th>Двигун</th><th>Колір</th><th>Колір UA</th><th aria-label="Display"><Monitor size={13} /></th><th aria-label="Service"><Wrench size={13} /></th><th>Омологація</th><th>MY</th><th>Ex-Works EUR</th><th>Ex-DC EUR</th></tr></thead>
             <tbody>
               {visibleRows.map((row) => (
-                <tr key={row.id}>
+                <tr key={row.id} data-record-id={row.id}>
                   <td className="font-mono font-semibold">{row.sku}</td><td className="font-medium">{row.family}</td><td>{row.trim}</td><td>{row.engine}</td><td>{row.color}</td><td>{row.colorUa}</td>
                   <td className="text-center text-[var(--green)]">{row.display ? <Check size={14} /> : "—"}</td><td className="text-center text-[var(--green)]">{row.service ? <Check size={14} /> : "—"}</td>
                   <td><StatusBadge>{row.homologation}</StatusBadge></td><td>{row.modelYear}</td><td className="tabular-nums">{row.exWorksEur.toFixed(2)}</td><td className="tabular-nums">{row.exDcEur.toFixed(2)}</td>
@@ -679,12 +751,29 @@ function PartsCatalog() {
 
       <Panel className="overflow-hidden shadow-none">
         <RepresentativeNotice shown={visibleRows.length} total={hasFilters ? visibleRows.length : catalogPartsSourceTotal} noun="рядків каталогу" />
-        <div className="data-table-wrap" role="region" aria-label="Каталог запчастин" tabIndex={0}>
+        <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Каталог запчастин">
+          {visibleRows.map((part) => (
+            <li key={part.id} data-record-id={part.id} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+              <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0"><strong className="block font-mono text-[13px] text-[var(--blue)]">{part.sku}</strong><span className="mt-1 block text-[12px] font-medium">{part.description}</span></div><div className="flex flex-wrap justify-end gap-1"><StatusBadge tone={part.fullType === "Sea-Doo Parts" ? "blue" : part.fullType === "SSV Parts" ? "green" : part.fullType === "Spyder Parts" ? "purple" : "neutral"}>{part.fullType}</StatusBadge><StatusBadge tone={part.status === "active" ? "green" : part.status === "obsolete" ? "red" : "amber"}>{part.status === "active" ? "Active" : part.status === "obsolete" ? "Obsolete" : "Substituted"}</StatusBadge></div></div>
+              <dl className="grid grid-cols-3 gap-x-2 gap-y-2 text-[11px]">
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Дист. EUR</dt><dd className="m-0 font-mono tabular-nums">{formatDecimal(part.distributorEur, "EUR")}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Дилер USD</dt><dd className="m-0 font-mono tabular-nums text-[var(--amber)]">{formatDecimal(part.dealerUsd, "USD")}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Розд. USD</dt><dd className="m-0 font-mono tabular-nums text-[var(--blue)]">{formatDecimal(part.retailUsd, "USD")}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">МОЗ</dt><dd className="m-0">{part.moq ?? "—"}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">К-ть</dt><dd className="m-0">{part.quantity ?? "—"}</dd></div>
+                <div><dt className="text-[9px] font-semibold uppercase tracking-[0.03em] text-[var(--muted-foreground)]">Активна</dt><dd className="m-0 font-mono text-[10px] text-[var(--green)]">{part.replacement ? `${part.replacement.activeSku}${part.replacement.priceUsd === null ? "" : ` $${part.replacement.priceUsd.toFixed(2)}`}` : "—"}</dd></div>
+              </dl>
+            </li>
+          ))}
+          {exactNoResult ? <li className="px-3 py-10 text-center text-[var(--muted-foreground)]">Нічого не знайдено.</li> : null}
+          {!hasFilters && !fixturePageCovered ? <li className="px-3 py-10 text-center text-[11px] text-[var(--muted-foreground)]">Сторінку {page} можна переглянути у локальній пагінації, але її рядки не входять до репрезентативного source fixture.</li> : null}
+        </ul>
+        <div className="data-table-wrap hidden md:block" role="region" aria-label="Таблиця каталогу запчастин" tabIndex={0}>
           <table className="data-table min-w-[1040px]">
             <thead><tr><th>SKU</th><th>Опис</th><th>Повний тип</th><th>Дист. EUR</th><th>Дилер USD</th><th>Розд. USD</th><th>МОЗ</th><th>К-ть</th><th>Статус</th><th>→ Активна запчастина</th></tr></thead>
             <tbody>
               {visibleRows.map((part) => (
-                <tr key={part.id}>
+                <tr key={part.id} data-record-id={part.id}>
                   <td className="font-mono font-semibold text-[var(--blue)]">{part.sku}</td><td>{part.description}</td><td><StatusBadge tone={part.fullType === "Sea-Doo Parts" ? "blue" : part.fullType === "SSV Parts" ? "green" : part.fullType === "Spyder Parts" ? "purple" : "neutral"}>{part.fullType}</StatusBadge></td>
                   <td className="font-mono tabular-nums">{formatDecimal(part.distributorEur, "EUR")}</td><td className="font-mono tabular-nums text-[var(--amber)]">{formatDecimal(part.dealerUsd, "USD")}</td><td className="font-mono tabular-nums text-[var(--blue)]">{formatDecimal(part.retailUsd, "USD")}</td><td>{part.moq ?? "—"}</td><td>{part.quantity ?? "—"}</td>
                   <td><StatusBadge tone={part.status === "active" ? "green" : part.status === "obsolete" ? "red" : "amber"}>{part.status === "active" ? "Active" : part.status === "obsolete" ? "Obsolete" : "Substituted"}</StatusBadge></td>
