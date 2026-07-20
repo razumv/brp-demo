@@ -54,10 +54,18 @@ test("Schedule keeps one full-width search and disclosed category control surfac
     const panel = page.locator("[data-mobile-disclosure-panel]");
     const categories = panel.getByRole("group", { name: "Категорії слотів доставки", includeHidden: true });
     const toolbar = panel.locator("xpath=..");
+    const searchSurface = search.locator("xpath=..");
 
     await expect(search).toBeVisible();
-    const [searchBox, toolbarBox] = await Promise.all([search.boundingBox(), toolbar.boundingBox()]);
-    expect(searchBox?.width ?? 0).toBeGreaterThanOrEqual((toolbarBox?.width ?? 0) - 28);
+    const [searchBox, filterBox, toolbarBox] = await Promise.all([
+      searchSurface.boundingBox(),
+      filters.boundingBox(),
+      toolbar.boundingBox(),
+    ]);
+    expect(filterBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect((filterBox?.x ?? 0) - ((searchBox?.x ?? 0) + (searchBox?.width ?? 0))).toBeLessThanOrEqual(10);
+    expect((toolbarBox?.x ?? 0) + (toolbarBox?.width ?? 0) - ((filterBox?.x ?? 0) + (filterBox?.width ?? 0))).toBeLessThanOrEqual(10);
+    expect(searchBox?.width ?? 0).toBeGreaterThan(200);
     await expect(panel).toHaveCount(1);
     await expect(categories).toHaveCount(1);
     await expect(categories).toBeHidden();

@@ -56,7 +56,7 @@ function DealerAccessFilterControls({
   onPolicyStateChange: (value: PolicyStateFilter) => void;
 }) {
   return (
-    <div className="grid w-full min-w-0 gap-2 md:hidden">
+    <div className="grid w-full min-w-0 gap-2 md:grid-cols-2">
       <label className="grid gap-1">
         <span className="text-[10px] font-[680] uppercase tracking-[.035em] text-[var(--muted-foreground)]">Стан доступу команди</span>
         <select

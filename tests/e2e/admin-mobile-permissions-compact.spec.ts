@@ -92,6 +92,26 @@ test("dealer filters narrow team and company policy without changing read-only s
   await expectNoDocumentOverflow(page);
 });
 
+test("active permission filters remain visible and resettable after crossing the desktop breakpoint", async ({ page }) => {
+  await openAdminRoute(page, "/admin/permissions", 767);
+  await page.getByRole("button", { name: "Фільтри дозволів" }).click();
+  const permissionState = page.getByRole("combobox", { name: "Стан дозволів" });
+  await permissionState.selectOption("off");
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await expect(permissionState).toBeVisible();
+  await permissionState.selectOption("all");
+  await expect(page.getByRole("table", { name: "Дозволи ролі Менеджер" })).toContainText("Взаєморозрахунки");
+
+  await openAdminRoute(page, "/admin/dealer-access", 767);
+  await page.getByRole("button", { name: "Фільтри доступу" }).click();
+  const teamAccess = page.getByRole("combobox", { name: "Стан доступу команди" });
+  await teamAccess.selectOption("without-access");
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await expect(teamAccess).toBeVisible();
+  await teamAccess.selectOption("all");
+  await expect(page.getByRole("region", { name: "Команда дилера" })).toContainText("Демо-керівник");
+});
+
 test("permission tables stay desktop-only at the exact breakpoint and wider", async ({ page }) => {
   for (const width of [768, 1440] as const) {
     await openAdminRoute(page, "/admin/permissions", width);

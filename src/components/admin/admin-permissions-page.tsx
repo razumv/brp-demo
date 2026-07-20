@@ -122,7 +122,7 @@ function PermissionStateFilterControl({
   onValueChange: (value: PermissionStateFilter) => void;
 }) {
   return (
-    <label className="grid min-w-0 flex-1 gap-1 md:hidden">
+    <label className="grid min-w-0 flex-1 gap-1 md:min-w-[180px] md:flex-none">
       <span className="text-[10px] font-[680] uppercase tracking-[.035em] text-[var(--muted-foreground)]">Стан дозволів</span>
       <select
         className="min-h-11 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] text-[var(--foreground)] outline-none focus:border-[var(--orange)] focus:ring-1 focus:ring-[var(--orange)]"
