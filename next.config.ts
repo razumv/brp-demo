@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     : {}),
   env: {
     NEXT_PUBLIC_BASE_PATH: isGithubPages ? githubPagesBasePath : "",
+    NEXT_PUBLIC_PWA_ENABLED: isGithubPages ? "true" : "false",
   },
 };
 

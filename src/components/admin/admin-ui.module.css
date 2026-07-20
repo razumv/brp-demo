@@ -5,6 +5,10 @@
   gap: 20px;
 }
 
+.adminPage {
+  min-width: 0;
+}
+
 .pageWide {
   width: min(100%, 1560px);
 }
@@ -131,6 +135,26 @@
 
 .mobileTabSelect {
   display: none;
+}
+
+.mobileDisclosureTrigger {
+  display: none;
+}
+
+.mobileDisclosurePanel {
+  display: contents;
+}
+
+.mobileDisclosureCount {
+  display: inline-grid;
+  min-width: 18px;
+  min-height: 18px;
+  padding-inline: 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 
 .segmented {
@@ -303,6 +327,10 @@
 
 .kpiGridThree {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kpiGridHideOnMobile {
+  display: grid;
 }
 
 .kpiCard {
@@ -566,6 +594,153 @@
   }
 }
 
+@media (max-width: 767px) {
+  .adminPage :global(.button) {
+    min-height: 44px;
+  }
+
+  .adminPage :global(.icon-button-small) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .searchField,
+  .searchFieldCompact {
+    height: 44px;
+  }
+
+  .searchField input {
+    min-height: 44px;
+  }
+
+  .searchClear {
+    width: 44px;
+    height: 44px;
+    right: 0;
+  }
+
+  .iconAction {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tabsWithMobileSelect .tabs {
+    display: none;
+  }
+
+  .tabsWithMobileSelect .mobileTabSelect {
+    display: grid;
+    gap: 6px;
+  }
+
+  .mobileTabSelect > span {
+    color: var(--muted-foreground);
+    font-size: 10px;
+    font-weight: 680;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+  }
+
+  .mobileTabSelect select {
+    width: 100%;
+    min-height: 44px;
+    padding: 7px 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--foreground);
+  }
+
+  .toolbarWithMobileDisclosure.toolbarContained {
+    align-items: center;
+    padding: 8px;
+  }
+
+  .toolbarWithMobileDisclosure .toolbarSearch {
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosureTrigger {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 11px;
+    gap: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--foreground);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 620;
+    white-space: nowrap;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosureTrigger[aria-expanded="true"] svg:last-child {
+    transform: rotate(180deg);
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel {
+    display: flex;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel[data-mobile-open="false"] {
+    display: none;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarFilters,
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarView,
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarFilters > *,
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarView > *,
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel .toolbarActions > * {
+    flex: 1 1 auto;
+  }
+
+  .toolbarWithMobileDisclosure .mobileDisclosurePanel :is(button, select, input) {
+    min-height: 44px !important;
+  }
+
+  .segmented {
+    min-height: 44px;
+  }
+
+  .kpiGridHideOnMobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobileDisclosureTrigger,
+  .mobileTabSelect {
+    display: none;
+  }
+
+  .mobileDisclosurePanel {
+    display: contents;
+  }
+
+  .toolbarWithMobileDisclosure .toolbarSearch { order: 0; }
+  .toolbarWithMobileDisclosure .toolbarFilters { order: 1; }
+  .toolbarWithMobileDisclosure .toolbarSpacer { order: 2; }
+  .toolbarWithMobileDisclosure .toolbarView { order: 3; }
+  .toolbarWithMobileDisclosure .toolbarActions { order: 4; }
+  .toolbarWithMobileDisclosure .toolbarMeta { order: 5; }
+}
+
 @media (max-width: 640px) {
   .page {
     gap: 16px;
@@ -600,53 +775,25 @@
     flex: 1 1 auto;
   }
 
-  .tabsWithMobileSelect .tabs {
-    display: none;
-  }
-
-  .tabsWithMobileSelect .mobileTabSelect {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .mobileTabSelect > span {
-    color: var(--muted-foreground);
-    font-size: 10px;
-    font-weight: 680;
-    letter-spacing: .035em;
-    text-transform: uppercase;
-  }
-
-  .mobileTabSelect select {
-    width: 100%;
-    min-height: 40px;
-    padding: 7px 11px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface);
-    color: var(--foreground);
-  }
-
-  .toolbarContained {
+  .toolbar:not(.toolbarWithMobileDisclosure).toolbarContained {
     align-items: stretch;
     padding: 8px;
   }
 
-  .toolbarSearch {
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarSearch {
     flex-basis: 100%;
   }
 
-  .toolbarFilters,
-  .toolbarView,
-  .toolbarActions {
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarFilters,
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarView,
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarActions {
     width: 100%;
     flex-wrap: wrap;
   }
 
-  .toolbarFilters > *,
-  .toolbarView > *,
-  .toolbarActions > * {
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarFilters > *,
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarView > *,
+  .toolbar:not(.toolbarWithMobileDisclosure) .toolbarActions > * {
     flex: 1 1 auto;
   }
 
@@ -671,11 +818,6 @@
   .tableHeaderActions {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .iconAction {
-    width: 44px;
-    height: 44px;
   }
 
   .formGrid {

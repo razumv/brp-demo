@@ -30,6 +30,7 @@ import {
   type UnitShippingCategory,
   type UnitShippingTab,
 } from "@/lib/admin-unit-shipping-data";
+import styles from "./admin.module.css";
 
 const DEFAULT_SYNC_FROM = "2025-10-18";
 const DEFAULT_SYNC_TO = "2026-07-18";
@@ -125,6 +126,15 @@ export function AdminUnitShippingPage() {
   const currentPage = Math.min(page, totalPages);
   const pageRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const activePanelId = `unit-shipping-${activeTab}-panel`;
+  const activeFilterCount = [
+    category !== "Всі",
+    Boolean(period),
+    Boolean(modelNumber),
+    activeTab === "shipped" && Boolean(shippedFrom),
+    activeTab === "shipped" && Boolean(shippedTo),
+  ]
+    .filter(Boolean)
+    .length;
 
   const resetFilters = () => {
     setQuery("");
@@ -223,7 +233,7 @@ export function AdminUnitShippingPage() {
             />
           )}
           filters={(
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className={`flex min-w-0 flex-wrap items-center gap-2 ${styles.unitShippingFilters}`}>
               <select
                 className="select !w-auto min-w-[150px] max-w-full"
                 aria-label="Тип техніки"
@@ -298,6 +308,7 @@ export function AdminUnitShippingPage() {
             </button>
           )}
           meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
+          mobileDisclosure={{ sections: ["filters", "actions"], activeCount: activeFilterCount }}
         />
 
         <Panel className="overflow-hidden">
@@ -384,7 +395,7 @@ export function AdminUnitShippingPage() {
                                 <span><strong className="text-[var(--foreground)]">Модель №:</strong> {record.model.number}</span>
                                 <span><strong className="text-[var(--foreground)]">Опис:</strong> {record.model.description}</span>
                               </div>
-                              <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                              <div className={`overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] ${styles.unitSerialScroller}`} role="region" aria-label={`Серійні номери замовлення ${orderNumber}`} tabIndex={0}>
                                 <table className="w-full min-w-[620px] border-collapse text-[11px]">
                                   <thead className="bg-[var(--surface-subtle)] text-left text-[var(--muted-foreground)]">
                                     <tr><th className="px-3 py-2 font-medium">Серійний номер (VIN)</th><th className="px-3 py-2 font-medium">Дата відвантаження</th><th className="px-3 py-2 font-medium">#</th></tr>
@@ -418,7 +429,7 @@ export function AdminUnitShippingPage() {
               <label className="inline-flex items-center gap-2">
                 <span>На сторінці</span>
                 <select
-                  className="select !min-h-8 !w-[76px] !py-1"
+                  className="select !min-h-11 !w-[76px] !py-1 md:!min-h-8"
                   aria-label="Записів на сторінці"
                   value={pageSize}
                   onChange={(event) => {
@@ -432,7 +443,7 @@ export function AdminUnitShippingPage() {
               </label>
               <button
                 type="button"
-                className="button button-outline !min-h-8 !px-2"
+                className="button button-outline !min-h-11 !min-w-11 !px-2 md:!min-h-8 md:!min-w-0"
                 aria-label="Попередня сторінка"
                 disabled={currentPage === 1}
                 onClick={() => {
@@ -445,7 +456,7 @@ export function AdminUnitShippingPage() {
               <span className="min-w-14 text-center font-medium text-[var(--foreground)]">{currentPage} / {totalPages}</span>
               <button
                 type="button"
-                className="button button-outline !min-h-8 !px-2"
+                className="button button-outline !min-h-11 !min-w-11 !px-2 md:!min-h-8 md:!min-w-0"
                 aria-label="Наступна сторінка"
                 disabled={currentPage === totalPages}
                 onClick={() => {

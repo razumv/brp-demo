@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  ChevronDown,
+  Filter,
   Search,
   X,
   type LucideIcon,
@@ -11,9 +13,18 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  useId,
+  useState,
 } from "react";
 import { cn } from "@/lib/utils";
+import {
+  getDisclosedToolbarSections,
+  type AdminToolbarMobileDisclosure,
+  type AdminToolbarSection,
+} from "./admin-toolbar-disclosure";
 import styles from "./admin-ui.module.css";
+
+export type { AdminToolbarMobileDisclosure } from "./admin-toolbar-disclosure";
 
 export type AdminTone = "neutral" | "orange" | "green" | "blue" | "amber" | "red";
 
@@ -27,7 +38,7 @@ export function AdminPage({
   className?: string;
 }) {
   return (
-    <div className={cn("page", styles.page, width === "wide" && styles.pageWide, className)}>
+    <div className={cn("page", styles.adminPage, styles.page, width === "wide" && styles.pageWide, className)}>
       {children}
     </div>
   );
@@ -198,6 +209,7 @@ export function AdminToolbar({
   view,
   actions,
   meta,
+  mobileDisclosure,
   contained = true,
   className,
 }: {
@@ -206,16 +218,61 @@ export function AdminToolbar({
   view?: ReactNode;
   actions?: ReactNode;
   meta?: ReactNode;
+  mobileDisclosure?: AdminToolbarMobileDisclosure;
   contained?: boolean;
   className?: string;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const disclosureId = `admin-toolbar-${useId().replaceAll(":", "")}`;
+  const disclosedSections = getDisclosedToolbarSections(
+    { filters: Boolean(filters), view: Boolean(view), actions: Boolean(actions) },
+    mobileDisclosure,
+  );
+  const hasDisclosedControls = Boolean(mobileDisclosure && disclosedSections.length);
+  const firstDisclosedSection = disclosedSections[0];
+
+  const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
+    if (!control || disclosedSections.includes(section)) return null;
+    return <div className={className}>{control}</div>;
+  };
+
+  const disclosurePanel = mobileDisclosure && hasDisclosedControls ? (
+    <div
+      id={disclosureId}
+      className={styles.mobileDisclosurePanel}
+      data-mobile-disclosure-panel
+      data-mobile-open={mobileOpen}
+    >
+      {disclosedSections.includes("filters") ? <div className={styles.toolbarFilters}>{filters}</div> : null}
+      {disclosedSections.includes("view") ? <div className={styles.toolbarView}>{view}</div> : null}
+      {disclosedSections.includes("actions") ? <div className={styles.toolbarActions}>{actions}</div> : null}
+    </div>
+  ) : null;
+
   return (
-    <section className={cn(styles.toolbar, contained && styles.toolbarContained, className)}>
+    <section className={cn(styles.toolbar, mobileDisclosure && styles.toolbarWithMobileDisclosure, contained && styles.toolbarContained, className)}>
       {search ? <div className={styles.toolbarSearch}>{search}</div> : null}
-      {filters ? <div className={styles.toolbarFilters}>{filters}</div> : null}
+      {mobileDisclosure && hasDisclosedControls ? (
+        <button
+          type="button"
+          className={styles.mobileDisclosureTrigger}
+          aria-expanded={mobileOpen}
+          aria-controls={disclosureId}
+          onClick={() => setMobileOpen((current) => !current)}
+        >
+          <Filter size={16} aria-hidden="true" />
+          <span>{mobileDisclosure.label ?? "Фільтри"}</span>
+          {mobileDisclosure.activeCount ? <span className={styles.mobileDisclosureCount}>{mobileDisclosure.activeCount}</span> : null}
+          <ChevronDown size={14} aria-hidden="true" />
+        </button>
+      ) : null}
+      {firstDisclosedSection === "filters" ? disclosurePanel : null}
+      {renderToolbarControl("filters", filters, styles.toolbarFilters)}
       {!search ? <div className={styles.toolbarSpacer} aria-hidden="true" /> : null}
-      {view ? <div className={styles.toolbarView}>{view}</div> : null}
-      {actions ? <div className={styles.toolbarActions}>{actions}</div> : null}
+      {firstDisclosedSection === "view" ? disclosurePanel : null}
+      {renderToolbarControl("view", view, styles.toolbarView)}
+      {firstDisclosedSection === "actions" ? disclosurePanel : null}
+      {renderToolbarControl("actions", actions, styles.toolbarActions)}
       {meta ? <div className={styles.toolbarMeta}>{meta}</div> : null}
     </section>
   );
@@ -281,16 +338,18 @@ export function AdminKpiGrid({
   items,
   label = "Ключові показники",
   columns = 4,
+  hideOnMobile = false,
   className,
 }: {
   items: readonly AdminKpi[];
   label?: string;
   columns?: 3 | 4;
+  hideOnMobile?: boolean;
   className?: string;
 }) {
   return (
     <section
-      className={cn(styles.kpiGrid, columns === 3 && styles.kpiGridThree, className)}
+      className={cn(styles.kpiGrid, columns === 3 && styles.kpiGridThree, hideOnMobile && styles.kpiGridHideOnMobile, className)}
       aria-label={label}
     >
       {items.map((item) => <AdminKpiCard key={item.id} item={item} />)}

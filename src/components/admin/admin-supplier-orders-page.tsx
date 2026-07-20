@@ -27,6 +27,7 @@ import {
   type SupplierOrdersSort,
   type SupplierOrdersTab,
 } from "@/lib/admin-supplier-orders-data";
+import styles from "./admin.module.css";
 
 type ExceptionFilter = "all" | "missing-pdf";
 
@@ -75,7 +76,7 @@ function KpiGrid({ selected, onSelect }: {
   onSelect: (id: string) => void;
 }) {
   return (
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Показники замовлень постачальнику">
+    <section className={`${styles.mobileHiddenOnMobile} grid grid-cols-2 gap-3 xl:grid-cols-4`} aria-label="Показники замовлень постачальнику">
       {supplierOrderKpis.map((kpi) => {
         const tone = kpiToneClasses[kpi.tone];
         const isSelected = selected === kpi.id;
@@ -244,6 +245,10 @@ function SearchToolbar({
           </label>
         </>
       )}
+      mobileDisclosure={{
+        sections: ["filters"],
+        activeCount: Number(Boolean(periodStart) || Boolean(periodEnd)) + Number(sort !== "status"),
+      }}
     />
   );
 }

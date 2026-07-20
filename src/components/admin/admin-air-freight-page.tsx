@@ -38,6 +38,7 @@ import {
   type AirFreightShipmentStatus,
   type AirFreightTone,
 } from "@/lib/admin-air-freight-data";
+import styles from "./admin.module.css";
 
 type AirFreightTab = "overview" | "shipments";
 type ShipmentFilter = "all" | AirFreightShipmentStatus;
@@ -148,32 +149,36 @@ function AirFreightTabs({ active, onChange }: { active: AirFreightTab; onChange:
 
 function WorkflowStrip() {
   return (
-    <Panel className="overflow-x-auto p-5">
-      <div className="flex min-w-[790px] items-start">
-        {airFreightWorkflowSteps.map((step, index) => {
-          const tone = toneClasses[step.tone];
-          return (
-            <div key={step.id} className="contents">
-              <div className="flex min-w-[86px] flex-1 flex-col items-center text-center">
-                <span className={`grid size-11 place-items-center rounded-full border text-base font-bold ${tone.soft} ${tone.text} ${tone.border}`}>
-                  {step.count}
-                </span>
-                <span className="mt-2 text-[10px] font-medium text-[var(--muted-foreground)]">{step.label}</span>
-              </div>
-              {index < airFreightWorkflowSteps.length - 1 ? (
-                <span className={`mt-[21px] h-px min-w-8 flex-1 ${index === 0 ? "bg-[var(--blue)]" : "bg-[var(--border)]"}`} aria-hidden="true" />
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </Panel>
+    <div className={styles.mobileHiddenOnMobile} data-mobile-surface="air-workflow">
+      <Panel className="min-w-0">
+        <div className="min-w-0 overflow-x-auto p-5" role="region" aria-label="Етапи Air Freight" tabIndex={0}>
+          <div className="flex min-w-[790px] items-start">
+            {airFreightWorkflowSteps.map((step, index) => {
+              const tone = toneClasses[step.tone];
+              return (
+                <div key={step.id} className="contents">
+                  <div className="flex min-w-[86px] flex-1 flex-col items-center text-center">
+                    <span className={`grid size-11 place-items-center rounded-full border text-base font-bold ${tone.soft} ${tone.text} ${tone.border}`}>
+                      {step.count}
+                    </span>
+                    <span className="mt-2 text-[10px] font-medium text-[var(--muted-foreground)]">{step.label}</span>
+                  </div>
+                  {index < airFreightWorkflowSteps.length - 1 ? (
+                    <span className={`mt-[21px] h-px min-w-8 flex-1 ${index === 0 ? "bg-[var(--blue)]" : "bg-[var(--border)]"}`} aria-hidden="true" />
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </Panel>
+    </div>
   );
 }
 
 function OverviewKpis() {
   return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6" aria-label="Показники Air Freight">
+    <section className={`${styles.mobileHiddenOnMobile} grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6`} aria-label="Показники Air Freight">
       {airFreightKpis.map((kpi) => {
         const Icon = kpiIcons[kpi.id];
         const tone = toneClasses[kpi.tone];
@@ -251,6 +256,7 @@ function OverviewTab() {
 function ShipmentMetrics() {
   return (
     <AdminKpiGrid
+      hideOnMobile
       label="Показники постачань"
       items={airFreightShipmentMetrics.map((metric) => {
         const Icon = shipmentMetricIcons[metric.id];
@@ -323,6 +329,10 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
           </button>
         )}
         meta={`${filteredShipments.length} з ${airFreightShipments.length} постачань`}
+        mobileDisclosure={{
+          sections: ["filters"],
+          activeCount: Number(filter !== "all"),
+        }}
       />
       <Panel>
         {filteredShipments.length === 0 ? (

@@ -109,14 +109,14 @@ function RoleBadge({ role }: { role: AdminUserRole }) {
   );
 }
 
-function UserIdentity({ user }: { user: AdminUserRecord }) {
+function UserIdentity({ user, titleId }: { user: AdminUserRecord; titleId?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] text-[10px] font-semibold text-[var(--muted-foreground)]" aria-hidden="true">
         {user.displayName.slice(-2)}
       </span>
       <span className="min-w-0">
-        <strong className="block truncate text-[12px] font-semibold">{user.displayName}</strong>
+        <strong id={titleId} className="block truncate text-[12px] font-semibold">{user.displayName}</strong>
         <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">{user.accountLabel}</span>
       </span>
     </div>
@@ -132,9 +132,9 @@ function Contact({ user }: { user: AdminUserRecord }) {
   );
 }
 
-function UserRowActions({ user, onEdit }: { user: AdminUserRecord; onEdit: () => void }) {
+function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserRecord; onEdit: () => void; compact?: boolean }) {
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className={compact ? "flex flex-wrap items-center gap-1 [&>button]:!size-11 md:[&>button]:!size-8" : "flex items-center justify-end gap-1"}>
       <AdminIconAction
         label={`Деактивувати ${user.displayName} — заблоковано`}
         tooltip="Деактивацію заблоковано у read-only демонстрації"
@@ -166,38 +166,71 @@ function ActiveUsersGrid({ users, resultCount, onEdit }: {
   onEdit: (user: AdminUserRecord) => void;
 }) {
   return (
-    <AdminTableShell
-      scrollLabel="Активні користувачі"
-      footer={<span className="text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</span>}
-    >
-      <div className={userGrid} role="row">
-        {["КОРИСТУВАЧ", "КОНТАКТ", "КОМПАНІЯ", "РОЛЬ", "СТАТУС", "РЕЄСТРАЦІЯ", "ДІЇ"].map((column) => (
-          <span key={column} role="columnheader" className="flex min-h-10 items-center bg-[var(--surface-subtle)] px-4 text-[9px] font-bold tracking-[0.03em] text-[var(--muted-foreground)]">
-            {column}
-          </span>
-        ))}
-      </div>
-      <div className="max-h-[600px] min-w-[1080px] overflow-y-auto border-t border-[var(--border)]" role="rowgroup">
+    <div role="grid" aria-label="Активні користувачі" className="min-w-0 max-md:hidden">
+      <AdminTableShell
+        scrollLabel="Активні користувачі"
+        footer={<span className="text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</span>}
+      >
+        <div className={userGrid} role="row">
+          {["КОРИСТУВАЧ", "КОНТАКТ", "КОМПАНІЯ", "РОЛЬ", "СТАТУС", "РЕЄСТРАЦІЯ", "ДІЇ"].map((column) => (
+            <span key={column} role="columnheader" className="flex min-h-10 items-center bg-[var(--surface-subtle)] px-4 text-[9px] font-bold tracking-[0.03em] text-[var(--muted-foreground)]">
+              {column}
+            </span>
+          ))}
+        </div>
+        <div className="max-h-[600px] min-w-[1080px] overflow-y-auto border-t border-[var(--border)]" role="rowgroup">
+          {users.map((user) => (
+            <div key={user.id} data-record-id={user.id} className={`${userGrid} min-h-[80px] items-center border-b border-[var(--border)] last:border-b-0`} role="row">
+              <div className="min-w-0 px-4 py-3" role="cell"><UserIdentity user={user} /></div>
+              <div className="min-w-0 px-4 py-3" role="cell"><Contact user={user} /></div>
+              <div className="flex min-w-0 items-center gap-1.5 px-4 py-3 text-[11px]" role="cell">
+                <Building2 size={13} className="shrink-0 text-[var(--muted-foreground)]" />
+                <span className="truncate font-medium">{user.company}</span>
+              </div>
+              <div className="px-4 py-3" role="cell"><RoleBadge role={user.role} /></div>
+              <div className="px-4 py-3" role="cell"><UserStatus /></div>
+              <div className="px-4 py-3 text-[11px] leading-[1.2] text-[var(--muted-foreground)]" role="cell">{user.registrationAge}</div>
+              <div className="px-4 py-2" role="cell"><UserRowActions user={user} onEdit={() => onEdit(user)} /></div>
+            </div>
+          ))}
+        </div>
+      </AdminTableShell>
+    </div>
+  );
+}
+
+function UserStatus() {
+  return (
+    <span className="inline-flex min-h-[21px] items-center gap-1.5 rounded-full border border-[#b7dfbf] bg-[var(--green-soft)] px-2 text-[10px] font-semibold text-[var(--green)] whitespace-nowrap">
+      <CheckCircle2 size={12} /> Активний
+    </span>
+  );
+}
+
+function ActiveUsersCards({ users, resultCount, onEdit }: {
+  users: readonly AdminUserRecord[];
+  resultCount: number;
+  onEdit: (user: AdminUserRecord) => void;
+}) {
+  return (
+    <div className="grid gap-3 md:hidden">
+      <ul aria-label="Активні користувачі" className="grid gap-3 p-0 md:hidden">
         {users.map((user) => (
-          <div key={user.id} className={`${userGrid} min-h-[80px] items-center border-b border-[var(--border)] last:border-b-0`} role="row">
-            <div className="min-w-0 px-4 py-3" role="cell"><UserIdentity user={user} /></div>
-            <div className="min-w-0 px-4 py-3" role="cell"><Contact user={user} /></div>
-            <div className="flex min-w-0 items-center gap-1.5 px-4 py-3 text-[11px]" role="cell">
-              <Building2 size={13} className="shrink-0 text-[var(--muted-foreground)]" />
-              <span className="truncate font-medium">{user.company}</span>
-            </div>
-            <div className="px-4 py-3" role="cell"><RoleBadge role={user.role} /></div>
-            <div className="px-4 py-3" role="cell">
-              <span className="inline-flex min-h-[21px] items-center gap-1.5 rounded-full border border-[#b7dfbf] bg-[var(--green-soft)] px-2 text-[10px] font-semibold text-[var(--green)] whitespace-nowrap">
-                <CheckCircle2 size={12} /> Активний
-              </span>
-            </div>
-            <div className="px-4 py-3 text-[11px] leading-[1.2] text-[var(--muted-foreground)]" role="cell">{user.registrationAge}</div>
-            <div className="px-4 py-2" role="cell"><UserRowActions user={user} onEdit={() => onEdit(user)} /></div>
-          </div>
+          <li key={user.id} data-record-id={user.id} aria-labelledby={`admin-user-${user.id}-title`} className="grid gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
+            <UserIdentity user={user} titleId={`admin-user-${user.id}-title`} />
+            <Contact user={user} />
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[10px]">
+              <div><dt className="text-[var(--muted-foreground)]">Компанія</dt><dd className="mt-0.5 font-medium"><Building2 size={12} className="mr-1 inline text-[var(--muted-foreground)]" />{user.company}</dd></div>
+              <div><dt className="text-[var(--muted-foreground)]">Роль</dt><dd className="mt-0.5"><RoleBadge role={user.role} /></dd></div>
+              <div><dt className="text-[var(--muted-foreground)]">Статус</dt><dd className="mt-0.5"><UserStatus /></dd></div>
+              <div><dt className="text-[var(--muted-foreground)]">Реєстрація</dt><dd className="mt-0.5 font-medium text-[var(--muted-foreground)]">{user.registrationAge}</dd></div>
+            </dl>
+            <UserRowActions user={user} onEdit={() => onEdit(user)} compact />
+          </li>
         ))}
-      </div>
-    </AdminTableShell>
+      </ul>
+      <p className="m-0 text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</p>
+    </div>
   );
 }
 
@@ -473,7 +506,7 @@ export function AdminUsersPage() {
         description="Керування обліковими записами, затвердження та дозволи"
       />
 
-      <AdminKpiGrid items={userKpiItems()} columns={3} label="Показники користувачів" />
+      <AdminKpiGrid items={userKpiItems()} columns={3} label="Показники користувачів" hideOnMobile />
 
       <AdminToolbar
         search={(
@@ -493,14 +526,18 @@ export function AdminUsersPage() {
               setTab(nextTab);
             }}
             label="Стани користувачів"
+            mobileSelectLabel="Стани користувачів"
             size="compact"
           />
         )}
       />
 
-      <section id={`admin-users-${tab}-panel`} role="tabpanel" aria-labelledby={`admin-users-${tab}-panel-tab`}>
+      <section id={`admin-users-${tab}-panel`} role="tabpanel" aria-labelledby={`admin-users-${tab}-panel-tab`} className="min-w-0">
         {tab === "active" && visibleUsers.length ? (
-          <ActiveUsersGrid users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />
+          <>
+            <ActiveUsersGrid users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />
+            <ActiveUsersCards users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />
+          </>
         ) : (
           <EmptyUsersState category={tab !== "active"} />
         )}

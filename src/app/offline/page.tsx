@@ -18,7 +18,7 @@ export default function OfflinePage() {
         <span className={styles.icon} aria-hidden="true"><WifiOff size={30} /></span>
         <p className={styles.eyebrow}>BRP Parts Catalog</p>
         <h1 id="offline-title">Немає з’єднання</h1>
-        <p className={styles.copy}>Перевірте інтернет і спробуйте ще раз. Уже відкриті сторінки залишаються доступними офлайн.</p>
+        <p className={styles.copy}>Перевірте інтернет і спробуйте ще раз. Сторінка автоматично оновиться після відновлення з’єднання.</p>
         <div className={styles.actions}>
           <button type="button" onClick={() => window.location.reload()}>
             <RefreshCw size={16} aria-hidden="true" />
