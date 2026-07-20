@@ -790,7 +790,6 @@ function PlacementTab() {
             <LockedButton title="Upload/import Excel є операційною дією і вимкнений"><Upload size={14} /> Завантажити Excel</LockedButton>
           </>
         )}
-        mobileDisclosure={{ sections: ["actions"] }}
       />
 
       <Panel className="overflow-hidden shadow-none">

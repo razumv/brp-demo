@@ -72,6 +72,17 @@ test("warehouse filters use one reachable mobile disclosure without losing its s
   await expect(supply).toHaveValue(selectedSupply);
 });
 
+test("warehouse placement keeps its locked upload action directly visible on phones", async ({ page }) => {
+  for (const width of [390, 767] as const) {
+    await openAdminRoute(page, "/admin/warehouse", width);
+    await page.getByRole("combobox", { name: "Процес складу" }).selectOption("placement");
+    const upload = page.getByRole("button", { name: "Завантажити Excel" });
+    await expect(upload).toHaveCount(1);
+    await expect(upload).toBeVisible();
+    await expect(upload).toBeDisabled();
+  }
+});
+
 test("invoices hide each KPI group on phones while preserving labelled section selection and direct actions", async ({ page }) => {
   await openAdminRoute(page, "/admin/invoices", 390);
   await expectMobileHidden(page, "Показники інвойсів");
