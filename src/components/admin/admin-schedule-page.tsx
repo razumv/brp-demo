@@ -141,6 +141,7 @@ function ScheduleKpis() {
   return (
     <AdminKpiGrid
       label="Показники графіка доставки"
+      hideOnMobile
       items={scheduleKpis.map((metric) => {
         const Icon = icons[metric.id];
         return {
@@ -233,7 +234,7 @@ function Chronology() {
   }), [timelineDateGroups, timelineMonths]);
 
   return (
-    <Panel className="overflow-visible p-0 shadow-none">
+    <Panel className={`${styles.chronologyPanel} overflow-visible p-0 shadow-none`}>
       <PersistedCollapsibleSection
         persistenceId="admin.schedule.chronology"
         title="Хронологія доставок"
@@ -353,7 +354,7 @@ function SlotRow({ slot, selected, onSelect }: { slot: ScheduleSlot; selected: b
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(slot)}
-      className={`grid min-w-[510px] grid-cols-[minmax(210px,1.45fr)_90px_100px_62px] items-center gap-3 border-b border-[var(--border)] px-3 py-2.5 text-left text-[11px] transition-colors last:border-b-0 ${selected ? "bg-[color-mix(in_srgb,var(--blue-soft)_45%,var(--surface))]" : "hover:bg-[var(--surface-subtle)]"}`}
+      className={`${styles.slotRow} border-b border-[var(--border)] text-left text-[11px] transition-colors last:border-b-0 ${selected ? "bg-[color-mix(in_srgb,var(--blue-soft)_45%,var(--surface))]" : "hover:bg-[var(--surface-subtle)]"}`}
     >
       <span className="min-w-0">
         <span className="flex items-center gap-2"><StatusBadge>{slot.category}</StatusBadge><strong className="truncate text-[13px] font-medium">{slot.name.replace(`${slot.category} `, "")}</strong></span>
@@ -398,8 +399,8 @@ function SlotList({
       <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
         Репрезентативна source-вибірка: {category === "all" ? `сторінка ${page} з 4` : `категорія ${category}`} · показано {slots.length} рядків.
       </p>
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[510px] grid-cols-[minmax(210px,1.45fr)_90px_100px_62px] gap-3 border-b border-[var(--border)] px-3 py-3 text-[10px] text-[var(--muted-foreground)]"><span>Назва</span><span>Статус</span><span>Прибуття</span><span className="text-right">Вільно</span></div>
+      <div className={styles.slotListScroller}>
+        <div className={`${styles.slotListHeader} border-b border-[var(--border)] text-[10px] text-[var(--muted-foreground)]`}><span>Назва</span><span>Статус</span><span>Прибуття</span><span className="text-right">Вільно</span></div>
         {slots.map((slot) => <SlotRow key={slot.id} slot={slot} selected={selectedId === slot.id} onSelect={onSelect} />)}
         {slots.length === 0 && page <= 2 ? <div className="grid min-h-44 place-items-center p-6 text-[11px] text-[var(--muted-foreground)]">У репрезентативній вибірці немає слотів цієї категорії.</div> : null}
         {page > 2 ? <SourceBoundaryEmpty page={page} /> : null}
@@ -537,6 +538,7 @@ function Deliveries({
       className="grid gap-4"
     >
       <AdminToolbar
+        className={styles.scheduleToolbar}
         search={(
           <AdminSearchField
             value={query}
@@ -553,6 +555,7 @@ function Deliveries({
             label="Категорії слотів доставки"
           />
         )}
+        mobileDisclosure={{ sections: ["filters"], activeCount: Number(category !== "all") }}
       />
       {normalize(query) ? (
         <SearchResults query={query} category={category} />
@@ -568,8 +571,9 @@ function Deliveries({
 
 function WarehouseStock() {
   return (
-    <section id="schedule-stock-panel" role="tabpanel" aria-labelledby="schedule-stock-panel-tab">
+    <section id="schedule-stock-panel" role="tabpanel" aria-labelledby="schedule-stock-panel-tab" className={styles.stockPanel}>
       <AdminTableShell
+        className={styles.stockTable}
         notice="Репрезентативна source-вибірка: 5 категорій; точний загальний складський лічильник — 33 од."
         scrollLabel="Складські запаси"
       >
