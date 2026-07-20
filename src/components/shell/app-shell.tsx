@@ -153,7 +153,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const router = useRouter();
-  const { state, hydrated, setSession, resetDemoData } = useDemoStore();
+  const { state, hydrated, setSession } = useDemoStore();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -183,9 +183,10 @@ export function AppShell({
   };
 
   const cartCount = state.cart.reduce((sum, line) => sum + line.quantity, 0);
-  const identity = useMemo(() => role === "admin"
-    ? { name: "Razumv Admin", company: "Logos" }
-    : { name: state.session?.displayName || "Финансы", company: "Logos" }, [role, state.session?.displayName]);
+  const identity = useMemo(() => ({
+    name: state.session?.displayName || (role === "admin" ? "Razumv Admin" : "Финансы"),
+    company: state.session?.company || "Logos",
+  }), [role, state.session?.company, state.session?.displayName]);
 
   if (!hydrated || state.session?.role !== role) {
     return (
@@ -265,12 +266,6 @@ export function AppShell({
               {profileOpen ? (
                 <div className="popover-menu profile-menu">
                   <div className="popover-profile"><strong>{identity.name}</strong><span>{role === "admin" ? "Адміністратор" : "Дилер"}</span></div>
-                  {role === "dealer" ? (
-                    <button type="button" onClick={() => {
-                      resetDemoData();
-                      setProfileOpen(false);
-                    }}><Trash2 size={15} /> Скинути демо-дані</button>
-                  ) : null}
                   <button type="button" onClick={() => {
                     setSession(null);
                     setProfileOpen(false);

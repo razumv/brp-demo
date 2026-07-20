@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { initialDemoState } from "@/lib/mock-data";
+import type { DemoState, Session } from "@/lib/types";
 
 const STORAGE_KEY = "brp-clone-demo-state-v1";
 
@@ -7,6 +9,14 @@ async function submitLogin(page: Page, email: string, password: string) {
   await page.getByLabel("Електронна пошта").fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
+}
+
+async function seedDealerSession(page: Page, session: Session) {
+  const state = JSON.parse(JSON.stringify(initialDemoState)) as DemoState;
+  state.session = session;
+  await page.addInitScript(({ storageKey, persistedState }) => {
+    window.localStorage.setItem(storageKey, JSON.stringify(persistedState));
+  }, { storageKey: STORAGE_KEY, persistedState: state });
 }
 
 test("login exposes only supported account actions", async ({ page }) => {
@@ -46,6 +56,27 @@ test("different ordinary emails resolve to the same dealer profile", async ({ pa
   await submitLogin(page, "another.dealer@example.invalid", "not-persisted");
   await expect(page.locator(".profile-summary").getByText("Финансы", { exact: true })).toBeVisible();
   await expect(page.locator(".profile-summary").getByText("Logos", { exact: true })).toBeVisible();
+});
+
+test("dealer shell renders identity supplied by the stored session", async ({ page }) => {
+  await seedDealerSession(page, {
+    role: "dealer",
+    email: "operator@backend.invalid",
+    displayName: "Backend Operator",
+    company: "Backend Dealer",
+    remember: true,
+    expiresAt: "2099-01-01T00:00:00.000Z",
+  });
+
+  await page.goto("/");
+  await expect(page.locator(".profile-summary").getByText("Backend Operator", { exact: true })).toBeVisible();
+  await expect(page.locator(".profile-summary").getByText("Backend Dealer", { exact: true })).toBeVisible();
+});
+
+test("dealer profile has no local demo-data reset action", async ({ page }) => {
+  await submitLogin(page, "dealer@example.invalid", "not-persisted");
+  await page.getByRole("button", { name: "Профіль" }).click();
+  await expect(page.getByRole("button", { name: /Скинути демо-дані/i })).toHaveCount(0);
 });
 
 test("an explicit admin email keeps the manager portal", async ({ page }) => {
