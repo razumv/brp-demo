@@ -209,6 +209,7 @@ export function AdminPermissionsPage() {
             value={activeRole}
             onValueChange={setActiveRole}
             label="Ролі доступу"
+            mobileSelectLabel="Роль доступу"
             size="compact"
           />
         )}
@@ -219,6 +220,7 @@ export function AdminPermissionsPage() {
             <ReadOnlyQuickButton tone="danger"><Trash2 size={14} /> Відкликати все</ReadOnlyQuickButton>
           </>
         )}
+        mobileDisclosure={{ sections: ["actions"], label: "Масові дії" }}
       />
 
       <section
