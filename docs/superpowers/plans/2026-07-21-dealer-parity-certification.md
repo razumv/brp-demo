@@ -67,13 +67,13 @@
 - Create: `tests/e2e/dealer-safe-actions.spec.ts`
 - Modify dealer consumers only; do not change admin call sites
 
-- [ ] Mount the additive client workflow provider in the dealer-only route group; keep the root `DemoStoreProvider`, storage key, state version, login, and admin branch unchanged.
-- [ ] Define typed results for local mutation, local preview, generated artifact, unavailable backend operation, and validation error.
-- [ ] Derive current dealer identity inside the dealer adapter boundary, not from caller-supplied company/actor fields.
-- [ ] Add an accessible reusable lock/reason UI for backend-dependent actions.
-- [ ] Write failing tests that detect false success copy and enabled inert controls.
-- [ ] Replace dealer-facing fake sync/upload/export/1C success with deterministic local behavior or the lock component.
-- [ ] Keep the existing static export compatible; no server actions or same-origin backend assumptions.
+- [x] Mount the additive client workflow provider in the dealer-only route group; keep the root `DemoStoreProvider`, storage key, state version, login, and admin branch unchanged.
+- [x] Define typed results for local mutation, local preview, generated artifact, unavailable backend operation, and validation error.
+- [x] Derive current dealer identity inside the dealer adapter boundary, not from caller-supplied company/actor fields.
+- [x] Add an accessible reusable lock/reason UI for backend-dependent actions.
+- [x] Write failing tests that detect false success copy and enabled inert controls.
+- [x] Replace dealer-facing fake sync/upload/export/1C success with deterministic local behavior or the lock component.
+- [x] Keep the existing static export compatible; no server actions or same-origin backend assumptions.
 
 ## Task 4: Split the dealer secondary-page monolith without changing behavior
 
