@@ -133,7 +133,7 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 | Control family | Classification and observable effect / lock reason |
 |---|---|
 | Profile selection, name save, quick access, permission switches, Save | Operational effects are absent and **backend contract required**. The controls are disabled, but the page notice/footer is not programmatically/focus/touch-associated with each lock, so the rendered locks are not yet classified as correctly locked. |
-| Add employee | Operational effect is absent; no dealer-side control is rendered. Do not introduce one without fresh source and authorization evidence. |
+| Add employee | **correctly locked/absent** — no dealer-side control is rendered, matching the intentional dealer boundary. Do not introduce one without fresh source and authorization evidence. |
 | Remote access read/write | A scoped read is **backend contract required**; no write port is authorized. Frontend now must complete lock explanation association without enabling writes. |
 
 <a id="controls-accessories"></a>
