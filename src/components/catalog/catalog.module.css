@@ -1,4 +1,5 @@
 .catalogPage {
+  min-width: 0;
   min-height: calc(100vh - 64px);
 }
 
@@ -380,6 +381,67 @@
   box-shadow: var(--shadow-card);
 }
 
+.cascadeViewport {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overscroll-behavior-inline: contain;
+}
+
+.cascadeGrid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(560px, calc(100vh - 166px), 880px);
+}
+
+.cascadeGrid[data-column-count="2"] {
+  grid-template-columns: repeat(2, minmax(210px, 1fr));
+  min-width: 420px;
+}
+
+.cascadeGrid[data-column-count="3"] {
+  grid-template-columns: repeat(3, minmax(210px, 1fr));
+  min-width: 630px;
+}
+
+.cascadeGrid[data-column-count="4"] {
+  grid-template-columns: repeat(4, minmax(210px, 1fr));
+  min-width: 840px;
+}
+
+.cascadeGrid[data-column-count="5"] {
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
+  min-width: 1050px;
+}
+
+.cascadeGrid .browserColumn {
+  max-height: clamp(560px, calc(100vh - 166px), 880px);
+}
+
+.cascadeEmpty {
+  max-width: 260px;
+  padding: 24px 18px;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.diagramMarker {
+  width: 7px;
+  height: 7px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
 .browserColumn {
   min-width: 0;
   overflow: auto;
@@ -428,6 +490,10 @@
 .browserRowStatic:hover {
   background: inherit;
   color: inherit;
+}
+
+.browserRowStatic[aria-disabled="true"] {
+  cursor: default;
 }
 
 .browserRowActive {
@@ -1801,11 +1867,25 @@
     box-shadow: none;
   }
 
+  .cascadeGrid,
+  .cascadeGrid .browserColumn {
+    min-height: 620px;
+    max-height: 620px;
+  }
+
   .browserColumn {
     margin-bottom: 10px;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 6px;
+  }
+
+  .cascadeGrid .browserColumn {
+    margin-bottom: 0;
+    overflow-y: auto;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
   }
 
   .yearColumn {

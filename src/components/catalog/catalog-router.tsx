@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowRight,
@@ -23,6 +24,12 @@ import {
 } from "@/lib/mock-data";
 import { DiagramViewer } from "@/components/catalog/diagram-viewer";
 import styles from "@/components/catalog/catalog.module.css";
+import {
+  dealerCatalogCascade,
+  resolveCatalogSelection,
+  type DealerCatalogNode,
+  type ResolvedCatalogSelection,
+} from "@/lib/dealer/catalog-data";
 
 type CatalogRouterProps = {
   slug: string[];
@@ -50,8 +57,8 @@ const configurationResults = [
   { code: "0001KTD00", name: "North America - OUTLANDER - XT - 700" },
 ];
 
-function CatalogPage({ children }: { children: ReactNode }) {
-  return <div className={`page page-narrow ${styles.catalogPage}`}>{children}</div>;
+function CatalogPage({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  return <div className={`page ${wide ? "" : "page-narrow"} ${styles.catalogPage}`}>{children}</div>;
 }
 
 function Breadcrumbs({
@@ -250,7 +257,7 @@ function BrandCatalog({ brandCode }: { brandCode: string }) {
         </Link>
         <Link className={styles.categoryCard} href={`/catalog/${CATALOG_IDS.brand}/sxs`}>
           <span><Wrench size={20} /></span>
-          <div><strong>Can-Am SXS</strong><small>Категорія · оглядовий розділ</small></div>
+          <div><strong>Can-Am SXS</strong><small>Категорія · моделі 2011–2026</small></div>
           <ChevronRight size={18} />
         </Link>
       </div>
@@ -271,9 +278,145 @@ function BrowserRow({
 }) {
   const className = `${styles.browserRow} ${active ? styles.browserRowActive : ""} ${!href && !onClick ? styles.browserRowStatic : ""}`;
   const content = <><Folder size={15} /><span>{children}</span><ChevronRight size={14} /></>;
-  if (href) return <Link className={className} href={href}>{content}</Link>;
+  if (href) return <Link className={className} href={href} aria-current={active ? "page" : undefined}>{content}</Link>;
   if (!onClick) return <div className={className} aria-current={active ? "page" : undefined}>{content}</div>;
   return <button type="button" className={className} aria-pressed={active} onClick={onClick}>{content}</button>;
+}
+
+const sxsCatalogPath = `/catalog/${CATALOG_IDS.brand}/sxs`;
+
+function getCascadeHref(node: DealerCatalogNode, selection: ResolvedCatalogSelection) {
+  if (node.kind === "category") return node.href;
+  if (node.kind === "diagram") return undefined;
+
+  const params = new URLSearchParams();
+  if (node.kind === "year") {
+    if (!node.children) return undefined;
+    params.set("year", node.id);
+  }
+  if (node.kind === "series") {
+    if (!node.children || !selection.year) return undefined;
+    params.set("year", selection.year.id);
+    params.set("series", node.id);
+  }
+  if (node.kind === "model") {
+    if (!node.children || !selection.year || !selection.series) return undefined;
+    params.set("year", selection.year.id);
+    params.set("series", selection.series.id);
+    params.set("model", node.id);
+  }
+  return `${sxsCatalogPath}?${params.toString()}`;
+}
+
+function CascadeRow({
+  node,
+  selected,
+  selection,
+}: {
+  node: DealerCatalogNode;
+  selected: boolean;
+  selection: ResolvedCatalogSelection;
+}) {
+  const href = getCascadeHref(node, selection);
+  const className = `${styles.browserRow} ${selected ? styles.browserRowActive : ""} ${href ? "" : styles.browserRowStatic}`;
+  const content = (
+    <>
+      {node.kind === "diagram" ? <span className={styles.diagramMarker} aria-hidden="true" /> : <Folder size={15} />}
+      <span>{node.label}</span>
+      {href ? <ChevronRight size={14} aria-hidden="true" /> : <span aria-hidden="true" />}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link className={className} href={href} aria-current={selected ? "page" : undefined} data-selected={selected || undefined}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={className} aria-current={selected ? "page" : undefined} aria-disabled="true" data-selected={selected || undefined}>
+      {content}
+    </div>
+  );
+}
+
+function CatalogCascade() {
+  const searchParams = useSearchParams();
+  const selection = resolveCatalogSelection("sxs", {
+    year: searchParams.get("year"),
+    series: searchParams.get("series"),
+    model: searchParams.get("model"),
+    diagram: searchParams.get("diagram"),
+  });
+  const columns: Array<{
+    id: string;
+    label: string;
+    nodes: readonly DealerCatalogNode[];
+    empty?: string;
+  }> = [
+    { id: "categories", label: "Категорії", nodes: dealerCatalogCascade },
+  ];
+
+  if (selection.category?.children) {
+    columns.push({ id: "years", label: "Роки", nodes: selection.category.children });
+  }
+  if (selection.year) {
+    columns.push({
+      id: "series",
+      label: "Серії",
+      nodes: selection.year.children ?? [],
+      empty: "Серії для цього року не підтверджені джерелом.",
+    });
+  }
+  if (selection.series) {
+    columns.push({
+      id: "models",
+      label: "Моделі",
+      nodes: selection.series.children ?? [],
+      empty: "Моделі для цієї серії не підтверджені джерелом.",
+    });
+  }
+  if (selection.model) {
+    columns.push({
+      id: "diagrams",
+      label: "Схеми",
+      nodes: selection.model.children ?? [],
+      empty: "Схеми для цієї моделі не підтверджені джерелом.",
+    });
+  }
+
+  const breadcrumbItems = [
+    { label: "Can-Am Off-Road", href: `/catalog/${CATALOG_IDS.brand}` },
+    ...selection.path.map((node, index) => ({
+      label: node.label,
+      href: index === selection.path.length - 1 ? undefined : getCascadeHref(node, selection),
+    })),
+  ];
+
+  return (
+    <CatalogPage wide>
+      <Breadcrumbs items={breadcrumbItems} />
+      <section className={styles.cascadeViewport} aria-label="Навігація каталогу">
+        <div className={styles.cascadeGrid} data-column-count={columns.length}>
+          {columns.map((column) => (
+            <section className={styles.browserColumn} aria-label={column.label} data-catalog-column={column.id} key={column.id}>
+              {column.nodes.map((node) => (
+                <CascadeRow
+                  key={`${node.kind}-${node.id}`}
+                  node={node}
+                  selected={selection.path.some((selectedNode) => selectedNode.kind === node.kind && selectedNode.id === node.id)}
+                  selection={selection}
+                />
+              ))}
+              {column.nodes.length === 0 && column.empty ? <p className={styles.cascadeEmpty}>{column.empty}</p> : null}
+            </section>
+          ))}
+        </div>
+      </section>
+    </CatalogPage>
+  );
 }
 
 function CategoryBrowser() {
@@ -436,20 +579,7 @@ export function CatalogRouter({ slug }: CatalogRouterProps) {
   if (current === CATALOG_IDS.series) return <ModelList />;
   if (current === CATALOG_IDS.category) return <CategoryBrowser />;
   if (catalogBrands.some((brand) => brand.code === current)) return <BrandCatalog brandCode={current} />;
-  if (current === "sxs") {
-    return (
-      <CatalogPage>
-        <Breadcrumbs items={[{ label: "Can-Am Off-Road", href: `/catalog/${CATALOG_IDS.brand}` }, { label: "Can-Am SXS" }]} />
-        <Panel>
-          <EmptyState
-            title="Can-Am SXS"
-            description="Цей розділ представлено оглядово. Детальні технічні схеми наразі доступні для Can-Am ATV 2026."
-            action={<Link className="button button-primary" href={categoryPath}>Відкрити Can-Am ATV</Link>}
-          />
-        </Panel>
-      </CatalogPage>
-    );
-  }
+  if (current === "sxs") return <CatalogCascade />;
   return <UnknownCatalogState />;
 }
 
