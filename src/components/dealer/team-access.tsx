@@ -28,6 +28,14 @@ const permissions = [
 
 export function TeamAccessPage() {
   const { identity } = useDealerWorkflow();
+  if (!identity) {
+    return (
+      <main className="auth-loading" aria-live="polite">
+        <span className="skeleton" />
+        <p>Завантажуємо дані облікового запису…</p>
+      </main>
+    );
+  }
   const { displayName: name, email } = identity;
 
   return (

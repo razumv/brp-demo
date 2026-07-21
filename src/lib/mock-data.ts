@@ -178,7 +178,7 @@ export function getPart(partNumber: string) {
     ?? getDealerAccessoryCartPart(partNumber);
 }
 
-export function orderTotal(lines: { quantity: number; dealerPrice: number }[]) {
+export function orderTotal(lines: readonly { quantity: number; dealerPrice: number }[]) {
   return lines.reduce((total, line) => total + line.quantity * line.dealerPrice, 0);
 }
 

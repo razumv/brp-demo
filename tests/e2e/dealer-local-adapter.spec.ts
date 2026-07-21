@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { createDealerLocalAdapter } from "@/lib/dealer/local-adapter";
 import type { DealerCommandResult } from "@/lib/dealer/contracts";
+import { createInitialDealerState } from "@/lib/dealer/order-state";
 import { initialDemoState } from "@/lib/mock-data";
 import type {
   Customer,
   CustomerInput,
-  DemoState,
   Equipment,
   EquipmentInput,
   OrderInput,
@@ -22,7 +22,7 @@ type MutationCalls = {
 };
 
 function createHarness() {
-  const state = JSON.parse(JSON.stringify(initialDemoState)) as DemoState;
+  const state = createInitialDealerState(initialDemoState, "dealer@example.invalid::logos", "Logos", "2026-07-21T00:00:00.000Z", "submission-test");
   state.cart = [];
   const calls: MutationCalls = {
     setCartQuantity: 0,
@@ -34,6 +34,7 @@ function createHarness() {
 
   const commands = createDealerLocalAdapter({
     state,
+    isReady() { return true; },
     addToCart() {},
     setCartQuantity() {
       calls.setCartQuantity += 1;
@@ -48,6 +49,26 @@ function createHarness() {
     updateCustomer() {},
     addEquipment(input: EquipmentInput): Equipment {
       return { ...input, id: "equipment-created" };
+    },
+    updateOrderBuilder() {},
+    startOrderDraft() {},
+    saveOrderDraft() {
+      return {
+        id: "draft-created",
+        title: "Draft",
+        customerId: "",
+        po: "",
+        note: "",
+        delivery: "standard",
+        lines: [],
+        createdAt: "2026-07-21T00:00:00.000Z",
+        updatedAt: "2026-07-21T00:00:00.000Z",
+      };
+    },
+    openOrderDraft() {},
+    deleteOrderDraft() {},
+    refreshOrderDrafts() {
+      return state.drafts;
     },
     createOrder(input: OrderInput) {
       const existing = state.orders[0];

@@ -1,4 +1,4 @@
-import type { Order, OrderStatus } from "@/lib/types";
+import type { OrderStatus } from "@/lib/types";
 
 export type DocumentType = "invoice" | "waybill";
 export type DocumentStatus = "paid" | "open" | "overdue";
@@ -156,7 +156,10 @@ export function filterNetworkRows(tab: "parts" | "units", filters: { dealer: "al
   ));
 }
 
-export function filterPartsReportOrders(orders: readonly Order[], filters: { period: ReportPeriod; manager: "all" | string; status: "all" | OrderStatus }) {
+export function filterPartsReportOrders<OrderType extends { readonly createdAt: string; readonly creator: string; readonly status: OrderStatus }>(
+  orders: readonly OrderType[],
+  filters: { period: ReportPeriod; manager: "all" | string; status: "all" | OrderStatus },
+) {
   const latestOrderTime = Math.max(...orders.map((order) => Date.parse(order.createdAt)), Date.parse(referenceDate));
   const latestMonth = new Date(latestOrderTime).toISOString().slice(0, 7);
   const periodDays = filters.period === "30" ? 30 : filters.period === "90" ? 90 : null;

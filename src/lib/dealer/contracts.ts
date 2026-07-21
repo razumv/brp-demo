@@ -1,11 +1,13 @@
 import type {
+  CartLine,
   Customer,
   CustomerInput,
-  DemoState,
   Equipment,
   EquipmentInput,
-  Order,
   OrderInput,
+  OrderLine,
+  OrderStatus,
+  TimelineEvent,
   WorkshopOrder,
   WorkshopOrderInput,
 } from "@/lib/types";
@@ -22,9 +24,75 @@ type DeepReadonly<T> = T extends readonly (infer Item)[]
     ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
     : T;
 
-export type DealerSnapshot = DeepReadonly<
-  Pick<DemoState, "customers" | "equipment" | "cart" | "orders" | "workshopOrders">
->;
+export type DealerAttachmentMetadata = Readonly<{
+  name: string;
+  size: number;
+  mimeType: string;
+}>;
+
+export type DealerOrderMessage = {
+  id: string;
+  author: string;
+  role: "dealer" | "admin";
+  body: string;
+  createdAt: string;
+  attachments: DealerAttachmentMetadata[];
+};
+
+export type DealerOrder = {
+  id: string;
+  code: string;
+  company: string;
+  creator: string;
+  customerId: string;
+  po: string;
+  note: string;
+  delivery: "standard" | "pickup";
+  status: OrderStatus;
+  stage: string;
+  createdAt: string;
+  lines: OrderLine[];
+  messages: DealerOrderMessage[];
+  timeline: TimelineEvent[];
+  localSubmissionKey?: string;
+};
+
+export type DealerOrderBuilder = {
+  title: string;
+  customerId: string;
+  po: string;
+  note: string;
+  delivery: "standard" | "pickup";
+  activeDraftId: string | null;
+  submissionKey: string;
+  updatedAt: string;
+};
+
+export type DealerOrderDraft = {
+  id: string;
+  title: string;
+  customerId: string;
+  po: string;
+  note: string;
+  delivery: "standard" | "pickup";
+  lines: CartLine[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DealerLocalState = {
+  version: 2;
+  ownerKey: string;
+  customers: Customer[];
+  equipment: Equipment[];
+  cart: CartLine[];
+  orders: DealerOrder[];
+  workshopOrders: WorkshopOrder[];
+  builder: DealerOrderBuilder;
+  drafts: DealerOrderDraft[];
+};
+
+export type DealerSnapshot = DeepReadonly<DealerLocalState>;
 
 export type DealerExternalOperation =
   | "sync"
@@ -88,10 +156,19 @@ export type DealerCommands = {
     customer: CustomerInput;
   }) => Promise<DealerCommandResult<void>>;
   createEquipment: (input: EquipmentInput) => Promise<DealerCommandResult<Equipment>>;
-  stageOrder: (input: OrderInput) => Promise<DealerCommandResult<Order>>;
+  updateOrderBuilder: (
+    input: Partial<Pick<DealerOrderBuilder, "title" | "customerId" | "po" | "note" | "delivery">>,
+  ) => Promise<DealerCommandResult<void>>;
+  startOrderDraft: () => Promise<DealerCommandResult<void>>;
+  saveOrderDraft: () => Promise<DealerCommandResult<DealerOrderDraft>>;
+  openOrderDraft: (input: { draftId: string }) => Promise<DealerCommandResult<void>>;
+  deleteOrderDraft: (input: { draftId: string }) => Promise<DealerCommandResult<void>>;
+  refreshOrderDrafts: () => Promise<DealerCommandResult<readonly DealerOrderDraft[]>>;
+  stageOrder: (input: OrderInput) => Promise<DealerCommandResult<DealerOrder>>;
   appendOrderMessage: (input: {
     orderId: string;
     body: string;
+    attachments?: readonly DealerAttachmentMetadata[];
   }) => Promise<DealerCommandResult<void>>;
   setOrderLineNote: (input: {
     orderId: string;
@@ -107,7 +184,7 @@ export type DealerCommands = {
 export type DealerWorkflow = {
   readonly hydrated: boolean;
   readonly snapshot: DealerSnapshot;
-  readonly identity: DealerIdentity;
+  readonly identity: DealerIdentity | null;
   readonly capabilities: Readonly<Record<DealerExternalOperation, DealerCapability>>;
   readonly commands: Readonly<DealerCommands>;
 };

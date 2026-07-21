@@ -17,7 +17,7 @@ test("authenticated dealer direct routes stay out of the manager portal", async 
 
   await openDealerRoute(page, "/dealer/orders", "Мої замовлення");
   await openDealerRoute(page, `/dealer/orders/${dealerOrderId}`, "LOG-01");
-  await openDealerRoute(page, `/order-confirmation/${dealerOrderId}`, "Замовлення оформлено");
+  await openDealerRoute(page, `/order-confirmation/${dealerOrderId}`, "Замовлення створено");
 });
 
 test("dealer route certification rejects an authentication redirect", async ({ page }) => {

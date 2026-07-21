@@ -1,8 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import { initialDemoState } from "@/lib/mock-data";
+import { dealerWorkflowStorageKey } from "@/lib/dealer/identity";
 import type { DemoState } from "@/lib/types";
 
 const STORAGE_KEY = "brp-clone-demo-state-v1";
+const DEALER_STORAGE_KEY = dealerWorkflowStorageKey({
+  email: "dealer@example.invalid",
+  displayName: "Финансы",
+  company: "Logos",
+});
 const DIAGRAM_PATH = "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25";
 
 async function seedDealerSession(page: Page) {
@@ -33,7 +39,7 @@ test("diagram reports cart success only after the dealer command succeeds", asyn
   await expect(page.getByText("9779150 додано", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Кошик (1)" })).toBeVisible();
   await expect.poll(async () => {
-    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), STORAGE_KEY);
+    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), DEALER_STORAGE_KEY);
     return persisted ? (JSON.parse(persisted) as DemoState).cart : [];
   }).toContainEqual(expect.objectContaining({ partNumber: "9779150", quantity: 1 }));
 });

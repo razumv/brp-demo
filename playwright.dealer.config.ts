@@ -5,6 +5,12 @@ export default defineConfig({
   testMatch: [
     "**/dealer-auth-navigation.spec.ts",
     "**/dealer-feature-routes.spec.ts",
+    "**/dealer-catalog-order-flow.spec.ts",
+    "**/dealer-order-detail.spec.ts",
+    "**/dealer-order-drafts.spec.ts",
+    "**/dealer-workflow-isolation.spec.ts",
+    "**/dealer-local-adapter.spec.ts",
+    "**/dealer-safe-actions.spec.ts",
   ],
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,

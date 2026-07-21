@@ -13,9 +13,9 @@ import {
   Upload,
   UserPlus,
 } from "lucide-react";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { LockedOperation } from "@/components/dealer/locked-operation";
-import { EmptyState, InlineNotice, Modal, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import { EmptyState, InlineNotice, Modal, PageHeader, Panel } from "@/components/shared/ui";
 import { getAccessoryProduct } from "@/lib/dealer/accessories-data";
 import { formatMoney, getPart, orderTotal } from "@/lib/mock-data";
 import { orderConfirmationHref } from "@/lib/order-route-hrefs";
@@ -30,55 +30,59 @@ type CustomerDraft = {
 };
 
 const initialCustomer: CustomerDraft = {
-  name: "Локальний тестовий клієнт",
-  phone: "+380000000000",
-  email: "demo.customer@example.invalid",
-  address: "Демонстраційна адреса",
-  notes: "Локальний запис для тестування клону.",
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  notes: "",
 };
 
 export function CartPage() {
   const router = useRouter();
-  const {
-    state,
-    addToCart,
-    setCartQuantity,
-    removeFromCart,
-    clearCart,
-    addCustomer,
-    createOrder,
-  } = useDemoStore();
-  const [draftTitle, setDraftTitle] = useState("Нове замовлення");
-  const [customerId, setCustomerId] = useState("");
-  const [po, setPo] = useState("");
-  const [note, setNote] = useState("");
-  const [delivery, setDelivery] = useState<"standard" | "pickup">("standard");
+  const { snapshot, commands } = useDealerWorkflow();
+  const { builder } = snapshot;
   const [manualPart, setManualPart] = useState("");
   const [manualFeedback, setManualFeedback] = useState("");
   const [validation, setValidation] = useState<string[]>([]);
+  const [draftFeedback, setDraftFeedback] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerDraft, setCustomerDraft] = useState<CustomerDraft>(initialCustomer);
   const [customerError, setCustomerError] = useState("");
 
-  const lines = useMemo(() => state.cart.flatMap((line) => {
+  const lines = useMemo(() => snapshot.cart.flatMap((line) => {
     const part = getPart(line.partNumber);
     return part ? [{ ...line, part, accessory: getAccessoryProduct(line.partNumber) }] : [];
-  }), [state.cart]);
+  }), [snapshot.cart]);
+  const unresolvedLines = useMemo(
+    () => snapshot.cart.filter((line) => !getPart(line.partNumber)),
+    [snapshot.cart],
+  );
   const total = orderTotal(lines.map((line) => ({ quantity: line.quantity, dealerPrice: line.part.dealerPrice })));
 
-  const addManualPart = () => {
+  const updateBuilder = (input: Parameters<typeof commands.updateOrderBuilder>[0]) => {
+    setDraftFeedback("");
+    void commands.updateOrderBuilder(input);
+  };
+
+  const addManualPart = async () => {
     const normalized = manualPart.trim();
-    if (normalized !== "9779150") {
-      setManualFeedback("Запчастину не знайдено. Спробуйте 9779150.");
+    const part = getPart(normalized);
+    if (!part) {
+      setManualFeedback("Запчастину не знайдено в каталозі.");
       return;
     }
-    addToCart("9779150", 1);
+    const result = await commands.addCartLine({ partNumber: normalized, quantity: 1 });
+    if (!result.ok) {
+      setManualFeedback(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося додати позицію." : "Не вдалося додати позицію.");
+      return;
+    }
     setManualPart("");
-    setManualFeedback("9779150 · COOLANT,EXT LIFE додано до замовлення.");
+    setManualFeedback(`${part.number} · ${part.description} додано до замовлення.`);
     setValidation([]);
   };
 
-  const quickCreateCustomer = () => {
+  const quickCreateCustomer = async () => {
     if (!customerDraft.name.trim()) {
       setCustomerError("Вкажіть ім’я клієнта.");
       return;
@@ -87,31 +91,59 @@ export function CartPage() {
       setCustomerError("Вкажіть принаймні телефон або email.");
       return;
     }
-    const customer = addCustomer({
+    const result = await commands.createCustomer({
       name: customerDraft.name.trim(),
       phone: customerDraft.phone.trim(),
       email: customerDraft.email.trim(),
       address: customerDraft.address.trim(),
       notes: customerDraft.notes.trim(),
     });
-    setCustomerId(customer.id);
+    if (!result.ok) {
+      setCustomerError(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося створити клієнта." : "Не вдалося створити клієнта.");
+      return;
+    }
+    await commands.updateOrderBuilder({ customerId: result.value.id });
     setCustomerOpen(false);
     setCustomerError("");
     setValidation([]);
     setCustomerDraft(initialCustomer);
   };
 
-  const submit = (event: FormEvent) => {
+  const saveDraft = async () => {
+    const result = await commands.saveOrderDraft();
+    if (!result.ok) {
+      setDraftFeedback(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося зберегти чернетку." : "Не вдалося зберегти чернетку.");
+      return;
+    }
+    setDraftFeedback(`Чернетку «${result.value.title}» збережено.`);
+  };
+
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     const errors: string[] = [];
-    if (lines.length === 0) errors.push("Додайте хоча б одну запчастину.");
-    if (!customerId) errors.push("Оберіть або створіть клієнта.");
+    if (snapshot.cart.length === 0) errors.push("Додайте хоча б одну запчастину.");
+    if (unresolvedLines.length) errors.push("Видаліть недоступні позиції перед створенням замовлення.");
+    if (!builder.customerId) errors.push("Оберіть або створіть клієнта.");
     if (errors.length) {
       setValidation(errors);
       return;
     }
-    const order = createOrder({ customerId, po: po.trim(), note: note.trim(), delivery });
-    router.push(orderConfirmationHref(order.id));
+    if (submitting) return;
+    setSubmitting(true);
+    const result = await commands.stageOrder({
+      customerId: builder.customerId,
+      po: builder.po.trim(),
+      note: builder.note.trim(),
+      delivery: builder.delivery,
+    });
+    if (!result.ok) {
+      setValidation(result.kind === "validation-error"
+        ? result.issues.map((issue) => issue.message)
+        : ["Не вдалося створити замовлення."]);
+      setSubmitting(false);
+      return;
+    }
+    router.push(orderConfirmationHref(result.value.id));
   };
 
   return (
@@ -127,42 +159,43 @@ export function CartPage() {
         <div className={styles.orderMain}>
           <Panel className={styles.formPanel}>
             <div className={styles.panelHeading}>
-              <div><h2>Чернетка замовлення</h2><p>Зберігається локально у цьому браузері</p></div>
-              <StatusBadge tone="amber">Автозбереження</StatusBadge>
+              <div><h2>Чернетка замовлення</h2><p>Збережіть її, щоб продовжити оформлення пізніше</p></div>
+              <button type="button" className="button button-outline" onClick={() => void saveDraft()}>Зберегти чернетку</button>
             </div>
             <div className={styles.formGrid}>
               <label className="field">
                 <span>Назва чернетки</span>
-                <input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} placeholder="Нове замовлення" />
+                <input value={builder.title} onChange={(event) => updateBuilder({ title: event.target.value })} placeholder="Нове замовлення" />
               </label>
               <label className="field">
                 <span>PO / номер замовлення</span>
-                <input value={po} onChange={(event) => setPo(event.target.value)} placeholder="напр. PO-2026-041" />
+                <input value={builder.po} onChange={(event) => updateBuilder({ po: event.target.value })} placeholder="напр. PO-2026-041" />
               </label>
               <div className={`field ${styles.customerField}`}>
                 <span>Покупець</span>
                 <div className={styles.customerPicker}>
-                  <select value={customerId} onChange={(event) => {
-                    setCustomerId(event.target.value);
+                  <select value={builder.customerId} onChange={(event) => {
+                    updateBuilder({ customerId: event.target.value });
                     setValidation([]);
                   }} aria-label="Оберіть покупця">
                     <option value="">Оберіть клієнта…</option>
-                    {state.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
+                    {snapshot.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
                   </select>
                   <button type="button" className="button button-outline" onClick={() => setCustomerOpen(true)}><UserPlus size={15} /> Швидко створити</button>
                 </div>
               </div>
               <label className={`field ${styles.fullField}`}>
                 <span>Примітка до замовлення</span>
-                <textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Уточнення для менеджера або складу" />
+                <textarea value={builder.note} onChange={(event) => updateBuilder({ note: event.target.value })} placeholder="Уточнення для менеджера або складу" />
               </label>
             </div>
+            {draftFeedback ? <p className={styles.successMessage} role="status">{draftFeedback}</p> : null}
           </Panel>
 
           <Panel className={styles.formPanel}>
             <div className={styles.panelHeading}>
-              <div><h2>Позиції</h2><p>{lines.length} позицій у чернетці</p></div>
-              {lines.length ? <button type="button" className={styles.clearButton} onClick={clearCart}><Trash2 size={14} /> Очистити все</button> : null}
+              <div><h2>Позиції</h2><p>{snapshot.cart.length} позицій у чернетці</p></div>
+              {snapshot.cart.length ? <button type="button" className={styles.clearButton} onClick={() => void commands.clearCart()}><Trash2 size={14} /> Очистити все</button> : null}
             </div>
 
             <div className={styles.orderTools}>
@@ -171,13 +204,13 @@ export function CartPage() {
                 <input aria-label="Номер запчастини" value={manualPart} onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    addManualPart();
+                    void addManualPart();
                   }
                 }} onChange={(event) => {
                   setManualPart(event.target.value);
                   setManualFeedback("");
                 }} placeholder="Додати за номером, напр. 9779150" />
-                <button type="button" className="button button-primary" onClick={addManualPart}><Plus size={15} /> Додати</button>
+                <button type="button" className="button button-primary" onClick={() => void addManualPart()}><Plus size={15} /> Додати</button>
               </div>
               <div className={styles.spreadsheetButtons}>
                 <LockedOperation
@@ -192,9 +225,9 @@ export function CartPage() {
                 />
               </div>
             </div>
-            {manualFeedback ? <p className={manualFeedback.startsWith("977") ? styles.successMessage : styles.errorMessage} aria-live="polite">{manualFeedback}</p> : null}
+            {manualFeedback ? <p className={getPart(manualFeedback.split(" · ")[0] ?? "") ? styles.successMessage : styles.errorMessage} aria-live="polite">{manualFeedback}</p> : null}
 
-            {lines.length === 0 ? (
+            {snapshot.cart.length === 0 ? (
               <EmptyState
                 compact
                 icon={<ShoppingCart size={23} />}
@@ -218,13 +251,22 @@ export function CartPage() {
                       ) : null}
                     </div>
                     <div className="quantity-control">
-                      <button type="button" aria-label={`Зменшити кількість ${line.part.number}`} onClick={() => setCartQuantity(line.partNumber, line.quantity - 1)}>−</button>
+                      <button type="button" aria-label={`Зменшити кількість ${line.part.number}`} onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 })}>−</button>
                       <span>{line.quantity}</span>
-                      <button type="button" aria-label={`Збільшити кількість ${line.part.number}`} onClick={() => setCartQuantity(line.partNumber, line.quantity + 1)}>+</button>
+                      <button type="button" aria-label={`Збільшити кількість ${line.part.number}`} onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 })}>+</button>
                     </div>
                     <span>{formatMoney(line.part.dealerPrice)}</span>
                     <strong>{formatMoney(line.quantity * line.part.dealerPrice)}</strong>
-                    <button type="button" className={styles.removeLine} aria-label={`Видалити ${line.part.number}`} onClick={() => removeFromCart(line.partNumber)}><Trash2 size={15} /></button>
+                    <button type="button" className={styles.removeLine} aria-label={`Видалити ${line.part.number}`} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><Trash2 size={15} /></button>
+                  </article>
+                ))}
+                {unresolvedLines.map((line) => (
+                  <article className={styles.orderLine} key={line.partNumber}>
+                    <div><strong>{line.partNumber}</strong><p>Позиція більше не доступна в каталозі.</p><small>Видаліть її та додайте актуальну позицію.</small></div>
+                    <span>—</span>
+                    <span>—</span>
+                    <strong>—</strong>
+                    <button type="button" className={styles.removeLine} aria-label={`Видалити недоступну позицію ${line.partNumber}`} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><Trash2 size={15} /></button>
                   </article>
                 ))}
               </div>
@@ -234,15 +276,15 @@ export function CartPage() {
           <Panel className={styles.formPanel}>
             <div className={styles.panelHeading}><div><h2>Спосіб отримання</h2><p>Оберіть доставку або самовивіз</p></div></div>
             <div className={styles.deliveryGrid}>
-              <label className={delivery === "standard" ? styles.deliveryActive : ""}>
-                <input type="radio" name="delivery" value="standard" checked={delivery === "standard"} onChange={() => setDelivery("standard")} />
+              <label className={builder.delivery === "standard" ? styles.deliveryActive : ""}>
+                <input type="radio" name="delivery" value="standard" checked={builder.delivery === "standard"} onChange={() => updateBuilder({ delivery: "standard" })} />
                 <span><strong>Стандартна доставка</strong><small>Доставка перевізником після комплектації</small></span>
-                {delivery === "standard" ? <Check size={17} /> : null}
+                {builder.delivery === "standard" ? <Check size={17} /> : null}
               </label>
-              <label className={delivery === "pickup" ? styles.deliveryActive : ""}>
-                <input type="radio" name="delivery" value="pickup" checked={delivery === "pickup"} onChange={() => setDelivery("pickup")} />
+              <label className={builder.delivery === "pickup" ? styles.deliveryActive : ""}>
+                <input type="radio" name="delivery" value="pickup" checked={builder.delivery === "pickup"} onChange={() => updateBuilder({ delivery: "pickup" })} />
                 <span><strong>Самовивіз</strong><small>Забрати зі складу після підтвердження</small></span>
-                {delivery === "pickup" ? <Check size={17} /> : null}
+                {builder.delivery === "pickup" ? <Check size={17} /> : null}
               </label>
             </div>
           </Panel>
@@ -252,16 +294,16 @@ export function CartPage() {
           <Panel className={styles.summaryPanel}>
             <h2>Підсумок</h2>
             <dl>
-              <div><dt>Позицій</dt><dd>{lines.length}</dd></div>
-              <div><dt>Одиниць</dt><dd>{lines.reduce((sum, line) => sum + line.quantity, 0)}</dd></div>
-              <div><dt>Доставка</dt><dd>{delivery === "standard" ? "Стандартна" : "Самовивіз"}</dd></div>
+              <div><dt>Позицій</dt><dd>{snapshot.cart.length}</dd></div>
+              <div><dt>Одиниць</dt><dd>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</dd></div>
+              <div><dt>Доставка</dt><dd>{builder.delivery === "standard" ? "Стандартна" : "Самовивіз"}</dd></div>
               <div className={styles.summaryTotal}><dt>Разом</dt><dd>{formatMoney(total)}</dd></div>
             </dl>
             {validation.length ? (
               <InlineNotice tone="danger"><span>{validation.map((error) => <span className={styles.validationLine} key={error}>{error}</span>)}</span></InlineNotice>
             ) : null}
-            <button type="submit" className="button button-primary button-wide"><Check size={16} /> Перевірити і відправити</button>
-            <p>Замовлення збережеться у цьому браузері та одразу з’явиться в «Мої замовлення».</p>
+            <button type="submit" className="button button-primary button-wide" disabled={submitting}><Check size={16} /> {submitting ? "Створення…" : "Створити замовлення"}</button>
+            <p>Після створення замовлення одразу з’явиться в «Мої замовлення».</p>
           </Panel>
         </aside>
       </form>
@@ -270,8 +312,8 @@ export function CartPage() {
         open={customerOpen}
         onClose={() => setCustomerOpen(false)}
         title="Швидке створення клієнта"
-        description="Локальний синтетичний запис для демонстрації"
-        footer={<><button type="button" className="button button-outline" onClick={() => setCustomerOpen(false)}>Скасувати</button><button type="button" className="button button-primary" onClick={quickCreateCustomer}><UserPlus size={15} /> Створити клієнта</button></>}
+        description="Дані клієнта будуть доступні під час оформлення замовлення."
+        footer={<><button type="button" className="button button-outline" onClick={() => setCustomerOpen(false)}>Скасувати</button><button type="button" className="button button-primary" onClick={() => void quickCreateCustomer()}><UserPlus size={15} /> Створити клієнта</button></>}
       >
         <div className={styles.quickCustomerForm}>
           <label className="field"><span>Ім’я *</span><input value={customerDraft.name} onChange={(event) => setCustomerDraft({ ...customerDraft, name: event.target.value })} /></label>

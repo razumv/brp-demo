@@ -6,13 +6,13 @@ import { SchedulePage } from "./features/schedule-page";
 import {
   ConsignmentPage,
   DocumentsPage,
-  DraftsPage,
   InventoryPage,
   NetworkPage,
   PartsReportPage,
   SettlementsPage,
   UnknownFeature,
 } from "./features/secondary-data-pages";
+import { OrderDraftsPage } from "./features/order-drafts-page";
 import { UnitsPage } from "./features/units-page";
 import { WorkshopPage } from "./features/workshop-page";
 
@@ -24,7 +24,7 @@ export function DealerFeaturePage({ feature }: { feature: string }) {
     case "bossweb": return <BossWebPage />;
     case "workshop": return <WorkshopPage />;
     case "documents": return <DocumentsPage />;
-    case "order-drafts": return <DraftsPage />;
+    case "order-drafts": return <OrderDraftsPage />;
     case "consignment": return <ConsignmentPage />;
     case "settlements": return <SettlementsPage />;
     case "parts-inventory": return <InventoryPage />;

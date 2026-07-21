@@ -12,21 +12,19 @@ import {
   Clock3,
   Download,
   FileClock,
-  FileSpreadsheet,
   FileText,
   Globe2,
   Package,
   PackageCheck,
   PackageOpen,
   Plus,
-  RefreshCw,
   Search,
   Truck,
   Warehouse,
   Wrench,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import { OrderStatusBadge, formatDate } from "@/components/dealer/common";
 import { LockedOperation } from "@/components/dealer/locked-operation";
@@ -100,11 +98,6 @@ export function DocumentsPage() {
       </Panel>
     </FeatureFrame>
   );
-}
-
-// Owned by the later drafts task; its behavior stays intentionally unchanged.
-export function DraftsPage() {
-  return <FeatureFrame feature="order-drafts" action={<button type="button" className="button button-primary"><Plus size={15} /> Нова чернетка</button>}><Panel><div className={styles.simpleToolbar}><div className="toolbar-search"><Search size={15} /><input placeholder="Пошук чернетки..." /></div><button type="button" className="button button-outline"><RefreshCw size={14} /> Оновити</button><button type="button" className="button button-outline" disabled><FileSpreadsheet size={14} /> Excel</button></div><EmptyState icon={<FileClock size={26} />} title="Чернеток немає" description="Незавершені замовлення та імпортовані файли з’являться тут." /></Panel></FeatureFrame>;
 }
 
 type ConsignmentTab = "stock" | "network" | "requests";
@@ -185,13 +178,13 @@ export function NetworkPage() {
 }
 
 export function PartsReportPage() {
-  const { state } = useDemoStore();
+  const { snapshot } = useDealerWorkflow();
   const [period, setPeriod] = useState<ReportPeriod>("all");
   const [manager, setManager] = useState("all");
   const [status, setStatus] = useState<"all" | import("@/lib/types").OrderStatus>("all");
-  const orders = useMemo(() => filterPartsReportOrders(state.orders, { period, manager, status }), [manager, period, state.orders, status]);
+  const orders = useMemo(() => filterPartsReportOrders(snapshot.orders, { period, manager, status }), [manager, period, snapshot.orders, status]);
   const total = sum(orders.map((order) => orderTotal(order.lines)));
-  const managers = [...new Set(state.orders.map((order) => order.creator))];
+  const managers = [...new Set(snapshot.orders.map((order) => order.creator))];
   return <FeatureFrame feature="parts-report" action={<LockedExport />}><section className={styles.statsGrid} aria-label="Показники звіту запчастин"><StatCard label="Замовлень" value={orders.length} icon={<Package size={18} />} /><StatCard label="Позицій" value={sum(orders.map((order) => order.lines.length))} icon={<Boxes size={18} />} tone="blue" /><StatCard label="Сума" value={formatMoney(total)} icon={<CircleDollarSign size={18} />} tone="orange" /><StatCard label="Середній чек" value={formatMoney(orders.length ? total / orders.length : 0)} icon={<BarChart3 size={18} />} tone="green" /></section><Panel><div className={styles.filterGrid}><label className={styles.selectField}><span>Період</span><select aria-label="Період звіту" value={period} onChange={(event) => setPeriod(event.target.value as ReportPeriod)}><option value="all">За весь час</option><option value="month">Поточний місяць</option><option value="30">30 днів</option><option value="90">90 днів</option></select></label><label className={styles.selectField}><span>Менеджер</span><select aria-label="Менеджер звіту" value={manager} onChange={(event) => setManager(event.target.value)}><option value="all">Усі</option>{managers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><label className={styles.selectField}><span>Статус</span><select aria-label="Статус замовлення" value={status} onChange={(event) => setStatus(event.target.value as "all" | import("@/lib/types").OrderStatus)}><option value="all">Усі статуси</option><option value="new">Новий</option><option value="waiting">Очікування</option><option value="supplier">У постачальника</option><option value="ready">Готово</option><option value="sent">Відправлено</option><option value="done">Виконано</option><option value="cancelled">Скасовано</option></select></label></div>{orders.length ? <TableRegion label="Замовлення у звіті запчастин"><table className="data-table"><thead><tr><th>Замовлення</th><th>Дата</th><th>Позицій</th><th>Статус</th><th>Сума</th></tr></thead><tbody>{orders.map((order) => <tr key={order.id}><td><Link className={styles.linkCode} href={dealerOrderHref(order.id)}>{order.code}</Link><small>{order.creator}</small></td><td>{formatDate(order.createdAt)}</td><td>{order.lines.length}</td><td><OrderStatusBadge status={order.status} /></td><td><strong>{formatMoney(orderTotal(order.lines))}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Даних за період немає" description="Змініть період, менеджера або статус." />}</Panel></FeatureFrame>;
 }
 

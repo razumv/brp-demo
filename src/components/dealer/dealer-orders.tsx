@@ -19,11 +19,13 @@ import {
   ShoppingBag,
   Truck,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
+import { findDealerOrder } from "@/lib/dealer/order-state";
+import type { DealerAttachmentMetadata, DealerCommandResult } from "@/lib/dealer/contracts";
 import type { OrderLine, OrderStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime, OrderStatusBadge, SectionHeading } from "./common";
@@ -42,16 +44,31 @@ const filterStatuses: Array<{ value: "all" | OrderStatus; label: string }> = [
   { value: "cancelled", label: "Скасовані" },
 ];
 
+const sourceLabels: Record<OrderLine["source"], string> = {
+  warehouse: "Склад",
+  catalog: "Каталог",
+  bossweb: "BossWeb",
+};
+
+function validationMessage(
+  result: DealerCommandResult<void>,
+  fallback: string,
+) {
+  return result.kind === "validation-error"
+    ? result.issues[0]?.message ?? fallback
+    : fallback;
+}
+
 export function DealerOrdersPage() {
-  const { state } = useDemoStore();
+  const { snapshot } = useDealerWorkflow();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | OrderStatus>("all");
   const [layout, setLayout] = useState<Layout>("list");
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return state.orders.filter((order) => {
-      const customer = state.customers.find((item) => item.id === order.customerId);
+    return snapshot.orders.filter((order) => {
+      const customer = snapshot.customers.find((item) => item.id === order.customerId);
       const haystack = [
         order.code,
         order.company,
@@ -62,12 +79,12 @@ export function DealerOrdersPage() {
       ].join(" ").toLowerCase();
       return (status === "all" || order.status === status) && (!normalized || haystack.includes(normalized));
     });
-  }, [query, state.customers, state.orders, status]);
+  }, [query, snapshot.customers, snapshot.orders, status]);
 
   const counts = useMemo(() => Object.fromEntries(filterStatuses.map((item) => [
     item.value,
-    item.value === "all" ? state.orders.length : state.orders.filter((order) => order.status === item.value).length,
-  ])) as Record<"all" | OrderStatus, number>, [state.orders]);
+    item.value === "all" ? snapshot.orders.length : snapshot.orders.filter((order) => order.status === item.value).length,
+  ])) as Record<"all" | OrderStatus, number>, [snapshot.orders]);
 
   return (
     <main className="page page-narrow">
@@ -115,14 +132,14 @@ export function DealerOrdersPage() {
         {filtered.length === 0 ? (
           <EmptyState
             icon={<Package size={27} />}
-            title={state.orders.length ? "Нічого не знайдено" : "Замовлень поки немає"}
-            description={state.orders.length ? "Змініть пошуковий запит або фільтр статусу." : "Додайте запчастини з каталогу та оформіть перше замовлення."}
+            title={snapshot.orders.length ? "Нічого не знайдено" : "Замовлень поки немає"}
+            description={snapshot.orders.length ? "Змініть пошуковий запит або фільтр статусу." : "Додайте запчастини з каталогу та оформіть перше замовлення."}
             action={<Link href="/catalog" className="button button-outline">Перейти до каталогу</Link>}
           />
         ) : layout === "list" ? (
           <div className={styles.orderList}>
             {filtered.map((order) => {
-              const customer = state.customers.find((item) => item.id === order.customerId);
+              const customer = snapshot.customers.find((item) => item.id === order.customerId);
               return (
                 <Link href={dealerOrderHref(order.id)} className={styles.orderRow} key={order.id}>
                   <span className={styles.orderIcon}><Package size={18} /></span>
@@ -145,7 +162,7 @@ export function DealerOrdersPage() {
                 {filtered.filter((order) => order.status === column.value).map((order) => (
                   <Link href={dealerOrderHref(order.id)} className={styles.kanbanCard} key={order.id}>
                     <div><strong>{order.code}</strong><OrderStatusBadge status={order.status} /></div>
-                    <p>{state.customers.find((item) => item.id === order.customerId)?.name || order.company}</p>
+                    <p>{snapshot.customers.find((item) => item.id === order.customerId)?.name || order.company}</p>
                     <footer><span>{order.lines.length} позицій</span><strong>{formatMoney(orderTotal(order.lines))}</strong></footer>
                   </Link>
                 ))}
@@ -159,22 +176,29 @@ export function DealerOrdersPage() {
 }
 
 function PrivateLineNote({ orderId, line }: { orderId: string; line: OrderLine }) {
-  const { setLineNote } = useDemoStore();
+  const { commands } = useDealerWorkflow();
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState(line.privateNote || "");
+  const [error, setError] = useState("");
 
   return (
     <div className={styles.lineNote}>
       {editing ? (
         <>
           <input value={note} onChange={(event) => setNote(event.target.value)} aria-label={`Приватна нотатка ${line.partNumber}`} placeholder="Приватна нотатка..." />
-          <button type="button" className="button button-outline" onClick={() => {
-            setLineNote(orderId, line.partNumber, note.trim());
+          <button type="button" className="button button-outline" onClick={async () => {
+            const result = await commands.setOrderLineNote({ orderId, partNumber: line.partNumber, note: note.trim() });
+            if (!result.ok) {
+              setError(validationMessage(result, "Не вдалося зберегти нотатку."));
+              return;
+            }
+            setError("");
             setEditing(false);
           }}><Save size={13} /> Зберегти</button>
+          {error ? <span className={styles.lineNoteError} role="alert">{error}</span> : null}
         </>
       ) : (
-        <button type="button" className={styles.noteButton} onClick={() => setEditing(true)}>
+        <button type="button" className={styles.noteButton} onClick={() => { setError(""); setEditing(true); }}>
           <FileText size={12} /> {line.privateNote || "Моя нотатка"}
         </button>
       )}
@@ -183,31 +207,46 @@ function PrivateLineNote({ orderId, line }: { orderId: string; line: OrderLine }
 }
 
 export function DealerOrderDetail({ id }: { id: string }) {
-  const { state, addOrderMessage } = useDemoStore();
-  const order = state.orders.find((item) => item.id === id);
+  const { snapshot, commands } = useDealerWorkflow();
+  const order = findDealerOrder(snapshot, id);
   const [message, setMessage] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
+  const [attachment, setAttachment] = useState<DealerAttachmentMetadata | null>(null);
+  const [messageError, setMessageError] = useState("");
+  const [messageStatus, setMessageStatus] = useState("");
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [lineTimelineOpen, setLineTimelineOpen] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!order) {
     return (
       <main className="page page-narrow">
-        <EmptyState title="Замовлення не знайдено" description="Можливо, локальні демо-дані були скинуті." action={<Link href="/dealer/orders" className="button button-outline">До замовлень</Link>} />
+        <EmptyState title="Замовлення не знайдено" description="Запис недоступний або вже видалений." action={<Link href="/dealer/orders" className="button button-outline">До замовлень</Link>} />
       </main>
     );
   }
 
-  const customer = state.customers.find((item) => item.id === order.customerId);
+  const customer = snapshot.customers.find((item) => item.id === order.customerId);
   const total = orderTotal(order.lines);
 
-  const sendMessage = (event: FormEvent<HTMLFormElement>) => {
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const body = message.trim();
-    if (!body && !attachmentName) return;
-    addOrderMessage(order.id, [body, attachmentName ? `📎 ${attachmentName}` : ""].filter(Boolean).join("\n"));
+    if (!body && !attachment) return;
+    const result = await commands.appendOrderMessage({
+      orderId: order.id,
+      body,
+      attachments: attachment ? [attachment] : [],
+    });
+    if (!result.ok) {
+      setMessageStatus("");
+      setMessageError(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося додати повідомлення." : "Не вдалося додати повідомлення.");
+      return;
+    }
     setMessage("");
-    setAttachmentName("");
+    setAttachment(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setMessageError("");
+    setMessageStatus("Повідомлення додано.");
   };
 
   return (
@@ -226,7 +265,7 @@ export function DealerOrderDetail({ id }: { id: string }) {
                 <div className={styles.orderTitleRow}>
                   <h1>{order.code}</h1>
                   <OrderStatusBadge status={order.status} />
-                  <span className={styles.liveDot} title="Локальні дані оновлено" />
+                  <span className={styles.liveDot} title="Дані доступні" />
                 </div>
                 <p>Створено {formatDate(order.createdAt)} · {order.creator} · {customer?.name || order.company}</p>
                 <div className={styles.chipRow}>
@@ -251,7 +290,7 @@ export function DealerOrderDetail({ id }: { id: string }) {
                         <strong>{line.description}</strong>
                         <PrivateLineNote orderId={order.id} line={line} />
                       </td>
-                      <td><span className={styles.sourceLabel}>{line.source === "warehouse" ? "Склад" : line.source}</span><StatusBadge tone="neutral">Очікування</StatusBadge></td>
+                      <td><span className={styles.sourceLabel}>{sourceLabels[line.source]}</span><StatusBadge tone="neutral">{order.stage}</StatusBadge></td>
                       <td>{line.quantity}</td>
                       <td>{formatMoney(line.dealerPrice)}</td>
                       <td><strong>{formatMoney(line.quantity * line.dealerPrice)}</strong></td>
@@ -280,11 +319,14 @@ export function DealerOrderDetail({ id }: { id: string }) {
 
           <Panel className={styles.chatPanel}>
             <SectionHeading title="Чат" helper={`${order.messages.length} повідомлень`} />
-            <div className={styles.messages} aria-live="polite">
+            <div className={styles.messages}>
               {order.messages.length ? order.messages.map((item) => (
                 <article className={cn(styles.message, item.role === "dealer" && styles.messageOwn)} key={item.id}>
-                  <header><strong>{item.author}</strong>{item.demo ? <StatusBadge tone="orange">Demo</StatusBadge> : null}</header>
-                  <p>{item.body}</p>
+                  <header><strong>{item.author}</strong></header>
+                  {item.body ? <p>{item.body}</p> : null}
+                  {item.attachments.length ? <ul className={styles.messageAttachments}>{item.attachments.map((file) => (
+                    <li key={`${file.name}-${file.size}`}><Paperclip size={12} /><span>{file.name}</span><small>{Math.max(1, Math.ceil(file.size / 1024))} KB</small></li>
+                  ))}</ul> : null}
                   <time>{formatDateTime(item.createdAt)}</time>
                 </article>
               )) : (
@@ -292,15 +334,24 @@ export function DealerOrderDetail({ id }: { id: string }) {
               )}
             </div>
             <form className={styles.chatComposer} onSubmit={sendMessage}>
-              {attachmentName ? <span className={styles.attachmentPreview}><Paperclip size={12} /> {attachmentName}<button type="button" onClick={() => setAttachmentName("")}>×</button></span> : null}
+              {attachment ? <span className={styles.attachmentPreview}><Paperclip size={12} /> {attachment.name}<button type="button" aria-label={`Прибрати ${attachment.name}`} onClick={() => {
+                setAttachment(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}>×</button></span> : null}
               <div>
-                <label className={styles.attachButton} aria-label="Додати файл">
+                <label className={styles.attachButton} aria-label="Додати дані про файл">
                   <Paperclip size={16} />
-                  <input type="file" onChange={(event) => setAttachmentName(event.target.files?.[0]?.name || "")} />
+                  <input ref={fileInputRef} type="file" onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    setAttachment(file ? { name: file.name, size: file.size, mimeType: file.type || "application/octet-stream" } : null);
+                  }} />
                 </label>
                 <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Введіть повідомлення..." aria-label="Повідомлення" />
-                <button type="submit" aria-label="Надіслати"><Send size={16} /></button>
+                <button type="submit" aria-label="Додати повідомлення"><Send size={16} /></button>
               </div>
+              <p className={styles.attachmentDisclosure}>Зберігаються лише назва, тип і розмір файлу; сам файл не передається.</p>
+              {messageStatus ? <p className={styles.chatStatus} role="status">{messageStatus}</p> : null}
+              {messageError ? <p className={styles.chatError} role="alert">{messageError}</p> : null}
             </form>
           </Panel>
 
@@ -315,12 +366,12 @@ export function DealerOrderDetail({ id }: { id: string }) {
             <button type="button" className={styles.accordionButton} aria-expanded={lineTimelineOpen} onClick={() => setLineTimelineOpen(!lineTimelineOpen)}>
               <ChevronDown size={15} /> Хронологія позицій <span>{order.lines.length}</span>
             </button>
-            {lineTimelineOpen ? <div className={styles.lineEvents}>{order.lines.map((line) => <div key={line.partNumber}><Boxes size={14} /><span><strong>{line.partNumber}</strong><small>{line.description} · очікує постачання</small></span></div>)}</div> : null}
+            {lineTimelineOpen ? <div className={styles.lineEvents}>{order.lines.map((line) => <div key={line.partNumber}><Boxes size={14} /><span><strong>{line.partNumber}</strong><small>{line.description} · статус замовлення: {order.stage}</small></span></div>)}</div> : null}
           </Panel>
 
           <Panel className={styles.shipmentPanel}>
             <SectionHeading title="Відправки дилеру" helper="Поки немає відправок" />
-            <div><Truck size={21} /><span>Відправка з&apos;явиться після комплектації.</span></div>
+            <div><Truck size={21} /><span>Інформація про відправлення з&apos;явиться після надходження даних.</span></div>
           </Panel>
         </aside>
       </div>

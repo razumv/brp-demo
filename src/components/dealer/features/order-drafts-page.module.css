@@ -1,0 +1,171 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.searchField {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 36px;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted-foreground);
+}
+
+.searchField:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 1px var(--orange);
+}
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.feedback {
+  margin: 0 0 10px;
+  color: var(--green);
+  font-size: 11px;
+}
+
+.resultCount {
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.draftList {
+  display: grid;
+  gap: 8px;
+}
+
+.draftCard {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.draftIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.draftBody {
+  min-width: 0;
+}
+
+.draftBody strong,
+.draftBody p,
+.draftBody small {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draftBody p,
+.draftBody small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.draftCount {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 2px 5px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.draftCount small {
+  grid-column: 1 / -1;
+}
+
+.draftActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deleteButton {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--red);
+}
+
+@media (max-width: 767px) {
+  .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .toolbar :global(button),
+  .searchField {
+    min-height: 44px;
+  }
+
+  .draftCard {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+  }
+
+  .draftCount {
+    justify-self: end;
+  }
+
+  .draftActions {
+    grid-column: 2 / -1;
+  }
+
+  .draftActions :global(.button) {
+    min-height: 44px;
+  }
+
+  .deleteButton {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 470px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .toolbar > :global(span) {
+    grid-column: 2;
+  }
+
+  .toolbar > :global(button) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

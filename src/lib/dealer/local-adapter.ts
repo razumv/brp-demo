@@ -2,24 +2,28 @@ import { getPart } from "@/lib/mock-data";
 import type {
   Customer,
   CustomerInput,
-  DemoState,
   Equipment,
   EquipmentInput,
-  Order,
   OrderInput,
   WorkshopOrder,
   WorkshopOrderInput,
 } from "@/lib/types";
 import type {
+  DealerAttachmentMetadata,
   DealerCapability,
   DealerCommandResult,
   DealerCommands,
   DealerExternalOperation,
-  DealerIdentity,
+  DealerLocalState,
+  DealerOrder,
+  DealerOrderDraft,
+  DealerOrderBuilder,
 } from "@/lib/dealer/contracts";
+import { findDealerOrder } from "@/lib/dealer/order-state";
 
-type DealerStorePort = {
-  state: DemoState;
+export type DealerStorePort = {
+  readonly state: DealerLocalState;
+  isReady: () => boolean;
   addToCart: (partNumber: string, quantity?: number, sourceDiagramId?: string) => void;
   setCartQuantity: (partNumber: string, quantity: number) => void;
   removeFromCart: (partNumber: string) => void;
@@ -27,8 +31,20 @@ type DealerStorePort = {
   addCustomer: (input: CustomerInput) => Customer;
   updateCustomer: (id: string, input: CustomerInput) => void;
   addEquipment: (input: EquipmentInput) => Equipment;
-  createOrder: (input: OrderInput) => Order;
-  addOrderMessage: (orderId: string, body: string, role?: "dealer" | "admin") => void;
+  updateOrderBuilder: (
+    input: Partial<Pick<DealerOrderBuilder, "title" | "customerId" | "po" | "note" | "delivery">>,
+  ) => void;
+  startOrderDraft: () => void;
+  saveOrderDraft: () => DealerOrderDraft;
+  openOrderDraft: (draftId: string) => void;
+  deleteOrderDraft: (draftId: string) => void;
+  refreshOrderDrafts: () => readonly DealerOrderDraft[];
+  createOrder: (input: OrderInput) => DealerOrder;
+  addOrderMessage: (
+    orderId: string,
+    body: string,
+    attachments: readonly DealerAttachmentMetadata[],
+  ) => void;
   setLineNote: (orderId: string, partNumber: string, note: string) => void;
   addWorkshopOrder: (input: WorkshopOrderInput) => WorkshopOrder;
 };
@@ -69,18 +85,8 @@ function validationError(
   return { ok: false, kind: "validation-error", issues: [{ field, code, message }] };
 }
 
-export function getDealerIdentity(state: DemoState): DealerIdentity {
-  return state.session?.role === "dealer"
-    ? {
-        email: state.session.email,
-        displayName: state.session.displayName,
-        company: state.session.company,
-      }
-    : {
-        email: "dealer@logos.local",
-        displayName: "Финансы",
-        company: "Logos",
-      };
+function sessionRequired<T>(): DealerCommandResult<T> {
+  return validationError("session", "dealer-session-required", "Дилерська сесія недоступна.");
 }
 
 export function createDealerLocalAdapter(
@@ -89,6 +95,7 @@ export function createDealerLocalAdapter(
 ): DealerCommands {
   return {
     async addCartLine({ partNumber, quantity = 1, sourceDiagramId }) {
+      if (!store.isReady()) return sessionRequired();
       if (!getPart(partNumber)) {
         return validationError("partNumber", "unknown-part", "Запчастину не знайдено.");
       }
@@ -99,6 +106,7 @@ export function createDealerLocalAdapter(
       return localMutation(undefined);
     },
     async setCartQuantity({ partNumber, quantity }) {
+      if (!store.isReady()) return sessionRequired();
       if (!Number.isInteger(quantity)) {
         return validationError("quantity", "invalid-quantity", "Кількість має бути цілим числом.");
       }
@@ -109,6 +117,7 @@ export function createDealerLocalAdapter(
       return localMutation(undefined);
     },
     async removeCartLine({ partNumber }) {
+      if (!store.isReady()) return sessionRequired();
       if (!store.state.cart.some((line) => line.partNumber === partNumber)) {
         return validationError("partNumber", "not-found", "Позицію кошика не знайдено.");
       }
@@ -116,16 +125,19 @@ export function createDealerLocalAdapter(
       return localMutation(undefined);
     },
     async clearCart() {
+      if (!store.isReady()) return sessionRequired();
       store.clearCart();
       return localMutation(undefined);
     },
     async createCustomer(input) {
+      if (!store.isReady()) return sessionRequired();
       if (!input.name.trim()) {
         return validationError("name", "required", "Вкажіть ім’я клієнта.");
       }
       return localMutation(store.addCustomer(input));
     },
     async updateCustomer({ id, customer }) {
+      if (!store.isReady()) return sessionRequired();
       if (!store.state.customers.some((item) => item.id === id)) {
         return validationError("id", "not-found", "Клієнта не знайдено.");
       }
@@ -133,12 +145,59 @@ export function createDealerLocalAdapter(
       return localMutation(undefined);
     },
     async createEquipment(input) {
+      if (!store.isReady()) return sessionRequired();
       if (!store.state.customers.some((item) => item.id === input.customerId)) {
         return validationError("customerId", "not-found", "Клієнта не знайдено.");
       }
       return localMutation(store.addEquipment(input));
     },
+    async updateOrderBuilder(input) {
+      if (!store.isReady()) return sessionRequired();
+      store.updateOrderBuilder(input);
+      return localMutation(undefined);
+    },
+    async startOrderDraft() {
+      if (!store.isReady()) return sessionRequired();
+      try {
+        store.startOrderDraft();
+        return localMutation(undefined);
+      } catch (error) {
+        return validationError("draft", "unsaved-order", error instanceof Error ? error.message : "Не вдалося створити чернетку.");
+      }
+    },
+    async saveOrderDraft() {
+      if (!store.isReady()) return sessionRequired();
+      if (!store.state.builder.title.trim()) {
+        return validationError("title", "required", "Вкажіть назву чернетки.");
+      }
+      return localMutation(store.saveOrderDraft());
+    },
+    async openOrderDraft({ draftId }) {
+      if (!store.isReady()) return sessionRequired();
+      if (!store.state.drafts.some((draft) => draft.id === draftId)) {
+        return validationError("draftId", "not-found", "Чернетку не знайдено.");
+      }
+      try {
+        store.openOrderDraft(draftId);
+        return localMutation(undefined);
+      } catch (error) {
+        return validationError("draftId", "unsaved-order", error instanceof Error ? error.message : "Не вдалося відкрити чернетку.");
+      }
+    },
+    async deleteOrderDraft({ draftId }) {
+      if (!store.isReady()) return sessionRequired();
+      if (!store.state.drafts.some((draft) => draft.id === draftId)) {
+        return validationError("draftId", "not-found", "Чернетку не знайдено.");
+      }
+      store.deleteOrderDraft(draftId);
+      return localMutation(undefined);
+    },
+    async refreshOrderDrafts() {
+      if (!store.isReady()) return sessionRequired();
+      return { ok: true, kind: "local-preview", value: store.refreshOrderDrafts() };
+    },
     async stageOrder(input) {
+      if (!store.isReady()) return sessionRequired();
       try {
         return localMutation(store.createOrder(input));
       } catch (error) {
@@ -149,18 +208,20 @@ export function createDealerLocalAdapter(
         );
       }
     },
-    async appendOrderMessage({ orderId, body }) {
-      if (!body.trim()) {
-        return validationError("body", "required", "Введіть повідомлення.");
+    async appendOrderMessage({ orderId, body, attachments = [] }) {
+      if (!store.isReady()) return sessionRequired();
+      if (!body.trim() && attachments.length === 0) {
+        return validationError("body", "required", "Введіть повідомлення або оберіть файл.");
       }
-      if (!store.state.orders.some((order) => order.id === orderId)) {
+      if (!findDealerOrder(store.state, orderId)) {
         return validationError("orderId", "not-found", "Замовлення не знайдено.");
       }
-      store.addOrderMessage(orderId, body.trim(), "dealer");
+      store.addOrderMessage(orderId, body.trim(), attachments);
       return localMutation(undefined);
     },
     async setOrderLineNote({ orderId, partNumber, note }) {
-      const order = store.state.orders.find((item) => item.id === orderId);
+      if (!store.isReady()) return sessionRequired();
+      const order = findDealerOrder(store.state, orderId);
       if (!order) {
         return validationError("orderId", "not-found", "Замовлення не знайдено.");
       }
@@ -171,6 +232,7 @@ export function createDealerLocalAdapter(
       return localMutation(undefined);
     },
     async createWorkshopOrder(input) {
+      if (!store.isReady()) return sessionRequired();
       if (!input.customerId || !input.description.trim()) {
         return validationError("workshopOrder", "required", "Заповніть обов’язкові поля.");
       }
@@ -180,6 +242,7 @@ export function createDealerLocalAdapter(
       return localMutation(store.addWorkshopOrder(input));
     },
     async copyText({ text }) {
+      if (!store.isReady()) return sessionRequired();
       if (!text) {
         return validationError("text", "required", "Немає тексту для копіювання.");
       }
