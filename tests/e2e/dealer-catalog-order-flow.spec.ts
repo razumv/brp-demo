@@ -94,6 +94,107 @@ test("catalog overview states use product copy without environment labels", asyn
   await expect(page.locator("main")).not.toContainText(forbiddenCopy);
 
   await page.goto("/catalog/CAN_OFF_EN_US/sxs");
-  await expect(page.getByRole("heading", { name: "Can-Am SXS" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Навігація каталогу" })).toBeVisible();
   await expect(page.locator("main")).not.toContainText(forbiddenCopy);
+});
+
+test("SXS catalog preserves the source five-column selection in the URL", async ({ page }) => {
+  await page.goto("/catalog/CAN_OFF_EN_US");
+  await page.getByRole("link", { name: "Can-Am SXS" }).click();
+  const cascade = page.getByRole("region", { name: "Навігація каталогу" });
+  await cascade.getByRole("link", { name: "2021", exact: true }).click();
+  await cascade.getByRole("link", { name: "005 - SSV - North America - Maverick Trail Series", exact: true }).click();
+  await cascade.getByRole("link", { name: "002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", exact: true }).click();
+
+  await expect(cascade.locator("[data-catalog-column]")).toHaveCount(5);
+  await expect(cascade.getByText("01- Rotax - Crankcase", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005&model=002$/);
+
+  for (const selectedLabel of [
+    "Can-Am SXS",
+    "2021",
+    "005 - SSV - North America - Maverick Trail Series",
+    "002 - Maverick Trail 1000 - BASE_DPS - North America, 2021",
+  ]) {
+    await expect(cascade.getByRole("link", { name: selectedLabel, exact: true })).toHaveAttribute("aria-current", "page");
+  }
+
+  const breadcrumb = page.getByRole("navigation", { name: "Хлібні крихти" });
+  await expect(breadcrumb).toContainText("Can-Am Off-Road");
+  await expect(breadcrumb).toContainText("Can-Am SXS");
+  await expect(breadcrumb).toContainText("2021");
+  await expect(breadcrumb).toContainText("005 - SSV - North America - Maverick Trail Series");
+  await expect(breadcrumb).toContainText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021");
+
+  await page.reload();
+  await expect(cascade.locator("[data-catalog-column]")).toHaveCount(5);
+  await expect(cascade.getByRole("link", { name: "002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(breadcrumb).toContainText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021");
+});
+
+test("catalog ancestors clear descendants while unsupported nodes remain unavailable", async ({ page }) => {
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs?year=2021&series=005&model=002");
+
+  const cascade = page.getByRole("region", { name: "Навігація каталогу" });
+  await expect(cascade.getByRole("link", { name: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021", exact: true })).toHaveCount(0);
+  await expect(cascade.locator('[aria-disabled="true"]', { hasText: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021" })).toHaveCount(1);
+  await expect(cascade.getByRole("link", { name: "011 - SSV - CE - Traxter Series", exact: true })).toHaveCount(0);
+  await expect(cascade.locator('[aria-disabled="true"]', { hasText: "011 - SSV - CE - Traxter Series" })).toHaveCount(1);
+
+  const breadcrumb = page.getByRole("navigation", { name: "Хлібні крихти" });
+  await breadcrumb.getByRole("link", { name: "005 - SSV - North America - Maverick Trail Series", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005$/);
+  await expect(cascade.getByText("01- Rotax - Crankcase", { exact: true })).toHaveCount(0);
+  await expect(cascade.getByText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", { exact: true })).toBeVisible();
+
+  await breadcrumb.getByRole("link", { name: "2021", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021$/);
+  await expect(cascade.getByText("001 - Maverick Trail 800 - BASE_DPS - North America, 2021", { exact: true })).toHaveCount(0);
+});
+
+test("legacy ATV 2026 series browsing still opens the supported model route", async ({ page }) => {
+  await page.goto("/catalog/CAN_OFF_EN_US/7560bdc0-e7f3-4d84-9812-b8ecb55d948a");
+  await page.getByRole("link", { name: "001 - North America - Outlander 500/700 Series", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/152970b5-6fc4-427c-b0c4-0b44f69baa8e\?series=1$/);
+  await expect(page.getByRole("heading", { name: "001 - North America - Outlander 500/700 Series" })).toBeVisible();
+});
+
+test("five-column catalog contains its horizontal overflow at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs");
+
+  const cascade = page.getByRole("region", { name: "Навігація каталогу" });
+  await expect(cascade.locator("[data-catalog-column]")).toHaveCount(5);
+  await expect.poll(() => page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }))).toEqual({ scrollWidth: 390, viewportWidth: 390 });
+  await expect.poll(() => cascade.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  await expect.poll(() => cascade.locator('[data-catalog-column="diagrams"]').evaluate((element) => ({
+    overflowY: window.getComputedStyle(element).overflowY,
+    scrollsVertically: element.scrollHeight > element.clientHeight,
+  }))).toEqual({ overflowY: "auto", scrollsVertically: true });
+  await expect.poll(() => cascade.locator('[data-catalog-column="diagrams"]').evaluate((column) => {
+    const viewport = column.parentElement?.parentElement;
+    if (!viewport) return false;
+    const columnRect = column.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    return columnRect.left >= viewportRect.left && columnRect.right <= viewportRect.right;
+  })).toBe(true);
+  await expect.poll(() => cascade.locator('[data-selected="true"]', { hasText: "002 - Maverick Trail 1000" }).evaluate((row) => {
+    const viewport = row.closest('[aria-label="Навігація каталогу"]');
+    if (!viewport) return false;
+    const rowRect = row.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    return rowRect.right > viewportRect.left && rowRect.left < viewportRect.right;
+  })).toBe(true);
+});
+
+test("five catalog columns fit the available dealer content at 1440px", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs");
+
+  const cascade = page.getByRole("region", { name: "Навігація каталогу" });
+  await expect(cascade.locator("[data-catalog-column]")).toHaveCount(5);
+  await expect.poll(() => cascade.evaluate((element) => element.scrollWidth === element.clientWidth)).toBe(true);
 });

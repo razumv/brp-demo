@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
   ShoppingCart,
+  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
@@ -19,6 +20,9 @@ import type { DealerSnapshot } from "@/lib/dealer/contracts";
 import { normalizeDealerSearch } from "@/lib/dealer/format";
 import { FeatureFrame } from "./feature-frame";
 import styles from "./order-drafts-page.module.css";
+
+export type DraftContentFilter = "all" | "with-items" | "empty";
+export type DraftBuyerFilter = "all" | "assigned" | "unassigned";
 
 function commandError(
   result: { readonly kind: string; readonly issues?: readonly { readonly message: string }[] },
@@ -33,6 +37,9 @@ export function OrderDraftsPage() {
   const router = useRouter();
   const { snapshot, commands } = useDealerWorkflow();
   const [query, setQuery] = useState("");
+  const [content, setContent] = useState<DraftContentFilter>("all");
+  const [buyer, setBuyer] = useState<DraftBuyerFilter>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [pendingDelete, setPendingDelete] = useState<DealerSnapshot["drafts"][number] | null>(null);
   const customerById = useMemo(
@@ -43,6 +50,10 @@ export function OrderDraftsPage() {
   const filtered = useMemo(() => {
     const needle = normalizeDealerSearch(query);
     return snapshot.drafts.filter((draft) => {
+      const contentMatches = content === "all"
+        || (content === "with-items" ? draft.lines.length > 0 : draft.lines.length === 0);
+      const buyerMatches = buyer === "all"
+        || (buyer === "assigned" ? Boolean(draft.customerId) : !draft.customerId);
       const customer = customerById.get(draft.customerId);
       const haystack = [
         draft.title,
@@ -50,9 +61,20 @@ export function OrderDraftsPage() {
         customer?.name ?? "",
         ...draft.lines.map((line) => line.partNumber),
       ].join(" ").toLocaleLowerCase("uk-UA");
-      return !needle || haystack.includes(needle);
+      return contentMatches && buyerMatches && (!needle || haystack.includes(needle));
     });
-  }, [customerById, query, snapshot.drafts]);
+  }, [buyer, content, customerById, query, snapshot.drafts]);
+
+  const activeFilterCount = Number(content !== "all") + Number(buyer !== "all");
+  const filterPanelId = "draft-filters";
+  const filterTriggerLabel = activeFilterCount
+    ? `Фільтри чернеток, активних: ${activeFilterCount}`
+    : "Фільтри чернеток";
+
+  const resetFilters = () => {
+    setContent("all");
+    setBuyer("all");
+  };
 
   const startDraft = async () => {
     const result = await commands.startOrderDraft();
@@ -96,7 +118,38 @@ export function OrderDraftsPage() {
             <Search size={15} aria-hidden="true" />
             <input aria-label="Пошук чернеток" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Назва, клієнт, PO або запчастина..." />
           </label>
+          <button
+            type="button"
+            className={styles.filterTrigger}
+            aria-label={filterTriggerLabel}
+            aria-controls={filterPanelId}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((current) => !current)}
+          >
+            <SlidersHorizontal size={15} aria-hidden="true" />
+            <span className={styles.filterTriggerLabel}>Фільтри чернеток</span>
+            {activeFilterCount ? <span className={styles.filterCount} data-filter-count>{activeFilterCount}</span> : null}
+          </button>
           <LockedOperation label="Excel" icon={<FileSpreadsheet size={14} />} reason="Імпорт і експорт файлів недоступні." />
+        </div>
+        <div id={filterPanelId} className={styles.filterPanel} hidden={!filtersOpen}>
+          <label>
+            Вміст чернетки
+            <select value={content} onChange={(event) => setContent(event.target.value as DraftContentFilter)}>
+              <option value="all">Усі</option>
+              <option value="with-items">З позиціями</option>
+              <option value="empty">Порожні</option>
+            </select>
+          </label>
+          <label>
+            Покупець чернетки
+            <select value={buyer} onChange={(event) => setBuyer(event.target.value as DraftBuyerFilter)}>
+              <option value="all">Усі</option>
+              <option value="assigned">Призначений</option>
+              <option value="unassigned">Не призначений</option>
+            </select>
+          </label>
+          <button type="button" className="button button-outline" onClick={resetFilters} disabled={!activeFilterCount}>Скинути фільтри</button>
         </div>
         <p className={styles.resultCount}>Показано {filtered.length} з {snapshot.drafts.length}</p>
         {feedback ? <p className={styles.feedback} role="status">{feedback}</p> : null}
@@ -127,7 +180,7 @@ export function OrderDraftsPage() {
           <EmptyState
             icon={<FileClock size={26} />}
             title={snapshot.drafts.length ? "Чернеток не знайдено" : "Чернеток поки немає"}
-            description={snapshot.drafts.length ? "Змініть пошуковий запит." : "Збережіть незавершене замовлення, щоб продовжити пізніше."}
+            description={snapshot.drafts.length ? "Змініть пошуковий запит або фільтри." : "Збережіть незавершене замовлення, щоб продовжити пізніше."}
             action={<button type="button" className="button button-outline" onClick={() => void startDraft()}>Створити чернетку</button>}
           />
         )}

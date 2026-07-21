@@ -63,16 +63,46 @@ test("selected Advex accessory adds its display SKU and proven metadata", async 
   await expect(cartLine.getByText("Сумісність: Outlander", { exact: true })).toBeVisible();
 });
 
-test("family, year, compatibility, purpose, query, stock, and sort filter the same collection", async ({ page }) => {
+test("source-style vehicle and product facets filter the same collection", async ({ page }) => {
   await page.goto("/dealer/accessories");
 
-  await page.getByLabel("Категорія").selectOption({ label: "Can-Am Off-Road" });
-  await page.getByLabel("Рік").selectOption("2025");
+  await expect(page.getByLabel("Сімейства аксесуарів").getByRole("button", { name: /^Can-Am Off-Road/ })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "За моделлю" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "За VIN" })).toBeDisabled();
+  await expect(page.getByText("Підбір за VIN поки недоступний. Використовуйте модель, комплектацію та двигун.", { exact: true })).toBeVisible();
+
+  const year = page.getByLabel("Рік техніки");
+  const model = page.getByLabel("Модель техніки");
+  const trim = page.getByLabel("Комплектація техніки");
+  const engine = page.getByLabel("Двигун техніки");
+
+  await expect(model).toBeDisabled();
+  await expect(trim).toBeDisabled();
+  await expect(engine).toBeDisabled();
+
+  await year.selectOption("2026");
+  await expect(model).toBeEnabled();
+  await model.selectOption("Outlander");
+  await expect(trim).toBeEnabled();
+  await trim.selectOption("MAX XT");
+  await expect(engine).toBeEnabled();
+  await engine.selectOption("Rotax 1000R");
+  await page.getByLabel("Категорія товару").selectOption("Lighting");
+
+  await expect(page.getByRole("button", { name: /Advex Helmet LED Utility Light/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /XPS Extended Life Coolant/ })).toHaveCount(0);
+
+  await year.selectOption("2025");
+  await expect(model).toHaveValue("all");
+  await expect(trim).toBeDisabled();
+  await expect(trim).toHaveValue("all");
+  await expect(engine).toBeDisabled();
+
   await page.getByLabel("Outlander").check();
   await page.getByLabel("Utility").check();
   await page.getByLabel("Наявність").selectOption("in-stock");
   await page.getByRole("searchbox", { name: "Пошук аксесуарів" }).fill("929085");
-  await page.getByLabel("Сортування").selectOption("price-asc");
+  await page.getByLabel("Сортування", { exact: true }).selectOption("price-asc");
 
   await expect(page.getByRole("button", { name: /Advex Helmet LED Utility Light/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /XPS Extended Life Coolant/ })).toHaveCount(0);
@@ -92,8 +122,17 @@ test("accessory controls fit a 390px viewport without horizontal overflow", asyn
   expect(overflow).toBeLessThanOrEqual(1);
   await expect(page.getByRole("searchbox", { name: "Пошук аксесуарів" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Advex Helmet LED Utility Light/ })).toBeVisible();
-  const filterToggle = page.getByRole("button", { name: "Фільтри" });
+  const filterToggle = page.getByRole("button", { name: "Фільтри аксесуарів" });
+  await expect(filterToggle).toHaveCount(1);
   await expect(filterToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByLabel("Рік техніки")).toBeHidden();
+  await expect(page.getByLabel("Категорія товару")).toBeHidden();
   await filterToggle.click();
-  await expect(page.getByLabel("Категорія")).toBeVisible();
+  await expect(page.getByLabel("Рік техніки")).toBeVisible();
+  await expect(page.getByLabel("Рік техніки")).toBeFocused();
+  await expect(page.getByLabel("Модель техніки")).toBeVisible();
+  await expect(page.getByLabel("Категорія товару")).toBeVisible();
+  await expect(page.getByLabel("Сортування фільтрів")).toBeVisible();
+  const expandedOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(expandedOverflow).toBeLessThanOrEqual(1);
 });

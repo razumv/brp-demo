@@ -6,6 +6,8 @@ export type DocumentStatus = "paid" | "open" | "overdue";
 export type StockFilter = "all" | "in-stock" | "low" | "out";
 export type ReportPeriod = "all" | "month" | "30" | "90";
 
+export const dealerNewDocumentCount = 5;
+
 export type DealerDocument = {
   id: string;
   code: string;

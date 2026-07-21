@@ -1,5 +1,6 @@
 .toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
@@ -29,6 +30,70 @@
   border: 0;
   outline: 0;
   background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.filterTrigger {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterTrigger:hover,
+.filterTrigger:focus-visible {
+  border-color: var(--foreground);
+  outline: none;
+}
+
+.filterCount {
+  display: inline-grid;
+  min-width: 16px;
+  min-height: 16px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.filterPanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  margin: -4px 0 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-subtle);
+}
+
+.filterPanel label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.filterPanel select {
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
   color: var(--foreground);
   font: inherit;
 }
@@ -124,12 +189,41 @@
 
 @media (max-width: 767px) {
   .toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) 44px auto;
   }
 
   .toolbar :global(button),
   .searchField {
+    min-height: 44px;
+  }
+
+  .filterTrigger {
+    position: relative;
+    width: 44px;
+    padding: 0;
+  }
+
+  .filterTriggerLabel {
+    display: none;
+  }
+
+  .filterCount {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 14px;
+    min-height: 14px;
+    padding: 0 3px;
+    border: 1px solid var(--surface);
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .filterPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .filterPanel :global(.button) {
     min-height: 44px;
   }
 
@@ -152,20 +246,5 @@
   .deleteButton {
     width: 44px;
     height: 44px;
-  }
-}
-
-@media (max-width: 470px) {
-  .toolbar {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .toolbar > :global(span) {
-    grid-column: 2;
-  }
-
-  .toolbar > :global(button) {
-    grid-column: 1;
-    grid-row: 2;
   }
 }

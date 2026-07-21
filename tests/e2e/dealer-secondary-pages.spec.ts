@@ -26,6 +26,11 @@ async function openDealerPage(page: Page, path: string) {
 
 test.beforeEach(async ({ page }) => seedDealer(page));
 
+test("dealer navigation restores the source new-document badge", async ({ page }) => {
+  await page.goto("/dealer/documents");
+  await expect(page.locator('.role-nav a[href$="/dealer/documents"] .nav-badge')).toHaveText("5");
+});
+
 test("secondary data pages render their deterministic records on desktop", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   for (const route of ["/dealer/documents", "/dealer/consignment", "/dealer/settlements", "/dealer/parts-inventory", "/dealer/network", "/dealer/parts-report"]) {

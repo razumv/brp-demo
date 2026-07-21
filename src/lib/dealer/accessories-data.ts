@@ -13,9 +13,25 @@ export type AccessoryCompatibility =
   | "Sea-Doo"
   | "Ski-Doo";
 
+export type AccessoryCategory = "Lighting" | "Luggage & Storage" | "Maintenance";
+export type AccessoryModel = "Outlander" | "Defender" | "Maverick" | "GTX" | "Summit";
+export type AccessoryTrim = "MAX XT" | "DPS" | "XT" | "GTX Limited" | "X";
+export type AccessoryEngine =
+  | "Rotax 1000R"
+  | "Rotax 700"
+  | "Rotax HD10"
+  | "Rotax 1630 ACE"
+  | "Rotax 850 E-TEC";
 export type AccessoryPurpose = "Utility" | "Touring" | "Storage" | "Maintenance";
 export type AccessoryStockFilter = "all" | "in-stock" | "under-order";
 export type AccessorySort = "featured" | "price-asc" | "price-desc";
+
+export type AccessoryVehicleFitment = Readonly<{
+  year: string;
+  model: AccessoryModel;
+  trim: AccessoryTrim;
+  engine: AccessoryEngine;
+}>;
 
 export type AccessoryProduct = Readonly<{
   id: string;
@@ -25,6 +41,8 @@ export type AccessoryProduct = Readonly<{
   price: number;
   stock: number;
   family: AccessoryFamily;
+  category: AccessoryCategory;
+  fitments: readonly AccessoryVehicleFitment[];
   years: readonly string[];
   compatibility: readonly AccessoryCompatibility[];
   purposes: readonly AccessoryPurpose[];
@@ -33,7 +51,11 @@ export type AccessoryProduct = Readonly<{
 
 export type AccessoryFilters = Readonly<{
   family: AccessoryFamily | "all";
+  category: AccessoryCategory | "all";
   year: string | "all";
+  model: AccessoryModel | "all";
+  trim: AccessoryTrim | "all";
+  engine: AccessoryEngine | "all";
   compatibility: readonly AccessoryCompatibility[];
   purposes: readonly AccessoryPurpose[];
   query: string;
@@ -52,6 +74,12 @@ export const ACCESSORY_FAMILY_OPTIONS: readonly AccessoryFamily[] = [
   "Can-Am On-Road",
   "Sea-Doo",
   "Ski-Doo",
+];
+
+export const ACCESSORY_CATEGORY_OPTIONS: readonly AccessoryCategory[] = [
+  "Lighting",
+  "Luggage & Storage",
+  "Maintenance",
 ];
 
 export const ACCESSORY_YEAR_OPTIONS = ["2026", "2025", "2024"] as const;
@@ -78,6 +106,11 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 92.59,
     stock: 1,
     family: "Can-Am Off-Road",
+    category: "Lighting",
+    fitments: [
+      { year: "2026", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2025", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+    ],
     years: ["2026", "2025"],
     compatibility: ["Outlander"],
     purposes: ["Utility", "Touring"],
@@ -91,6 +124,12 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 179.99,
     stock: 8,
     family: "Ski-Doo",
+    category: "Luggage & Storage",
+    fitments: [
+      { year: "2026", model: "Summit", trim: "X", engine: "Rotax 850 E-TEC" },
+      { year: "2025", model: "Summit", trim: "X", engine: "Rotax 850 E-TEC" },
+      { year: "2024", model: "Summit", trim: "X", engine: "Rotax 850 E-TEC" },
+    ],
     years: ["2026", "2025", "2024"],
     compatibility: ["Ski-Doo"],
     purposes: ["Touring", "Storage"],
@@ -104,6 +143,18 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 13.09,
     stock: 240,
     family: "Can-Am Off-Road",
+    category: "Maintenance",
+    fitments: [
+      { year: "2026", model: "Outlander", trim: "DPS", engine: "Rotax 700" },
+      { year: "2026", model: "Defender", trim: "XT", engine: "Rotax HD10" },
+      { year: "2026", model: "Maverick", trim: "X", engine: "Rotax 1000R" },
+      { year: "2025", model: "Outlander", trim: "DPS", engine: "Rotax 700" },
+      { year: "2025", model: "Defender", trim: "XT", engine: "Rotax HD10" },
+      { year: "2025", model: "Maverick", trim: "X", engine: "Rotax 1000R" },
+      { year: "2024", model: "Outlander", trim: "DPS", engine: "Rotax 700" },
+      { year: "2024", model: "Defender", trim: "XT", engine: "Rotax HD10" },
+      { year: "2024", model: "Maverick", trim: "X", engine: "Rotax 1000R" },
+    ],
     years: ["2026", "2025", "2024"],
     compatibility: ["Outlander", "Defender", "Maverick"],
     purposes: ["Maintenance"],
@@ -117,6 +168,13 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 45.65,
     stock: 4,
     family: "Can-Am Off-Road",
+    category: "Luggage & Storage",
+    fitments: [
+      { year: "2026", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2026", model: "Defender", trim: "XT", engine: "Rotax HD10" },
+      { year: "2025", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2025", model: "Defender", trim: "XT", engine: "Rotax HD10" },
+    ],
     years: ["2026", "2025"],
     compatibility: ["Outlander", "Defender"],
     purposes: ["Utility", "Storage"],
@@ -130,6 +188,11 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 79.99,
     stock: 2,
     family: "Sea-Doo",
+    category: "Luggage & Storage",
+    fitments: [
+      { year: "2026", model: "GTX", trim: "GTX Limited", engine: "Rotax 1630 ACE" },
+      { year: "2025", model: "GTX", trim: "GTX Limited", engine: "Rotax 1630 ACE" },
+    ],
     years: ["2026", "2025"],
     compatibility: ["Sea-Doo"],
     purposes: ["Storage"],
@@ -143,6 +206,15 @@ export const ACCESSORY_PRODUCTS: readonly AccessoryProduct[] = [
     price: 218.5,
     stock: 0,
     family: "Can-Am Off-Road",
+    category: "Luggage & Storage",
+    fitments: [
+      { year: "2026", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2026", model: "Defender", trim: "DPS", engine: "Rotax HD10" },
+      { year: "2025", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2025", model: "Defender", trim: "DPS", engine: "Rotax HD10" },
+      { year: "2024", model: "Outlander", trim: "MAX XT", engine: "Rotax 1000R" },
+      { year: "2024", model: "Defender", trim: "DPS", engine: "Rotax HD10" },
+    ],
     years: ["2026", "2025", "2024"],
     compatibility: ["Outlander", "Defender"],
     purposes: ["Utility", "Storage"],
@@ -154,6 +226,72 @@ function includesAny<T>(values: readonly T[], selected: readonly T[]) {
   return selected.length === 0 || selected.some((value) => values.includes(value));
 }
 
+function matchesVehicleFilter(
+  fitment: AccessoryVehicleFitment,
+  filters: AccessoryFilters,
+) {
+  return (filters.year === "all" || fitment.year === filters.year)
+    && (filters.model === "all" || fitment.model === filters.model)
+    && (filters.trim === "all" || fitment.trim === filters.trim)
+    && (filters.engine === "all" || fitment.engine === filters.engine);
+}
+
+function unique<T>(values: readonly T[]) {
+  return [...new Set(values)];
+}
+
+export type AccessoryVehicleOptions = Readonly<{
+  years: readonly string[];
+  models: readonly AccessoryModel[];
+  trims: readonly AccessoryTrim[];
+  engines: readonly AccessoryEngine[];
+}>;
+
+/**
+ * Builds the vehicle cascade from the supplied catalog records. Product facets
+ * deliberately do not constrain this sequence: category and family are
+ * independent filter groups that compose only when products are filtered.
+ */
+export function accessoryVehicleOptions(
+  products: readonly AccessoryProduct[],
+  filters: AccessoryFilters,
+): AccessoryVehicleOptions {
+  const fitments = products.flatMap((product) => product.fitments);
+  const withYear = fitments.filter((fitment) => (
+    filters.year === "all" || fitment.year === filters.year
+  ));
+  const withModel = filters.model === "all"
+    ? []
+    : withYear.filter((fitment) => fitment.model === filters.model);
+  const withTrim = filters.trim === "all"
+    ? []
+    : withModel.filter((fitment) => fitment.trim === filters.trim);
+
+  return {
+    years: unique(fitments.map((fitment) => fitment.year)),
+    models: unique(withYear.map((fitment) => fitment.model)),
+    trims: unique(withModel.map((fitment) => fitment.trim)),
+    engines: unique(withTrim.map((fitment) => fitment.engine)),
+  };
+}
+
+export type AccessoryVehicleFilterUpdate = Readonly<Partial<Pick<
+  AccessoryFilters,
+  "year" | "model" | "trim" | "engine"
+>>>;
+
+/** Clears descendants whenever a vehicle ancestor changes. */
+export function updateAccessoryVehicleFilter(
+  filters: AccessoryFilters,
+  update: AccessoryVehicleFilterUpdate,
+): AccessoryFilters {
+  const next = { ...filters, ...update };
+  if ("year" in update) return { ...next, model: "all", trim: "all", engine: "all" };
+  if ("model" in update) return { ...next, trim: "all", engine: "all" };
+  if ("trim" in update) return { ...next, engine: "all" };
+  return next;
+}
+
 export function filterAccessories(
   products: readonly AccessoryProduct[],
   filters: AccessoryFilters,
@@ -163,14 +301,16 @@ export function filterAccessories(
     const searchable = `${product.title} ${product.sku} ${product.activeReplacementNumber} ${product.family}`
       .toLocaleLowerCase("uk-UA");
     const matchesFamily = filters.family === "all" || product.family === filters.family;
-    const matchesYear = filters.year === "all" || product.years.includes(filters.year);
+    const matchesCategory = filters.category === "all" || product.category === filters.category;
+    const matchesVehicle = product.fitments.some((fitment) => matchesVehicleFilter(fitment, filters));
     const matchesCompatibility = includesAny(product.compatibility, filters.compatibility);
     const matchesPurpose = includesAny(product.purposes, filters.purposes);
     const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery);
     const matchesStock = filters.stock === "all"
       || (filters.stock === "in-stock" ? product.stock > 0 : product.stock === 0);
     return matchesFamily
-      && matchesYear
+      && matchesCategory
+      && matchesVehicle
       && matchesCompatibility
       && matchesPurpose
       && matchesQuery
