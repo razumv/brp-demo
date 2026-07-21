@@ -1,9 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
+import { dealerWorkflowStorageKey } from "@/lib/dealer/identity";
 import { loginAsDealer, openDealerRoute } from "./support/dealer-session";
 
 const dealerSessionOptions = process.env.DEALER_E2E_ORIGIN
   ? { origin: process.env.DEALER_E2E_ORIGIN }
   : {};
+const dealerStorageKey = dealerWorkflowStorageKey({
+  email: "dealer@example.invalid",
+  displayName: "Финансы",
+  company: "Logos",
+});
 
 async function expectNoDocumentOverflow(page: Page) {
   await expect.poll(() => page.evaluate(() => ({
@@ -50,6 +56,13 @@ test.describe("dealer operational features on desktop", () => {
     await page.getByRole("button", { name: "Створити замовлення-наряд" }).click();
     await expect(page.getByRole("status")).toHaveText("Замовлення-наряд створено.");
     await expect(page.getByRole("heading", { name: "Сезонне технічне обслуговування" })).toBeVisible();
+    await expect.poll(async () => page.evaluate((storageKey) => {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return [];
+      return (JSON.parse(raw) as { workshopOrders?: Array<{ description: string }> }).workshopOrders ?? [];
+    }, dealerStorageKey)).toContainEqual(expect.objectContaining({
+      description: "Сезонне технічне обслуговування",
+    }));
 
     await openDealerRoute(page, "/dealer/bossweb", "Пошук запчастин", dealerSessionOptions);
     await expect(page.getByText("COOLANT,EXT LIFE", { exact: true })).toBeVisible();
@@ -60,6 +73,21 @@ test.describe("dealer operational features on desktop", () => {
     expect(await page.getByRole("status").count()).toBe(0);
     await expect(page.getByRole("heading", { name: "Запчастину не знайдено" })).toBeVisible();
     await expect(page.getByText(/для демонстрації|онлайн-пошук виконується/i)).toHaveCount(0);
+  });
+
+  test("dashboard reads the same dealer cart as accessories and order creation", async ({ page }) => {
+    await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
+    await openDealerRoute(page, "/dealer/accessories", "Каталог аксесуарів", dealerSessionOptions);
+
+    await page.getByRole("button", { name: /Advex Helmet LED Utility Light/ }).click();
+    await page.getByRole("dialog", { name: "Advex Helmet LED Utility Light" })
+      .getByRole("button", { name: "Додати в кошик" })
+      .click();
+
+    await page.goto("/");
+    const summary = page.getByRole("region", { name: "Додаткові показники" });
+    await expect(summary).toContainText("Позицій у кошику");
+    await expect(summary).toContainText("1");
   });
 });
 

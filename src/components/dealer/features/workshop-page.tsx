@@ -9,7 +9,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import {
   getWorkshopColumnCounts,
@@ -43,28 +43,34 @@ function emptyWorkshopForm(customerId: string): WorkshopOrderInput {
 }
 
 export function WorkshopPage() {
-  const { state, addWorkshopOrder } = useDemoStore();
-  const firstCustomerId = state.customers[0]?.id ?? "";
+  const { snapshot, commands } = useDealerWorkflow();
+  const firstCustomerId = snapshot.customers[0]?.id ?? "";
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<WorkshopOrderInput>(() => emptyWorkshopForm(firstCustomerId));
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const counts = useMemo(() => getWorkshopColumnCounts(state.workshopOrders), [state.workshopOrders]);
-  const groups = useMemo(() => groupWorkshopOrders(state.workshopOrders), [state.workshopOrders]);
+  const counts = useMemo(() => getWorkshopColumnCounts(snapshot.workshopOrders), [snapshot.workshopOrders]);
+  const groups = useMemo(() => groupWorkshopOrders(snapshot.workshopOrders), [snapshot.workshopOrders]);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.customerId || !form.description.trim()) {
       setError("Оберіть клієнта та опишіть роботу.");
       return;
     }
 
-    addWorkshopOrder({
+    const result = await commands.createWorkshopOrder({
       ...form,
       description: form.description.trim(),
       mechanic: form.mechanic.trim(),
       notes: form.notes.trim(),
     });
+    if (!result.ok) {
+      setError(result.kind === "validation-error"
+        ? result.issues[0]?.message ?? "Не вдалося створити замовлення-наряд."
+        : "Не вдалося створити замовлення-наряд.");
+      return;
+    }
     setForm(emptyWorkshopForm(form.customerId));
     setOpen(false);
     setError("");
@@ -78,7 +84,7 @@ export function WorkshopPage() {
         <button
           type="button"
           className="button button-primary"
-          disabled={!state.customers.length}
+          disabled={!snapshot.customers.length}
           onClick={() => {
             setForm((current) => ({ ...current, customerId: current.customerId || firstCustomerId }));
             setError("");
@@ -137,7 +143,7 @@ export function WorkshopPage() {
                     <article className={operationalStyles.workshopOrder} key={order.id}>
                       <StatusBadge tone={stage.tone}>{workshopTypeLabels[order.type]}</StatusBadge>
                       <h3>{order.description}</h3>
-                      <p>{state.customers.find((customer) => customer.id === order.customerId)?.name ?? "Клієнта не знайдено"}</p>
+                      <p>{snapshot.customers.find((customer) => customer.id === order.customerId)?.name ?? "Клієнта не знайдено"}</p>
                       {order.mechanic ? <small>Механік: {order.mechanic}</small> : null}
                       {order.scheduledAt ? <small>Заплановано: {formatDateTime(order.scheduledAt)}</small> : null}
                     </article>
@@ -174,7 +180,7 @@ export function WorkshopPage() {
             <span>Клієнт *</span>
             <select value={form.customerId} onChange={(event) => setForm({ ...form, customerId: event.target.value })}>
               <option value="">Оберіть клієнта</option>
-              {state.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
+              {snapshot.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
             </select>
           </label>
           <label className="field">

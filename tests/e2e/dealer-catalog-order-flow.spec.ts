@@ -73,3 +73,19 @@ test("dealer order surfaces fit a 390px viewport without document overflow", asy
     }))).toEqual({ scrollWidth: 390, viewportWidth: 390 });
   }
 });
+
+test("catalog overview states use product copy without environment labels", async ({ page }) => {
+  const forbiddenCopy = /demo|демо|демонстрац|тестов|environment/i;
+
+  await page.goto("/catalog/CAN_ONR_EN_US");
+  await expect(page.getByRole("heading", { name: "CAN-AM ON-ROAD" })).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(forbiddenCopy);
+
+  await page.goto("/catalog/CAN_OFF_EN_US/7560bdc0-e7f3-4d84-9812-b8ecb55d948a");
+  await page.getByRole("button", { name: "2025", exact: true }).click();
+  await expect(page.locator("main")).not.toContainText(forbiddenCopy);
+
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs");
+  await expect(page.getByRole("heading", { name: "Can-Am SXS" })).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(forbiddenCopy);
+});

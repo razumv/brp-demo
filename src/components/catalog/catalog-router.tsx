@@ -227,7 +227,7 @@ function BrandCatalog({ brandCode }: { brandCode: string }) {
           <EmptyState
             icon={<BookOpen size={25} />}
             title="Розділ представлено оглядово"
-            description="Для наскрізної демонстрації схем відкрийте каталог Can-Am Off-Road."
+            description="Детальні технічні схеми наразі доступні для Can-Am Off-Road."
             action={<Link className="button button-primary" href={`/catalog/${CATALOG_IDS.brand}`}>Can-Am Off-Road</Link>}
           />
         </Panel>
@@ -304,7 +304,7 @@ function CategoryBrowser() {
             <div className={styles.columnEmpty}>
               <Folder size={22} />
               <strong>{selectedYear}</strong>
-              <span>У демонстрації детально відтворено каталог 2026 року.</span>
+              <span>Детальні технічні схеми доступні для модельного року 2026.</span>
               <button type="button" className="button button-outline" onClick={() => setSelectedYear("2026")}>Показати 2026</button>
             </div>
           )}
@@ -442,7 +442,7 @@ export function CatalogRouter({ slug }: CatalogRouterProps) {
         <Panel>
           <EmptyState
             title="Can-Am SXS"
-            description="Цей розділ збережено як оглядовий. Детальна демонстрація доступна для Can-Am ATV 2026."
+            description="Цей розділ представлено оглядово. Детальні технічні схеми наразі доступні для Can-Am ATV 2026."
             action={<Link className="button button-primary" href={categoryPath}>Відкрити Can-Am ATV</Link>}
           />
         </Panel>
