@@ -26,6 +26,7 @@ import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider"
 import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { DealerGlobalPartsSearch } from "@/components/shell/global-parts-search";
 import { navForRole } from "@/components/shell/nav-data";
+import { useAppearance } from "@/components/appearance/use-appearance";
 
 function Brand({ role }: { role: Role }) {
   return (
@@ -380,7 +381,7 @@ export function AppShell({
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobilePartsSearchOpen, setMobilePartsSearchOpen] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const {desiredPreference, resolvedTheme, updatePreference} = useAppearance();
   const mobileSearchButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -390,31 +391,15 @@ export function AppShell({
   const closeMobilePartsSearch = useCallback(() => setMobilePartsSearchOpen(false), []);
 
   useEffect(() => {
-    let saved: string | null = null;
-    try {
-      saved = window.localStorage.getItem("brp-clone-theme");
-    } catch {
-      // Keep the default theme when browser storage is unavailable.
-    }
-    const nextTheme = saved === "dark" ? "dark" : "light";
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-    const frame = window.requestAnimationFrame(() => setTheme(nextTheme));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  useEffect(() => {
     if (hydrated && state.session?.role !== role) router.replace("/login");
   }, [hydrated, role, router, state.session?.role]);
 
   const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    try {
-      window.localStorage.setItem("brp-clone-theme", next);
-    } catch {
-      // Theme changes remain usable for the current tab without persistence.
-    }
+    void updatePreference({
+      version: 1,
+      designSystem: desiredPreference.designSystem,
+      colorMode: resolvedTheme === "dark" ? "light" : "dark",
+    });
   };
 
   const identity = useMemo(() => ({
@@ -468,8 +453,8 @@ export function AppShell({
           else setMobilePartsSearchOpen(true);
         }}><Search size={19} /></button>
         <div className="header-actions">
-          <button type="button" className="icon-button" aria-label={theme === "dark" ? "switch_to_light" : "switch_to_dark"} onClick={toggleTheme}>
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          <button type="button" className="icon-button" aria-label={resolvedTheme === "dark" ? "switch_to_light" : "switch_to_dark"} onClick={toggleTheme}>
+            {resolvedTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           {role === "admin" ? (
             <>

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { AppearanceBootstrapScript } from "@/components/appearance/appearance-bootstrap-script";
+import { AppearanceProvider } from "@/components/providers/appearance-provider";
 import { DemoStoreProvider } from "@/components/providers/demo-store-provider";
 import { PwaRegistration } from "@/components/providers/pwa-registration";
 import { AstryxFoundationProbe } from "@/components/appearance/astryx-foundation-probe";
@@ -47,13 +49,18 @@ export default function RootLayout({
       lang="uk"
       suppressHydrationWarning
     >
+      <head>
+        <AppearanceBootstrapScript />
+      </head>
       <body>
-        <div id="brp-app-root">
-          <DemoStoreProvider>{children}</DemoStoreProvider>
-          {process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE === "1" ? (
-            <AstryxFoundationProbe />
-          ) : null}
-        </div>
+        <AppearanceProvider>
+          <div id="brp-app-root">
+            <DemoStoreProvider>{children}</DemoStoreProvider>
+            {process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE === "1" ? (
+              <AstryxFoundationProbe />
+            ) : null}
+          </div>
+        </AppearanceProvider>
         <PwaRegistration />
       </body>
     </html>
