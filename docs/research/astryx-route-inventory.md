@@ -74,9 +74,9 @@ These are runtime query representations, so they are not separate prerender path
 
 | URL contract | Controller/view | Existing coverage |
 | --- | --- | --- |
-| `/admin/order-detail?id=<order-id-or-code>` | `src/components/admin/admin-order-detail.tsx`; `src/lib/order-route-hrefs.ts` prefers static path IDs/codes and uses the query form only for runtime prefixes | `admin-mobile-operations` |
-| `/dealer/order-detail?id=<order-id-or-code>` | `src/components/dealer/dealer-orders.tsx`; `src/lib/order-route-hrefs.ts` prefers static path IDs/codes and uses the query form only for runtime prefixes | `dealer-order-detail` |
-| `/order-confirmation?id=<order-id-or-code>` | `src/components/catalog/order-confirmation-page.tsx`; `src/lib/order-route-hrefs.ts` preserves static fixture paths and uses the query form only for runtime prefixes | `dealer-catalog-order-flow` |
+| `/admin/order-detail?id=demo-order-<runtime-id>` | `src/components/admin/admin-order-detail.tsx`; `src/lib/order-route-hrefs.ts` uses this query form only for the `demo-order-*` runtime prefix. All static fixture IDs/codes use `/admin/orders/<id-or-code>`. | `admin-mobile-operations` |
+| `/dealer/order-detail?id=<runtime-id>` | `src/components/dealer/dealer-orders.tsx`; `src/lib/order-route-hrefs.ts` uses this query form only for `demo-order-*` or `dealer-order-*`. All static fixture IDs/codes use `/dealer/orders/<id-or-code>`. | `dealer-order-detail` |
+| `/order-confirmation?id=<runtime-id>` | `src/components/catalog/order-confirmation-page.tsx`; `src/lib/order-route-hrefs.ts` uses this query form only for `demo-order-*` or `dealer-order-*`. All static fixture IDs/codes use `/order-confirmation/<id-or-code>`. | `dealer-catalog-order-flow` |
 | `/catalog/...?...year=&series=&model=&configuration=&diagram=` | `src/components/catalog/catalog-router.tsx` / `src/components/catalog/diagram-viewer.tsx` | `dealer-catalog-order-flow` |
 | `/admin/bossweb-lookup?part=` | `src/components/admin/admin-bossweb-lookup-page.tsx` (`AdminBossWebLookupPage`) | no dedicated query test |
 | `/admin/dealer-access?company=` | `src/components/admin/admin-dealer-access-page.tsx` (`AdminDealerAccessPage`) | `admin-mobile-people` |
