@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DemoStoreProvider } from "@/components/providers/demo-store-provider";
 import { PwaRegistration } from "@/components/providers/pwa-registration";
+import { AstryxFoundationProbe } from "@/components/appearance/astryx-foundation-probe";
 import { publicAssetPath } from "@/lib/public-base-path";
 import "./globals.css";
 
@@ -39,9 +40,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk" suppressHydrationWarning>
+    <html
+      data-color-mode="light"
+      data-design-system="shadcn"
+      data-resolved-theme="light"
+      lang="uk"
+      suppressHydrationWarning
+    >
       <body>
-        <DemoStoreProvider>{children}</DemoStoreProvider>
+        <div id="brp-app-root">
+          <DemoStoreProvider>{children}</DemoStoreProvider>
+          {process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE === "1" ? (
+            <AstryxFoundationProbe />
+          ) : null}
+        </div>
         <PwaRegistration />
       </body>
     </html>
