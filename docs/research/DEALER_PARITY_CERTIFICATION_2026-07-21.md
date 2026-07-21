@@ -2,7 +2,7 @@
 
 ## Certification status
 
-**Not certified for fresh source parity.** This record is the dealer-only evidence baseline for the next certification pass. Historical dealer captures from 2026-07-18 remain useful evidence at their recorded confidence; the 2026-07-20 probe used an admin-authenticated browser session and is explicitly **not** fresh dealer evidence. A browser session authenticated as the intended dealer is required before any row can be certified against the current source.
+**Implementation-complete, pending fresh source certification.** The dealer-only clone has completed its local implementation and automated verification pass. Historical dealer captures from 2026-07-18 remain useful evidence at their recorded confidence; the latest 2026-07-21 source probe redirected to an admin-authenticated page and is explicitly **not** dealer evidence. A browser session authenticated as the intended dealer is still required before any row can be certified against the current source.
 
 The intended clone identity is one dealer-facing **Logos / Финансы** profile. That is the supported scope, not a tenant-fidelity defect, and this certification does not require multi-tenant simulation. The clone must nevertheless use that one profile consistently for dealer-visible records.
 
@@ -25,7 +25,36 @@ The prior evidence set does not assign numerical confidence scores. This documen
 4. “Frontend now” means deterministic browser-local behavior or an accessible lock. “Future `brp-dev1`” means a proposed typed adapter and the precise effect that may become remote only after its authentication, authorization, validation, error, and persistence contract is approved.
 5. 1C, synchronization, real file transfer/export, approval, shipment, permissions, and operational request submission remain locked pending an approved backend contract.
 
-## Route evidence matrix
+## 2026-07-21 implementation result
+
+The dealer frontend is now internally consistent and testable as one browser-local product surface. This result supersedes the **Current clone** and **Gap** cells in the baseline matrix below; the original cells are retained unchanged so reviewers can trace what the implementation pass corrected. It does not upgrade historical evidence into a fresh source claim.
+
+| Surface | Implemented dealer behavior | Deliberate boundary |
+|---|---|---|
+| Shell, identity, navigation, global search | Dealer identity stays isolated across login/logout and identity changes; desktop/mobile navigation, theme, profile, logout, global parts search, cart drawer, focus return, Escape, background inertness, and mobile overflow are covered. | Client-mode, language persistence, and notifications remain visibly unavailable until their source and backend contracts are known. |
+| Catalog, hierarchy, diagram, cart, confirmation | Exposed hierarchy rows navigate; diagram controls and row-specific cart additions use the selected SKU; cart metadata/lines/customer/delivery are persisted; order creation yields a truthful local receipt and navigable confirmation. Clipboard failures surface as failures. | Real import/export, upload, remote submit, and remote processing claims remain unavailable. |
+| Orders, drafts, detail | Order list/search/status/layout/detail, notes, messages, timelines, draft create/edit/delete/search/refresh, and draft-to-cart continuation use the same persisted dealer state. | Approval, fulfillment, shipment, attachment upload, and other unverified remote mutations remain absent or locked. |
+| Customers and equipment | Customer search/category selection/create/edit/delete and equipment create/edit/delete persist locally. Deletion is rejected while orders, drafts, the active builder, equipment, or workshop work still reference the customer. | Remote ownership, audit, conflict, and deletion semantics remain future adapter work. |
+| Accessories | Family/query/year/compatibility/purpose/sort filters are deterministic; product detail adds its own SKU, description, price, and quantity to the shared cart. | Live catalog breadth and availability remain future read contracts. |
+| Units, schedule, workshop, BossWeb, parts report | Each page derives tabs, searches, filters, counts, selected detail, and report totals from one typed collection. Workshop creation persists and updates dealer dashboard data. | Receipt, lifecycle progression, synchronization, shipment, and export stay unavailable without source/backend evidence. |
+| Documents, consignment, settlements, inventory, network | Previously inert searches, tabs, periods, selectors, empty/populated states, previews, and counts now have deterministic effects backed by typed dealer data. | Download/export, refresh/sync, final consignment submission, allocation, and inventory mutation remain locked. |
+| Team access | One consistent Logos / Финансы profile is rendered read-only, with persistent explanations connected to unavailable controls for mouse, keyboard, and touch users. | Permission/profile writes and adding employees remain absent until authorization and audit contracts exist. |
+| PWA and GitHub Pages | Dealer routes, exact trailing-slash paths, base-path links, manifest start/scope/shortcuts, service-worker registration, logout, and installed-app navigation are covered by the static export harness. | Deployment success is certified separately after merge against the published Pages artifact. |
+
+### Local verification evidence
+
+- `npm run check`: lint, typecheck, 17 dealer state-contract tests, and production build passed.
+- `npm run test:e2e:dealer`: 56 dealer browser scenarios passed across desktop and mobile projects.
+- `npm run test:e2e:dealer-pages`: a clean Pages export passed PWA validation and 7 exact-route/manifest/service-worker browser scenarios.
+- No changed implementation path is under `src/app/admin/**`, `src/components/admin/**`, or `src/lib/admin*`.
+
+### Remaining source-certification gate
+
+The implementation can be shipped and exercised on GitHub Pages, but **current-source parity is still pending**. The 2026-07-21 probe reached an admin-authenticated source view, so it cannot certify dealer route presence, wording, layout, or behavior. The final comparison requires the intended dealer-authenticated source session at 1440px and 390px, following the safe interaction policy and appending fresh artifacts to this record.
+
+## Pre-implementation route evidence matrix (retained for traceability)
+
+The **Current clone** and **Gap** columns below describe the state at the start of this implementation pass. Use the implementation-result ledger above for the current clone state.
 
 | Dealer route / surface | Source evidence | Current clone | Gap | Frontend now | Fresh source evidence required | Future `brp-dev1` | Priority | Control classification | Evidence date |
 |---|---|---|---|---|---|---|---:|---|---|
