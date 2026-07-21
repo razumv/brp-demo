@@ -1,0 +1,3687 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "1dffa0deebdef2f2e7ebf36f07c47618aa8386f1",
+  "captureBaseUrl": "http://127.0.0.1:3108",
+  "captureTargets": [
+    {
+      "name": "login",
+      "path": "/login",
+      "role": "public",
+      "themeParticipant": false
+    },
+    {
+      "name": "offline",
+      "path": "/offline",
+      "role": "public",
+      "themeParticipant": false
+    },
+    {
+      "name": "dealer-dashboard",
+      "path": "/",
+      "role": "dealer"
+    },
+    {
+      "name": "admin-order-pipeline",
+      "path": "/admin/order-pipeline",
+      "role": "admin"
+    },
+    {
+      "name": "admin-consignment",
+      "path": "/admin/consignment",
+      "role": "admin"
+    },
+    {
+      "name": "admin-warehouse",
+      "path": "/admin/warehouse",
+      "role": "admin"
+    },
+    {
+      "name": "admin-catalog",
+      "path": "/admin/catalog",
+      "role": "admin"
+    },
+    {
+      "name": "admin-schedule",
+      "path": "/admin/schedule",
+      "role": "admin"
+    },
+    {
+      "name": "admin-permissions",
+      "path": "/admin/permissions",
+      "role": "admin"
+    },
+    {
+      "name": "dealer-catalog-diagram",
+      "path": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "themeParticipant": false
+    },
+    {
+      "name": "dealer-cart",
+      "path": "/cart",
+      "role": "dealer"
+    },
+    {
+      "name": "dealer-orders",
+      "path": "/dealer/orders",
+      "role": "dealer"
+    },
+    {
+      "name": "dealer-accessories",
+      "path": "/dealer/accessories",
+      "role": "dealer"
+    },
+    {
+      "name": "dealer-workshop",
+      "path": "/dealer/workshop",
+      "role": "dealer"
+    },
+    {
+      "name": "dealer-team-access",
+      "path": "/dealer/team-access",
+      "role": "dealer"
+    }
+  ],
+  "screenshots": [
+    {
+      "filename": "login--light--390.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 21456,
+        "sha256": "0df6007ded684059f06e285378318627c1be2deb3cd513a2d5c14b01e9f34ccf"
+      }
+    },
+    {
+      "filename": "login--light--768.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 23813,
+        "sha256": "3c8f21c9125b7f5a1f4452e211311f45c998fbe18bf30b6978d7a673f7db10d6"
+      }
+    },
+    {
+      "filename": "login--light--1280.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 25532,
+        "sha256": "21bf57663f9bc0c6d3d6eaa7a6a18eb674b010c1f6d4d2690ae94d9f9b9eb2d9"
+      }
+    },
+    {
+      "filename": "login--light--1440.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 26287,
+        "sha256": "f041372d771193c717a43915deb572414332f2480882d5ec1b2a20bcdc60e7d3"
+      }
+    },
+    {
+      "filename": "login--dark--390.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 21456,
+        "sha256": "0df6007ded684059f06e285378318627c1be2deb3cd513a2d5c14b01e9f34ccf"
+      }
+    },
+    {
+      "filename": "login--dark--768.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 23813,
+        "sha256": "3c8f21c9125b7f5a1f4452e211311f45c998fbe18bf30b6978d7a673f7db10d6"
+      }
+    },
+    {
+      "filename": "login--dark--1280.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 25532,
+        "sha256": "21bf57663f9bc0c6d3d6eaa7a6a18eb674b010c1f6d4d2690ae94d9f9b9eb2d9"
+      }
+    },
+    {
+      "filename": "login--dark--1440.png",
+      "route": "/login",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/login",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 26287,
+        "sha256": "f041372d771193c717a43915deb572414332f2480882d5ec1b2a20bcdc60e7d3"
+      }
+    },
+    {
+      "filename": "offline--light--390.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 65247,
+        "sha256": "99fc75e787545efb4879886dc74140e940c929c4540970d20f7c5997fb999be8"
+      }
+    },
+    {
+      "filename": "offline--light--768.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 141017,
+        "sha256": "d708b626707720a80a60ba4379dfd63f8d158746f0384430f1e48d7f2b77a06b"
+      }
+    },
+    {
+      "filename": "offline--light--1280.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 172978,
+        "sha256": "7fb8c651166cd07e8d47868119a2186d57a6b4a7362419b64560e9afd74b7b96"
+      }
+    },
+    {
+      "filename": "offline--light--1440.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 186553,
+        "sha256": "8d57ceb7b56cd360adbb8f5317963b55242265261553bfcd3ffc0a56279808d6"
+      }
+    },
+    {
+      "filename": "offline--dark--390.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 65247,
+        "sha256": "99fc75e787545efb4879886dc74140e940c929c4540970d20f7c5997fb999be8"
+      }
+    },
+    {
+      "filename": "offline--dark--768.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 141017,
+        "sha256": "d708b626707720a80a60ba4379dfd63f8d158746f0384430f1e48d7f2b77a06b"
+      }
+    },
+    {
+      "filename": "offline--dark--1280.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 172978,
+        "sha256": "7fb8c651166cd07e8d47868119a2186d57a6b4a7362419b64560e9afd74b7b96"
+      }
+    },
+    {
+      "filename": "offline--dark--1440.png",
+      "route": "/offline",
+      "role": "public",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/offline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 186553,
+        "sha256": "8d57ceb7b56cd360adbb8f5317963b55242265261553bfcd3ffc0a56279808d6"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--light--390.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 52569,
+        "sha256": "e72a034ac58abe1eef4789be03068bc4ebbad5235d65c624fc502d21902725db"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--light--768.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 83640,
+        "sha256": "7ba9444529cb2758ec19139add842f47de045e0286c01d272a87c3859270c328"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--light--1280.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 136204,
+        "sha256": "366e88ef0e052db935345ae8fbdfdd794e2fd2bf12bbe88820ee7036dbc2980f"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--light--1440.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 137652,
+        "sha256": "a6a972ec787cb97c6bdea37650e06fb4efcf596bc0e78ff4adccc77fc0862257"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--dark--390.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 52080,
+        "sha256": "b91cc02c39b5e599298ebfd1b0ded60c9bd2450ff24eaa69e10772a66c406cf3"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--dark--768.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 82188,
+        "sha256": "c5820062860257dfc04fd0a86486ddb87c518afb7f8449d22da4ae1f3731f4df"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--dark--1280.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 134264,
+        "sha256": "fc626239ab1629d54cb196cfb2e43c2995d40593a74ff5b5f0591720df2caad3"
+      }
+    },
+    {
+      "filename": "dealer-dashboard--dark--1440.png",
+      "route": "/",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 135437,
+        "sha256": "ac6c868f825ab61e77249ed11fe32aa3d13c9ba201ce76697b2cee14ec77d21b"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--light--390.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 52342,
+        "sha256": "5486f6aa6d02ca5f2d1935cde3ec2676dd16541b488a57210f98e9dab26d2bfe"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--light--768.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 101073,
+        "sha256": "59d98c2c1c094d2fdc3538695d998bd322f81ad391825e4601d30b0bbb0ff1dc"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--light--1280.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 175191,
+        "sha256": "95c3777903d91578faa1c11eeb2a312b631287c001dcb3ba532ef5eca330d0bd"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--light--1440.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 180562,
+        "sha256": "367b46c44a5266d44dba43f5ef6ba06d7ffe02687a6a50ebecc8be23dbc7f343"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--dark--390.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 52047,
+        "sha256": "4de47c9f6e537cb0de35301e8b5e5e3b34a4e74441cadcea5e303596ee4ca307"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--dark--768.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 99625,
+        "sha256": "34002a8f2b09d0f7e7e13263a46d692489fdf61cbaeb05ac9e634adfb74d90bc"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--dark--1280.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 172104,
+        "sha256": "ac44ff9de0d5ffc6434d8fe8f9ae3ed3fe570fe7d8b6b404e19ff4db76afb51d"
+      }
+    },
+    {
+      "filename": "admin-order-pipeline--dark--1440.png",
+      "route": "/admin/order-pipeline",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/order-pipeline",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 177450,
+        "sha256": "187e0292382c307de92d8edf774bca808474786738af54386ed92b6757e7e54a"
+      }
+    },
+    {
+      "filename": "admin-consignment--light--390.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 47633,
+        "sha256": "a0e586108b2c489da742e7559f672cef276988080bcf0a258267e692b2d14c1b"
+      }
+    },
+    {
+      "filename": "admin-consignment--light--768.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 62533,
+        "sha256": "f6d4cebaba7ae67a963e2e6d728cfbbb2cc0735be1a7e76755679d47b834e6d6"
+      }
+    },
+    {
+      "filename": "admin-consignment--light--1280.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 118418,
+        "sha256": "82f59c56a27d219bf4653d03b5f01d5256db5fd9818f5d3841c53661d60fe322"
+      }
+    },
+    {
+      "filename": "admin-consignment--light--1440.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 122705,
+        "sha256": "2308ac37232dad41f9d1cb1624cff8803b71dec389c0ff5bf7ee720deb6601ab"
+      }
+    },
+    {
+      "filename": "admin-consignment--dark--390.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 47463,
+        "sha256": "b6be4d602eab9ef6d7129c6485f0cd4038c0f3460e5f8fbb6533ee4e6958f6dc"
+      }
+    },
+    {
+      "filename": "admin-consignment--dark--768.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 61757,
+        "sha256": "5005935fb034ba3d9ab71461dc052d27c125dc8f3c75aeac255b88d2a20c5978"
+      }
+    },
+    {
+      "filename": "admin-consignment--dark--1280.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 116806,
+        "sha256": "59ea5db756468e025069c1a032ebcc11a31661aa4cef11d07507a0aee364d8fd"
+      }
+    },
+    {
+      "filename": "admin-consignment--dark--1440.png",
+      "route": "/admin/consignment",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/consignment",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 121137,
+        "sha256": "5580c835125d4d49343846bb3c8a592a5b3a0416f662e2cad29f78f6fe800d63"
+      }
+    },
+    {
+      "filename": "admin-warehouse--light--390.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 58058,
+        "sha256": "93c8ec7fd485f46eddd1babb239ee6f93943e1f46a24a7702abf22f04c562325"
+      }
+    },
+    {
+      "filename": "admin-warehouse--light--768.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 87877,
+        "sha256": "8691a406353542b7d99a4799e4319f9b9587f9c6887a746eef39109345a4e554"
+      }
+    },
+    {
+      "filename": "admin-warehouse--light--1280.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 152252,
+        "sha256": "01dd4a1eb9acb2ed2a652d84de476c54f804e872ab7deb1c4aaa283d3ef41f46"
+      }
+    },
+    {
+      "filename": "admin-warehouse--light--1440.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 154473,
+        "sha256": "f352b6f24c5fa0fb2ff3c95634641d7c1e9905bc2743f44b4db1899bd7330be3"
+      }
+    },
+    {
+      "filename": "admin-warehouse--dark--390.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 57456,
+        "sha256": "4c2b0306465c79f0a16ef1f8616f4f1d4c8975b73f51076e5478bc96d1ef86c4"
+      }
+    },
+    {
+      "filename": "admin-warehouse--dark--768.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 85796,
+        "sha256": "7ab24105b328fb8086397f9f27dd675d00ec2f67e6bde4683c6ec4dc2206c23f"
+      }
+    },
+    {
+      "filename": "admin-warehouse--dark--1280.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 149199,
+        "sha256": "960a320084535216b15b96a5214c3e83aeddccf5c9f551b1993dc5ba53d927bc"
+      }
+    },
+    {
+      "filename": "admin-warehouse--dark--1440.png",
+      "route": "/admin/warehouse",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/warehouse",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 151281,
+        "sha256": "940d86c9737a7450a132a5f2923866808097f2315469198511763c74a502ec86"
+      }
+    },
+    {
+      "filename": "admin-catalog--light--390.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 60838,
+        "sha256": "6ae669e280e82d24d4f68d9b515037737c3071112ba7e006b6748843772cbe1d"
+      }
+    },
+    {
+      "filename": "admin-catalog--light--768.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 103969,
+        "sha256": "b59e43164069a2a7bc2ecb246acabeadd779bccd18b21912343cf6ce26322ca9"
+      }
+    },
+    {
+      "filename": "admin-catalog--light--1280.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 177108,
+        "sha256": "21257ac3bd7cec183d952f4ae9776662b0e49275a1934f9be1a7c268a34c1933"
+      }
+    },
+    {
+      "filename": "admin-catalog--light--1440.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 185901,
+        "sha256": "cc6d8cf8d76c38e6c88bb38ad17c2badda574573c3cd3e34651488cf0348ddeb"
+      }
+    },
+    {
+      "filename": "admin-catalog--dark--390.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 59912,
+        "sha256": "a145156b1cd1fde1ec60cae0d37a3917c9e1a29a89890c5f8de5b43608a70c06"
+      }
+    },
+    {
+      "filename": "admin-catalog--dark--768.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 102127,
+        "sha256": "625a3617b1990df30bbcff35ee93e6d1201bbaed2595eefd0db8e8e3e1bb78b2"
+      }
+    },
+    {
+      "filename": "admin-catalog--dark--1280.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 175041,
+        "sha256": "ad29f6984f15e2e59c6383fcaa2febb88071c8684e3b843a08ad96020de940e3"
+      }
+    },
+    {
+      "filename": "admin-catalog--dark--1440.png",
+      "route": "/admin/catalog",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/catalog",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 183305,
+        "sha256": "418e249cf7ff3cdb800df0d7b028117b09b99bd223ee26b8d7a15d0b51821ea1"
+      }
+    },
+    {
+      "filename": "admin-schedule--light--390.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 50453,
+        "sha256": "277c2124f910864acec6a82a9d4b91ac35f7bffc7bafc5258c39eb52db77a04e"
+      }
+    },
+    {
+      "filename": "admin-schedule--light--768.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 86093,
+        "sha256": "d2d47b9073e9f195651753ee88594e6c77f4c6f09b90b79dd760bdacfde13c91"
+      }
+    },
+    {
+      "filename": "admin-schedule--light--1280.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 159332,
+        "sha256": "7a92371981dce7952acc83daf06396e0850922b4f62b4e6327d65ac9caa5f874"
+      }
+    },
+    {
+      "filename": "admin-schedule--light--1440.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 173586,
+        "sha256": "7abab93424106442be1be8c513f47914293f123e1087015b134b913f44b5857a"
+      }
+    },
+    {
+      "filename": "admin-schedule--dark--390.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 50001,
+        "sha256": "487a87eb56acffcfbc759ed5070c6394da39500980ffb030c64bec0fced57778"
+      }
+    },
+    {
+      "filename": "admin-schedule--dark--768.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 84703,
+        "sha256": "8bba6384fe89bfad67b1d1dc7fb0aafeedd2b172554070307fbc4173eff32eb4"
+      }
+    },
+    {
+      "filename": "admin-schedule--dark--1280.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 156953,
+        "sha256": "f94bb047430ca470d49a09d5e500e8d29d274eeea139cd5944aed4203cbbffdf"
+      }
+    },
+    {
+      "filename": "admin-schedule--dark--1440.png",
+      "route": "/admin/schedule",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/schedule",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 171000,
+        "sha256": "eabaa096393d489dcf8570b8c8c8feb87fe54d15c9c296ce741a706a4a97aad7"
+      }
+    },
+    {
+      "filename": "admin-permissions--light--390.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 51273,
+        "sha256": "da95eaa670fdd302cf4787d1c57b5284a96362ecac3fa89f402848801217a60a"
+      }
+    },
+    {
+      "filename": "admin-permissions--light--768.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 85487,
+        "sha256": "51c896e408699f50e5b21b75894695f2f2f91fcada1e27144c853696d2a77b7d"
+      }
+    },
+    {
+      "filename": "admin-permissions--light--1280.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 147853,
+        "sha256": "a7a9573851aa6284b57697381fe6601ec3c71a0ea5fd6c50cf3476e9712032fd"
+      }
+    },
+    {
+      "filename": "admin-permissions--light--1440.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 151061,
+        "sha256": "cab847c68b6b6880871ab591da9e73e166b0d36e4d3e39961cc30e4d85f49deb"
+      }
+    },
+    {
+      "filename": "admin-permissions--dark--390.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 51750,
+        "sha256": "e481c6c79a56e07a2a3ba59636b0f85b1e0f99be1923188f543fd95a5b537d78"
+      }
+    },
+    {
+      "filename": "admin-permissions--dark--768.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 83568,
+        "sha256": "5f54981735077a404eecc37768484abadc3f6929a5de40903f21de56c9283017"
+      }
+    },
+    {
+      "filename": "admin-permissions--dark--1280.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 144287,
+        "sha256": "dea82f5e464567fc9ba10e56b3bc7a273ef42ba3388248453c642c6abe0df5a5"
+      }
+    },
+    {
+      "filename": "admin-permissions--dark--1440.png",
+      "route": "/admin/permissions",
+      "role": "admin",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/admin/permissions",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 147706,
+        "sha256": "44682cea1e6bb076700e032d5ce5aff452dd92bc0ffa8c1efda7c84932f6edb3"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--light--390.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 101179,
+        "sha256": "008b8c10e80a37489e6361d1bf5a3d221d35845606e968a2cd187b51146800d4"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--light--768.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 155222,
+        "sha256": "b3ddfc2c262080f5ce8f64fd5be568f6351354c6ff8ad368cc57bf82531f3ce7"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--light--1280.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 358338,
+        "sha256": "a5e180d3dbe94995dd00f2ca23d2f38e37d91e6c2f3cf9cd8168b1e03b3e002b"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--light--1440.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 415380,
+        "sha256": "bd1334101dabfb0aefe9d84044d8c00d713b180c4d475d1bb845fc414465bc22"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--dark--390.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 101179,
+        "sha256": "008b8c10e80a37489e6361d1bf5a3d221d35845606e968a2cd187b51146800d4"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--dark--768.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 155222,
+        "sha256": "b3ddfc2c262080f5ce8f64fd5be568f6351354c6ff8ad368cc57bf82531f3ce7"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--dark--1280.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 358338,
+        "sha256": "a5e180d3dbe94995dd00f2ca23d2f38e37d91e6c2f3cf9cd8168b1e03b3e002b"
+      }
+    },
+    {
+      "filename": "dealer-catalog-diagram--dark--1440.png",
+      "route": "/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/catalog/CAN_OFF_EN_US/062bdf9d-05c3-470a-a043-8d10bd287a25",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 415380,
+        "sha256": "bd1334101dabfb0aefe9d84044d8c00d713b180c4d475d1bb845fc414465bc22"
+      }
+    },
+    {
+      "filename": "dealer-cart--light--390.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 57508,
+        "sha256": "e1882c5ab2f93d7a9f2361e642b3c3a3188abe8845952c5c1f329be626f0f31d"
+      }
+    },
+    {
+      "filename": "dealer-cart--light--768.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 81627,
+        "sha256": "44de6d0641f4d3c7a712a07aa90b2399d935c32bdb91dfd3513183e44ac8a575"
+      }
+    },
+    {
+      "filename": "dealer-cart--light--1280.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 145349,
+        "sha256": "921e6073cd3ac02fee421b215c1b0da6002f83f97dbc669064bee77754cb9128"
+      }
+    },
+    {
+      "filename": "dealer-cart--light--1440.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 149241,
+        "sha256": "e2546ac5f9ab386701575b371317a940b4ba50b2bed15a5104d2cd8c3b1519f2"
+      }
+    },
+    {
+      "filename": "dealer-cart--dark--390.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 57333,
+        "sha256": "7badf6db1ebaedf4b2a11a5a2e140a1ba32e743d7d43dc7a4b0b3aee644ad28b"
+      }
+    },
+    {
+      "filename": "dealer-cart--dark--768.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 80760,
+        "sha256": "cee284375e047ded243b64ef5e1d4e583515a2a275843d3fbbae90a06bdecbea"
+      }
+    },
+    {
+      "filename": "dealer-cart--dark--1280.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 143073,
+        "sha256": "b691a8b5c7f5e52166bae3175d1ef39482cd124e7ab8796436088b42d22806d6"
+      }
+    },
+    {
+      "filename": "dealer-cart--dark--1440.png",
+      "route": "/cart",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/cart",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 146801,
+        "sha256": "5d7e65945e72f43c8c247449a99bcbf71e0ca0f4d52c51a7ed53fe67a579f852"
+      }
+    },
+    {
+      "filename": "dealer-orders--light--390.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 36251,
+        "sha256": "5fd70079175deca1ea893d9ab8dcab8736c4fee3aaeaa23ec11daa5da04522f1"
+      }
+    },
+    {
+      "filename": "dealer-orders--light--768.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 49492,
+        "sha256": "a8f0b75fb6c79486954d244378e5e3f8b6c7a73c31accb4a8279311a421b4c37"
+      }
+    },
+    {
+      "filename": "dealer-orders--light--1280.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 98403,
+        "sha256": "f8a1aa9b0a0a39e7e8372c929c3d99683070de1e5a8b36b00bf293d34cece193"
+      }
+    },
+    {
+      "filename": "dealer-orders--light--1440.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 99984,
+        "sha256": "f4a1d92966ec17d413c6a9abeb80524f12c1c6e9e02401dbfe87a1793d8c8f63"
+      }
+    },
+    {
+      "filename": "dealer-orders--dark--390.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 35525,
+        "sha256": "75b4da4a733657d4ab2b7de0e26d94239e18d8366deb746950758f54e6692e40"
+      }
+    },
+    {
+      "filename": "dealer-orders--dark--768.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 47896,
+        "sha256": "2bfa43149251739b20ba63c1797ffec0ec7a43dbf9f3e56642417e9b3c7971ef"
+      }
+    },
+    {
+      "filename": "dealer-orders--dark--1280.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 96893,
+        "sha256": "4a87b02035db0ef432d7a7c813dd8b43cd4ef065f20ce5e4137d19c3827c3d58"
+      }
+    },
+    {
+      "filename": "dealer-orders--dark--1440.png",
+      "route": "/dealer/orders",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/orders",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 98475,
+        "sha256": "f1bc0167a33e8c58a75550321694893805b9e9cc7f0ddfb55960640dab97e9a5"
+      }
+    },
+    {
+      "filename": "dealer-accessories--light--390.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 96023,
+        "sha256": "f3d5a1cd2aaadecee7d134bd504b1eaae7189158eef12568a9ce833741ab0254"
+      }
+    },
+    {
+      "filename": "dealer-accessories--light--768.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 163183,
+        "sha256": "20025a3a6595d52df35668568596c28794934719bb89210aebef8d4d358e922c"
+      }
+    },
+    {
+      "filename": "dealer-accessories--light--1280.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 256297,
+        "sha256": "8a8268ed9d76c0cbf57e1a4e8401edc6b0f052180a1d841e81d4439bd3880fb2"
+      }
+    },
+    {
+      "filename": "dealer-accessories--light--1440.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 292151,
+        "sha256": "a5997b600157a10f4f1a81d829fd7f49236d8df19bc3ee3552cc3d1a9fd97d11"
+      }
+    },
+    {
+      "filename": "dealer-accessories--dark--390.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 95435,
+        "sha256": "3627899d8c8cb9c20bc605c0348dbd3d98ea0d61cb20174c87f04955af19cd59"
+      }
+    },
+    {
+      "filename": "dealer-accessories--dark--768.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 161570,
+        "sha256": "40825f1e57cd4e8da354cc36528e67e2370d7dbc9aac64650dadcfacf5b8f696"
+      }
+    },
+    {
+      "filename": "dealer-accessories--dark--1280.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 253523,
+        "sha256": "5009c6c807c26ec9072238d8209b3280c58713a85cf24f4e2fbbe179b51041a3"
+      }
+    },
+    {
+      "filename": "dealer-accessories--dark--1440.png",
+      "route": "/dealer/accessories",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/accessories",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 289227,
+        "sha256": "25ced947a064471ac3fe950d85f909da11e11ad2501d38cb5d58585d915af351"
+      }
+    },
+    {
+      "filename": "dealer-workshop--light--390.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 39723,
+        "sha256": "24c8dd7606b9aff5f1839242acd19e192fc7f400ddd6eee0ffdfcb6dc31b25bd"
+      }
+    },
+    {
+      "filename": "dealer-workshop--light--768.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 48580,
+        "sha256": "e3ced12685cff732adfd1a2b11f2af2f1ef0196dd2747b7128be081385532e8b"
+      }
+    },
+    {
+      "filename": "dealer-workshop--light--1280.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 93821,
+        "sha256": "5b1818f3f6bd1447d38d862d448bfde349292479a444ff6cfbc4341a05459950"
+      }
+    },
+    {
+      "filename": "dealer-workshop--light--1440.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 95586,
+        "sha256": "359da5c53adbec611761eecaf2c339df5ebcc2890e20220bb56b13d7b535cbac"
+      }
+    },
+    {
+      "filename": "dealer-workshop--dark--390.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 39473,
+        "sha256": "a96227e525544acee351999c245c3285a732e6568cb0d13f7f00ce2408178219"
+      }
+    },
+    {
+      "filename": "dealer-workshop--dark--768.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 47782,
+        "sha256": "e4fd0d403723fc48fa4aca28aabc3236d7223b9e859b91953c00837853e9e0f7"
+      }
+    },
+    {
+      "filename": "dealer-workshop--dark--1280.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 92751,
+        "sha256": "f653d01cb46daded4851d966f9bf8a74079b7cd5d98ae2c66ab3d688370b85f4"
+      }
+    },
+    {
+      "filename": "dealer-workshop--dark--1440.png",
+      "route": "/dealer/workshop",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/workshop",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 94325,
+        "sha256": "77ade7be903489f1a5c493dece420d0efce269d02021d9b5edbc5f5a4dee2c00"
+      }
+    },
+    {
+      "filename": "dealer-team-access--light--390.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 55535,
+        "sha256": "5668f3dc6cb86d513e824abea478e05d14ae7c24c720caa28962b2b30533d76a"
+      }
+    },
+    {
+      "filename": "dealer-team-access--light--768.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 91456,
+        "sha256": "029f2b2810011fad7d2afc36020790eced59344f36c95e1090c240c5a59a0614"
+      }
+    },
+    {
+      "filename": "dealer-team-access--light--1280.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 141723,
+        "sha256": "6e0eb25d7b607cfbf8cefa0aa53163cae74fb12c28f11b5a35708eae6b5f8fbe"
+      }
+    },
+    {
+      "filename": "dealer-team-access--light--1440.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "",
+        "dark": false,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": false
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 143818,
+        "sha256": "8ddd76fe7abaf8bf3178ac518e256a7bae5a431c47bbe3247576974f10e824ea"
+      }
+    },
+    {
+      "filename": "dealer-team-access--dark--390.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 390,
+        "height": 844,
+        "bytes": 54468,
+        "sha256": "9dff4ade36d46b19fb55dea12daab766802a5e50c275138c7fb175b292974a5c"
+      }
+    },
+    {
+      "filename": "dealer-team-access--dark--768.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 768,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 768,
+        "height": 1000,
+        "bytes": 89139,
+        "sha256": "d643fa81b916d4a5b6c07324a423acb447d657931e8b22151a049bd23159af13"
+      }
+    },
+    {
+      "filename": "dealer-team-access--dark--1280.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1280,
+        "height": 1000,
+        "bytes": 138327,
+        "sha256": "881b2092d63125122e4e4f04749fd70d9b987124d72862b4526baa321d5b29af"
+      }
+    },
+    {
+      "filename": "dealer-team-access--dark--1440.png",
+      "route": "/dealer/team-access",
+      "role": "dealer",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "finalUrl": "http://127.0.0.1:3108/dealer/team-access",
+      "rootTheme": {
+        "className": "dark",
+        "dark": true,
+        "designSystem": null,
+        "colorMode": null,
+        "resolvedTheme": null,
+        "expectedDark": true
+      },
+      "stylesheet": {
+        "href": "/_next/static/chunks/0d8beyzzgjnkc.css",
+        "status": 200,
+        "bodyFontFamily": "Inter, ui-sans-serif, system-ui, sans-serif"
+      },
+      "png": {
+        "width": 1440,
+        "height": 1000,
+        "bytes": 140220,
+        "sha256": "d39b26c70ee4425daf9e4cbd4bc942b2d7d2e4c40a3860c3510d40eba2a13a26"
+      }
+    }
+  ]
+}
