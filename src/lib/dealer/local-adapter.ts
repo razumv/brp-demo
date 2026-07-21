@@ -21,6 +21,9 @@ import type {
 } from "@/lib/dealer/contracts";
 import { dealerCustomerCategories } from "@/lib/dealer/contracts";
 import { findDealerOrder } from "@/lib/dealer/order-state";
+import { DealerLocalPersistenceError } from "@/lib/dealer/workflow-persistence";
+
+export { DealerLocalPersistenceError } from "@/lib/dealer/workflow-persistence";
 
 export type DealerStorePort = {
   readonly state: DealerLocalState;
@@ -57,25 +60,23 @@ type BrowserPort = {
   writeClipboard: (text: string) => Promise<void>;
 };
 
-const unavailableOperations = [
-  "sync",
-  "sync-1c",
-  "upload",
-  "download",
-  "export",
-  "remote-order-submit",
-  "approval",
-  "shipment",
-  "team-management",
-  "permission-management",
-] as const satisfies readonly DealerExternalOperation[];
+const unavailableCapability = {
+  status: "unavailable",
+  reason: "contract-unconfirmed",
+} as const satisfies DealerCapability;
 
-export const dealerCapabilities = Object.fromEntries(
-  unavailableOperations.map((operation) => [
-    operation,
-    { status: "unavailable", reason: "contract-unconfirmed" },
-  ]),
-) as Record<DealerExternalOperation, DealerCapability>;
+export const dealerCapabilities = {
+  sync: unavailableCapability,
+  "sync-1c": unavailableCapability,
+  upload: unavailableCapability,
+  download: unavailableCapability,
+  export: unavailableCapability,
+  "remote-order-submit": unavailableCapability,
+  approval: unavailableCapability,
+  shipment: unavailableCapability,
+  "team-management": unavailableCapability,
+  "permission-management": unavailableCapability,
+} satisfies Record<DealerExternalOperation, DealerCapability>;
 
 function localMutation<T>(value: T): DealerCommandResult<T> {
   return { ok: true, kind: "local-mutation", value };
@@ -94,11 +95,39 @@ function sessionRequired<T>(): DealerCommandResult<T> {
 }
 
 function stateMutationError(field: string, error: unknown): DealerCommandResult<never> {
+  if (error instanceof DealerLocalPersistenceError) {
+    return {
+      ok: false,
+      kind: "local-error",
+      message: error.message,
+      retryable: true,
+    };
+  }
   return validationError(
     field,
     "state-conflict",
     error instanceof Error ? error.message : "Не вдалося зберегти зміни.",
   );
+}
+
+function runLocalMutation<T>(
+  field: string,
+  operation: () => T,
+  fallbackCode = "state-conflict",
+  fallbackMessage = "Не вдалося зберегти зміни.",
+): DealerCommandResult<T> {
+  try {
+    return localMutation(operation());
+  } catch (error) {
+    if (error instanceof DealerLocalPersistenceError) {
+      return stateMutationError(field, error);
+    }
+    return validationError(
+      field,
+      fallbackCode,
+      error instanceof Error ? error.message : fallbackMessage,
+    );
+  }
 }
 
 export function createDealerLocalAdapter(
@@ -114,8 +143,7 @@ export function createDealerLocalAdapter(
       if (!Number.isInteger(quantity) || quantity <= 0) {
         return validationError("quantity", "invalid-quantity", "Кількість має бути більшою за нуль.");
       }
-      store.addToCart(partNumber, quantity, sourceDiagramId);
-      return localMutation(undefined);
+      return runLocalMutation("cart", () => store.addToCart(partNumber, quantity, sourceDiagramId));
     },
     async setCartQuantity({ partNumber, quantity }) {
       if (!store.isReady()) return sessionRequired();
@@ -125,21 +153,18 @@ export function createDealerLocalAdapter(
       if (!store.state.cart.some((line) => line.partNumber === partNumber)) {
         return validationError("partNumber", "not-found", "Позицію кошика не знайдено.");
       }
-      store.setCartQuantity(partNumber, quantity);
-      return localMutation(undefined);
+      return runLocalMutation("cart", () => store.setCartQuantity(partNumber, quantity));
     },
     async removeCartLine({ partNumber }) {
       if (!store.isReady()) return sessionRequired();
       if (!store.state.cart.some((line) => line.partNumber === partNumber)) {
         return validationError("partNumber", "not-found", "Позицію кошика не знайдено.");
       }
-      store.removeFromCart(partNumber);
-      return localMutation(undefined);
+      return runLocalMutation("cart", () => store.removeFromCart(partNumber));
     },
     async clearCart() {
       if (!store.isReady()) return sessionRequired();
-      store.clearCart();
-      return localMutation(undefined);
+      return runLocalMutation("cart", () => store.clearCart());
     },
     async createCustomer(input) {
       if (!store.isReady()) return sessionRequired();
@@ -149,7 +174,7 @@ export function createDealerLocalAdapter(
       if (input.category && !dealerCustomerCategories.includes(input.category)) {
         return validationError("category", "invalid-category", "Оберіть категорію клієнта.");
       }
-      return localMutation(store.addCustomer(input));
+      return runLocalMutation("customer", () => store.addCustomer(input));
     },
     async updateCustomer({ id, customer }) {
       if (!store.isReady()) return sessionRequired();
@@ -159,12 +184,7 @@ export function createDealerLocalAdapter(
       if (customer.category && !dealerCustomerCategories.includes(customer.category)) {
         return validationError("category", "invalid-category", "Оберіть категорію клієнта.");
       }
-      try {
-        store.updateCustomer(id, customer);
-        return localMutation(undefined);
-      } catch (error) {
-        return stateMutationError("id", error);
-      }
+      return runLocalMutation("id", () => store.updateCustomer(id, customer));
     },
     async deleteCustomer({ id }) {
       if (!store.isReady()) return sessionRequired();
@@ -179,19 +199,14 @@ export function createDealerLocalAdapter(
       if (hasRelatedRecords) {
         return validationError("id", "related-records", "Клієнта неможливо видалити: є пов’язані записи.");
       }
-      try {
-        store.deleteCustomer(id);
-        return localMutation(undefined);
-      } catch (error) {
-        return stateMutationError("id", error);
-      }
+      return runLocalMutation("id", () => store.deleteCustomer(id));
     },
     async createEquipment(input) {
       if (!store.isReady()) return sessionRequired();
       if (!store.state.customers.some((item) => item.id === input.customerId)) {
         return validationError("customerId", "not-found", "Клієнта не знайдено.");
       }
-      return localMutation(store.addEquipment(input));
+      return runLocalMutation("equipment", () => store.addEquipment(input));
     },
     async updateEquipment({ id, customerId, equipment }) {
       if (!store.isReady()) return sessionRequired();
@@ -200,12 +215,7 @@ export function createDealerLocalAdapter(
       if (current.customerId !== customerId || equipment.customerId !== customerId) {
         return validationError("customerId", "ownership", "Техніка не належить клієнту.");
       }
-      try {
-        store.updateEquipment(id, customerId, equipment);
-        return localMutation(undefined);
-      } catch (error) {
-        return stateMutationError("id", error);
-      }
+      return runLocalMutation("id", () => store.updateEquipment(id, customerId, equipment));
     },
     async deleteEquipment({ id, customerId }) {
       if (!store.isReady()) return sessionRequired();
@@ -214,53 +224,36 @@ export function createDealerLocalAdapter(
       if (current.customerId !== customerId) {
         return validationError("customerId", "ownership", "Техніка не належить клієнту.");
       }
-      try {
-        store.deleteEquipment(id, customerId);
-        return localMutation(undefined);
-      } catch (error) {
-        return stateMutationError("id", error);
-      }
+      return runLocalMutation("id", () => store.deleteEquipment(id, customerId));
     },
     async updateOrderBuilder(input) {
       if (!store.isReady()) return sessionRequired();
-      store.updateOrderBuilder(input);
-      return localMutation(undefined);
+      return runLocalMutation("builder", () => store.updateOrderBuilder(input));
     },
     async startOrderDraft() {
       if (!store.isReady()) return sessionRequired();
-      try {
-        store.startOrderDraft();
-        return localMutation(undefined);
-      } catch (error) {
-        return validationError("draft", "unsaved-order", error instanceof Error ? error.message : "Не вдалося створити чернетку.");
-      }
+      return runLocalMutation("draft", () => store.startOrderDraft(), "unsaved-order", "Не вдалося створити чернетку.");
     },
     async saveOrderDraft() {
       if (!store.isReady()) return sessionRequired();
       if (!store.state.builder.title.trim()) {
         return validationError("title", "required", "Вкажіть назву чернетки.");
       }
-      return localMutation(store.saveOrderDraft());
+      return runLocalMutation("draft", () => store.saveOrderDraft(), "unsaved-order", "Не вдалося зберегти чернетку.");
     },
     async openOrderDraft({ draftId }) {
       if (!store.isReady()) return sessionRequired();
       if (!store.state.drafts.some((draft) => draft.id === draftId)) {
         return validationError("draftId", "not-found", "Чернетку не знайдено.");
       }
-      try {
-        store.openOrderDraft(draftId);
-        return localMutation(undefined);
-      } catch (error) {
-        return validationError("draftId", "unsaved-order", error instanceof Error ? error.message : "Не вдалося відкрити чернетку.");
-      }
+      return runLocalMutation("draftId", () => store.openOrderDraft(draftId), "unsaved-order", "Не вдалося відкрити чернетку.");
     },
     async deleteOrderDraft({ draftId }) {
       if (!store.isReady()) return sessionRequired();
       if (!store.state.drafts.some((draft) => draft.id === draftId)) {
         return validationError("draftId", "not-found", "Чернетку не знайдено.");
       }
-      store.deleteOrderDraft(draftId);
-      return localMutation(undefined);
+      return runLocalMutation("draftId", () => store.deleteOrderDraft(draftId));
     },
     async refreshOrderDrafts() {
       if (!store.isReady()) return sessionRequired();
@@ -268,15 +261,7 @@ export function createDealerLocalAdapter(
     },
     async stageOrder(input) {
       if (!store.isReady()) return sessionRequired();
-      try {
-        return localMutation(store.createOrder(input));
-      } catch (error) {
-        return validationError(
-          "order",
-          "invalid-order",
-          error instanceof Error ? error.message : "Не вдалося зберегти замовлення.",
-        );
-      }
+      return runLocalMutation("order", () => store.createOrder(input), "invalid-order", "Не вдалося зберегти замовлення.");
     },
     async appendOrderMessage({ orderId, body, attachments = [] }) {
       if (!store.isReady()) return sessionRequired();
@@ -286,8 +271,7 @@ export function createDealerLocalAdapter(
       if (!findDealerOrder(store.state, orderId)) {
         return validationError("orderId", "not-found", "Замовлення не знайдено.");
       }
-      store.addOrderMessage(orderId, body.trim(), attachments);
-      return localMutation(undefined);
+      return runLocalMutation("orderId", () => store.addOrderMessage(orderId, body.trim(), attachments));
     },
     async setOrderLineNote({ orderId, partNumber, note }) {
       if (!store.isReady()) return sessionRequired();
@@ -298,8 +282,7 @@ export function createDealerLocalAdapter(
       if (!order.lines.some((line) => line.partNumber === partNumber)) {
         return validationError("partNumber", "not-found", "Позицію замовлення не знайдено.");
       }
-      store.setLineNote(orderId, partNumber, note);
-      return localMutation(undefined);
+      return runLocalMutation("orderId", () => store.setLineNote(orderId, partNumber, note));
     },
     async createWorkshopOrder(input) {
       if (!store.isReady()) return sessionRequired();
@@ -309,7 +292,7 @@ export function createDealerLocalAdapter(
       if (!store.state.customers.some((customer) => customer.id === input.customerId)) {
         return validationError("customerId", "not-found", "Клієнта не знайдено.");
       }
-      return localMutation(store.addWorkshopOrder(input));
+      return runLocalMutation("workshopOrder", () => store.addWorkshopOrder(input));
     },
     async copyText({ text }) {
       if (!store.isReady()) return sessionRequired();

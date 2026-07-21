@@ -23,6 +23,7 @@ import type {
 import {
   createDealerLocalAdapter,
   dealerCapabilities,
+  DealerLocalPersistenceError,
   type DealerStorePort,
 } from "@/lib/dealer/local-adapter";
 import {
@@ -48,6 +49,11 @@ import {
   updateDealerEquipment,
   updateDealerOrderBuilder,
 } from "@/lib/dealer/order-state";
+import {
+  readDealerWorkflowPayload,
+  removeDealerWorkflowPayload,
+  writeDealerWorkflowPayload,
+} from "@/lib/dealer/workflow-persistence";
 import { getPart } from "@/lib/mock-data";
 import type {
   Equipment,
@@ -109,9 +115,16 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
   const commit = useCallback((update: (current: DealerLocalState) => DealerLocalState) => {
     if (!readyRef.current) throw new Error("Дилерська сесія ще не готова.");
     const next = update(stateRef.current);
+    if (!storageKey) throw new DealerLocalPersistenceError();
+    try {
+      writeDealerWorkflowPayload(window.localStorage, storageKey, next);
+    } catch (error) {
+      if (error instanceof DealerLocalPersistenceError) throw error;
+      throw new DealerLocalPersistenceError();
+    }
     replaceState(next);
     return next;
-  }, [replaceState]);
+  }, [replaceState, storageKey]);
 
   useEffect(() => {
     if (!sharedStore.hydrated) return;
@@ -120,14 +133,21 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
     replaceState(createEmptyDealerState(new Date().toISOString(), "submission-unavailable"));
     if (!identity || !ownerKey || !storageKey) return;
 
+    let storage: Storage | null = null;
     try {
-      const saved = window.localStorage.getItem(storageKey);
+      storage = window.localStorage;
+    } catch {
+      storage = null;
+    }
+
+    try {
+      const saved = storage ? readDealerWorkflowPayload(storage, storageKey) : null;
       if (saved) {
         const parsed: unknown = JSON.parse(saved);
         const normalized = normalizeDealerLocalStateForOwner(parsed, ownerKey);
         if (normalized) replaceState(normalized);
         else {
-          window.localStorage.removeItem(storageKey);
+          if (storage) removeDealerWorkflowPayload(storage, storageKey);
           replaceState(createInitialDealerState(
             sharedStateRef.current,
             ownerKey,
@@ -146,7 +166,7 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
         ));
       }
     } catch {
-      window.localStorage.removeItem(storageKey);
+      if (storage) removeDealerWorkflowPayload(storage, storageKey);
       replaceState(createInitialDealerState(
         sharedStateRef.current,
         ownerKey,
@@ -163,7 +183,7 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !storageKey) return;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(state));
+      writeDealerWorkflowPayload(window.localStorage, storageKey, state);
     } catch {
       // The in-memory dealer workflow remains usable when storage is unavailable.
     }

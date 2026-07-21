@@ -59,8 +59,6 @@ export type NetworkUnitRow = {
   year: string;
 };
 
-const referenceDate = "2026-07-21T23:59:59.999Z";
-
 export const dealerDocuments = [
   { id: "document-invoice-001", code: "INV-2026-001", orderCode: "LOG-01", type: "invoice", status: "paid", issuedAt: "2026-07-18T10:15:00.000Z", amount: 13.09 },
   { id: "document-waybill-001", code: "WAY-2026-001", orderCode: "LOG-01", type: "waybill", status: "open", issuedAt: "2026-07-19T09:00:00.000Z", amount: 13.09 },
@@ -125,9 +123,16 @@ export function filterConsignmentRows(tab: "stock" | "network" | "requests", fil
   ));
 }
 
-export function filterSettlementRows(filters: { period: number; query: string }) {
-  const cutoff = Date.parse(referenceDate) - filters.period * 24 * 60 * 60 * 1000;
+export function filterSettlementRows(
+  filters: { period: number; query: string },
+  asOf = new Date(),
+) {
+  const cutoff = asOf.getTime() - filters.period * 24 * 60 * 60 * 1000;
   return settlementRows.filter((row) => Date.parse(row.date) >= cutoff && matchesQuery(filters.query, [row.code]));
+}
+
+export function isDateInCurrentMonth(date: string, asOf = new Date()) {
+  return date.slice(0, 7) === asOf.toISOString().slice(0, 7);
 }
 
 export function filterInventoryRows(filters: { query: string; stock: StockFilter }) {
@@ -156,9 +161,10 @@ export function filterNetworkRows(tab: "parts" | "units", filters: { dealer: "al
 export function filterPartsReportOrders<OrderType extends { readonly createdAt: string; readonly creator: string; readonly status: OrderStatus }>(
   orders: readonly OrderType[],
   filters: { period: ReportPeriod; manager: "all" | string; status: "all" | OrderStatus },
+  asOf = new Date(),
 ) {
-  const latestOrderTime = Math.max(...orders.map((order) => Date.parse(order.createdAt)), Date.parse(referenceDate));
-  const latestMonth = new Date(latestOrderTime).toISOString().slice(0, 7);
+  const latestOrderTime = asOf.getTime();
+  const latestMonth = asOf.toISOString().slice(0, 7);
   const periodDays = filters.period === "30" ? 30 : filters.period === "90" ? 90 : null;
   return orders.filter((order) => {
     const periodMatches = filters.period === "all"

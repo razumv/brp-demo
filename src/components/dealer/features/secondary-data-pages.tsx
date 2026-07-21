@@ -38,6 +38,7 @@ import {
   filterConsignmentRows,
   filterDocuments,
   filterInventoryRows,
+  isDateInCurrentMonth,
   filterNetworkRows,
   filterPartsReportOrders,
   filterSettlementRows,
@@ -85,7 +86,7 @@ export function DocumentsPage() {
       <section className={styles.statsGrid} aria-label="Показники документів">
         <StatCard label="Документів" value={dealerDocuments.length} icon={<FileText size={18} />} />
         <StatCard label="Неоплачені" value={dealerDocuments.filter((document) => document.status !== "paid").length} icon={<Clock3 size={18} />} tone="amber" />
-        <StatCard label="Цього місяця" value={dealerDocuments.filter((document) => document.issuedAt.startsWith("2026-07")).length} icon={<CalendarDays size={18} />} tone="blue" />
+        <StatCard label="Цього місяця" value={dealerDocuments.filter((document) => isDateInCurrentMonth(document.issuedAt)).length} icon={<CalendarDays size={18} />} tone="blue" />
         <StatCard label="До сплати" value={formatMoney(openAmount)} icon={<CircleDollarSign size={18} />} tone="orange" />
       </section>
       <Panel>

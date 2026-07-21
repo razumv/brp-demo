@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createDealerLocalAdapter } from "@/lib/dealer/local-adapter";
+import { createDealerLocalAdapter, DealerLocalPersistenceError } from "@/lib/dealer/local-adapter";
 import type { DealerCommandResult, DealerCustomer, DealerCustomerInput } from "@/lib/dealer/contracts";
 import { createInitialDealerState } from "@/lib/dealer/order-state";
 import { initialDemoState } from "@/lib/mock-data";
@@ -19,7 +19,7 @@ type MutationCalls = {
   createWorkshopOrder: number;
 };
 
-function createHarness() {
+function createHarness(options: { failUpdateOrderBuilder?: boolean } = {}) {
   const state = createInitialDealerState(initialDemoState, "dealer@example.invalid::logos", "Logos", "2026-07-21T00:00:00.000Z", "submission-test");
   state.cart = [];
   const calls: MutationCalls = {
@@ -51,7 +51,11 @@ function createHarness() {
     },
     updateEquipment() {},
     deleteEquipment() {},
-    updateOrderBuilder() {},
+    updateOrderBuilder() {
+      if (options.failUpdateOrderBuilder) {
+        throw new DealerLocalPersistenceError();
+      }
+    },
     startOrderDraft() {},
     saveOrderDraft() {
       return {
@@ -160,4 +164,17 @@ test("workshop creation rejects an unknown customer without calling the store", 
 
   expectValidationError(result);
   expect(calls.createWorkshopOrder).toBe(0);
+});
+
+test("local mutations return a truthful failure when durable persistence is unavailable", async () => {
+  const { commands } = createHarness({ failUpdateOrderBuilder: true });
+
+  const result = await commands.updateOrderBuilder({ title: "Saved only in memory" });
+
+  expect(result).toEqual({
+    ok: false,
+    kind: "local-error",
+    message: "Не вдалося зберегти зміни на пристрої.",
+    retryable: true,
+  });
 });

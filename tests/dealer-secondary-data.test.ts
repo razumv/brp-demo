@@ -7,6 +7,7 @@ import {
   filterNetworkRows,
   filterPartsReportOrders,
   filterSettlementRows,
+  isDateInCurrentMonth,
 } from "@/lib/dealer/secondary-data";
 import { initialDemoState } from "@/lib/mock-data";
 
@@ -24,4 +25,22 @@ test("secondary data filters are deterministic and preserve one source of truth"
   assert.equal(report[0]?.status, initialDemoState.orders[0]?.status);
   assert.equal(filterPartsReportOrders(initialDemoState.orders, { period: "30", manager: "Финансы", status: "all" }).length, 1);
   assert.equal(filterPartsReportOrders(initialDemoState.orders, { period: "90", manager: "missing", status: "all" }).length, 0);
+});
+
+test("secondary period filters use the supplied current date instead of a fixed fixture date", () => {
+  const julyTwentyFirst = new Date("2026-07-21T23:59:59.999Z");
+  const augustTwentieth = new Date("2026-08-20T00:00:00.000Z");
+
+  assert.equal(filterSettlementRows({ period: 30, query: "INV-2026-001" }, julyTwentyFirst).length, 1);
+  assert.equal(filterSettlementRows({ period: 30, query: "INV-2026-001" }, augustTwentieth).length, 0);
+  assert.equal(isDateInCurrentMonth("2026-07-18T10:15:00.000Z", julyTwentyFirst), true);
+  assert.equal(isDateInCurrentMonth("2026-07-18T10:15:00.000Z", augustTwentieth), false);
+  assert.equal(
+    filterPartsReportOrders(
+      initialDemoState.orders,
+      { period: "month", manager: "all", status: "all" },
+      augustTwentieth,
+    ).length,
+    0,
+  );
 });

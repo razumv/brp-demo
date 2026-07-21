@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { dealerWorkflowStorageKey } from "@/lib/dealer/identity";
-import { seedDealerWorkflowSession } from "./support/dealer-workflow-session";
+import {
+  DEALER_WORKFLOW_STORAGE_KEY,
+  seedDealerWorkflowSession,
+} from "./support/dealer-workflow-session";
 
 const SHARED_STORAGE_KEY = "brp-clone-demo-state-v1";
 const firstIdentity = {
@@ -73,4 +76,41 @@ test("corrupt persisted state is replaced safely and an unknown cart line remain
   await expect(page.getByText("Позиція більше не доступна в каталозі.")).toBeVisible();
   await page.getByRole("button", { name: "Видалити недоступну позицію REMOVED-SKU" }).click();
   await expect(page.getByRole("heading", { name: "Кошик порожній" })).toBeVisible();
+});
+
+test("blocked dealer storage hydration still reaches the working dealer page", async ({ page }) => {
+  await page.addInitScript((dealerKey) => {
+    const originalGetItem = Storage.prototype.getItem;
+    const originalRemoveItem = Storage.prototype.removeItem;
+    Storage.prototype.getItem = function getItem(key) {
+      if (key === dealerKey) throw new Error("storage blocked");
+      return originalGetItem.call(this, key);
+    };
+    Storage.prototype.removeItem = function removeItem(key) {
+      if (key === dealerKey) throw new Error("storage blocked");
+      return originalRemoveItem.call(this, key);
+    };
+  }, DEALER_WORKFLOW_STORAGE_KEY);
+
+  await page.goto("/dealer/orders");
+
+  await expect(page.getByText("LOG-01", { exact: true })).toBeVisible();
+  await expect(page.getByText("Завантажуємо робочі дані…")).toHaveCount(0);
+});
+
+test("blocked dealer persistence keeps the cart unchanged and reports a retryable failure", async ({ page }) => {
+  await page.addInitScript((dealerKey) => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (key === dealerKey) throw new Error("storage blocked");
+      return originalSetItem.call(this, key, value);
+    };
+  }, DEALER_WORKFLOW_STORAGE_KEY);
+
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Глобальний пошук запчастин" }).fill("507032473");
+  await page.getByRole("button", { name: "Додати 507032473 до кошика" }).click();
+
+  await expect(page.getByText("Повторити", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Кошик (0)" })).toBeVisible();
 });
