@@ -6,9 +6,7 @@ import {
   Bell,
   Check,
   CircleUserRound,
-  Eye,
   Globe2,
-  Info,
   Menu,
   Moon,
   Search,
@@ -17,7 +15,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { getPart, formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerNewDocumentCount } from "@/lib/dealer/secondary-data";
@@ -242,47 +240,6 @@ function DealerCartControl({ inertTargets }: { inertTargets: readonly RefObject<
       </button>
       {cartOpen ? <DealerCartPanel onClose={closeCart} returnFocusRef={cartButtonRef} inertTargets={inertTargets} /> : null}
     </>
-  );
-}
-
-const dealerHeaderUnavailableReason = "Функція стане доступною після підключення сервісу.";
-
-function DealerUnavailableHeaderControl({
-  label,
-  icon,
-  className,
-}: {
-  label: string;
-  icon: ReactNode;
-  className?: string;
-}) {
-  const reasonId = useId();
-  const [reasonOpen, setReasonOpen] = useState(false);
-
-  return (
-    <span className={cn("dealer-header-unavailable", className)}>
-      <button type="button" className="icon-button" aria-label={label} aria-describedby={reasonId} disabled>
-        {icon}
-      </button>
-      <button
-        type="button"
-        className="dealer-header-unavailable-help"
-        aria-label={`Чому недоступно: ${label}`}
-        aria-controls={reasonId}
-        aria-expanded={reasonOpen}
-        onClick={() => setReasonOpen((current) => !current)}
-      >
-        <Info size={14} aria-hidden="true" />
-      </button>
-      <span
-        id={reasonId}
-        role="note"
-        aria-label={`${label}: ${dealerHeaderUnavailableReason}`}
-        className={cn("dealer-header-unavailable-reason", reasonOpen && "dealer-header-unavailable-reason-open")}
-      >
-        {dealerHeaderUnavailableReason}
-      </span>
-    </span>
   );
 }
 
@@ -511,18 +468,10 @@ export function AppShell({
           else setMobilePartsSearchOpen(true);
         }}><Search size={19} /></button>
         <div className="header-actions">
-          {role === "dealer" ? (
-            <DealerUnavailableHeaderControl label="Режим клієнта" icon={<Eye size={18} />} className="dealer-header-unavailable-client" />
-          ) : null}
           <button type="button" className="icon-button" aria-label={theme === "dark" ? "switch_to_light" : "switch_to_dark"} onClick={toggleTheme}>
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          {role === "dealer" ? (
-            <>
-              <DealerUnavailableHeaderControl label="Мова" icon={<Globe2 size={17} />} className="dealer-header-unavailable-language" />
-              <DealerUnavailableHeaderControl label="Сповіщення" icon={<Bell size={18} />} />
-            </>
-          ) : (
+          {role === "admin" ? (
             <>
               <div className="menu-anchor">
                 <button type="button" className="header-language" aria-label="language_switcher" onClick={() => {
@@ -541,7 +490,7 @@ export function AppShell({
               </div>
               <button type="button" className="icon-button notification-button" aria-label="Сповіщення"><Bell size={18} /><span>9+</span></button>
             </>
-          )}
+          ) : null}
           <div className="profile-summary">
             <div><strong>{identity.name}</strong><small>{identity.company}</small></div>
             <div className="menu-anchor">

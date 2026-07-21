@@ -403,26 +403,29 @@
   overflow: hidden;
 }
 
-.ordersToolbar,
 .customerToolbar,
 .productToolbar,
 .unitsToolbar,
-.simpleToolbar,
-.scheduleFilters {
+.simpleToolbar {
   display: flex;
   align-items: center;
   gap: 9px;
 }
 
-.ordersToolbar,
 .simpleToolbar {
   padding: 14px;
   border-bottom: 1px solid var(--border);
 }
 
-.ordersToolbar > select {
-  width: auto;
-  min-width: 150px;
+.ordersToolbar {
+  padding: 14px 14px 0;
+}
+
+.orderViewModes {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 14px;
+  border-bottom: 1px solid var(--border);
 }
 
 .orderRow {
@@ -1050,14 +1053,6 @@
 }
 
 /* Customers */
-
-.customerToolbar {
-  margin-bottom: 16px;
-}
-
-.customerToolbar > :first-child {
-  max-width: 390px;
-}
 
 .customerLayout {
   display: grid;
@@ -1934,14 +1929,6 @@
   font-weight: 650;
 }
 
-.scheduleFilters {
-  margin-bottom: 12px;
-}
-
-.scheduleFilters > :last-child {
-  max-width: 320px;
-}
-
 .scheduleColumns {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(0, 1.1fr);
@@ -2350,28 +2337,22 @@
     border-bottom: 0;
   }
 
-  .ordersToolbar,
   .customerToolbar,
   .productToolbar,
   .unitsToolbar,
-  .simpleToolbar,
-  .scheduleFilters {
+  .simpleToolbar {
     align-items: stretch;
     flex-wrap: wrap;
   }
 
-  .ordersToolbar > *,
   .customerToolbar > *,
   .productToolbar > *,
-  .simpleToolbar > *,
-  .scheduleFilters > * {
+  .simpleToolbar > * {
     width: 100%;
     max-width: none !important;
   }
 
-  .ordersToolbar :global(.segmented),
-  .customerToolbar :global(.segmented),
-  .scheduleFilters :global(.segmented) {
+  .customerToolbar :global(.segmented) {
     overflow-x: auto;
   }
 
@@ -2513,10 +2494,6 @@
 
   .timelineTrack {
     min-width: 570px;
-  }
-
-  .scheduleFilters :global(.segmented) {
-    display: flex;
   }
 
   .slotDetail {

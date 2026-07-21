@@ -26,7 +26,7 @@ test("draft filters change visible records, compose with search, and reset", asy
   await page.getByRole("button", { name: "Зберегти чернетку" }).click();
 
   await page.goto("/dealer/order-drafts");
-  const trigger = page.getByRole("button", { name: "Фільтри чернеток" });
+  const trigger = page.getByRole("button", { name: "Фільтри", exact: true });
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await trigger.click();
   await page.getByLabel("Вміст чернетки").selectOption("with-items");
@@ -42,13 +42,12 @@ test("draft filters change visible records, compose with search, and reset", asy
 
   await page.getByLabel("Вміст чернетки").selectOption("empty");
   await page.getByLabel("Покупець чернетки").selectOption("assigned");
-  const activeTrigger = page.getByRole("button", { name: "Фільтри чернеток, активних: 2" });
+  const activeTrigger = page.getByRole("button", { name: "Фільтри", exact: true });
   await expect(activeTrigger).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await activeTrigger.click();
   await expect(activeTrigger).toHaveAttribute("aria-expanded", "false");
-  await expect(activeTrigger.locator("[data-filter-count]")).toHaveText("2");
-  await expect(activeTrigger.locator("[data-filter-count]")).toBeVisible();
+  await expect(activeTrigger).toHaveText("2");
   await activeTrigger.click();
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
   await page.getByLabel("Пошук чернеток").fill("без покупця");
@@ -66,40 +65,30 @@ test("draft filters change visible records, compose with search, and reset", asy
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
 });
 
-test("draft toolbar remains a visible one-row control set at 390 pixels", async ({ page }) => {
+test("draft toolbar remains a visible one-row control set without Excel at 390 pixels", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dealer/order-drafts");
 
   const search = page.getByLabel("Пошук чернеток");
   const searchControl = search.locator("xpath=..");
-  const filter = page.getByRole("button", { name: "Фільтри чернеток" });
-  const excel = page.getByRole("button", { name: "Excel", exact: true });
-  const excelInfo = page.getByRole("button", { name: "Чому недоступно: Excel" });
+  const filter = page.getByRole("button", { name: "Фільтри", exact: true });
   await expect(search).toBeVisible();
   await expect(searchControl).toBeVisible();
   await expect(filter).toBeVisible();
-  await expect(excel).toBeVisible();
-  await expect(excel).toBeDisabled();
-  await expect(excelInfo).toBeVisible();
+  await expect(page.getByRole("button", { name: "Excel", exact: true })).toHaveCount(0);
 
-  const [searchBox, filterBox, excelBox, excelInfoBox] = await Promise.all([
+  const [searchBox, filterBox] = await Promise.all([
     searchControl.boundingBox(),
     filter.boundingBox(),
-    excel.boundingBox(),
-    excelInfo.boundingBox(),
   ]);
   expect(searchBox).not.toBeNull();
   expect(filterBox).not.toBeNull();
-  expect(excelBox).not.toBeNull();
-  expect(excelInfoBox).not.toBeNull();
-  if (!searchBox || !filterBox || !excelBox || !excelInfoBox) return;
+  if (!searchBox || !filterBox) return;
 
   expect(Math.abs(searchBox.y - filterBox.y)).toBeLessThanOrEqual(1);
-  expect(Math.abs(searchBox.y - excelBox.y)).toBeLessThanOrEqual(1);
-  expect(Math.abs(searchBox.y - excelInfoBox.y)).toBeLessThanOrEqual(1);
   expect(searchBox.x).toBeLessThan(filterBox.x);
-  expect(filterBox.x).toBeLessThan(excelBox.x);
-  expect(excelBox.x).toBeLessThan(excelInfoBox.x);
+  expect(filterBox.width).toBe(44);
+  expect(filterBox.height).toBe(44);
   await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
 });
 

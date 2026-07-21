@@ -1,10 +1,12 @@
-import type { OrderStatus } from "@/lib/types";
+import { orderTotal } from "@/lib/mock-data";
 import { normalizeDealerSearch } from "@/lib/dealer/format";
 
 export type DocumentType = "invoice" | "waybill";
 export type DocumentStatus = "paid" | "open" | "overdue";
 export type StockFilter = "all" | "in-stock" | "low" | "out";
-export type ReportPeriod = "all" | "month" | "30" | "90";
+export type ConsignmentStatusFilter = "all" | ConsignmentRow["status"];
+
+export const dealerSettlementReferenceDate = new Date("2026-07-21T12:00:00.000Z");
 
 export const dealerNewDocumentCount = 5;
 
@@ -117,10 +119,10 @@ export function filterDocuments(filters: { query: string; type: "all" | Document
   ));
 }
 
-export function filterConsignmentRows(tab: "stock" | "network" | "requests", filters: { query: string; availability: "all" | "in-stock" | "requested" }) {
+export function filterConsignmentRows(tab: "stock" | "network" | "requests", filters: { query: string; status: ConsignmentStatusFilter }) {
   const source = tab === "stock" ? consignmentStock : tab === "network" ? consignmentNetwork : consignmentRequests;
   return source.filter((row) => (
-    (filters.availability === "all" || (filters.availability === "in-stock" ? row.quantity > 0 : row.status === "requested"))
+    (filters.status === "all" || row.status === filters.status)
     && matchesQuery(filters.query, [row.partNumber, row.description, row.dealer])
   ));
 }
@@ -160,20 +162,45 @@ export function filterNetworkRows(tab: "parts" | "units", filters: { dealer: "al
   ));
 }
 
-export function filterPartsReportOrders<OrderType extends { readonly createdAt: string; readonly creator: string; readonly status: OrderStatus }>(
-  orders: readonly OrderType[],
-  filters: { period: ReportPeriod; manager: "all" | string; status: "all" | OrderStatus },
-  asOf = new Date(),
-) {
-  const latestOrderTime = asOf.getTime();
-  const latestMonth = asOf.toISOString().slice(0, 7);
-  const periodDays = filters.period === "30" ? 30 : filters.period === "90" ? 90 : null;
-  return orders.filter((order) => {
-    const periodMatches = filters.period === "all"
-      || (filters.period === "month" && order.createdAt.slice(0, 7) === latestMonth)
-      || (periodDays !== null && Date.parse(order.createdAt) >= latestOrderTime - periodDays * 24 * 60 * 60 * 1000);
-    return periodMatches
-      && (filters.manager === "all" || order.creator === filters.manager)
-      && (filters.status === "all" || order.status === filters.status);
-  });
+export function getNetworkDealers(tab: "parts" | "units") {
+  const rows = tab === "parts" ? networkParts : networkUnits;
+  return [...new Set(rows.map((row) => row.dealer))].sort((left, right) => left.localeCompare(right, "uk-UA"));
+}
+
+export type DealerPartsReportQuery = Readonly<{
+  query: string;
+  from: string;
+  to: string;
+}>;
+
+export type DealerPartsReportRow = Readonly<{
+  orderId: string;
+  orderCode: string;
+  createdAt: string;
+  itemCount: number;
+  total: Readonly<{ amount: number; currency: "USD" }>;
+}>;
+
+type DealerPartsReportOrder = Readonly<{
+  id: string;
+  code: string;
+  createdAt: string;
+  lines: readonly Readonly<{ quantity: number; dealerPrice: number }>[];
+}>;
+
+export function projectDealerPartsReport(orders: readonly DealerPartsReportOrder[], query: DealerPartsReportQuery): DealerPartsReportRow[] {
+  return orders
+    .filter((order) => {
+      const date = order.createdAt.slice(0, 10);
+      return matchesQuery(query.query, [order.code])
+        && (!query.from || date >= query.from)
+        && (!query.to || date <= query.to);
+    })
+    .map((order) => ({
+      orderId: order.id,
+      orderCode: order.code,
+      createdAt: order.createdAt,
+      itemCount: order.lines.length,
+      total: { amount: orderTotal(order.lines), currency: "USD" },
+    }));
 }

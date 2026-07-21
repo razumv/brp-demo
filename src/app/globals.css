@@ -624,69 +624,6 @@ a {
   margin-left: auto;
 }
 
-.dealer-header-unavailable {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.dealer-header-unavailable .icon-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
-.dealer-header-unavailable-help {
-  display: inline-grid;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-
-.dealer-header-unavailable-help:hover,
-.dealer-header-unavailable-help:focus-visible {
-  background: var(--surface-subtle);
-  color: var(--foreground);
-}
-
-.dealer-header-unavailable-reason {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.dealer-header-unavailable-reason-open {
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 90;
-  width: min(272px, calc(100vw - 24px));
-  height: auto;
-  padding: 9px 11px;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--surface-raised);
-  box-shadow: var(--shadow-menu);
-  color: var(--foreground);
-  font-size: 12px;
-  line-height: 1.35;
-  white-space: normal;
-}
-
 .icon-button,
 .avatar-button {
   display: inline-flex;
@@ -2025,13 +1962,8 @@ a {
   .header-actions {
     margin-left: 0;
   }
-  .header-secondary-action,
   .profile-summary,
   .header-language span {
-    display: none;
-  }
-  .dealer-header-unavailable-client,
-  .dealer-header-unavailable-language {
     display: none;
   }
   .header-language {

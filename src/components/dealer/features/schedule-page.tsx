@@ -4,7 +4,6 @@ import {
   CalendarDays,
   CircleDollarSign,
   PackageCheck,
-  Search,
   Truck,
   Warehouse,
 } from "lucide-react";
@@ -28,6 +27,7 @@ import {
 import { ukrainianCount } from "@/lib/dealer/format";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "../common";
+import { DealerDataToolbar } from "../dealer-data-toolbar";
 import dealerStyles from "../dealer.module.css";
 import operationalStyles from "./operational-features.module.css";
 import { FeatureFrame } from "./feature-frame";
@@ -74,6 +74,7 @@ export function SchedulePage() {
   const asOf = useMemo(() => new Date(), []);
   const [category, setCategory] = useState<DealerScheduleCategoryFilter>("all");
   const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>(dealerScheduleSlots[0]?.id ?? "");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const filteredSlots = useMemo(
@@ -119,36 +120,31 @@ export function SchedulePage() {
         )}
       </Panel>
 
-      <div className={dealerStyles.scheduleFilters}>
-        <div className="segmented" role="group" aria-label="Категорія техніки">
-          {scheduleCategoryOptions.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              aria-pressed={category === item.id}
-              onClick={() => setCategory(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <div className="toolbar-search">
-          <Search size={15} />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label="Пошук у графіку поставки"
-            placeholder="SKU, модель або слот…"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </div>
-      </div>
-
-      <p className={operationalStyles.resultCount} data-testid="schedule-result-count" aria-live="polite">
-        {scheduleResultLabel(metrics)}
-      </p>
+      <DealerDataToolbar
+        search={{
+          value: query,
+          onValueChange: setQuery,
+          label: "Пошук у графіку поставки",
+          placeholder: "SKU, модель або слот…",
+        }}
+        filters={{
+          label: "Фільтри графіка поставки",
+          activeCount: Number(category !== "all"),
+          open: filtersOpen,
+          onOpenChange: setFiltersOpen,
+          panelId: "schedule-filters",
+          onClear: () => setCategory("all"),
+          content: (
+            <label className="field">
+              <span>Категорія техніки</span>
+              <select aria-label="Категорія техніки" value={category} onChange={(event) => setCategory(event.target.value as DealerScheduleCategoryFilter)}>
+                {scheduleCategoryOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </label>
+          ),
+        }}
+        resultMeta={<span data-testid="schedule-result-count">{scheduleResultLabel(metrics)}</span>}
+      />
 
       <section className={dealerStyles.scheduleColumns}>
         <Panel className={dealerStyles.slotList}>

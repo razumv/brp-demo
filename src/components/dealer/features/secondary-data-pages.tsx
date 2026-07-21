@@ -3,9 +3,7 @@
 import Link from "next/link";
 import {
   AlertTriangle,
-  BarChart3,
   Box,
-  Boxes,
   CalendarDays,
   Check,
   CircleDollarSign,
@@ -14,38 +12,37 @@ import {
   FileClock,
   FileText,
   Globe2,
-  Package,
   PackageCheck,
   PackageOpen,
-  Plus,
-  Search,
   Truck,
   Warehouse,
   Wrench,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
-import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
-import { OrderStatusBadge, formatDate } from "@/components/dealer/common";
-import { LockedOperation } from "@/components/dealer/locked-operation";
-import { formatMoney, orderTotal } from "@/lib/mock-data";
+import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { EmptyState, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
+import { formatDate } from "@/components/dealer/common";
+import { formatMoney } from "@/lib/mock-data";
+import { ukrainianCount } from "@/lib/dealer/format";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import {
   consignmentNetwork,
   consignmentRequests,
   consignmentStock,
+  dealerSettlementReferenceDate,
   dealerDocuments,
   filterConsignmentRows,
   filterDocuments,
   filterInventoryRows,
   isDateInCurrentMonth,
   filterNetworkRows,
-  filterPartsReportOrders,
   filterSettlementRows,
-  networkParts,
+  getNetworkDealers,
+  projectDealerPartsReport,
+  type ConsignmentStatusFilter,
   type DocumentStatus,
   type DocumentType,
-  type ReportPeriod,
   type StockFilter,
 } from "@/lib/dealer/secondary-data";
 import legacyStyles from "../dealer.module.css";
@@ -62,10 +59,6 @@ function TableRegion({ label, children }: { label: string; children: React.React
   return <div className={styles.tableRegion} role="region" aria-label={label} tabIndex={0}>{children}</div>;
 }
 
-function LockedExport() {
-  return <LockedOperation label="Експорт" icon={<Download size={14} />} reason="Експорт у зовнішній файл недоступний." />;
-}
-
 function documentStatusLabel(status: DocumentStatus) {
   return ({ paid: "Сплачено", open: "Очікує оплату", overdue: "Прострочено" } as const)[status];
 }
@@ -78,11 +71,12 @@ export function DocumentsPage() {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<"all" | DocumentType>("all");
   const [status, setStatus] = useState<"all" | DocumentStatus>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const documents = useMemo(() => filterDocuments({ query, type, status }), [query, status, type]);
   const openAmount = sum(dealerDocuments.filter((document) => document.status !== "paid").map((document) => document.amount));
 
   return (
-    <FeatureFrame feature="documents" action={<LockedExport />}>
+    <FeatureFrame feature="documents">
       <section className={styles.statsGrid} aria-label="Показники документів">
         <StatCard label="Документів" value={dealerDocuments.length} icon={<FileText size={18} />} />
         <StatCard label="Неоплачені" value={dealerDocuments.filter((document) => document.status !== "paid").length} icon={<Clock3 size={18} />} tone="amber" />
@@ -90,11 +84,7 @@ export function DocumentsPage() {
         <StatCard label="До сплати" value={formatMoney(openAmount)} icon={<CircleDollarSign size={18} />} tone="orange" />
       </section>
       <Panel>
-        <div className={styles.toolbar}>
-          <label className={styles.searchField}><Search size={15} aria-hidden="true" /><span className="sr-only">Пошук документів</span><input aria-label="Пошук документів" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер документа або замовлення..." /></label>
-          <label className={styles.selectField}><span>Тип</span><select aria-label="Тип документа" value={type} onChange={(event) => setType(event.target.value as "all" | DocumentType)}><option value="all">Усі типи</option><option value="invoice">Рахунок</option><option value="waybill">Накладна</option></select></label>
-          <label className={styles.selectField}><span>Статус</span><select aria-label="Статус документа" value={status} onChange={(event) => setStatus(event.target.value as "all" | DocumentStatus)}><option value="all">Усі статуси</option><option value="paid">Сплачено</option><option value="open">Очікує оплату</option><option value="overdue">Прострочено</option></select></label>
-        </div>
+        <DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук документів", placeholder: "Номер документа або замовлення..." }} filters={{ label: "Фільтри", activeCount: Number(type !== "all") + Number(status !== "all"), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "documents-filters", onClear: () => { setType("all"); setStatus("all"); }, content: <><label className={styles.selectField}><span>Тип</span><select aria-label="Тип документа" value={type} onChange={(event) => setType(event.target.value as "all" | DocumentType)}><option value="all">Усі типи</option><option value="invoice">Рахунок</option><option value="waybill">Накладна</option></select></label><label className={styles.selectField}><span>Статус</span><select aria-label="Статус документа" value={status} onChange={(event) => setStatus(event.target.value as "all" | DocumentStatus)}><option value="all">Усі статуси</option><option value="paid">Сплачено</option><option value="open">Очікує оплату</option><option value="overdue">Прострочено</option></select></label></> }} resultMeta={ukrainianCount(documents.length, ["документ", "документи", "документів"])} />
         {documents.length ? <TableRegion label="Документи"><table className="data-table"><thead><tr><th>Документ</th><th>Замовлення</th><th>Дата</th><th>Статус</th><th>Сума</th></tr></thead><tbody>{documents.map((document) => <tr key={document.id}><td><strong>{document.code}</strong><small>{document.type === "invoice" ? "Рахунок" : "Накладна"}</small></td><td>{document.orderCode}</td><td>{formatDate(document.issuedAt)}</td><td><StatusBadge tone={documentTone(document.status)}>{documentStatusLabel(document.status)}</StatusBadge></td><td><strong>{formatMoney(document.amount)}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Документів не знайдено" description="Змініть запит або фільтри." />}
       </Panel>
     </FeatureFrame>
@@ -110,12 +100,12 @@ function consignmentTabLabel(tab: ConsignmentTab) {
 export function ConsignmentPage() {
   const [tab, setTab] = useState<ConsignmentTab>("stock");
   const [query, setQuery] = useState("");
-  const [availability, setAvailability] = useState<"all" | "in-stock" | "requested">("all");
-  const [requestOpen, setRequestOpen] = useState(false);
-  const rows = useMemo(() => filterConsignmentRows(tab, { query, availability }), [availability, query, tab]);
+  const [status, setStatus] = useState<ConsignmentStatusFilter>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const rows = useMemo(() => filterConsignmentRows(tab, { query, status }), [query, status, tab]);
 
   return (
-    <FeatureFrame feature="consignment" action={<button type="button" className="button button-primary" onClick={() => setRequestOpen(true)}><Plus size={15} /> Створити запит</button>}>
+    <FeatureFrame feature="consignment">
       <section className={styles.statsGrid} aria-label="Показники консигнації">
         <StatCard label="На консигнації" value={sum(consignmentStock.map((row) => row.quantity))} icon={<PackageOpen size={18} />} />
         <StatCard label="У мережі" value={sum(consignmentNetwork.map((row) => row.quantity))} icon={<Globe2 size={18} />} tone="blue" />
@@ -124,15 +114,9 @@ export function ConsignmentPage() {
       </section>
       <Panel>
         <div className={styles.tabs} role="tablist" aria-label="Розділи консигнації">{(["stock", "network", "requests"] as const).map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => setTab(item)}>{consignmentTabLabel(item)}</button>)}</div>
-        <div className={styles.toolbar}>
-          <label className={styles.searchField}><Search size={15} aria-hidden="true" /><span className="sr-only">Пошук консигнації</span><input aria-label="Пошук консигнації" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер або опис запчастини..." /></label>
-          <label className={styles.selectField}><span>Наявність</span><select aria-label="Фільтр консигнації" value={availability} onChange={(event) => setAvailability(event.target.value as "all" | "in-stock" | "requested")}><option value="all">Усі позиції</option><option value="in-stock">Є в наявності</option><option value="requested">Запитані</option></select></label>
-        </div>
-        {rows.length ? <TableRegion label={consignmentTabLabel(tab)}><table className="data-table"><thead><tr><th>Запчастина</th><th>Дилер</th><th>Кількість</th><th>Стан</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.dealer}</td><td>{row.quantity}</td><td><StatusBadge tone={row.status === "available" ? "green" : row.status === "requested" ? "amber" : "blue"}>{row.status === "available" ? "Доступно" : row.status === "requested" ? "Запит" : "Резерв"}</StatusBadge></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Позицій не знайдено" description="Змініть запит або фільтр наявності." />}
+        <DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук консигнації", placeholder: "Номер, опис або дилер..." }} filters={{ label: "Фільтри", activeCount: Number(status !== "all"), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "consignment-filters", onClear: () => setStatus("all"), content: <label className={styles.selectField}><span>Стан</span><select aria-label="Фільтр консигнації" value={status} onChange={(event) => setStatus(event.target.value as ConsignmentStatusFilter)}><option value="all">Усі стани</option><option value="available">Доступно</option><option value="reserved">Резерв</option><option value="requested">Запит</option></select></label> }} resultMeta={ukrainianCount(rows.length, ["позиція", "позиції", "позицій"])} />
+        {rows.length ? <TableRegion label={consignmentTabLabel(tab)}><table className="data-table"><thead><tr><th>Запчастина</th><th>Дилер</th><th>Кількість</th><th>Стан</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.dealer}</td><td>{row.quantity}</td><td><StatusBadge tone={row.status === "available" ? "green" : row.status === "requested" ? "amber" : "blue"}>{row.status === "available" ? "Доступно" : row.status === "requested" ? "Запит" : "Резерв"}</StatusBadge></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Позицій не знайдено" description="Змініть запит або фільтр стану." />}
       </Panel>
-      <Modal open={requestOpen} onClose={() => setRequestOpen(false)} title="Запит на консигнацію" description="Локальний перегляд форми без відправлення">
-        <div className={styles.modalForm}><label className="field"><span>Запчастина</span><select defaultValue=""><option value="" disabled>Оберіть позицію</option>{consignmentStock.map((row) => <option key={row.id} value={row.partNumber}>{row.partNumber} — {row.description}</option>)}</select></label><label className="field"><span>Коментар</span><textarea placeholder="Обґрунтування запиту" /></label><div className={styles.formActions}><button type="button" className="button button-outline" onClick={() => setRequestOpen(false)}>Скасувати</button><LockedOperation label="Надіслати запит" reason="Відправлення запиту недоступне." className="button button-primary" /></div></div>
-      </Modal>
     </FeatureFrame>
   );
 }
@@ -140,16 +124,17 @@ export function ConsignmentPage() {
 export function SettlementsPage() {
   const [period, setPeriod] = useState(30);
   const [query, setQuery] = useState("");
-  const rows = useMemo(() => filterSettlementRows({ period, query }), [period, query]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const rows = useMemo(() => filterSettlementRows({ period, query }, dealerSettlementReferenceDate), [period, query]);
   const accrual = sum(rows.filter((row) => row.kind === "accrual").map((row) => row.amount));
   const paid = -sum(rows.filter((row) => row.kind === "payment").map((row) => row.amount));
   const overdue = sum(rows.filter((row) => row.status === "overdue").map((row) => row.amount));
 
   return (
-    <FeatureFrame feature="settlements" action={<LockedExport />}>
+    <FeatureFrame feature="settlements">
       <section className={styles.statsGrid} aria-label="Показники взаєморозрахунків"><StatCard label="Поточний баланс" value={formatMoney(accrual - paid)} icon={<CircleDollarSign size={18} />} tone="green" /><StatCard label="Нараховано" value={formatMoney(accrual)} icon={<Download size={18} />} tone="blue" /><StatCard label="Сплачено" value={formatMoney(paid)} icon={<Check size={18} />} tone="green" /><StatCard label="Прострочено" value={formatMoney(overdue)} icon={<AlertTriangle size={18} />} tone="amber" /></section>
       <Panel>
-        <div className={styles.toolbar}><div className={styles.tabs} aria-label="Період взаєморозрахунків">{[30, 60, 90, 180, 360].map((value) => <button type="button" aria-pressed={period === value} key={value} onClick={() => setPeriod(value)}>{value} днів</button>)}</div><label className={styles.searchField}><Search size={15} aria-hidden="true" /><span className="sr-only">Пошук взаєморозрахунків</span><input aria-label="Пошук взаєморозрахунків" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер документа..." /></label><LockedOperation label="Оновити баланс" icon={<Clock3 size={14} />} reason="Оновлення балансу недоступне." /></div>
+        <DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук взаєморозрахунків", placeholder: "Номер документа..." }} filters={{ label: "Фільтри", activeCount: Number(period !== 30), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "settlements-filters", onClear: () => setPeriod(30), content: <label className={styles.selectField}><span>Період</span><select aria-label="Період взаєморозрахунків" value={period} onChange={(event) => setPeriod(Number(event.target.value))}>{[30, 60, 90, 180, 360].map((value) => <option value={value} key={value}>{value} днів</option>)}</select></label> }} resultMeta={ukrainianCount(rows.length, ["рух", "рухи", "рухів"])} />
         {rows.length ? <TableRegion label="Рух коштів"><table className="data-table"><thead><tr><th>Дата</th><th>Документ</th><th>Операція</th><th>Статус</th><th>Сума</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td>{formatDate(row.date)}</td><td><strong>{row.code}</strong></td><td>{row.kind === "accrual" ? "Нарахування" : "Оплата"}</td><td><StatusBadge tone={row.status === "overdue" ? "red" : "green"}>{documentStatusLabel(row.status)}</StatusBadge></td><td className={row.amount < 0 ? styles.negativeAmount : undefined}><strong>{formatMoney(row.amount)}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState title={`Рухів за ${period} днів немає`} description="Змініть період або запит." />}
       </Panel>
     </FeatureFrame>
@@ -159,12 +144,13 @@ export function SettlementsPage() {
 export function InventoryPage() {
   const [query, setQuery] = useState("");
   const [stock, setStock] = useState<StockFilter>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const rows = useMemo(() => filterInventoryRows({ query, stock }), [query, stock]);
   const stockValue = sum(rows.map((row) => row.stock * row.dealerPrice));
   return (
     <FeatureFrame feature="parts-inventory">
       <section className={styles.statsGrid} aria-label="Показники складу"><StatCard label="Позицій" value={rows.length} icon={<Wrench size={18} />} /><StatCard label="В наявності" value={rows.filter((row) => row.stock > 0).length} icon={<PackageCheck size={18} />} tone="green" /><StatCard label="Низький залишок" value={rows.filter((row) => row.stock > 0 && row.stock <= row.reorderPoint).length} icon={<AlertTriangle size={18} />} tone="amber" /><StatCard label="Вартість" value={formatMoney(stockValue)} icon={<CircleDollarSign size={18} />} tone="orange" /></section>
-      <Panel><div className={styles.toolbar}><label className={styles.searchField}><Search size={15} aria-hidden="true" /><span className="sr-only">Пошук складу</span><input aria-label="Пошук складу" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Номер або опис запчастини..." /></label><label className={styles.selectField}><span>Запас</span><select aria-label="Фільтр запасу" value={stock} onChange={(event) => setStock(event.target.value as StockFilter)}><option value="all">Усі позиції</option><option value="in-stock">В наявності</option><option value="low">Низький залишок</option><option value="out">Немає в наявності</option></select></label></div>{rows.length ? <TableRegion label="Локальний склад"><table className="data-table"><thead><tr><th>Запчастина</th><th>Залишок</th><th>Мінімум</th><th>Вартість</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.stock}</td><td>{row.reorderPoint}</td><td><strong>{formatMoney(row.stock * row.dealerPrice)}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState icon={<Warehouse size={26} />} title="Позицій не знайдено" description="Змініть запит або фільтр запасу." />}</Panel>
+      <Panel><DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук складу", placeholder: "Номер або опис запчастини..." }} filters={{ label: "Фільтри", activeCount: Number(stock !== "all"), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "inventory-filters", onClear: () => setStock("all"), content: <label className={styles.selectField}><span>Запас</span><select aria-label="Фільтр запасу" value={stock} onChange={(event) => setStock(event.target.value as StockFilter)}><option value="all">Усі позиції</option><option value="in-stock">В наявності</option><option value="low">Низький залишок</option><option value="out">Немає в наявності</option></select></label> }} resultMeta={ukrainianCount(rows.length, ["позиція", "позиції", "позицій"])} />{rows.length ? <TableRegion label="Склад дилера"><table className="data-table"><thead><tr><th>Запчастина</th><th>Залишок</th><th>Мінімум</th><th>Вартість</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.stock}</td><td>{row.reorderPoint}</td><td><strong>{formatMoney(row.stock * row.dealerPrice)}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState icon={<Warehouse size={26} />} title="Позицій не знайдено" description="Змініть запит або фільтр запасу." />}</Panel>
     </FeatureFrame>
   );
 }
@@ -173,20 +159,21 @@ export function NetworkPage() {
   const [tab, setTab] = useState<"parts" | "units">("parts");
   const [query, setQuery] = useState("");
   const [dealer, setDealer] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const rows = useMemo(() => filterNetworkRows(tab, { dealer, query }), [dealer, query, tab]);
-  const dealers = [...new Set([...networkParts.map((row) => row.dealer), "Logos", "BRP Київ"])];
-  return <FeatureFrame feature="network"><Panel><div className={styles.tabs} role="tablist" aria-label="Ресурси дилерської мережі"><button type="button" role="tab" aria-selected={tab === "parts"} onClick={() => setTab("parts")}><Wrench size={14} /> Запчастини</button><button type="button" role="tab" aria-selected={tab === "units"} onClick={() => setTab("units")}><Box size={14} /> Техніка</button></div><div className={styles.toolbar}><label className={styles.searchField}><Search size={15} aria-hidden="true" /><span className="sr-only">Пошук мережі</span><input aria-label="Пошук мережі" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "parts" ? "Номер запчастини..." : "Модель, VIN або SKU..."} /></label><label className={styles.selectField}><span>Дилер</span><select aria-label="Дилер мережі" value={dealer} onChange={(event) => setDealer(event.target.value)}><option value="all">Усі дилери</option>{dealers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label></div>{rows.length ? <TableRegion label={tab === "parts" ? "Запчастини мережі" : "Техніка мережі"}>{tab === "parts" ? <table className="data-table"><thead><tr><th>Запчастина</th><th>Дилер</th><th>Кількість</th></tr></thead><tbody>{rows.map((row) => "partNumber" in row ? <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.dealer}</td><td>{row.quantity}</td></tr> : null)}</tbody></table> : <table className="data-table"><thead><tr><th>Модель</th><th>VIN</th><th>Дилер</th><th>Рік</th></tr></thead><tbody>{rows.map((row) => "model" in row ? <tr key={row.id}><td><strong>{row.model}</strong></td><td>{row.vin}</td><td>{row.dealer}</td><td>{row.year}</td></tr> : null)}</tbody></table>}</TableRegion> : <EmptyState icon={<Globe2 size={26} />} title={tab === "parts" ? "Запчастин у мережі не знайдено" : "Техніки у мережі не знайдено"} description="Спробуйте змінити запит або дилера." />}</Panel></FeatureFrame>;
+  const dealers = getNetworkDealers(tab);
+  const changeTab = (nextTab: "parts" | "units") => { setTab(nextTab); setDealer("all"); };
+  return <FeatureFrame feature="network"><Panel><div className={styles.tabs} role="tablist" aria-label="Ресурси дилерської мережі"><button type="button" role="tab" aria-selected={tab === "parts"} onClick={() => changeTab("parts")}><Wrench size={14} /> Запчастини</button><button type="button" role="tab" aria-selected={tab === "units"} onClick={() => changeTab("units")}><Box size={14} /> Техніка</button></div><DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук мережі", placeholder: tab === "parts" ? "Номер або опис запчастини..." : "Модель або VIN..." }} filters={{ label: "Фільтри", activeCount: Number(dealer !== "all"), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "network-filters", onClear: () => setDealer("all"), content: <label className={styles.selectField}><span>Дилер</span><select aria-label="Дилер мережі" value={dealer} onChange={(event) => setDealer(event.target.value)}><option value="all">Усі дилери</option>{dealers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label> }} resultMeta={ukrainianCount(rows.length, ["позиція", "позиції", "позицій"])} />{rows.length ? <TableRegion label={tab === "parts" ? "Запчастини мережі" : "Техніка мережі"}>{tab === "parts" ? <table className="data-table"><thead><tr><th>Запчастина</th><th>Дилер</th><th>Кількість</th></tr></thead><tbody>{rows.map((row) => "partNumber" in row ? <tr key={row.id}><td><strong>{row.partNumber}</strong><small>{row.description}</small></td><td>{row.dealer}</td><td>{row.quantity}</td></tr> : null)}</tbody></table> : <table className="data-table"><thead><tr><th>Модель</th><th>VIN</th><th>Дилер</th><th>Рік</th></tr></thead><tbody>{rows.map((row) => "model" in row ? <tr key={row.id}><td><strong>{row.model}</strong></td><td>{row.vin}</td><td>{row.dealer}</td><td>{row.year}</td></tr> : null)}</tbody></table>}</TableRegion> : <EmptyState icon={<Globe2 size={26} />} title={tab === "parts" ? "Запчастин у мережі не знайдено" : "Техніки у мережі не знайдено"} description="Спробуйте змінити запит або дилера." />}</Panel></FeatureFrame>;
 }
 
 export function PartsReportPage() {
   const { snapshot } = useDealerWorkflow();
-  const [period, setPeriod] = useState<ReportPeriod>("all");
-  const [manager, setManager] = useState("all");
-  const [status, setStatus] = useState<"all" | import("@/lib/types").OrderStatus>("all");
-  const orders = useMemo(() => filterPartsReportOrders(snapshot.orders, { period, manager, status }), [manager, period, snapshot.orders, status]);
-  const total = sum(orders.map((order) => orderTotal(order.lines)));
-  const managers = [...new Set(snapshot.orders.map((order) => order.creator))];
-  return <FeatureFrame feature="parts-report" action={<LockedExport />}><section className={styles.statsGrid} aria-label="Показники звіту запчастин"><StatCard label="Замовлень" value={orders.length} icon={<Package size={18} />} /><StatCard label="Позицій" value={sum(orders.map((order) => order.lines.length))} icon={<Boxes size={18} />} tone="blue" /><StatCard label="Сума" value={formatMoney(total)} icon={<CircleDollarSign size={18} />} tone="orange" /><StatCard label="Середній чек" value={formatMoney(orders.length ? total / orders.length : 0)} icon={<BarChart3 size={18} />} tone="green" /></section><Panel><div className={styles.filterGrid}><label className={styles.selectField}><span>Період</span><select aria-label="Період звіту" value={period} onChange={(event) => setPeriod(event.target.value as ReportPeriod)}><option value="all">За весь час</option><option value="month">Поточний місяць</option><option value="30">30 днів</option><option value="90">90 днів</option></select></label><label className={styles.selectField}><span>Менеджер</span><select aria-label="Менеджер звіту" value={manager} onChange={(event) => setManager(event.target.value)}><option value="all">Усі</option>{managers.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><label className={styles.selectField}><span>Статус</span><select aria-label="Статус замовлення" value={status} onChange={(event) => setStatus(event.target.value as "all" | import("@/lib/types").OrderStatus)}><option value="all">Усі статуси</option><option value="new">Новий</option><option value="waiting">Очікування</option><option value="supplier">У постачальника</option><option value="ready">Готово</option><option value="sent">Відправлено</option><option value="done">Виконано</option><option value="cancelled">Скасовано</option></select></label></div>{orders.length ? <TableRegion label="Замовлення у звіті запчастин"><table className="data-table"><thead><tr><th>Замовлення</th><th>Дата</th><th>Позицій</th><th>Статус</th><th>Сума</th></tr></thead><tbody>{orders.map((order) => <tr key={order.id}><td><Link className={styles.linkCode} href={dealerOrderHref(order.id)}>{order.code}</Link><small>{order.creator}</small></td><td>{formatDate(order.createdAt)}</td><td>{order.lines.length}</td><td><OrderStatusBadge status={order.status} /></td><td><strong>{formatMoney(orderTotal(order.lines))}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Даних за період немає" description="Змініть період, менеджера або статус." />}</Panel></FeatureFrame>;
+  const [query, setQuery] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const rows = useMemo(() => projectDealerPartsReport(snapshot.orders, { query, from, to }), [from, query, snapshot.orders, to]);
+  return <FeatureFrame feature="parts-report"><Panel><DealerDataToolbar search={{ value: query, onValueChange: setQuery, label: "Пошук звіту запчастин", placeholder: "Номер замовлення..." }} filters={{ label: "Фільтри", activeCount: Number(Boolean(from)) + Number(Boolean(to)), open: filtersOpen, onOpenChange: setFiltersOpen, panelId: "parts-report-filters", onClear: () => { setFrom(""); setTo(""); }, content: <><label className={styles.selectField}><span>Дата від</span><input aria-label="Дата звіту від" type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label><label className={styles.selectField}><span>Дата до</span><input aria-label="Дата звіту до" type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label></> }} resultMeta={ukrainianCount(rows.length, ["замовлення", "замовлення", "замовлень"])} />{rows.length ? <TableRegion label="Замовлення у звіті запчастин"><table className="data-table"><thead><tr><th>Замовлення</th><th>Дата</th><th>Позицій</th><th>Сума</th></tr></thead><tbody>{rows.map((row) => <tr key={row.orderId}><td><Link className={styles.linkCode} href={dealerOrderHref(row.orderId)}>{row.orderCode}</Link></td><td>{formatDate(row.createdAt)}</td><td>{row.itemCount}</td><td><strong>{formatMoney(row.total.amount)}</strong></td></tr>)}</tbody></table></TableRegion> : <EmptyState title="Замовлень не знайдено" description="Змініть запит або діапазон дат." />}</Panel></FeatureFrame>;
 }
 
 export function UnknownFeature({ feature }: { feature: string }) {

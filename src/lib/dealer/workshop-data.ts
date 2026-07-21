@@ -1,3 +1,5 @@
+import type { DealerCustomer } from "@/lib/dealer/contracts";
+import { normalizeDealerSearch } from "@/lib/dealer/format";
 import type { WorkshopOrder } from "@/lib/types";
 
 export type WorkshopStage = Readonly<{
@@ -21,11 +23,32 @@ export const workshopTypeLabels = {
   recall: "Recall",
 } as const satisfies Record<WorkshopOrder["type"], string>;
 
-export const workshopTransitionCapability = {
-  status: "unavailable",
-  reason:
-    "Зміна статусу недоступна: підтверджено лише створення нового замовлення-наряду.",
-} as const;
+export type WorkshopFilters = Readonly<{
+  query: string;
+  stages: readonly WorkshopOrder["status"][];
+  types: readonly WorkshopOrder["type"][];
+}>;
+
+export function filterWorkshopOrders(
+  orders: readonly WorkshopOrder[],
+  customers: readonly DealerCustomer[],
+  filters: WorkshopFilters,
+) {
+  const query = normalizeDealerSearch(filters.query);
+  const customerNames = new Map(customers.map((customer) => [customer.id, customer.name]));
+
+  return orders.filter((order) => {
+    if (filters.stages.length && !filters.stages.includes(order.status)) return false;
+    if (filters.types.length && !filters.types.includes(order.type)) return false;
+    if (!query) return true;
+    return [
+      order.description,
+      customerNames.get(order.customerId) ?? "",
+      order.mechanic,
+      order.notes,
+    ].some((value) => normalizeDealerSearch(value).includes(query));
+  });
+}
 
 export function getWorkshopColumnCounts(orders: readonly WorkshopOrder[]) {
   const counts: Record<WorkshopOrder["status"], number> = {

@@ -5,44 +5,6 @@
   margin-bottom: 16px;
 }
 
-.toolbar,
-.filterGrid {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.searchField {
-  display: flex;
-  flex: 1 1 240px;
-  align-items: center;
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 10px;
-  gap: 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--muted-foreground);
-}
-
-.searchField:focus-within {
-  border-color: var(--orange);
-  box-shadow: 0 0 0 1px var(--orange);
-}
-
-.searchField input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-}
-
 .selectField {
   display: grid;
   min-width: 130px;
@@ -53,6 +15,16 @@
 }
 
 .selectField select {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+}
+
+.selectField input {
   min-height: 36px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -118,18 +90,6 @@
   color: var(--green);
 }
 
-.modalForm {
-  display: grid;
-  gap: 14px;
-}
-
-.formActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .linkCode {
   color: var(--orange);
   font-weight: 680;
@@ -146,21 +106,8 @@
     gap: 8px;
   }
 
-  .toolbar,
-  .filterGrid {
-    align-items: stretch;
-  }
-
-  .toolbar > *,
-  .filterGrid > * {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-
-  .searchField,
   .selectField select,
-  .tabs button,
-  .formActions :global(button) {
+  .tabs button {
     min-height: 44px;
   }
 
@@ -179,9 +126,5 @@
 
   .tableRegion table {
     min-width: 520px;
-  }
-
-  .formActions {
-    justify-content: stretch;
   }
 }

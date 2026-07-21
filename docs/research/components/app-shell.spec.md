@@ -1,9 +1,9 @@
 # AppShell Specification
 
 ## Overview
-- Target file: `src/components/AppShell.tsx`
+- Target file: `src/components/shell/app-shell.tsx`
 - Screenshots: admin/dealer desktop, mobile menu, dark captures
-- Interaction model: click-driven theme/language/drawers/navigation
+- Interaction model: click-driven theme/drawers/navigation, with language and notifications retained only for the admin role
 
 ## DOM Structure
 Top-level app contains header then row with aside and main. Drawer mirrors aside below 1024px. Overlay dialogs render for language/profile/cart.
@@ -20,7 +20,8 @@ Top-level app contains header then row with aside and main. Drawer mirrors aside
 ## States & Behaviors
 - Desktop sidebar visible at >=1024px; modal drawer below.
 - Theme and menu transitions: 150ms.
-- Language menu: English, Русский, Українська.
+- Dealer header: brand, global parts search, theme, profile/logout and cart only. Unsupported client-mode, language, notification and help controls are not rendered.
+- Admin header: retains its language menu and notification control unchanged.
 - Cart dialog: right-side panel, empty-state by default.
 
 ## Responsive

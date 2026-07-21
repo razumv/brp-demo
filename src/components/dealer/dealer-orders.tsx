@@ -14,7 +14,6 @@ import {
   Package,
   Paperclip,
   Save,
-  Search,
   Send,
   ShoppingBag,
   Truck,
@@ -23,12 +22,14 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
+import { ukrainianCount } from "@/lib/dealer/format";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { findDealerOrder } from "@/lib/dealer/order-state";
 import type { DealerAttachmentMetadata, DealerCommandResult, DealerSnapshot } from "@/lib/dealer/contracts";
 import type { OrderLine, OrderStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime, OrderStatusBadge, SectionHeading } from "./common";
+import { DealerDataToolbar } from "./dealer-data-toolbar";
 import styles from "./dealer.module.css";
 
 type Layout = "list" | "kanban";
@@ -67,6 +68,7 @@ export function DealerOrdersPage() {
   const { snapshot } = useDealerWorkflow();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | OrderStatus>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [layout, setLayout] = useState<Layout>("list");
   const customerById = useMemo(
     () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
@@ -143,18 +145,33 @@ export function DealerOrdersPage() {
 
       <Panel className={styles.ordersPanel}>
         <div className={styles.ordersToolbar}>
-          <div className="toolbar-search">
-            <Search size={15} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Пошук за номером, клієнтом, PO або запчастиною..."
-              aria-label="Пошук замовлень"
-            />
-          </div>
-          <select className="select" value={status} onChange={(event) => setStatus(event.target.value as "all" | OrderStatus)} aria-label="Статус">
-            {filterStatuses.map((item) => <option value={item.value} key={item.value}>{item.label} ({counts[item.value]})</option>)}
-          </select>
+          <DealerDataToolbar
+            search={{
+              value: query,
+              onValueChange: setQuery,
+              label: "Пошук замовлень",
+              placeholder: "Пошук за номером, клієнтом, PO або запчастиною...",
+            }}
+            filters={{
+              label: "Фільтри замовлень",
+              activeCount: Number(status !== "all"),
+              open: filtersOpen,
+              onOpenChange: setFiltersOpen,
+              panelId: "dealer-order-filters",
+              onClear: () => setStatus("all"),
+              content: (
+                <label className="field">
+                  <span>Статус</span>
+                  <select value={status} onChange={(event) => setStatus(event.target.value as "all" | OrderStatus)} aria-label="Статус замовлень">
+                    {filterStatuses.map((item) => <option value={item.value} key={item.value}>{item.label} ({counts[item.value]})</option>)}
+                  </select>
+                </label>
+              ),
+            }}
+            resultMeta={ukrainianCount(filtered.length, ["замовлення", "замовлення", "замовлень"])}
+          />
+        </div>
+        <div className={styles.orderViewModes}>
           <div className="segmented" aria-label="Вигляд замовлень">
             <button type="button" aria-pressed={layout === "list"} onClick={() => setLayout("list")}><List size={14} /> Список</button>
             <button type="button" aria-pressed={layout === "kanban"} onClick={() => setLayout("kanban")}><LayoutGrid size={14} /> Канбан</button>

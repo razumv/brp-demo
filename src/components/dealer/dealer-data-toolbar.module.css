@@ -1,0 +1,147 @@
+.root {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.searchField {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+}
+
+.searchField:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 1px var(--orange);
+}
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.filterTrigger {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.filterTrigger:hover,
+.filterTrigger:focus-visible {
+  border-color: var(--orange);
+  color: var(--orange);
+  outline: 0;
+}
+
+.filterTrigger:focus-visible {
+  box-shadow: 0 0 0 1px var(--orange);
+}
+
+.activeCount {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-grid;
+  min-width: 17px;
+  min-height: 17px;
+  padding-inline: 3px;
+  place-items: center;
+  border: 1px solid var(--surface);
+  border-radius: 999px;
+  background: var(--orange);
+  color: white;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.filterPanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+}
+
+.filterContent {
+  display: flex;
+  flex: 1 1 220px;
+  flex-wrap: wrap;
+  align-items: end;
+  min-width: 0;
+  gap: 10px;
+}
+
+.resetButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.resetButton:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.resultMeta {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .filterPanel {
+    align-items: stretch;
+  }
+
+  .filterContent,
+  .filterContent > *,
+  .resetButton {
+    width: 100%;
+  }
+
+  .resetButton {
+    justify-content: center;
+    min-height: 44px;
+  }
+}

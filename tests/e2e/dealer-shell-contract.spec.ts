@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { loginAsDealer } from "./support/dealer-session";
+import { loginAsAdmin } from "./support/admin-session";
 
 test("dealer shell keeps cart state in the dealer workflow", async ({ page }) => {
   await loginAsDealer(page);
@@ -22,14 +23,22 @@ test("dealer shell keeps cart state in the dealer workflow", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Кошик (0)" })).toBeFocused();
 });
 
-test("dealer-only header controls with no local action expose an unavailable reason", async ({ page }) => {
+test("dealer header omits unsupported controls and clone-state copy", async ({ page }) => {
   await loginAsDealer(page);
 
   for (const label of ["Режим клієнта", "Мова", "Сповіщення"]) {
-    await expect(page.getByRole("button", { name: label, exact: true })).toBeDisabled();
-    await page.getByRole("button", { name: `Чому недоступно: ${label}` }).click();
-    await expect(page.getByRole("note", { name: `${label}: Функція стане доступною після підключення сервісу.` })).toBeVisible();
+    await expect(page.getByRole("button", { name: label, exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: `Чому недоступно: ${label}` })).toHaveCount(0);
   }
+
+  await expect(page.locator(".app-header")).not.toContainText(/demo|демо|mock|мок|local|локальн|clone|клон/i);
+});
+
+test("admin header retains its language and notification controls", async ({ page }) => {
+  await loginAsAdmin(page);
+
+  await expect(page.getByRole("button", { name: "language_switcher" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Сповіщення", exact: true })).toBeVisible();
 });
 
 test.describe("dealer shell at 390px", () => {

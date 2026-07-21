@@ -4,7 +4,7 @@
 
 This is the shared dealer-only interaction contract for the [2026-07-21 parity certification](../DEALER_PARITY_CERTIFICATION_2026-07-21.md). It applies to the single Logos / Финансы profile, with no multi-tenant simulation requirement. It uses the safety boundary in [SOURCE_QA_POLICY.md](../SOURCE_QA_POLICY.md) and the dated historical record in [SOURCE_TEST_RECORDS.md](../SOURCE_TEST_RECORDS.md).
 
-Fresh dealer-authenticated evidence at desktop 1440px and mobile 390px is **PENDING** for every surface below. The current-control observations are clone-code findings, not claims about current source behavior.
+Fresh dealer-authenticated evidence at desktop 1440px and mobile 390px is **PENDING** for every surface below. The current-control observations are local implementation findings, not claims about current source behavior. Legacy baseline findings remain historical even where a row below records a corrected current-local control.
 
 ## Classification vocabulary
 
@@ -37,14 +37,12 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 | Control family | Classification and observable effect / lock reason |
 |---|---|
 | Desktop navigation and brand link | **working local** — links change route, active state follows the URL, and the order badge follows local order count. |
-| Mobile menu button, close button, backdrop close, nav-link close | **working local** for visible open/close/navigation. The drawer declares modal semantics but lacks initial focus, focus containment, Escape close, background inertness, and return focus, so that modal behavior is a **wrong action** until completed. |
+| Mobile menu button, close button, backdrop close, nav-link close | **working local** — the modal drawer handles initial focus, containment, Escape, background inertness and return focus in addition to visible open/close/navigation. |
 | Theme | **working local** — toggles the document class and persists light/dark choice in local storage. |
 | Profile popover and Logout | **working local** — popover visibility changes; Logout clears the local session and routes to login. |
-| Cart button/drawer, line quantity/remove/clear, catalog/checkout navigation | **working local** — drawer/local cart/route changes as labeled. Its dialog also lacks a complete Escape/focus/return contract and must receive the same frontend drawer correction. |
+| Cart button/drawer, line quantity/remove/clear, catalog/checkout navigation | **working local** — drawer/local cart/route changes as labeled, including Escape, focus containment and return focus. |
 | Identity | **working local** read projection — renders the current session identity with Logos / Финансы fallback. A future remote identity read is **backend contract required**. |
-| Client-view button | **enabled inert** — it has no handler or visible effect. Implement only after source/authorization semantics are known, or lock/remove it. |
-| Language menu | Menu open/close is **working local**; each language choice is **wrong action** and **enabled inert** for its label because it only closes the menu and leaves UA/content unchanged. Preference persistence is **backend contract required** if it becomes remote. |
-| Notifications | **enabled inert** — button has no handler or panel. Remote notification read/state is **backend contract required**. |
+| Client-view, language, notifications and related help affordances | **correctly locked/absent** — unsupported dealer-only controls are not rendered. Admin language and notifications remain unchanged. |
 
 <a id="controls-global-search"></a>
 ### Global parts search
@@ -113,8 +111,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 |---|---|
 | Search, status cards/select, List/Kanban, row/card links | **working local** — one local collection is filtered or presented differently and detail opens. |
 | Private note, message composer, timeline disclosures | **working local** — local order data or disclosure state changes. |
-| File picker labeled Add file | **wrong action** — it stores filename metadata only and does not upload. Present metadata-only selection truthfully or lock upload. |
-| Chat `Demo` badge | **wrong action** — prohibited product-facing state label; remove it without changing local message behavior. |
+| File metadata chooser | **working local** — it records only the disclosed name, type, and size with a persistent statement that the file itself is not transferred. Remote upload remains a **backend contract required**. |
+| Chat identity projection | **working local** — persisted local messages render without a product-facing demo/test label. |
 | Approval, fulfillment, shipment, delivery mutation | **correctly locked/absent** — dealer detail exposes none of these controls. |
 | Remote note/chat/attachment persistence | **backend contract required** — authorization, audit, retries/idempotency, and file storage must be specified. |
 
@@ -123,8 +121,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Search, customer selection, create/edit, add equipment, order links | **working local** — selected/local records, validation, metrics, and navigation update. |
-| Service/fleet/VIP category buttons | **wrong action** — all non-retail selections collapse to the same empty result instead of typed category semantics. Bind or remove them. |
+| Search, compact category filter/reset, customer selection, create/edit, add equipment, order links | **working local** — the typed collection, selected/local records, validation, metrics and navigation update. |
+| Retail/Fleet/VIP/Wholesale category selection | **working local** — every exposed category compares the typed customer category and updates results. |
 | Remote customer/equipment CRUD | **backend contract required** — ownership, validation, conflict/audit, and deletion semantics are not contracted. |
 
 <a id="controls-team-access"></a>
@@ -151,8 +149,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Tabs and row disclosure | **working local** — selected tab/empty state and expanded row change. |
-| Query | **wrong action** — it filters container/BL only while promising model/VIN too. Align fields or implementation. |
+| Tabs, captured KPI projection and row disclosure | **working local** — the selected tab/empty state, 15-shipment / 13-unit counts and expanded source-shaped rows derive from one typed shipment collection. |
+| Query and compact action filter/reset | **working local** — query covers container, BL, model, SKU and VIN; action selection filters source-backed read-only action states. |
 | Receipt/shipment/status mutation | **correctly locked/absent** — no operational mutation control is exposed. |
 | Remote unit/shipment read | **backend contract required** — dealer visibility and pagination/schema contracts are required. |
 
@@ -161,8 +159,9 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| New work order modal, validation, cancel/create | **working local** — a valid record appears in the local New column. |
-| Stage transition, assignment, edit, delete | **correctly locked/absent** — source lifecycle is unverified, so no control is exposed. Do not invent it. |
+| Search, stage/work-type filters and reset | **working local** — one typed order collection is filtered by description, customer, mechanic, notes, stage and type. |
+| New work order modal, validation, cancel/create | **working local** — a valid record persists, appears in the New column and survives reload; storage failure produces a retryable error without success UI. |
+| Stage transition, drag/drop, assignment, edit, delete | **correctly locked/absent** — cards are static and non-draggable because the source lifecycle is unverified. No decorative lock notice or fake transition button is rendered. |
 | Remote list/create | **backend contract required** — even these methods wait for fresh source field evidence plus ownership/validation/audit contracts. |
 
 <a id="controls-bossweb"></a>
@@ -179,8 +178,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 | Control family | Classification and observable effect / lock reason |
 |---|---|
 | Category buttons and slot selection/modal | **working local** — the local list/selection/detail changes. |
-| Future/available view buttons and text query | **enabled inert** — clicks/typing do not change the view or collection. |
-| Slot count/KPIs/timeline versus rendered rows | **wrong action** — projections do not derive from the shown typed collection. |
+| Text query and compact category filter/reset | **working local** — both filter the typed slot collection; selected slot, timeline, counts, detail and empty state derive from the same result. |
+| Alternate schedule views | **correctly locked/absent** — no unobserved view control is rendered. |
 | Reservation/shipment mutation | **correctly locked/absent** — no such controls are exposed. |
 | Remote schedule/availability read | **backend contract required** — timezone, visibility, pagination, and freshness must be defined. |
 
@@ -189,42 +188,39 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Query and type select | **enabled inert** — no document collection is filtered. Lock while empty or add typed local rows. |
-| Export | **backend contract required** — disabled, but needs a persistent signed-artifact/authorization reason to be a correct lock. |
+| Query and compact type/status filters/reset | **working local** — the typed document collection and result metadata change together. |
+| Export/download | **correctly locked/absent** and **backend contract required** — no decorative export control is rendered; signed-artifact authorization is still required for a future remote effect. |
 
 <a id="controls-drafts"></a>
 ### Drafts `/dealer/order-drafts`
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| New Draft, query, Refresh | **enabled inert** — no draft is created, filtered, or refreshed. Implement local draft state or lock each control. |
-| Excel | **backend contract required** — disabled without a persistent file-transfer reason. |
+| New Draft, query, content/buyer filters/reset, open and delete | **working local** — persisted draft state changes, filters compose with search, and opening continues in the cart. |
+| Refresh and Excel | **correctly locked/absent** and **backend contract required** — no inert refresh or decorative file-transfer control is rendered. |
 
 <a id="controls-consignment"></a>
 ### Consignment `/dealer/consignment`
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Stock/network/request tabs and Create request modal | **working local** — selected empty state or modal visibility changes. |
-| Query, Filters, request part/comment fields | **enabled inert** — they do not filter data or change the request summary. |
-| Final Send request | **correctly locked/absent** and **backend contract required** — disabled; modal context explains preview-only, and operational eligibility/authorization/idempotency remain uncontracted. |
+| Stock/network/request tabs, query and explicit state filter/reset | **working local** — tabs select a typed collection; query and available/reserved/requested status change its rows. |
+| Request creation and final submit | **correctly locked/absent** and **backend contract required** — no partial form or disabled submit is exposed while operational eligibility, authorization, idempotency and workflow status remain uncontracted. |
 
 <a id="controls-settlements"></a>
 ### Settlements `/dealer/settlements`
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Period buttons | **working local** — selected period and empty-state text change, but no ledger is filtered yet. |
-| Refresh balance | **enabled inert** — no refresh/state change occurs. |
-| Excel | **backend contract required** — disabled without a persistent export reason. |
+| Query, compact period filter/reset, rows and totals | **working local** — the typed ledger is filtered against the certification reference clock and every total derives from visible rows. |
+| Refresh balance and Excel | **correctly locked/absent** — no inert synchronization or export control is rendered. Remote effects remain a **backend contract required**. |
 
 <a id="controls-inventory"></a>
 ### Inventory `/dealer/parts-inventory`
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Low-stock checkbox | **working local** — checked state and empty-state explanation change. |
-| Query | **enabled inert** — input does not filter a collection. |
+| Query and compact stock-state filter/reset | **working local** — query filters part number/description; in-stock, low and out states filter the typed inventory collection and update derived values. |
 | Stock mutation/sync | **correctly locked/absent** — no operational controls are exposed. |
 | Remote inventory read | **backend contract required** — location, freshness, price visibility, and pagination must be defined. |
 
@@ -233,8 +229,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Parts/units tabs | **working local** — placeholder and empty-state copy change. |
-| Query and dealer select | **enabled inert** — no collection is filtered. |
+| Parts/units tabs | **working local** — the active typed collection, query fields, dealer options, rows and empty state change together. |
+| Query and compact dealer filter/reset | **working local** — parts search covers part/description; units search covers model/VIN; dealer options derive only from the active tab. |
 | Allocation/reservation | **correctly locked/absent** — no cross-dealer write control is exposed. |
 | Remote network read | **backend contract required** — cross-dealer privacy/scope/freshness contracts are required. |
 
@@ -243,10 +239,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| KPI totals and order links | **working local** — values derive from local orders and links open detail. |
-| Period and manager selects | **enabled inert** — neither filters rows/totals. |
-| Status column | **wrong action** — every row renders New instead of deriving the order status. |
-| Excel | **backend contract required** — disabled without a persistent export reason. |
+| Order-code query, date range, rows, item counts, totals and order links | **working local** — all values derive from the same local orders and links open detail. |
+| Manager/status/admin KPI dimensions and Excel | **correctly locked/absent** — the dealer view does not invent a manager alias, hard-coded status or non-working export. Remote reporting/export remains a **backend contract required**. |
 
 ## Proposed typed `brp-dev1` ports
 
