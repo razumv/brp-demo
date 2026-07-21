@@ -95,7 +95,7 @@ Do not bulk-edit all routes before proving the foundation and provider architect
 
 1. Pin the verified Astryx/StyleX versions and update the lockfile.
 2. Run `npx astryx theme add neutral` and inspect every generated file.
-3. Bundle Figtree variable font locally with Cyrillic coverage; verify license and offline path.
+3. Bundle exact-pinned Figtree variable Latin/Latin-Extended files locally and keep the existing local Inter variable Cyrillic WOFF2 as the explicit fallback. Verify both licenses/offline paths; Figtree itself does not ship Cyrillic glyphs.
 4. Build the local theme to static CSS/JS/declarations. Add a deterministic script/check so generated artifacts cannot drift from source.
 5. Implement the official Tailwind v4 layer sequence. The `@layer` declaration must live in a file imported before any other CSS because Next/webpack hoists imports:
 
@@ -117,11 +117,11 @@ Then load Tailwind theme/preflight, Astryx reset/base, local built Neutral theme
    - `data-color-mode`;
    - `data-resolved-theme`;
    - `.dark` only for resolved dark;
-   - `data-renderer-pending` only for saved Astryx cold start.
-5. Server-prerender shadcn and hydrate the same tree. Load Astryx as a separately identifiable renderer chunk, commit its providers, signal readiness, and only then remove the app-root pending marker.
+   - `data-renderer-pending` on `<html>` only for a saved Astryx cold start; the head bootstrap must never query the not-yet-parsed `#brp-app-root`.
+5. Server-prerender shadcn and hydrate the same tree. Load Astryx as a separately identifiable renderer chunk, commit its providers, signal readiness, and only then remove the canonical `data-renderer-pending` marker from `<html>`.
 6. Add a bounded bootstrap watchdog and renderer error boundary that recover to the visible server-rendered shadcn tree on blocked/rejected chunk, renderer failure, or stale PWA assets. Test successful cold load, blocked import, rejected import, renderer error, JavaScript-disabled fallback, and recovery.
-7. Place domain/session/cart/workflow providers and every stateful controller that must survive a switch outside the renderer branch. Unsaved form values, filters, sorting, pagination, selections, collapse state, and workflow drafts must not reset; only transient presentation state may be renderer-local.
-8. Place exactly one Astryx `Theme`, `LayerProvider`, and base-path-safe Next `LinkProvider` inside Astryx root. Let AppearanceProvider own application attributes; let Astryx `Theme` own `data-theme` and required `data-astryx-theme="neutral"` semantics, including omitting `data-theme` in `system` mode.
+7. Never conditionally wrap route/layout `children` in different renderer-root component types. Keep domain/session/cart/workflow providers and every stateful controller in stable ancestry; select only `CurrentView | lazy AstryxView` below each controller. Unsaved form values, filters, sorting, pagination, selections, collapse state, shell query state, and workflow drafts must not reset; only transient presentation state may be renderer-local.
+8. Mount exactly one stable `Theme`, `LayerProvider`, and base-path-safe Next `LinkProvider` infrastructure root. Keep its component ancestry unchanged across renderer switches; change only the Theme props between a current compatibility theme and generated Neutral. Let AppearanceProvider own semantic application attributes; let Astryx `Theme` own `data-theme` and its wrapper/root theme markers. Actual Astryx views remain lazy and separately identifiable.
 9. Update runtime `theme-color`; retain a safe static manifest value.
 
 ## Phase 3: admin appearance settings and shared facade
@@ -199,7 +199,7 @@ Do not claim workshop drag-and-drop or another functional workflow was added unl
 3. Cover desktop/mobile special routes at 390, 768, 1280, and 1440 widths.
 4. Verify landmarks, labels, focus, escape/return focus, dialogs/popovers/menus/toasts, table semantics, switches/tabs/selectors, contrast, reduced motion, and no document overflow.
 5. Real-browser test current Chrome/Edge/Firefox/Safari plus iOS Safari and Android Chrome. Verify Tier 2 overlay fallbacks.
-6. Extend PWA validation for Astryx chunks, local theme CSS, Figtree WOFF2, `/brp-demo` paths, offline load, saved Astryx preference, update, and switch back.
+6. Extend PWA validation for Astryx chunks, local theme CSS, Figtree Latin/Latin-Extended WOFF2, Inter Cyrillic WOFF2 fallback, `/brp-demo` paths, offline load, saved Astryx preference, update, and switch back.
 7. Run:
 
 ```bash

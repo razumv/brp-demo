@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-21
 
-**Status:** Proposed; product direction approved in conversation, written specification awaiting approval
+**Status:** Approved by the product owner on 2026-07-21; implementation authorized
 
 **Scope:** All admin and dealer routes, shared application chrome, light/dark/system color modes, static GitHub Pages delivery, and a future `brp-dev1` organization-settings adapter
 
@@ -101,7 +101,7 @@ Authoritative sources:
 
 The CLI-generated editable Neutral theme is authoritative for this project. Do not silently substitute the published prebuilt Neutral theme because it is not byte-for-byte equivalent to the CLI scaffold. Commit the generated TypeScript source, icon registry, CSS, JavaScript theme object, and declarations required by the build. Rebuild generated artifacts deterministically when the source changes.
 
-The CLI theme uses Figtree typography. Bundle Figtree locally (for example through an exact-pinned `@fontsource-variable/figtree` package or locally committed licensed WOFF2 files), include Cyrillic coverage, and ensure it is available offline and under the GitHub Pages base path. Do not load a remote Google Fonts stylesheet.
+The CLI theme uses Figtree typography. The official Figtree distribution has Latin and Latin-Extended glyphs but no Cyrillic subset. Bundle the exact-pinned `@fontsource-variable/figtree` package locally for supported glyphs and use the already bundled variable Inter Cyrillic WOFF2 as the explicit next fallback (`"Figtree Variable", "Inter", ...`). Both families must work offline and under the GitHub Pages base path. Do not load a remote Google Fonts stylesheet and do not claim that Figtree itself contains Cyrillic glyphs.
 
 Astryx is beta software. Exact subpath imports are required, and all APIs used in code must be checked against the installed version or the Astryx MCP instead of inferred from memory.
 
@@ -115,17 +115,18 @@ Astryx is beta software. Exact subpath imports are required, and all APIs used i
 RootLayout
 ├── early appearance bootstrap
 └── AppearanceProvider
-    ├── DemoStoreProvider and other domain/session/cart providers
-    └── ActiveRenderer
-        ├── CurrentRendererRoot
-        └── AstryxRendererRoot
+    └── StableRendererInfrastructure
+        ├── exactly one Theme / LayerProvider / LinkProvider root
+        └── DemoStoreProvider and other domain/session/cart providers
+            └── stable route and shell controllers
+                └── CurrentView | lazy AstryxView
 ```
 
-Only the selected renderer is mounted. Session, cart, drafts, orders, permissions, and workflow state are not remounted when the renderer changes.
+Only the selected renderer view is mounted. The provider/component ancestry above controllers is stable and never changes type when the renderer changes. Session, cart, drafts, orders, permissions, and workflow state are therefore not remounted. A root-level `CurrentRendererRoot | AstryxRendererRoot` wrapper around `children` is forbidden because changing that wrapper type remounts the complete route tree.
 
 Every behavior-bearing controller and every state value that must survive a renderer change—including unsaved controlled form values, filters, sorting, pagination, selections, collapse state, and workflow drafts—lives in a stable component/provider above the renderer-specific view branch. Renderer views may own only disposable presentation state such as hover and transient overlay visibility. Switching renderers may close an overlay and restore focus, but must not discard user-entered or workflow state.
 
-The Astryx root contains exactly one `Theme`, one `LayerProvider`, one `LinkProvider` configured for Next.js navigation, and the appropriate internationalization provider if Astryx-owned strings require it. Never nest `LayerProvider` instances.
+The stable renderer infrastructure contains exactly one `Theme`, one `LayerProvider`, one `LinkProvider` configured for Next.js navigation, and the appropriate internationalization provider if Astryx-owned strings require it. `Theme` stays mounted in both modes and receives either a no-op/current compatibility theme or the generated Neutral theme; changing its props must not change descendant ancestry. Never nest `LayerProvider` instances. Actual Astryx route views remain separately code-split and are mounted only when requested.
 
 ### Hydration and first paint on GitHub Pages
 
@@ -133,14 +134,14 @@ GitHub Pages uses static export, so the server cannot read local storage. Use th
 
 1. the server prerenders the current `shadcn` renderer;
 2. a small inline bootstrap in `<head>` validates the saved preference and applies root attributes before paint;
-3. if the saved renderer is Astryx, the bootstrap seeds the required Astryx theme markers and sets a `data-renderer-pending` marker on the application root;
+3. if the saved renderer is Astryx, the bootstrap seeds the required Astryx theme markers and sets `data-renderer-pending="true"` on `<html>`; the head script cannot address the not-yet-parsed application root;
 4. the first React client render matches the server-rendered shadcn tree;
-5. the provider loads Astryx as a separately identifiable renderer chunk, commits its root providers, signals readiness, and removes the pending marker before a visible mismatched tree is painted;
-6. the pending rule hides only the application root, never the whole document or offline fallback.
+5. the provider records the saved Astryx value as the desired renderer while keeping the committed renderer as shadcn, lazy-loads the Astryx shell and active route view, signals readiness only after every registered renderer slot commits, then changes the committed renderer and removes the pending marker before a visible mismatched tree is painted;
+6. the pending selector `html[data-renderer-pending="true"] #brp-app-root` hides only the application root, never the whole document or offline fallback.
 
 This avoids a hydration mismatch and an obvious shadcn-to-Astryx flash. A short empty application-root phase on a cold Astryx visit is acceptable for static hosting and disappears when a future backend/cookie lets the server know the organization renderer.
 
-The bootstrap installs a bounded recovery watchdog. If hydration, Astryx import, or renderer readiness is not signaled in time, it atomically restores shadcn root attributes, removes the pending marker, reveals the server-rendered shadcn tree, and records a non-blocking diagnostic. An Astryx renderer error boundary performs the same recovery. JavaScript-disabled visits never execute the bootstrap and therefore remain visible in the server-rendered shadcn fallback.
+The bootstrap installs a bounded recovery watchdog. If hydration, an Astryx view import, or the readiness barrier is not signaled in time, it atomically restores shadcn root attributes, removes the `<html>` pending marker, reveals the server-rendered shadcn tree, and records a non-blocking diagnostic. An Astryx view error boundary performs the same recovery. JavaScript-disabled visits never execute the bootstrap and therefore remain visible in the server-rendered shadcn fallback.
 
 Do not render both design systems simultaneously, make the whole application client-only, or use a CSS-only component-theme switch.
 
@@ -263,7 +264,7 @@ Do not dynamically import global CSS and do not rely on source order alone. Insp
 ### Token ownership
 
 - Current renderer retains current variables and Inter.
-- Astryx renderer uses the generated Neutral tokens and Figtree.
+- Astryx renderer uses the generated Neutral tokens, Figtree for Latin/Latin-Extended glyphs, and the local Inter variable font for Cyrillic glyphs.
 - BRP orange may be introduced through the supported Astryx theme/accent-family API, never by changing one accent token while leaving derived contrast tokens stale.
 - Status semantics remain consistent across renderers: success, warning, danger, info, neutral.
 - No route migration may add arbitrary hardcoded color classes for Astryx state.
@@ -444,7 +445,7 @@ Add focused `test:appearance` and `test:e2e:appearance` suites, include them in 
 
 - Keep static export and `/brp-demo` base path intact.
 - Astryx JavaScript and CSS under `_next/static` must be precached by the existing Workbox generation rules.
-- Precache local Figtree WOFF2 assets and verify paths in the generated service worker.
+- Precache local Figtree Latin/Latin-Extended WOFF2 assets and the existing Inter Cyrillic WOFF2 fallback; verify all paths in the generated service worker.
 - Keep navigation network-only with the existing offline fallback unless separately approved.
 - Do not precache admin HTML/RSC simply to make the theme work.
 - Extend `pwa:validate` to assert that Astryx chunks/theme CSS/font assets exist under the correct base path and are reachable from the exported shell.
@@ -454,7 +455,7 @@ Add focused `test:appearance` and `test:e2e:appearance` suites, include them in 
 ## Delivery sequence
 
 1. Pin Astryx dependencies and run the exact Neutral-theme CLI scaffold.
-2. Build/commit the static theme and local Figtree assets.
+2. Build/commit the static theme, local Figtree assets, and verified Inter Cyrillic fallback.
 3. Establish CSS layers and pass the foundation smoke test in development and production build.
 4. Implement preference types, repository, bootstrap, provider, root attributes, and tests.
 5. Implement appearance settings in both renderers.
@@ -499,7 +500,7 @@ The work is complete only when:
 | Risk | Control |
 | --- | --- |
 | Tailwind/reset silently overrides Astryx | canonical layers file, legacy reset audit, foundation computed-style test, production CSS inspection |
-| hydration mismatch or renderer flash | server shadcn baseline, head bootstrap, first-render parity, layout-effect switch, app-root pending marker |
+| hydration mismatch or renderer flash | server shadcn baseline, head bootstrap, first-render parity, readiness-gated switch, `<html>` pending marker that hides only `#brp-app-root` |
 | state lost on switch | providers/domain store above renderer branch, persistence tests |
 | current UI regresses | current renderer preserved and screenshot-regressed before route migration |
 | partial “Astryx skin” | semantic facade inventory, native-control audit, route acceptance matrix |
