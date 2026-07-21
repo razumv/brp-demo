@@ -30,13 +30,13 @@ test("creates a customer with an explicit category that can be filtered determin
       address: "Київ",
       notes: "",
     },
-    category: "service",
+    category: "wholesale",
     id: "customer-water",
     now: "2026-07-21T10:00:00.000Z",
   });
 
-  assert.equal(result.customer.category, "service");
-  assert.equal(result.state.customers.filter((customer) => customer.category === "service").length, 1);
+  assert.equal(result.customer.category, "wholesale");
+  assert.equal(result.state.customers.filter((customer) => customer.category === "wholesale").length, 1);
 });
 
 test("does not delete a customer with related orders or equipment", () => {
@@ -148,5 +148,17 @@ test("migrates a prior v2 dealer payload without categories without discarding w
   assert.equal(migrated.customers[0]?.category, "retail");
   assert.deepEqual(migrated.cart, [{ partNumber: "9779150", quantity: 2 }]);
   assert.equal(migrated.drafts[0]?.id, "draft-1");
+  assert.equal(migrated.orders[0]?.id, state.orders[0]?.id);
+});
+
+test("migrates the retired service category without discarding dealer workflow data", () => {
+  const state = createState();
+  const persisted = JSON.parse(JSON.stringify(state)) as { customers: Array<Record<string, unknown>> };
+  if (!persisted.customers[0]) throw new Error("Customer fixture is required");
+  persisted.customers[0].category = "service";
+
+  const migrated = normalizeDealerLocalStateForOwner(persisted, "orders@logos.ua::logos");
+  assert.ok(migrated);
+  assert.equal(migrated.customers[0]?.category, "retail");
   assert.equal(migrated.orders[0]?.id, state.orders[0]?.id);
 });

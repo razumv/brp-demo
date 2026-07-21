@@ -269,9 +269,10 @@ function BrowserRow({
   href?: string;
   onClick?: () => void;
 }) {
-  const className = `${styles.browserRow} ${active ? styles.browserRowActive : ""}`;
+  const className = `${styles.browserRow} ${active ? styles.browserRowActive : ""} ${!href && !onClick ? styles.browserRowStatic : ""}`;
   const content = <><Folder size={15} /><span>{children}</span><ChevronRight size={14} /></>;
   if (href) return <Link className={className} href={href}>{content}</Link>;
+  if (!onClick) return <div className={className} aria-current={active ? "page" : undefined}>{content}</div>;
   return <button type="button" className={className} aria-pressed={active} onClick={onClick}>{content}</button>;
 }
 
@@ -292,7 +293,7 @@ function CategoryBrowser() {
           <BrowserRow href={`/catalog/${CATALOG_IDS.brand}/sxs`}>Can-Am SXS</BrowserRow>
         </section>
         <section className={`${styles.browserColumn} ${styles.yearColumn}`} aria-label="Роки">
-          <BrowserRow>Accessories</BrowserRow>
+          <BrowserRow href="/dealer/accessories">Accessories</BrowserRow>
           {years.map((year) => (
             <BrowserRow key={year} active={selectedYear === year} onClick={() => setSelectedYear(year)}>{year}</BrowserRow>
           ))}

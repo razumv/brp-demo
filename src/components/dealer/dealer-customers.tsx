@@ -29,12 +29,12 @@ import { useDealerWorkflow } from "./dealer-workflow-provider";
 import { Initials, Metric, SectionHeading } from "./common";
 import styles from "./dealer.module.css";
 
-const categories = ["all", "retail", "service", "fleet", "vip"] as const;
+const categories = ["all", "retail", "fleet", "vip", "wholesale"] as const;
 const categoryLabels: Record<DealerCustomerCategory, string> = {
   retail: "Роздріб",
-  service: "Сервіс",
   fleet: "Автопарк",
   vip: "VIP",
+  wholesale: "Опт",
 };
 const emptyCustomer: DealerCustomerInput = {
   name: "",
@@ -209,7 +209,7 @@ export function CustomersPage() {
         <StatCard label="Загалом" value={state.customers.length} icon={<UsersRound size={18} />} />
         <StatCard label="З технікою" value={new Set(state.equipment.map((item) => item.customerId)).size} icon={<CarFront size={18} />} tone="blue" />
         <StatCard label="VIP" value={categoryCount("vip")} icon={<Star size={18} />} tone="amber" />
-        <StatCard label="Автопарк" value={categoryCount("fleet")} icon={<Package size={18} />} tone="orange" />
+        <StatCard label="Опт" value={categoryCount("wholesale")} icon={<Package size={18} />} tone="orange" />
       </section>
 
       <div className={styles.customerToolbar}>
@@ -268,6 +268,11 @@ export function CustomersPage() {
               <section className={styles.customerSection}>
                 <SectionHeading title={`Замовлення запчастин (${selectedOrders.length})`} />
                 {selectedOrders.length ? selectedOrders.map((order) => <Link href={dealerOrderHref(order.id)} className={styles.customerOrder} key={order.id}><Package size={15} /><span><strong>{order.code}</strong><small>{order.lines.length} позицій</small></span><strong>{formatMoney(orderTotal(order.lines))}</strong></Link>) : <p className={styles.mutedRow}>Поки немає замовлень</p>}
+              </section>
+
+              <section className={styles.customerSection}>
+                <SectionHeading title="Продана техніка (0)" />
+                <p className={styles.mutedRow}>Немає продажів техніки</p>
               </section>
             </>
           ) : <EmptyState title="Оберіть клієнта" description="Картка клієнта з’явиться тут." />}

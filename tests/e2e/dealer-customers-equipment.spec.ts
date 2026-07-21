@@ -13,17 +13,19 @@ test("dealer creates, filters, and deletes an unrelated customer", async ({ page
   await page.getByRole("button", { name: "Додати клієнта" }).click();
   await page.getByLabel("Ім’я *").fill("ПП Озерний");
   await page.getByLabel("Телефон").fill("+380441112233");
-  await page.getByLabel("Категорія").selectOption("service");
+  await page.getByLabel("Категорія").selectOption("wholesale");
   await page.getByRole("dialog", { name: "Додати клієнта" }).getByRole("button", { name: "Додати клієнта", exact: true }).click();
 
   await expect(page.getByRole("button", { name: "ПП Озерний", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Сервіс" }).click();
+  await page.getByRole("button", { name: "Опт" }).click();
   await expect(page.getByRole("button", { name: "ПП Озерний", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Всі" }).click();
   await page.getByRole("button", { name: "Клієнт Logos", exact: true }).click();
-  await page.getByRole("button", { name: "Сервіс" }).click();
+  await page.getByRole("button", { name: "Опт" }).click();
   await expect(page.getByRole("heading", { name: "Клієнт Logos", exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "ПП Озерний", exact: true })).toBeVisible();
+  await expect(page.getByText("Продана техніка (0)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Немає продажів техніки", { exact: true })).toBeVisible();
   await page.getByLabel("Пошук клієнтів").fill("Неіснуючий клієнт");
   await expect(page.getByText("Клієнтів не знайдено", { exact: true })).toBeVisible();
 

@@ -82,6 +82,13 @@ test("catalog overview states use product copy without environment labels", asyn
   await expect(page.locator("main")).not.toContainText(forbiddenCopy);
 
   await page.goto("/catalog/CAN_OFF_EN_US/7560bdc0-e7f3-4d84-9812-b8ecb55d948a");
+  await expect(page.getByLabel("Категорії").locator('[aria-current="page"]')).toHaveText("Can-Am ATV");
+  await expect(page.getByRole("button", { name: "Can-Am ATV", exact: true })).toHaveCount(0);
+  await page.getByRole("link", { name: "Accessories", exact: true }).click();
+  await expect(page).toHaveURL(/\/dealer\/accessories$/);
+  await expect(page.getByRole("heading", { name: "Каталог аксесуарів" })).toBeVisible();
+
+  await page.goto("/catalog/CAN_OFF_EN_US/7560bdc0-e7f3-4d84-9812-b8ecb55d948a");
   await page.getByRole("button", { name: "2025", exact: true }).click();
   await expect(page.locator("main")).not.toContainText(forbiddenCopy);
 

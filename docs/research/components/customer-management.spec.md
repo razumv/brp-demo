@@ -8,11 +8,11 @@ The populated customer capture and the allowed QA-record creation are historical
 
 Page header contains title, search/filters and New client. Client dialog fields are name, phone, email, address and notes. Require name and either phone or email.
 
-Every enabled category filter must deterministically filter typed local customer data. Do not render service, fleet, VIP, or any other category as enabled unless its local data and resulting empty state are defined. Search covers the documented local fields while typing.
+The locked source capture exposes All, Retail, Fleet, VIP and Wholesale. Every enabled category filter must deterministically filter typed local customer data, including a defined empty state. Search covers the documented local fields while typing.
 
 ## Detail
 
-Selected client shows contact data, statistics and tabs/sections for equipment, orders and sold units. Edit and a confirmed delete are local deterministic actions only. A delete confirmation must name the affected local record and return focus safely; it must not imply a remote deletion.
+Selected client shows contact data, statistics and separate sections for equipment, parts orders and sold units. Until a backend sale-to-customer relation is contracted, sold units remain a truthful zero-state rather than being inferred from registered equipment. Edit and a confirmed delete are local deterministic actions only. A delete confirmation must name the affected local record and return focus safely; it must not imply a remote deletion.
 
 ## Equipment
 

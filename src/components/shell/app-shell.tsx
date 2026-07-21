@@ -412,7 +412,12 @@ export function AppShell({
   const closeMobilePartsSearch = useCallback(() => setMobilePartsSearchOpen(false), []);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("brp-clone-theme");
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem("brp-clone-theme");
+    } catch {
+      // Keep the default theme when browser storage is unavailable.
+    }
     const nextTheme = saved === "dark" ? "dark" : "light";
     document.documentElement.classList.toggle("dark", nextTheme === "dark");
     const frame = window.requestAnimationFrame(() => setTheme(nextTheme));
@@ -427,7 +432,11 @@ export function AppShell({
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
     document.documentElement.classList.toggle("dark", next === "dark");
-    window.localStorage.setItem("brp-clone-theme", next);
+    try {
+      window.localStorage.setItem("brp-clone-theme", next);
+    } catch {
+      // Theme changes remain usable for the current tab without persistence.
+    }
   };
 
   const identity = useMemo(() => ({

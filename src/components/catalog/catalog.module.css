@@ -421,6 +421,15 @@
   color: var(--foreground);
 }
 
+.browserRowStatic {
+  cursor: default;
+}
+
+.browserRowStatic:hover {
+  background: inherit;
+  color: inherit;
+}
+
 .browserRowActive {
   border-left: 2px solid var(--orange);
   background: #e8ebef;

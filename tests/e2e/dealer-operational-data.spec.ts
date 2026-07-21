@@ -59,12 +59,13 @@ test("schedule selectors derive filtering, dated timeframe, and model totals fro
     "pwc-october-2026",
   ]);
 
-  expect(getDealerScheduleMetrics(dealerScheduleSlots)).toEqual({
+  expect(getDealerScheduleMetrics(dealerScheduleSlots, new Date("2026-07-21T12:00:00.000Z"))).toEqual({
     slots: 4,
     totalUnits: 28,
     availableUnits: 8,
     overduePayments: 1,
   });
+  expect(getDealerScheduleMetrics(dealerScheduleSlots, new Date("2026-11-01T00:00:00.000Z")).overduePayments).toBe(0);
   expect(getDealerScheduleTimeframe(dealerScheduleSlots).map((month) => month.key)).toEqual([
     "2026-07",
     "2026-08",

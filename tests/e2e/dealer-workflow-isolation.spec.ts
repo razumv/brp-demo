@@ -114,3 +114,24 @@ test("blocked dealer persistence keeps the cart unchanged and reports a retryabl
   await expect(page.getByText("Повторити", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Кошик (0)" })).toBeVisible();
 });
+
+test("blocked theme storage does not break the dealer shell", async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalGetItem = Storage.prototype.getItem;
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.getItem = function getItem(key) {
+      if (key === "brp-clone-theme") throw new Error("storage blocked");
+      return originalGetItem.call(this, key);
+    };
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (key === "brp-clone-theme") throw new Error("storage blocked");
+      return originalSetItem.call(this, key, value);
+    };
+  });
+
+  await page.goto("/dealer/orders");
+  await page.getByRole("button", { name: "switch_to_dark" }).click();
+
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(page.getByRole("heading", { name: "Мої замовлення" })).toBeVisible();
+});

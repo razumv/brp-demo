@@ -534,7 +534,11 @@ function isCustomer(value: unknown) {
 function isCustomerWithOptionalCategory(value: unknown) {
   return isRecord(value) && hasStringFields(value, [
     "id", "name", "phone", "email", "address", "notes", "createdAt",
-  ]) && (value.category === undefined || dealerCustomerCategories.includes(value.category as DealerCustomerCategory));
+  ]) && (
+    value.category === undefined
+    || value.category === "service"
+    || dealerCustomerCategories.includes(value.category as DealerCustomerCategory)
+  );
 }
 
 function isEquipment(value: unknown) {

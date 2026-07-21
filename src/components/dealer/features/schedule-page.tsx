@@ -11,13 +11,13 @@ import {
 import { useMemo, useState } from "react";
 import { EmptyState, InlineNotice, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import {
-  dealerScheduleAsOfDate,
   dealerScheduleCategoryLabels,
   dealerScheduleSlots,
   dealerScheduleStatusLabels,
   filterDealerScheduleSlots,
   formatDealerScheduleDate,
   formatDealerScheduleTimeframe,
+  getDealerScheduleAsOfDate,
   getDealerScheduleMetrics,
   getDealerScheduleSlotTotals,
   getDealerScheduleTimeframe,
@@ -71,6 +71,7 @@ function ScheduleSlotContent({ slot }: { slot: DealerScheduleSlot }) {
 }
 
 export function SchedulePage() {
+  const asOf = useMemo(() => new Date(), []);
   const [category, setCategory] = useState<DealerScheduleCategoryFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>(dealerScheduleSlots[0]?.id ?? "");
@@ -79,7 +80,7 @@ export function SchedulePage() {
     () => filterDealerScheduleSlots(dealerScheduleSlots, category, query),
     [category, query],
   );
-  const metrics = useMemo(() => getDealerScheduleMetrics(filteredSlots), [filteredSlots]);
+  const metrics = useMemo(() => getDealerScheduleMetrics(filteredSlots, asOf), [asOf, filteredSlots]);
   const timeframe = useMemo(() => getDealerScheduleTimeframe(filteredSlots), [filteredSlots]);
   const timeframeLabel = useMemo(() => formatDealerScheduleTimeframe(filteredSlots), [filteredSlots]);
   const selected = filteredSlots.find((slot) => slot.id === selectedId) ?? filteredSlots[0];
@@ -88,7 +89,7 @@ export function SchedulePage() {
     <FeatureFrame feature="schedule">
       {metrics.overduePayments ? (
         <InlineNotice tone="warning">
-          <strong>{ukrainianCount(metrics.overduePayments, ["поставка", "поставки", "поставок"])}</strong> має прострочену дату оплати станом на {formatDealerScheduleDate(dealerScheduleAsOfDate)}.
+          <strong>{ukrainianCount(metrics.overduePayments, ["поставка", "поставки", "поставок"])}</strong> має прострочену дату оплати станом на {formatDealerScheduleDate(getDealerScheduleAsOfDate(asOf))}.
         </InlineNotice>
       ) : null}
 

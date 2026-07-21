@@ -86,7 +86,11 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
         else window.localStorage.removeItem(STORAGE_KEY);
       }
     } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // A blocked storage implementation must not prevent the session shell from loading.
+      }
     } finally {
       setHydrated(true);
     }

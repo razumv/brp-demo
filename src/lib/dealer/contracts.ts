@@ -18,7 +18,7 @@ export type DealerIdentity = Readonly<{
   company: string;
 }>;
 
-export const dealerCustomerCategories = ["retail", "service", "fleet", "vip"] as const;
+export const dealerCustomerCategories = ["retail", "fleet", "vip", "wholesale"] as const;
 export type DealerCustomerCategory = (typeof dealerCustomerCategories)[number];
 export type DealerCustomer = Customer & { category: DealerCustomerCategory };
 export type DealerCustomerInput = CustomerInput & { category?: DealerCustomerCategory };

@@ -34,8 +34,6 @@ export type DealerScheduleMonth = Readonly<{
   slotCount: number;
 }>;
 
-export const dealerScheduleAsOfDate = "2026-07-21";
-
 export const dealerScheduleCategoryLabels = {
   PWC: "Sea-Doo",
   ATV: "ATV",
@@ -148,7 +146,9 @@ export function filterDealerScheduleSlots(
 
 export function getDealerScheduleMetrics(
   slots: readonly DealerScheduleSlot[],
+  asOf = new Date(),
 ): DealerScheduleMetrics {
+  const asOfDate = getDealerScheduleAsOfDate(asOf);
   return slots.reduce<DealerScheduleMetrics>((metrics, slot) => {
     const totals = getSlotTotals(slot);
     return {
@@ -157,9 +157,13 @@ export function getDealerScheduleMetrics(
       availableUnits: metrics.availableUnits + totals.availableUnits,
       overduePayments:
         metrics.overduePayments
-        + (slot.paymentDueDate < dealerScheduleAsOfDate && slot.arrivalDate >= dealerScheduleAsOfDate ? 1 : 0),
+        + (slot.paymentDueDate < asOfDate && slot.arrivalDate >= asOfDate ? 1 : 0),
     };
   }, { slots: 0, totalUnits: 0, availableUnits: 0, overduePayments: 0 });
+}
+
+export function getDealerScheduleAsOfDate(asOf = new Date()) {
+  return asOf.toISOString().slice(0, 10);
 }
 
 export function getDealerScheduleTimeframe(
