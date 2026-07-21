@@ -634,6 +634,14 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
       return;
     }
 
+    if (stateRef.current.renderedDesignSystem === "astryx") {
+      coordinator.cancel();
+      clearProviderWatchdog();
+      clearWindowWatchdog();
+      dispatch({type: "commit-astryx-preference", preference: normalized});
+      return;
+    }
+
     // The inline watchdog protects only the pre-hydration gap. Once the provider
     // accepts Astryx intent, its readiness coordinator owns timeout recovery and
     // the bootstrap must no longer remove attributes owned by the mounted Theme.

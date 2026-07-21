@@ -21,6 +21,23 @@ function waitForManualRendererGate(query: URLSearchParams) {
   });
 }
 
+function waitForSecondaryRendererGate(query: URLSearchParams) {
+  if (query.get("renderer-second-gate") !== "manual") return Promise.resolve();
+  const gateWindow = window as Window & {
+    __BRP_RENDERER_SECOND_GATE_RELEASED__?: boolean;
+    __BRP_RENDERER_SECOND_GATE_WAITING__?: boolean;
+  };
+  if (gateWindow.__BRP_RENDERER_SECOND_GATE_RELEASED__) return Promise.resolve();
+  gateWindow.__BRP_RENDERER_SECOND_GATE_WAITING__ = true;
+  return new Promise<void>((resolve) => {
+    window.addEventListener("brp:renderer-second-gate-release", () => {
+      gateWindow.__BRP_RENDERER_SECOND_GATE_RELEASED__ = true;
+      gateWindow.__BRP_RENDERER_SECOND_GATE_WAITING__ = false;
+      resolve();
+    }, {once: true});
+  });
+}
+
 function loadAstryxFoundationView() {
   const query = new URLSearchParams(window.location.search);
   if (query.get("renderer-failure") === "import") {
@@ -33,6 +50,14 @@ function loadAstryxFoundationView() {
     ? Promise.resolve()
     : new Promise<void>((resolve) => window.setTimeout(resolve, delay));
   return Promise.all([waitForManualRendererGate(query), delayPromise]).then(load);
+}
+
+function loadSecondaryAstryxFoundationView() {
+  const query = new URLSearchParams(window.location.search);
+  return waitForSecondaryRendererGate(query).then(() => (
+    import("./renderer-atomicity-probe")
+      .then((module) => ({default: module.RendererAtomicityProbe}))
+  ));
 }
 
 function subscribeToLocation(onStoreChange: () => void) {
@@ -57,6 +82,10 @@ export function AstryxFoundationProbe() {
     getServerProbeQuerySnapshot,
   );
   if (!isEnabled) return null;
+  const query = new URLSearchParams(window.location.search);
+  const loadSecondaryAstryxView = query.get("renderer-second-slot") === "1"
+    ? loadSecondaryAstryxFoundationView
+    : undefined;
 
   return (
     <section
@@ -65,9 +94,13 @@ export function AstryxFoundationProbe() {
       data-provider-design-system={appearance.desiredPreference.designSystem}
       data-provider-error={appearance.error ?? ""}
       data-provider-status={appearance.transitionStatus}
+      data-renderer-attempt={appearance.rendererAttemptId}
       data-testid="astryx-foundation-probe"
     >
-      <RendererStateHarnessController loadAstryxView={loadAstryxFoundationView} />
+      <RendererStateHarnessController
+        loadAstryxView={loadAstryxFoundationView}
+        loadSecondaryAstryxView={loadSecondaryAstryxView}
+      />
     </section>
   );
 }

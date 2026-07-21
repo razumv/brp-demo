@@ -30,6 +30,9 @@ test("renderer switching is lazy, slot-based, and recovers to the current view",
   assert.match(viewSwitch, /attemptSlotId = `\$\{rendererAttemptId\}:\$\{slotId\}`/);
   assert.match(viewSwitch, /registerRendererSlot/);
   assert.match(viewSwitch, /markRendererSlotReady/);
+  assert.match(viewSwitch, /renderedDesignSystem/);
+  assert.match(viewSwitch, /hidden=\{!isAstryxCommitted\}/);
+  assert.match(viewSwitch, /isAstryxCommitted \? null : currentView/);
   assert.match(viewSwitch, /<AstryxViewBoundary/);
   assert.match(viewSwitch, /failRendererTransition/);
   assert.match(boundary, /fallback/);

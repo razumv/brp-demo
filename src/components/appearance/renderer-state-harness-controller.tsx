@@ -10,6 +10,7 @@ import {
   RendererViewSwitch,
   type AstryxRendererViewLoader,
 } from "@/components/appearance/renderer-view-switch";
+import type {RendererAtomicityProbeProps} from "@/components/appearance/renderer-atomicity-probe";
 
 function CurrentRendererStateView({
   state,
@@ -74,8 +75,10 @@ function CurrentRendererStateView({
 
 export function RendererStateHarnessController({
   loadAstryxView,
+  loadSecondaryAstryxView,
 }: {
   loadAstryxView: AstryxRendererViewLoader<RendererStateHarnessProps>;
+  loadSecondaryAstryxView?: AstryxRendererViewLoader<RendererAtomicityProbeProps>;
 }) {
   const [state, setState] = useState(INITIAL_RENDERER_HARNESS_STATE);
   const viewProps: RendererStateHarnessProps = {
@@ -89,11 +92,25 @@ export function RendererStateHarnessController({
   };
 
   return (
-    <RendererViewSwitch
-      astryxViewProps={viewProps}
-      currentView={<CurrentRendererStateView {...viewProps} />}
-      loadAstryxView={loadAstryxView}
-      slotId="astryx-foundation-probe"
-    />
+    <>
+      <RendererViewSwitch
+        astryxViewProps={viewProps}
+        currentView={<CurrentRendererStateView {...viewProps} />}
+        loadAstryxView={loadAstryxView}
+        slotId="astryx-foundation-probe"
+      />
+      {loadSecondaryAstryxView ? (
+        <RendererViewSwitch
+          astryxViewProps={{label: "Secondary renderer slot"}}
+          currentView={(
+            <section data-testid="renderer-secondary-current-view">
+              Secondary current renderer slot
+            </section>
+          )}
+          loadAstryxView={loadSecondaryAstryxView}
+          slotId="astryx-foundation-secondary-probe"
+        />
+      ) : null}
+    </>
   );
 }

@@ -1,0 +1,7 @@
+.stage {
+  display: contents;
+}
+
+.stage[hidden] {
+  display: none;
+}

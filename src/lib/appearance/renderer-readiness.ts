@@ -20,6 +20,7 @@ export type AppearanceTransitionAction =
       transitionId: number;
     }
   | {type: "commit-astryx"; transitionId: number}
+  | {type: "commit-astryx-preference"; preference: AppearancePreferenceV1}
   | {type: "commit-shadcn"; preference: AppearancePreferenceV1}
   | {
       type: "fail";
@@ -75,6 +76,20 @@ export function appearanceTransitionReducer(
         transitionStatus: state.error ? "error" : "ready",
         transitionId: null,
         error: state.error,
+      };
+    case "commit-astryx-preference":
+      if (
+        state.renderedDesignSystem !== "astryx" ||
+        action.preference.designSystem !== "astryx"
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        desiredPreference: copyPreference(action.preference),
+        renderedPreference: copyPreference(action.preference),
+        transitionStatus: state.error ? "error" : "ready",
+        transitionId: null,
       };
     case "commit-shadcn":
       return {

@@ -9,6 +9,7 @@ import {
 } from "react";
 import {AstryxViewBoundary} from "@/components/appearance/astryx-view-boundary";
 import {useAppearance} from "@/components/appearance/use-appearance";
+import styles from "./renderer-view-switch.module.css";
 
 export type AstryxRendererViewProps = {onReady(): void};
 export type AstryxRendererViewModule<Props extends object> = {
@@ -54,8 +55,10 @@ export function RendererViewSwitch<Props extends object>({
     markRendererSlotReady,
     registerRendererSlot,
     rendererAttemptId,
+    renderedDesignSystem,
   } = useAppearance();
   const wantsAstryx = desiredPreference.designSystem === "astryx";
+  const isAstryxCommitted = renderedDesignSystem === "astryx";
   const attemptSlotId = `${rendererAttemptId}:${slotId}`;
   const handleReady = useCallback(
     () => markRendererSlotReady(attemptSlotId),
@@ -70,19 +73,29 @@ export function RendererViewSwitch<Props extends object>({
   if (!wantsAstryx) return currentView;
 
   return (
-    <AstryxViewBoundary
-      fallback={currentView}
-      onFailure={failRendererTransition}
-      resetKey={rendererAttemptId}
-    >
-      <Suspense fallback={currentView}>
-        <LazyAstryxAttempt
-          key={rendererAttemptId}
-          astryxViewProps={astryxViewProps}
-          loadAstryxView={loadAstryxView}
-          onReady={handleReady}
-        />
-      </Suspense>
-    </AstryxViewBoundary>
+    <>
+      {isAstryxCommitted ? null : currentView}
+      <div
+        aria-hidden={!isAstryxCommitted}
+        className={styles.stage}
+        data-renderer-stage={slotId}
+        hidden={!isAstryxCommitted}
+      >
+        <AstryxViewBoundary
+          fallback={isAstryxCommitted ? currentView : null}
+          onFailure={failRendererTransition}
+          resetKey={rendererAttemptId}
+        >
+          <Suspense fallback={isAstryxCommitted ? currentView : null}>
+            <LazyAstryxAttempt
+              key={rendererAttemptId}
+              astryxViewProps={astryxViewProps}
+              loadAstryxView={loadAstryxView}
+              onReady={handleReady}
+            />
+          </Suspense>
+        </AstryxViewBoundary>
+      </div>
+    </>
   );
 }

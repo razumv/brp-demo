@@ -300,6 +300,37 @@ test("only the active transition commits and shadcn commits immediately", () => 
   assert.equal(returned.transitionStatus, "idle");
 });
 
+test("committed Astryx color-mode changes keep the mounted renderer attempt", () => {
+  const initial = createInitialAppearanceTransitionState();
+  const loading = appearanceTransitionReducer(initial, {
+    type: "request-astryx",
+    preference: ASTRYX_SYSTEM,
+    transitionId: 7,
+  });
+  const committed = appearanceTransitionReducer(loading, {
+    type: "commit-astryx",
+    transitionId: 7,
+  });
+  const darkPreference = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
+  const updated = appearanceTransitionReducer(committed, {
+    type: "commit-astryx-preference",
+    preference: darkPreference,
+  });
+
+  assert.deepEqual(updated.desiredPreference, darkPreference);
+  assert.deepEqual(updated.renderedPreference, darkPreference);
+  assert.equal(updated.renderedDesignSystem, "astryx");
+  assert.equal(updated.transitionStatus, "ready");
+  assert.equal(updated.transitionId, null);
+  assert.equal(updated.rendererAttemptId, committed.rendererAttemptId);
+
+  const invalidEarlyCommit = appearanceTransitionReducer(initial, {
+    type: "commit-astryx-preference",
+    preference: darkPreference,
+  });
+  assert.deepEqual(invalidEarlyCommit, initial);
+});
+
 test("repository subscription wins over a delayed stale read and cleanup is idempotent", async () => {
   let releaseRead: ((preference: AppearancePreferenceV1 | null) => void) | null = null;
   let listener: Parameters<AppearancePreferencesRepository["subscribe"]>[0] | null = null;
@@ -1430,6 +1461,20 @@ test("the hydrated provider takes over timeout recovery before requesting Astryx
   const requestIndex = astryxAcceptance.indexOf("dispatch({type: \"request-astryx\"");
   assert.ok(clearIndex >= 0);
   assert.ok(requestIndex > clearIndex);
+});
+
+test("the provider changes an already-mounted Astryx mode without restarting readiness", async () => {
+  const source = await readFile("src/components/providers/appearance-provider.tsx", "utf8");
+  const acceptance = source.slice(
+    source.indexOf("const acceptPreference ="),
+    source.indexOf("const handleTransitionFailure ="),
+  );
+
+  const immediateCommitIndex = acceptance.indexOf('type: "commit-astryx-preference"');
+  const newAttemptIndex = acceptance.indexOf("const transitionId = ++transitionSequenceRef.current");
+  assert.ok(immediateCommitIndex >= 0);
+  assert.ok(newAttemptIndex > immediateCommitIndex);
+  assert.match(acceptance, /stateRef\.current\.renderedDesignSystem === "astryx"/);
 });
 
 test("AppShell delegates color mode and owns no legacy storage or root dark class", async () => {

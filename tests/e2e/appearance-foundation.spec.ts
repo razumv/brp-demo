@@ -1,8 +1,16 @@
 import {expect, test, type Page} from "@playwright/test";
 
 const ASTRYX_LIGHT = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
+const ASTRYX_DARK = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
 
-async function publishAstryx(page: Page) {
+async function publishAstryx(
+  page: Page,
+  preference: {
+    readonly version: 1;
+    readonly designSystem: "astryx";
+    readonly colorMode: "light" | "dark" | "system";
+  } = ASTRYX_LIGHT,
+) {
   await page.evaluate((preference) => {
     const value = JSON.stringify(preference);
     window.localStorage.setItem("brp-appearance-v1", value);
@@ -11,7 +19,7 @@ async function publishAstryx(page: Page) {
       newValue: value,
       storageArea: window.localStorage,
     }));
-  }, ASTRYX_LIGHT);
+  }, preference);
 }
 
 test("saved Astryx hydrates the current view first, then commits one stable provider root", async ({page}) => {
@@ -121,6 +129,79 @@ test("saved Astryx hydrates the current view first, then commits one stable prov
   expect(astryxIndex).toBeGreaterThan(currentIndex);
   expect(pageErrors).toEqual([]);
   expect(hydrationConsole).toEqual([]);
+});
+
+test("multiple renderer slots stay staged until one atomic visible commit", async ({page}) => {
+  test.skip(
+    process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE !== "1",
+    "The renderer foundation probe is enabled only for the focused production regression suite.",
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem("brp-appearance-v1", JSON.stringify({
+      version: 1,
+      designSystem: "astryx",
+      colorMode: "light",
+    }));
+  });
+
+  await page.goto(
+    "/login?astryx-foundation-probe=1&renderer-second-slot=1&renderer-second-gate=manual",
+    {waitUntil: "domcontentloaded"},
+  );
+
+  await expect.poll(() => page.evaluate(() => (
+    window as Window & {__BRP_RENDERER_SECOND_GATE_WAITING__?: boolean}
+  ).__BRP_RENDERER_SECOND_GATE_WAITING__ ?? false)).toBe(true);
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
+  await expect(page.locator("html")).toHaveAttribute("data-renderer-pending", "true");
+  await expect(page.getByTestId("renderer-current-foundation-view")).toBeVisible();
+  await expect(page.getByTestId("renderer-secondary-current-view")).toBeVisible();
+  await expect(page.getByTestId("renderer-state-preservation-probe")).toBeAttached();
+  await expect(page.getByTestId("renderer-state-preservation-probe")).toBeHidden();
+  await expect(page.getByTestId("renderer-secondary-astryx-view")).toHaveCount(0);
+
+  await page.evaluate(() => window.dispatchEvent(new Event("brp:renderer-second-gate-release")));
+
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
+  await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true");
+  await expect(page.getByTestId("renderer-current-foundation-view")).toHaveCount(0);
+  await expect(page.getByTestId("renderer-secondary-current-view")).toHaveCount(0);
+  await expect(page.getByTestId("renderer-state-preservation-probe")).toBeVisible();
+  await expect(page.getByTestId("renderer-secondary-astryx-view")).toBeVisible();
+});
+
+test("an Astryx color-mode change keeps the committed renderer mounted", async ({page}) => {
+  test.skip(
+    process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE !== "1",
+    "The renderer foundation probe is enabled only for the focused production regression suite.",
+  );
+  await page.addInitScript(() => {
+    window.localStorage.setItem("brp-appearance-v1", JSON.stringify({
+      version: 1,
+      designSystem: "astryx",
+      colorMode: "light",
+    }));
+  });
+
+  await page.goto("/login?astryx-foundation-probe=1", {waitUntil: "domcontentloaded"});
+  const probe = page.getByTestId("astryx-foundation-probe");
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
+  await expect(page.getByTestId("renderer-state-preservation-probe")).toBeVisible();
+  const firstAttempt = await probe.getAttribute("data-renderer-attempt");
+
+  await page.evaluate(() => {
+    history.replaceState(null, "", "/login?astryx-foundation-probe=1&renderer-gate=manual");
+  });
+  await publishAstryx(page, ASTRYX_DARK);
+
+  await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
+  await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true");
+  await expect(probe).toHaveAttribute("data-renderer-attempt", firstAttempt ?? "");
+  await expect(page.getByTestId("renderer-current-foundation-view")).toHaveCount(0);
+  await expect(page.getByTestId("renderer-state-preservation-probe")).toBeVisible();
+  expect(await page.evaluate(() => (
+    window as Window & {__BRP_RENDERER_GATE_WAITING__?: boolean}
+  ).__BRP_RENDERER_GATE_WAITING__ ?? false)).toBe(false);
 });
 
 test("a normal route cannot use the test probe to fake production Astryx readiness", async ({page}) => {
