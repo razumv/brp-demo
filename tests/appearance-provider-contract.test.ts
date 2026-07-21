@@ -17,9 +17,11 @@ import {
 import {
   connectAppearanceRepository,
   createAppearanceAcceptanceGate,
+  createAppearanceWriteCoordinator,
   persistAppearancePreference,
   recoverRootToShadcn,
   subscribeToResolvedTheme,
+  updateRuntimeThemeColor,
 } from "../src/components/providers/appearance-provider";
 
 const DEFAULT = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
@@ -268,6 +270,37 @@ test("repository subscription wins over a delayed stale read and cleanup is idem
   assert.equal(unsubscribeCalls, 1);
 });
 
+test("a synchronous subscribe emission invalidates the later stale repository read", async () => {
+  let releaseRead: ((preference: AppearancePreferenceV1 | null) => void) | null = null;
+  const authoritative = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
+  const order: string[] = [];
+  const repository: AppearancePreferencesRepository = {
+    read() {
+      order.push("read");
+      return new Promise((resolve) => {
+        releaseRead = resolve;
+      });
+    },
+    async write() {},
+    subscribe(listener) {
+      order.push("subscribe");
+      listener(authoritative);
+      return () => undefined;
+    },
+  };
+  const seen: AppearancePreferenceV1[] = [];
+  connectAppearanceRepository(repository, {
+    onError: (error) => assert.fail(String(error)),
+    onPreference: (preference) => seen.push(preference),
+  });
+
+  assert.deepEqual(order, ["subscribe", "read"]);
+  assert.ok(releaseRead);
+  (releaseRead as (preference: AppearancePreferenceV1 | null) => void)(DEFAULT);
+  await Promise.resolve();
+  assert.deepEqual(seen, [authoritative]);
+});
+
 test("StrictMode cleanup resets duplicate acceptance so replay restarts readiness", () => {
   const gate = createAppearanceAcceptanceGate();
 
@@ -300,6 +333,158 @@ test("failed persistence never publishes an unacknowledged desired preference", 
     /quota denied/,
   );
   assert.equal(acknowledged, false);
+});
+
+test("reverse-order write acknowledgements commit only the latest user intent", async () => {
+  const releases = new Map<string, Array<() => void>>();
+  let durablePreference: AppearancePreferenceV1 | null = null;
+  const repository: AppearancePreferencesRepository = {
+    async read() {
+      return null;
+    },
+    write(preference) {
+      return new Promise((resolve) => {
+        const key = JSON.stringify(preference);
+        const queued = releases.get(key) ?? [];
+        queued.push(() => {
+          durablePreference = preference;
+          resolve();
+        });
+        releases.set(key, queued);
+      });
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const acknowledged: AppearancePreferenceV1[] = [];
+  let invalidations = 0;
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => invalidations++,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => assert.fail(String(error)),
+  });
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const firstResult = coordinator.write(first);
+  const secondResult = coordinator.write(second);
+
+  assert.equal(coordinator.shouldSuppressPublication(first), true);
+  assert.equal(coordinator.shouldSuppressPublication(second), true);
+  releases.get(JSON.stringify(second))?.shift()?.();
+  assert.equal(await secondResult, true);
+  assert.deepEqual(acknowledged, [second]);
+  assert.deepEqual(durablePreference, second);
+  releases.get(JSON.stringify(first))?.shift()?.();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  assert.equal(releases.get(JSON.stringify(second))?.length, 1);
+  releases.get(JSON.stringify(second))?.shift()?.();
+  assert.equal(await firstResult, false);
+  assert.deepEqual(acknowledged, [second]);
+  assert.deepEqual(durablePreference, second);
+  assert.equal(invalidations, 3);
+});
+
+test("an acknowledged write invalidates an older pending initial read without adapter publication", async () => {
+  let releaseRead: ((preference: AppearancePreferenceV1 | null) => void) | null = null;
+  const repository: AppearancePreferencesRepository = {
+    read() {
+      return new Promise((resolve) => {
+        releaseRead = resolve;
+      });
+    },
+    async write() {},
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const seen: AppearancePreferenceV1[] = [];
+  const connection = connectAppearanceRepository(repository, {
+    onError: (error) => assert.fail(String(error)),
+    onPreference: (preference) => seen.push(preference),
+  });
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: connection.invalidatePendingRead,
+    onAcknowledged: (preference) => seen.push(preference),
+    onError: (error) => assert.fail(String(error)),
+  });
+
+  assert.equal(await coordinator.write(ASTRYX_SYSTEM), true);
+  assert.ok(releaseRead);
+  (releaseRead as (preference: AppearancePreferenceV1 | null) => void)(DEFAULT);
+  await Promise.resolve();
+  assert.deepEqual(seen, [ASTRYX_SYSTEM]);
+});
+
+test("runtime theme color stays first and supports shadcn and Astryx palettes", () => {
+  type FakeMeta = {
+    content: string;
+    dataset: Record<string, string>;
+    isConnected: boolean;
+    media: string | null;
+    name: string;
+    removeAttribute(name: string): void;
+  };
+  const createMeta = (name = "theme-color", media: string | null = null): FakeMeta => ({
+    content: "",
+    dataset: {},
+    isConnected: true,
+    media,
+    name,
+    removeAttribute(attribute) {
+      if (attribute === "media") this.media = null;
+    },
+  });
+  const staticLight = createMeta("theme-color", "(prefers-color-scheme: light)");
+  const staticDark = createMeta("theme-color", "(prefers-color-scheme: dark)");
+  const elements = [staticLight, staticDark];
+  const head = {
+    append(meta: FakeMeta) {
+      meta.isConnected = true;
+      elements.push(meta);
+    },
+    insertBefore(meta: FakeMeta, before: FakeMeta) {
+      const existing = elements.indexOf(meta);
+      if (existing >= 0) elements.splice(existing, 1);
+      meta.isConnected = true;
+      elements.splice(elements.indexOf(before), 0, meta);
+    },
+    querySelector(selector: string) {
+      if (selector.includes("data-brp-runtime-theme-color")) {
+        return elements.find((meta) => meta.dataset.brpRuntimeThemeColor === "true") ?? null;
+      }
+      return elements.find((meta) => meta.name === "theme-color") ?? null;
+    },
+  };
+  const previousDocument = globalThis.document;
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    value: {
+      createElement() {
+        const meta = createMeta("", null);
+        meta.isConnected = false;
+        return meta;
+      },
+      head,
+    },
+  });
+
+  try {
+    updateRuntimeThemeColor("shadcn", "dark");
+    assert.equal(elements[0]?.dataset.brpRuntimeThemeColor, "true");
+    assert.equal(elements[0]?.content, "#0d1117");
+    assert.equal(elements[0]?.media, null);
+    assert.deepEqual(elements.slice(1), [staticLight, staticDark]);
+
+    updateRuntimeThemeColor("astryx", "light");
+    assert.equal(elements[0]?.content, "#f1f1f1");
+    assert.equal(elements.filter((meta) => meta.dataset.brpRuntimeThemeColor === "true").length, 1);
+  } finally {
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: previousDocument,
+    });
+  }
 });
 
 test("system color mode changes are observed and listener cleanup is exact", () => {
@@ -396,4 +581,15 @@ test("AppShell delegates color mode and owns no legacy storage or root dark clas
   assert.doesNotMatch(source, /localStorage/);
   assert.doesNotMatch(source, /document\.documentElement\.classList/);
   assert.match(source, /useAppearance/);
+});
+
+test("renderer fallback persistence is routed through the race-safe writer", async () => {
+  const source = await readFile("src/components/providers/appearance-provider.tsx", "utf8");
+  const failureHandler = source.slice(
+    source.indexOf("const handleTransitionFailure ="),
+    source.indexOf("useLayoutEffect(() =>", source.indexOf("const handleTransitionFailure =")),
+  );
+
+  assert.match(failureHandler, /writeCoordinatorRef\.current/);
+  assert.match(failureHandler, /writer\.write\(fallback\)/);
 });

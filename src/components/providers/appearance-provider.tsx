@@ -41,6 +41,11 @@ export interface AppearanceRepositoryConnectionCallbacks {
   onError(error: unknown): void;
 }
 
+export interface AppearanceRepositoryConnection {
+  (): void;
+  invalidatePendingRead(): void;
+}
+
 export interface AppearanceAcceptanceGate {
   accept(preference: AppearancePreferenceV1): boolean;
   remember(preference: AppearancePreferenceV1): void;
@@ -70,17 +75,16 @@ export function createAppearanceAcceptanceGate(): AppearanceAcceptanceGate {
 export function connectAppearanceRepository(
   repository: AppearancePreferencesRepository,
   callbacks: AppearanceRepositoryConnectionCallbacks,
-): () => void {
+): AppearanceRepositoryConnection {
   let active = true;
   let revision = 0;
   let disconnected = false;
+  const readRevision = revision;
   const unsubscribe = repository.subscribe((preference) => {
     if (!active) return;
     revision++;
     callbacks.onPreference(preference);
   });
-  const readRevision = revision;
-
   try {
     void repository.read().then(
       (preference) => {
@@ -96,11 +100,112 @@ export function connectAppearanceRepository(
     callbacks.onError(error);
   }
 
-  return () => {
+  const disconnect = (() => {
     if (disconnected) return;
     disconnected = true;
     active = false;
     unsubscribe();
+  }) as AppearanceRepositoryConnection;
+  disconnect.invalidatePendingRead = () => {
+    if (!active) return;
+    revision++;
+  };
+  return disconnect;
+}
+
+export interface AppearanceWriteCoordinatorCallbacks {
+  invalidatePendingRead(): void;
+  onAcknowledged(preference: AppearancePreferenceV1): void;
+  onError(error: unknown): void;
+}
+
+export interface AppearanceWriteCoordinator {
+  write(preference: AppearancePreferenceV1): Promise<boolean>;
+  shouldSuppressPublication(preference: AppearancePreferenceV1): boolean;
+  dispose(): void;
+}
+
+export function createAppearanceWriteCoordinator(
+  repository: AppearancePreferencesRepository,
+  callbacks: AppearanceWriteCoordinatorCallbacks,
+): AppearanceWriteCoordinator {
+  type Intent = {generation: number; preference: AppearancePreferenceV1};
+
+  let active = true;
+  let generation = 0;
+  let latestIntent: Intent | null = null;
+  let repairChain = Promise.resolve();
+  const pendingPublications = new Map<string, number>();
+  const serialize = (preference: AppearancePreferenceV1) => JSON.stringify(preference);
+  const trackPending = (preference: AppearancePreferenceV1, delta: 1 | -1) => {
+    const key = serialize(preference);
+    const next = (pendingPublications.get(key) ?? 0) + delta;
+    if (next > 0) pendingPublications.set(key, next);
+    else pendingPublications.delete(key);
+  };
+  const writeRepository = async (preference: AppearancePreferenceV1) => {
+    trackPending(preference, 1);
+    try {
+      await repository.write(preference);
+      if (active) callbacks.invalidatePendingRead();
+    } finally {
+      trackPending(preference, -1);
+    }
+  };
+  const repairLatestDurableIntent = () => {
+    const repair = async () => {
+      while (active && latestIntent) {
+        const target = latestIntent;
+        try {
+          await writeRepository(target.preference);
+        } catch (error) {
+          if (active && latestIntent?.generation === target.generation) {
+            callbacks.onError(error);
+          }
+          return;
+        }
+        if (!active || latestIntent?.generation === target.generation) return;
+      }
+    };
+    repairChain = repairChain.then(repair, repair);
+    return repairChain;
+  };
+
+  return {
+    async write(preference) {
+      const normalized = normalizeAppearancePreference(preference);
+      if (!normalized) {
+        if (active) {
+          callbacks.onError(new TypeError("Appearance preference must use the supported v1 contract."));
+        }
+        return false;
+      }
+      const intent = {generation: ++generation, preference: normalized};
+      latestIntent = intent;
+      try {
+        await writeRepository(normalized);
+      } catch (error) {
+        if (active && latestIntent?.generation === intent.generation) callbacks.onError(error);
+        return false;
+      }
+      if (!active) return false;
+      if (latestIntent?.generation !== intent.generation) {
+        await repairLatestDurableIntent();
+        return false;
+      }
+      callbacks.onAcknowledged(normalized);
+      return true;
+    },
+    shouldSuppressPublication(preference) {
+      const normalized = normalizeAppearancePreference(preference);
+      return normalized ? (pendingPublications.get(serialize(normalized)) ?? 0) > 0 : false;
+    },
+    dispose() {
+      active = false;
+      generation++;
+      latestIntent = null;
+      pendingPublications.clear();
+    },
   };
 }
 
@@ -184,14 +289,20 @@ export function recoverRootToShadcn(preference: AppearancePreferenceV1): void {
   root.removeAttribute("data-renderer-pending");
 }
 
-function updateRuntimeThemeColor(renderedDesignSystem: "shadcn" | "astryx", theme: ResolvedTheme) {
+export function updateRuntimeThemeColor(
+  renderedDesignSystem: "shadcn" | "astryx",
+  theme: ResolvedTheme,
+): void {
   let meta = document.head.querySelector<HTMLMetaElement>('meta[data-brp-runtime-theme-color="true"]');
+  const firstThemeColor = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (!meta) {
     meta = document.createElement("meta");
     meta.name = "theme-color";
     meta.dataset.brpRuntimeThemeColor = "true";
-    document.head.append(meta);
   }
+  if (firstThemeColor && firstThemeColor !== meta) document.head.insertBefore(meta, firstThemeColor);
+  else if (!meta.isConnected) document.head.append(meta);
+  meta.removeAttribute("media");
   meta.content = renderedDesignSystem === "astryx"
     ? theme === "dark" ? "#1b1b1b" : "#f1f1f1"
     : theme === "dark" ? "#0d1117" : "#f6f8fa";
@@ -204,7 +315,9 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     createInitialAppearanceTransitionState,
   );
   const stateRef = useRef(state);
+  const bootstrapReconciledRef = useRef(false);
   const repositoryRef = useRef<AppearancePreferencesRepository | null>(null);
+  const writeCoordinatorRef = useRef<AppearanceWriteCoordinator | null>(null);
   const providerWatchdogRef = useRef<number | null>(null);
   const transitionSequenceRef = useRef(0);
   const lastShadcnPreferenceRef = useRef<AppearancePreferenceV1>({
@@ -297,6 +410,11 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
       fallback,
       transitionId,
     });
+    const writer = writeCoordinatorRef.current;
+    if (writer) {
+      void writer.write(fallback);
+      return;
+    }
     const repository = repositoryRef.current;
     if (repository) {
       suppressPublicationRef.current = serializedFallback;
@@ -326,21 +444,41 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     window.addEventListener("brp:appearance-recovery", recoveryListener);
 
     const bootstrap = normalizeAppearancePreference(window.__BRP_APPEARANCE_BOOTSTRAP__);
+    bootstrapReconciledRef.current = true;
     if (bootstrap) acceptPreference(bootstrap);
 
-    const disconnect = repository
-      ? connectAppearanceRepository(repository, {
-          onPreference: acceptPreference,
+    let connection: AppearanceRepositoryConnection | null = null;
+    const writer = repository
+      ? createAppearanceWriteCoordinator(repository, {
+          invalidatePendingRead() {
+            connection?.invalidatePendingRead();
+          },
+          onAcknowledged: acceptPreference,
           onError(error) {
-            handleTransitionFailureRef.current(new Error(formatError(error)), stateRef.current.transitionId);
+            dispatch({type: "report-error", error: formatError(error)});
           },
         })
-      : () => undefined;
+      : null;
+    writeCoordinatorRef.current = writer;
+    if (repository && writer) {
+      connection = connectAppearanceRepository(repository, {
+        onPreference(preference) {
+          if (writer.shouldSuppressPublication(preference)) return;
+          acceptPreference(preference);
+        },
+        onError(error) {
+          handleTransitionFailureRef.current(new Error(formatError(error)), stateRef.current.transitionId);
+        },
+      });
+    }
 
     return () => {
-      disconnect();
+      writer?.dispose();
+      connection?.();
       window.removeEventListener("brp:appearance-recovery", recoveryListener);
       if (repositoryRef.current === repository) repositoryRef.current = null;
+      if (writeCoordinatorRef.current === writer) writeCoordinatorRef.current = null;
+      bootstrapReconciledRef.current = false;
       acceptanceGate.reset();
       suppressPublicationRef.current = "";
     };
@@ -357,42 +495,36 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
   );
 
   useLayoutEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !bootstrapReconciledRef.current) return;
     const root = document.documentElement;
-    const bootstrapStillPending =
-      root.dataset.rendererPending === "true" &&
-      state.transitionStatus === "idle" &&
-      state.desiredPreference.designSystem === "shadcn" &&
-      window.__BRP_APPEARANCE_BOOTSTRAP__?.designSystem === "astryx";
-    if (bootstrapStillPending) return;
 
     root.dataset.designSystem = state.renderedDesignSystem;
     root.dataset.colorMode = state.renderedPreference.colorMode;
     root.dataset.resolvedTheme = resolvedTheme;
     root.classList.toggle("dark", resolvedTheme === "dark");
+    if (
+      state.renderedDesignSystem === "shadcn" &&
+      state.desiredPreference.designSystem === "shadcn"
+    ) {
+      root.removeAttribute("data-astryx-theme");
+      root.removeAttribute("data-theme");
+    }
     if (state.transitionStatus === "loading-astryx") {
       root.dataset.rendererPending = "true";
     } else {
       root.removeAttribute("data-renderer-pending");
     }
     updateRuntimeThemeColor(state.renderedDesignSystem, resolvedTheme);
-  }, [hydrated, resolvedTheme, state.desiredPreference.designSystem, state.renderedDesignSystem, state.renderedPreference.colorMode, state.transitionStatus]);
+  }, [hydrated, resolvedTheme, state]);
 
   const updatePreference = useCallback(async (preference: AppearancePreferenceV1) => {
-    const repository = repositoryRef.current;
-    if (!repository) {
+    const writer = writeCoordinatorRef.current;
+    if (!writer) {
       dispatch({type: "report-error", error: "Appearance preferences are unavailable."});
       return false;
     }
-    try {
-      const acknowledged = await persistAppearancePreference(repository, preference);
-      acceptPreference(acknowledged);
-      return true;
-    } catch (error) {
-      dispatch({type: "report-error", error: formatError(error)});
-      return false;
-    }
-  }, [acceptPreference]);
+    return writer.write(preference);
+  }, []);
 
   const failRendererTransition = useCallback((error: Error) => {
     if (stateRef.current.transitionId === null) {
