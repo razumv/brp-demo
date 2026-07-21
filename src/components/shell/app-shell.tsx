@@ -20,6 +20,7 @@ import {
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { getPart, formatMoney, orderTotal } from "@/lib/mock-data";
+import { dealerNewDocumentCount } from "@/lib/dealer/secondary-data";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
@@ -89,7 +90,11 @@ function DealerRoleNav({ onNavigate }: { onNavigate?: () => void }) {
             const exactRoot = item.href === "/" && pathname === "/";
             const active = exactRoot || (item.href !== "/" && (pathname === item.href || pathname.startsWith(item.href + "/")));
             const Icon = item.icon;
-            const badge = item.href === "/dealer/orders" ? String(snapshot.orders.length) : item.badge;
+            const badge = item.href === "/dealer/orders"
+              ? String(snapshot.orders.length)
+              : item.href === "/dealer/documents"
+                ? String(dealerNewDocumentCount)
+                : item.badge;
             return (
               <Link
                 href={item.href}

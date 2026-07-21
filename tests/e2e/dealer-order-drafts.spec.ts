@@ -5,6 +5,16 @@ test.beforeEach(async ({ page }) => {
   await seedDealerWorkflowSession(page);
 });
 
+test("draft filters are collapsed and compose with search", async ({ page }) => {
+  await page.goto("/dealer/order-drafts");
+  const trigger = page.getByRole("button", { name: "Фільтри чернеток" });
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await trigger.click();
+  await page.getByLabel("Вміст чернетки").selectOption("with-items");
+  await page.getByLabel("Покупець чернетки").selectOption("assigned");
+  await expect(trigger).toContainText("2");
+});
+
 test("dealer can search, reopen, and delete a saved order draft", async ({ page }) => {
   await page.goto("/cart");
   await page.getByLabel("Номер запчастини").fill("9779150");
