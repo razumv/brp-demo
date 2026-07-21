@@ -77,7 +77,8 @@ test("saved Astryx hydrates the current view first, then commits one stable prov
   });
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
   await expect(page.locator("html")).toHaveAttribute("data-renderer-pending", "true");
-  await expect(page.locator("#brp-app-root")).toHaveCSS("visibility", "hidden");
+  await expect(page.locator("#brp-app-root")).toHaveCSS("visibility", "visible");
+  await expect(page.getByLabel("Електронна пошта")).toBeVisible();
   await expect(page.locator("body")).not.toHaveCSS("visibility", "hidden");
   await expect(page.getByTestId("renderer-current-foundation-view")).toBeAttached();
   await expect(page.getByTestId("renderer-state-preservation-probe")).toHaveCount(0);
@@ -136,6 +137,7 @@ test("a normal route cannot use the test probe to fake production Astryx readine
   });
   await page.goto("/login", {waitUntil: "domcontentloaded"});
   await expect(page.getByTestId("astryx-foundation-probe")).toHaveCount(0);
+  await expect(page.getByLabel("Електронна пошта")).toBeVisible({timeout: 1_000});
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn", {timeout: 7_000});
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true", {timeout: 7_000});
   await expect(page.getByLabel("Електронна пошта")).toBeVisible();

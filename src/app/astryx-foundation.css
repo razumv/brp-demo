@@ -6,10 +6,6 @@
   font-family: "Figtree Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-html[data-renderer-pending="true"] #brp-app-root {
-  visibility: hidden;
-}
-
 /* Keep the compatibility provider structurally permanent without perturbing
    the preserved current renderer's layout box or screenshot geometry. */
 body > [data-astryx-theme="brp-current-compatibility"] {
