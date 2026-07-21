@@ -110,7 +110,7 @@ for (const testCase of cases) {
   });
 }
 
-test("authoritative shadcn clears bootstrap-only Astryx theme markers", async ({page}) => {
+test("authoritative shadcn replaces bootstrap Neutral markers with the compatibility Theme marker", async ({page}) => {
   await page.addInitScript(() => {
     const astryx = {version: 1, designSystem: "astryx", colorMode: "dark"};
     const shadcn = {version: 1, designSystem: "shadcn", colorMode: "dark"};
@@ -145,8 +145,8 @@ test("authoritative shadcn clears bootstrap-only Astryx theme markers", async ({
   await page.goto("/login", {waitUntil: "domcontentloaded"});
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true");
-  await expect(page.locator("html")).not.toHaveAttribute("data-astryx-theme", "neutral");
-  await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
 test("cold Astryx bootstrap recovers to a visible shadcn fallback when no renderer slots mount", async ({page}) => {
@@ -166,13 +166,14 @@ test("cold Astryx bootstrap recovers to a visible shadcn fallback when no render
 
   await page.goto("/login", {waitUntil: "domcontentloaded"});
   await expect(page.locator("html")).toHaveAttribute("data-renderer-pending", "true");
-  await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "neutral");
+  await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true", {
     timeout: 7_000,
   });
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
   await expect(page.locator("html")).toHaveAttribute("data-color-mode", "light");
   await expect(page.locator("html")).not.toHaveAttribute("data-astryx-theme", "neutral");
+  await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
   await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute("content", "#f6f8fa");
   expect(consoleErrors).toEqual([]);

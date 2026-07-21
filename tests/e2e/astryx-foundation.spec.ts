@@ -5,6 +5,13 @@ import { expect, test } from "@playwright/test";
 const regions = ["light", "dark"] as const;
 
 test("renders real Astryx foundation components in light and dark Theme regions", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("brp-appearance-v1", JSON.stringify({
+      version: 1,
+      designSystem: "astryx",
+      colorMode: "light",
+    }));
+  });
   await page.goto("/login?astryx-foundation-probe=1");
   await expect(page.getByTestId("astryx-foundation-probe")).toHaveAttribute(
     "data-design-system",

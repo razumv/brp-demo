@@ -4,6 +4,7 @@ import { AppearanceProvider } from "@/components/providers/appearance-provider";
 import { DemoStoreProvider } from "@/components/providers/demo-store-provider";
 import { PwaRegistration } from "@/components/providers/pwa-registration";
 import { AstryxFoundationProbe } from "@/components/appearance/astryx-foundation-probe";
+import { StableRendererInfrastructure } from "@/components/appearance/stable-renderer-infrastructure";
 import { publicAssetPath } from "@/lib/public-base-path";
 import "./globals.css";
 
@@ -54,12 +55,14 @@ export default function RootLayout({
       </head>
       <body>
         <AppearanceProvider>
-          <div id="brp-app-root">
-            <DemoStoreProvider>{children}</DemoStoreProvider>
-            {process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE === "1" ? (
-              <AstryxFoundationProbe />
-            ) : null}
-          </div>
+          <StableRendererInfrastructure>
+            <div id="brp-app-root">
+              <DemoStoreProvider>{children}</DemoStoreProvider>
+              {process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE === "1" ? (
+                <AstryxFoundationProbe />
+              ) : null}
+            </div>
+          </StableRendererInfrastructure>
         </AppearanceProvider>
         <PwaRegistration />
       </body>

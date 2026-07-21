@@ -1,20 +1,28 @@
 "use client";
 
-import { useLayoutEffect, useSyncExternalStore } from "react";
-import NextLink from "next/link";
+import {useSyncExternalStore} from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
-import { LayerProvider } from "@astryxdesign/core/Layer";
-import { Link, LinkProvider } from "@astryxdesign/core/Link";
+import {Link} from "@astryxdesign/core/Link";
 import {
   proportional,
   Table,
 } from "@astryxdesign/core/Table";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { Theme } from "@astryxdesign/core/theme";
 import { useAppearance } from "@/components/appearance/use-appearance";
-import { neutralTheme } from "@/themes/neutral/neutral";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
+
+const AstryxFoundationReadinessSlot = dynamic(
+  () => {
+    if (new URLSearchParams(window.location.search).get("renderer-failure") === "import") {
+      return Promise.reject(new Error("Injected Astryx lazy view import failure."));
+    }
+    return import("./renderer-state-preservation-probe").then((module) => module.RendererStatePreservationProbe);
+  },
+  {ssr: false},
+);
 
 type ThemeRegionProps = {
   mode: "light" | "dark";
@@ -68,29 +76,12 @@ function ThemeRegion({ mode }: ThemeRegionProps) {
 export function AstryxFoundationProbe() {
   const pathname = usePathname();
   const appearance = useAppearance();
-  const {markRendererSlotReady, registerRendererSlot} = appearance;
   const isEnabled = useSyncExternalStore(
     subscribeToLocation,
     getProbeQuerySnapshot,
     getServerProbeQuerySnapshot,
   );
   const isVisible = pathname === "/login" && isEnabled;
-
-  useLayoutEffect(() => {
-    if (!isVisible) return;
-    const unregister = registerRendererSlot("astryx-foundation-probe");
-    const frame = window.requestAnimationFrame(() => {
-      markRendererSlotReady("astryx-foundation-probe");
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-      unregister();
-    };
-  }, [
-    markRendererSlotReady,
-    registerRendererSlot,
-    isVisible,
-  ]);
 
   if (!isVisible) return null;
 
@@ -103,16 +94,13 @@ export function AstryxFoundationProbe() {
       data-provider-status={appearance.transitionStatus}
       data-testid="astryx-foundation-probe"
     >
-      <LinkProvider component={NextLink}>
-        <LayerProvider>
-          <Theme mode="light" theme={neutralTheme}>
-            <ThemeRegion mode="light" />
-            <Theme mode="dark" theme={neutralTheme}>
-              <ThemeRegion mode="dark" />
-            </Theme>
-          </Theme>
-        </LayerProvider>
-      </LinkProvider>
+      <ThemeRegion mode="light" />
+      <ThemeRegion mode="dark" />
+      <RendererViewSwitch
+        AstryxView={AstryxFoundationReadinessSlot}
+        currentView={null}
+        slotId="astryx-foundation-probe"
+      />
     </section>
   );
 }

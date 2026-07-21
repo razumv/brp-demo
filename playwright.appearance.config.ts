@@ -32,7 +32,7 @@ const serverValidation = [
 export default defineConfig({
   outputDir: ".next/playwright-appearance-results",
   testDir: "./tests/e2e",
-  testMatch: "**/astryx-*.spec.ts",
+  testMatch: "**/{astryx,appearance}-*.spec.ts",
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
   workers: 1,

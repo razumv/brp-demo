@@ -544,8 +544,11 @@ export function recoverRootToShadcn(preference: AppearancePreferenceV1): void {
   root.dataset.colorMode = preference.colorMode;
   root.dataset.resolvedTheme = resolved;
   root.classList.toggle("dark", resolved === "dark");
-  root.removeAttribute("data-astryx-theme");
-  root.removeAttribute("data-theme");
+  // The permanently mounted compatibility Theme owns these Astryx markers even
+  // while the semantic renderer has fallen back to shadcn.
+  root.dataset.astryxTheme = "brp-current-compatibility";
+  if (preference.colorMode === "system") root.removeAttribute("data-theme");
+  else root.dataset.theme = preference.colorMode;
   root.removeAttribute("data-renderer-pending");
 }
 
@@ -763,13 +766,6 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     root.dataset.colorMode = state.renderedPreference.colorMode;
     root.dataset.resolvedTheme = resolvedTheme;
     root.classList.toggle("dark", resolvedTheme === "dark");
-    if (
-      state.renderedDesignSystem === "shadcn" &&
-      state.desiredPreference.designSystem === "shadcn"
-    ) {
-      root.removeAttribute("data-astryx-theme");
-      root.removeAttribute("data-theme");
-    }
     if (state.transitionStatus === "loading-astryx") {
       root.dataset.rendererPending = "true";
     } else {
@@ -797,7 +793,10 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
 
   const value = useMemo<AppearanceContextValue>(() => ({
     desiredPreference: state.desiredPreference,
+    renderedPreference: state.renderedPreference,
+    renderedColorMode: state.renderedPreference.colorMode,
     renderedDesignSystem: state.renderedDesignSystem,
+    rendererTransitionId: state.transitionId,
     resolvedTheme,
     transitionStatus: state.transitionStatus,
     error: state.error,
@@ -805,7 +804,7 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     registerRendererSlot: coordinator.register,
     markRendererSlotReady: coordinator.markReady,
     failRendererTransition,
-  }), [coordinator.markReady, coordinator.register, failRendererTransition, resolvedTheme, state.desiredPreference, state.error, state.renderedDesignSystem, state.transitionStatus, updatePreference]);
+  }), [coordinator.markReady, coordinator.register, failRendererTransition, resolvedTheme, state.desiredPreference, state.error, state.renderedDesignSystem, state.renderedPreference, state.transitionId, state.transitionStatus, updatePreference]);
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }

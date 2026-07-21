@@ -9,3 +9,13 @@
 html[data-renderer-pending="true"] #brp-app-root {
   visibility: hidden;
 }
+
+/* Keep the compatibility provider structurally permanent without perturbing
+   the preserved current renderer's layout box or screenshot geometry. */
+body > [data-astryx-theme="brp-current-compatibility"] {
+  display: contents;
+  --font-family-body: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  --font-family-heading: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  color-scheme: normal !important;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+}

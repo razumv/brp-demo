@@ -6,7 +6,10 @@ import type {AppearanceTransitionStatus} from "@/lib/appearance/renderer-readine
 
 export interface AppearanceContextValue {
   desiredPreference: AppearancePreferenceV1;
+  renderedPreference: AppearancePreferenceV1;
+  renderedColorMode: AppearancePreferenceV1["colorMode"];
   renderedDesignSystem: DesignSystem;
+  rendererTransitionId: number | null;
   resolvedTheme: ResolvedTheme;
   transitionStatus: AppearanceTransitionStatus;
   error: string | null;

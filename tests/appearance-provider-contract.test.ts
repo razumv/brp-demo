@@ -1443,6 +1443,7 @@ test("atomic shadcn recovery resolves a saved system mode from matchMedia", () =
   try {
     recoverRootToShadcn({version: 1, designSystem: "shadcn", colorMode: "system"});
     assert.deepEqual(dataset, {
+      astryxTheme: "brp-current-compatibility",
       colorMode: "system",
       designSystem: "shadcn",
       resolvedTheme: "dark",
