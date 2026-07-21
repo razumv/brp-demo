@@ -30,6 +30,7 @@ const serverValidation = [
 ].join(" ");
 
 export default defineConfig({
+  outputDir: ".next/playwright-appearance-results",
   testDir: "./tests/e2e",
   testMatch: "**/astryx-*.spec.ts",
   fullyParallel: false,

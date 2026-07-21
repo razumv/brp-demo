@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@astryxdesign/core/Button";
@@ -29,6 +29,19 @@ const foundationColumns = [
   },
 ];
 
+function subscribeToLocation(onStoreChange: () => void) {
+  window.addEventListener("popstate", onStoreChange);
+  return () => window.removeEventListener("popstate", onStoreChange);
+}
+
+function getProbeQuerySnapshot() {
+  return new URLSearchParams(window.location.search).get("astryx-foundation-probe") === "1";
+}
+
+function getServerProbeQuerySnapshot() {
+  return false;
+}
+
 function ThemeRegion({ mode }: ThemeRegionProps) {
   return (
     <section data-testid={`astryx-foundation-${mode}`}>
@@ -53,11 +66,11 @@ function ThemeRegion({ mode }: ThemeRegionProps) {
 /** Gated production probe for validating Astryx's compiled CSS foundation. */
 export function AstryxFoundationProbe() {
   const pathname = usePathname();
-  const [isEnabled, setIsEnabled] = useState(false);
-
-  useEffect(() => {
-    setIsEnabled(new URLSearchParams(window.location.search).get("astryx-foundation-probe") === "1");
-  }, []);
+  const isEnabled = useSyncExternalStore(
+    subscribeToLocation,
+    getProbeQuerySnapshot,
+    getServerProbeQuerySnapshot,
+  );
 
   if (pathname !== "/login" || !isEnabled) return null;
 
