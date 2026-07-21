@@ -1,8 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
+import { dealerWorkflowStorageKey } from "@/lib/dealer/identity";
 import { initialDemoState } from "@/lib/mock-data";
+import type { DealerLocalState } from "@/lib/dealer/contracts";
 import type { DemoState } from "@/lib/types";
 
 const STORAGE_KEY = "brp-clone-demo-state-v1";
+const DEALER_STORAGE_KEY = dealerWorkflowStorageKey({
+  email: "dealer@example.invalid",
+  displayName: "Финансы",
+  company: "Logos",
+});
 
 async function seedDealerSession(page: Page) {
   const state = JSON.parse(JSON.stringify(initialDemoState)) as DemoState;
@@ -38,8 +45,8 @@ test("selected Advex accessory adds its display SKU and proven metadata", async 
   await dialog.getByRole("button", { name: "Додати в кошик" }).click();
 
   await expect.poll(async () => {
-    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), STORAGE_KEY);
-    const cart = persisted ? (JSON.parse(persisted) as DemoState).cart : [];
+    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), DEALER_STORAGE_KEY);
+    const cart = persisted ? (JSON.parse(persisted) as DealerLocalState).cart : [];
     return cart[0];
   }).toEqual(expect.objectContaining({
     partNumber: "929085",

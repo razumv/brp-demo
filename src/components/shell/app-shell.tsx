@@ -8,6 +8,7 @@ import {
   CircleUserRound,
   Eye,
   Globe2,
+  Info,
   Menu,
   Moon,
   Search,
@@ -16,11 +17,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { getPart, formatMoney } from "@/lib/mock-data";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { DealerGlobalPartsSearch } from "@/components/shell/global-parts-search";
 import { navForRole } from "@/components/shell/nav-data";
 
@@ -36,10 +39,10 @@ function Brand({ role }: { role: Role }) {
   );
 }
 
-function RoleNav({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
+function AdminRoleNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { state } = useDemoStore();
-  const groups = navForRole(role);
+  const groups = navForRole("admin");
   return (
     <nav className="role-nav">
       {groups.map((group, groupIndex) => (
@@ -49,11 +52,9 @@ function RoleNav({ role, onNavigate }: { role: Role; onNavigate?: () => void }) 
             const exactRoot = item.href === "/" && pathname === "/";
             const active = exactRoot || (item.href !== "/" && (pathname === item.href || pathname.startsWith(item.href + "/")));
             const Icon = item.icon;
-            const badge = item.href === "/dealer/orders"
-              ? String(state.orders.length)
-              : item.href === "/admin/order-pipeline"
-                ? String(9 + state.orders.filter((order) => order.status === "new").length)
-                : item.badge;
+            const badge = item.href === "/admin/order-pipeline"
+              ? String(9 + state.orders.filter((order) => order.status === "new").length)
+              : item.badge;
             return (
               <Link
                 href={item.href}
@@ -73,20 +74,76 @@ function RoleNav({ role, onNavigate }: { role: Role; onNavigate?: () => void }) 
   );
 }
 
-function CartPanel({ onClose }: { onClose: () => void }) {
+function DealerRoleNav({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const { snapshot } = useDealerWorkflow();
+  const groups = navForRole("dealer");
+
+  return (
+    <nav className="role-nav">
+      {groups.map((group, groupIndex) => (
+        <div className="nav-group" key={(group.label || "main") + groupIndex}>
+          {group.label ? <p className="nav-group-label">{group.label}</p> : null}
+          {group.items.map((item) => {
+            const exactRoot = item.href === "/" && pathname === "/";
+            const active = exactRoot || (item.href !== "/" && (pathname === item.href || pathname.startsWith(item.href + "/")));
+            const Icon = item.icon;
+            const badge = item.href === "/dealer/orders" ? String(snapshot.orders.length) : item.badge;
+            return (
+              <Link
+                href={item.href}
+                className={cn("nav-link", active && "nav-link-active")}
+                key={item.href}
+                onClick={onNavigate}
+              >
+                <Icon size={16} strokeWidth={1.7} />
+                <span>{item.label}</span>
+                {badge ? <span className="nav-badge">{badge}</span> : null}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function RoleNav({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
+  return role === "dealer"
+    ? <DealerRoleNav onNavigate={onNavigate} />
+    : <AdminRoleNav onNavigate={onNavigate} />;
+}
+
+function DealerCartPanel({
+  onClose,
+  returnFocusRef,
+  inertTargets,
+}: {
+  onClose: () => void;
+  returnFocusRef: RefObject<HTMLElement | null>;
+  inertTargets: readonly RefObject<HTMLElement | null>[];
+}) {
   const router = useRouter();
-  const { state, setCartQuantity, removeFromCart, clearCart } = useDemoStore();
-  const lines = state.cart.flatMap((line) => {
+  const { snapshot, commands } = useDealerWorkflow();
+  const dialogRef = useRef<HTMLElement>(null);
+  useDealerDrawerAccessibility({
+    open: true,
+    onClose,
+    dialogRef,
+    returnFocusRef,
+    inertTargets,
+  });
+  const lines = snapshot.cart.flatMap((line) => {
     const part = getPart(line.partNumber);
     return part ? [{ ...line, part }] : [];
   });
   const total = lines.reduce((sum, line) => sum + line.quantity * line.part.dealerPrice, 0);
 
-  return (
+  const dialog = (
     <div className="drawer-overlay" role="presentation" onMouseDown={(event) => {
       if (event.currentTarget === event.target) onClose();
     }}>
-      <aside className="side-drawer cart-drawer" role="dialog" aria-modal="true" aria-label="Кошик">
+      <aside ref={dialogRef} className="side-drawer cart-drawer" role="dialog" aria-modal="true" aria-label="Кошик" tabIndex={-1}>
         <header className="drawer-header">
           <div>
             <h2>Кошик</h2>
@@ -109,7 +166,7 @@ function CartPanel({ onClose }: { onClose: () => void }) {
             <div className="drawer-scroll">
               <div className="drawer-inline-header">
                 <span>До найближчої поставки</span>
-                <button type="button" onClick={clearCart}><Trash2 size={13} /> Очистити</button>
+                <button type="button" onClick={() => void commands.clearCart()}><Trash2 size={13} /> Очистити</button>
               </div>
               {lines.map((line) => (
                 <article className="cart-line" key={line.partNumber}>
@@ -118,13 +175,13 @@ function CartPanel({ onClose }: { onClose: () => void }) {
                       <strong>{line.part.number}</strong>
                       {line.part.description ? <p>{line.part.description}</p> : null}
                     </div>
-                    <button type="button" className="icon-button icon-button-small" aria-label={"Видалити " + line.part.number} onClick={() => removeFromCart(line.partNumber)}><X size={14} /></button>
+                    <button type="button" className="icon-button icon-button-small" aria-label={"Видалити " + line.part.number} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><X size={14} /></button>
                   </div>
                   <div className="cart-line-foot">
                     <div className="quantity-control">
-                      <button type="button" aria-label="Зменшити" onClick={() => setCartQuantity(line.partNumber, line.quantity - 1)}>−</button>
+                      <button type="button" aria-label="Зменшити" onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 })}>−</button>
                       <span>{line.quantity}</span>
-                      <button type="button" aria-label="Збільшити" onClick={() => setCartQuantity(line.partNumber, line.quantity + 1)}>+</button>
+                      <button type="button" aria-label="Збільшити" onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 })}>+</button>
                     </div>
                     <strong>{formatMoney(line.quantity * line.part.dealerPrice)}</strong>
                   </div>
@@ -143,6 +200,188 @@ function CartPanel({ onClose }: { onClose: () => void }) {
       </aside>
     </div>
   );
+
+  return typeof document === "undefined" ? null : createPortal(dialog, document.body);
+}
+
+function DealerCartControl({ inertTargets }: { inertTargets: readonly RefObject<HTMLElement | null>[] }) {
+  const { snapshot } = useDealerWorkflow();
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
+  const cartCount = snapshot.cart.reduce((sum, line) => sum + line.quantity, 0);
+
+  return (
+    <>
+      <button ref={cartButtonRef} type="button" className="cart-button" aria-label={`Кошик (${cartCount})`} onClick={() => setCartOpen(true)}>
+        <ShoppingCart size={17} /><span>Кошик ({cartCount})</span>
+      </button>
+      {cartOpen ? <DealerCartPanel onClose={() => setCartOpen(false)} returnFocusRef={cartButtonRef} inertTargets={inertTargets} /> : null}
+    </>
+  );
+}
+
+const dealerHeaderUnavailableReason = "Функція стане доступною після підключення сервісу.";
+
+function DealerUnavailableHeaderControl({
+  label,
+  icon,
+  className,
+}: {
+  label: string;
+  icon: ReactNode;
+  className?: string;
+}) {
+  const reasonId = useId();
+  const [reasonOpen, setReasonOpen] = useState(false);
+
+  return (
+    <span className={cn("dealer-header-unavailable", className)}>
+      <button type="button" className="icon-button" aria-label={label} aria-describedby={reasonId} disabled>
+        {icon}
+      </button>
+      <button
+        type="button"
+        className="dealer-header-unavailable-help"
+        aria-label={`Чому недоступно: ${label}`}
+        aria-controls={reasonId}
+        aria-expanded={reasonOpen}
+        onClick={() => setReasonOpen((current) => !current)}
+      >
+        <Info size={14} aria-hidden="true" />
+      </button>
+      <span
+        id={reasonId}
+        role="note"
+        aria-label={`${label}: ${dealerHeaderUnavailableReason}`}
+        className={cn("dealer-header-unavailable-reason", reasonOpen && "dealer-header-unavailable-reason-open")}
+      >
+        {dealerHeaderUnavailableReason}
+      </span>
+    </span>
+  );
+}
+
+const focusableSelector = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+function useDealerDrawerAccessibility({
+  open,
+  onClose,
+  dialogRef,
+  returnFocusRef,
+  inertTargets,
+}: {
+  open: boolean;
+  onClose: () => void;
+  dialogRef: RefObject<HTMLElement | null>;
+  returnFocusRef: RefObject<HTMLElement | null>;
+  inertTargets: readonly RefObject<HTMLElement | null>[];
+}) {
+  useEffect(() => {
+    if (!open) return;
+
+    const returnTarget = returnFocusRef.current;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    const targetStates = inertTargets.map((target) => ({
+      element: target.current,
+      hadInert: target.current?.hasAttribute("inert") ?? false,
+      ariaHidden: target.current?.getAttribute("aria-hidden") ?? null,
+    }));
+    const focusDialog = () => {
+      const focusTarget = dialogRef.current?.querySelector<HTMLElement>("button:not([disabled]), [href], input:not([disabled])")
+        ?? dialogRef.current;
+      focusTarget?.focus({ preventScroll: true });
+    };
+
+    for (const target of targetStates) {
+      target.element?.setAttribute("inert", "");
+      target.element?.setAttribute("aria-hidden", "true");
+    }
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    window.requestAnimationFrame(focusDialog);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => element.tabIndex >= 0 && element.offsetParent !== null && !element.hasAttribute("hidden"));
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === first || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (activeElement === last || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+      for (const target of targetStates) {
+        if (!target.element) continue;
+        if (!target.hadInert) target.element.removeAttribute("inert");
+        if (target.ariaHidden === null) target.element.removeAttribute("aria-hidden");
+        else target.element.setAttribute("aria-hidden", target.ariaHidden);
+      }
+      window.requestAnimationFrame(() => returnTarget?.focus({ preventScroll: true }));
+    };
+  }, [dialogRef, inertTargets, onClose, open, returnFocusRef]);
+}
+
+function DealerMobileNavigation({
+  onClose,
+  returnFocusRef,
+  inertTargets,
+}: {
+  onClose: () => void;
+  returnFocusRef: RefObject<HTMLElement | null>;
+  inertTargets: readonly RefObject<HTMLElement | null>[];
+}) {
+  const dialogRef = useRef<HTMLElement>(null);
+  useDealerDrawerAccessibility({
+    open: true,
+    onClose,
+    dialogRef,
+    returnFocusRef,
+    inertTargets,
+  });
+
+  return (
+    <div className="drawer-overlay mobile-nav-overlay" role="presentation" onMouseDown={(event) => {
+      if (event.currentTarget === event.target) onClose();
+    }}>
+      <aside ref={dialogRef} className="side-drawer mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Навігація" tabIndex={-1}>
+        <header className="drawer-header"><Brand role="dealer" /><button type="button" className="icon-button" onClick={onClose} aria-label="Закрити меню"><X size={19} /></button></header>
+        <div className="drawer-scroll"><DealerRoleNav onNavigate={onClose} /></div>
+      </aside>
+    </div>
+  );
 }
 
 export function AppShell({
@@ -157,11 +396,13 @@ export function AppShell({
   const [mobileMenu, setMobileMenu] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
   const [mobilePartsSearchOpen, setMobilePartsSearchOpen] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const mobileSearchButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("brp-clone-theme");
@@ -182,7 +423,6 @@ export function AppShell({
     window.localStorage.setItem("brp-clone-theme", next);
   };
 
-  const cartCount = state.cart.reduce((sum, line) => sum + line.quantity, 0);
   const identity = useMemo(() => ({
     name: state.session?.displayName || (role === "admin" ? "Razumv Admin" : "Финансы"),
     company: state.session?.company || "Logos",
@@ -205,8 +445,8 @@ export function AppShell({
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <button type="button" className="icon-button mobile-menu-button" aria-label="Меню" onClick={() => setMobileMenu(true)}><Menu size={20} /></button>
+      <header ref={headerRef} className="app-header">
+        <button ref={mobileMenuButtonRef} type="button" className="icon-button mobile-menu-button" aria-label="Меню" onClick={() => setMobileMenu(true)}><Menu size={20} /></button>
         <Brand role={role} />
         {role === "dealer" ? (
           <DealerGlobalPartsSearch
@@ -235,27 +475,36 @@ export function AppShell({
         }}><Search size={19} /></button>
         <div className="header-actions">
           {role === "dealer" ? (
-            <button type="button" className="icon-button header-secondary-action" aria-label="Режим клієнта" title="Режим клієнта"><Eye size={18} /></button>
+            <DealerUnavailableHeaderControl label="Режим клієнта" icon={<Eye size={18} />} className="dealer-header-unavailable-client" />
           ) : null}
           <button type="button" className="icon-button" aria-label={theme === "dark" ? "switch_to_light" : "switch_to_dark"} onClick={toggleTheme}>
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <div className="menu-anchor">
-            <button type="button" className="header-language" aria-label="language_switcher" onClick={() => {
-              setLanguageOpen(!languageOpen);
-              setProfileOpen(false);
-            }}><Globe2 size={17} /><span>UA</span></button>
-            {languageOpen ? (
-              <div className="popover-menu language-menu">
-                {["English", "Русский", "Українська"].map((language) => (
-                  <button type="button" key={language} onClick={() => setLanguageOpen(false)}>
-                    <span>{language}</span>{language === "Українська" ? <Check size={14} /> : null}
-                  </button>
-                ))}
+          {role === "dealer" ? (
+            <>
+              <DealerUnavailableHeaderControl label="Мова" icon={<Globe2 size={17} />} className="dealer-header-unavailable-language" />
+              <DealerUnavailableHeaderControl label="Сповіщення" icon={<Bell size={18} />} />
+            </>
+          ) : (
+            <>
+              <div className="menu-anchor">
+                <button type="button" className="header-language" aria-label="language_switcher" onClick={() => {
+                  setLanguageOpen(!languageOpen);
+                  setProfileOpen(false);
+                }}><Globe2 size={17} /><span>UA</span></button>
+                {languageOpen ? (
+                  <div className="popover-menu language-menu">
+                    {["English", "Русский", "Українська"].map((language) => (
+                      <button type="button" key={language} onClick={() => setLanguageOpen(false)}>
+                        <span>{language}</span>{language === "Українська" ? <Check size={14} /> : null}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-          <button type="button" className="icon-button notification-button" aria-label="Сповіщення"><Bell size={18} />{role === "admin" ? <span>9+</span> : null}</button>
+              <button type="button" className="icon-button notification-button" aria-label="Сповіщення"><Bell size={18} /><span>9+</span></button>
+            </>
+          )}
           <div className="profile-summary">
             <div><strong>{identity.name}</strong><small>{identity.company}</small></div>
             <div className="menu-anchor">
@@ -276,29 +525,28 @@ export function AppShell({
             </div>
           </div>
           {role === "dealer" ? (
-            <button type="button" className="cart-button" aria-label={"Кошик (" + cartCount + ")"} onClick={() => setCartOpen(true)}>
-              <ShoppingCart size={17} /><span>Кошик ({cartCount})</span>
-            </button>
+            <DealerCartControl inertTargets={[headerRef, bodyRef]} />
           ) : null}
         </div>
       </header>
 
-      <div className="app-body">
+      <div ref={bodyRef} className="app-body">
         <aside className="desktop-sidebar"><RoleNav role={role} /></aside>
         <main className="app-main">{children}</main>
       </div>
 
       {mobileMenu ? (
-        <div className="drawer-overlay mobile-nav-overlay" role="presentation" onMouseDown={(event) => {
-          if (event.currentTarget === event.target) setMobileMenu(false);
-        }}>
-          <aside className="side-drawer mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Навігація">
-            <header className="drawer-header"><Brand role={role} /><button type="button" className="icon-button" onClick={() => setMobileMenu(false)} aria-label="Закрити меню"><X size={19} /></button></header>
-            <div className="drawer-scroll"><RoleNav role={role} onNavigate={() => setMobileMenu(false)} /></div>
-          </aside>
-        </div>
+        role === "dealer"
+          ? <DealerMobileNavigation onClose={() => setMobileMenu(false)} returnFocusRef={mobileMenuButtonRef} inertTargets={[headerRef, bodyRef]} />
+          : <div className="drawer-overlay mobile-nav-overlay" role="presentation" onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setMobileMenu(false);
+          }}>
+            <aside className="side-drawer mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Навігація">
+              <header className="drawer-header"><Brand role={role} /><button type="button" className="icon-button" onClick={() => setMobileMenu(false)} aria-label="Закрити меню"><X size={19} /></button></header>
+              <div className="drawer-scroll"><RoleNav role={role} onNavigate={() => setMobileMenu(false)} /></div>
+            </aside>
+          </div>
       ) : null}
-      {cartOpen ? <CartPanel onClose={() => setCartOpen(false)} /> : null}
     </div>
   );
 }

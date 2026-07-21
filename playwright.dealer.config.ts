@@ -1,31 +1,27 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = process.env.PLAYWRIGHT_PORT ?? "3001";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
+const usesExternalServer = Boolean(process.env.PLAYWRIGHT_BASE_URL);
+
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: [
-    "**/dealer-auth-navigation.spec.ts",
-    "**/dealer-feature-routes.spec.ts",
-    "**/dealer-catalog-order-flow.spec.ts",
-    "**/dealer-order-detail.spec.ts",
-    "**/dealer-order-drafts.spec.ts",
-    "**/dealer-workflow-isolation.spec.ts",
-    "**/dealer-local-adapter.spec.ts",
-    "**/dealer-safe-actions.spec.ts",
-  ],
+  testMatch: "**/dealer-*.spec.ts",
+  testIgnore: "**/dealer-pwa-pages.spec.ts",
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://127.0.0.1:3001",
+    baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3001",
-    url: "http://127.0.0.1:3001/login",
+  webServer: usesExternalServer ? undefined : {
+    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    url: `${baseURL}/login`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

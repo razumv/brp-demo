@@ -1,8 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 import { initialDemoState } from "@/lib/mock-data";
+import { dealerWorkflowStorageKey } from "@/lib/dealer/identity";
+import type { DealerLocalState } from "@/lib/dealer/contracts";
 import type { DemoState } from "@/lib/types";
 
 const STORAGE_KEY = "brp-clone-demo-state-v1";
+const DEALER_STORAGE_KEY = dealerWorkflowStorageKey({
+  email: "dealer@example.invalid",
+  displayName: "Финансы",
+  company: "Logos",
+});
 
 async function seedDealerSession(page: Page) {
   const state = JSON.parse(JSON.stringify(initialDemoState)) as DemoState;
@@ -45,8 +52,8 @@ test("desktop global search keeps source counts and adds quantity three with met
   await part.getByRole("button", { name: "Додати 507032473 до кошика" }).click();
 
   await expect.poll(async () => {
-    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), STORAGE_KEY);
-    const cart = persisted ? (JSON.parse(persisted) as DemoState).cart : [];
+    const persisted = await page.evaluate((storageKey) => window.localStorage.getItem(storageKey), DEALER_STORAGE_KEY);
+    const cart = persisted ? (JSON.parse(persisted) as DealerLocalState).cart : [];
     return cart[0];
   }).toEqual(expect.objectContaining({
     partNumber: "507032473",

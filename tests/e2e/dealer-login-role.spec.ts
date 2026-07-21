@@ -29,7 +29,7 @@ test("ordinary credentials create the shared Logos identity without storing the 
   const password = "storage-secret-7f4a";
   await submitLogin(page, "USER.ONE@EXAMPLE.INVALID", password);
 
-  await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3000\/$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.locator(".profile-summary").getByText("Финансы", { exact: true })).toBeVisible();
   await expect(page.locator(".profile-summary").getByText("Logos", { exact: true })).toBeVisible();
 

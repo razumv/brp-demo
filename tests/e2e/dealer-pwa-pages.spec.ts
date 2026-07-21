@@ -34,11 +34,11 @@ test("Pages export serves every required dealer route from its generated file", 
   }
 });
 
-test("Pages export redirects directory routes to their trailing-slash static paths", async ({ page }) => {
-  const response = await page.goto(server().url("/brp-demo/dealer/orders"));
+test("Pages export redirects directory routes to their trailing-slash static paths", async ({ request }) => {
+  const response = await request.get(server().url("/brp-demo/dealer/orders"), { maxRedirects: 0 });
 
-  expect(response?.status()).toBe(200);
-  await expect(page).toHaveURL(/\/brp-demo\/dealer\/orders\/$/);
+  expect(response.status()).toBe(308);
+  expect(response.headers().location).toBe("/brp-demo/dealer/orders/");
 });
 
 test("Pages export certifies every required route after visible dealer sign-in", async ({ page }) => {
@@ -50,7 +50,7 @@ test("Pages export certifies every required route after visible dealer sign-in",
     { path: "/catalog/", heading: "Каталог запчастин", content: "Оберіть виробника для перегляду або пошуку запчастин." },
     { path: "/dealer/orders/", heading: "Мої замовлення", content: "Історія, поточні статуси та повідомлення по замовленнях." },
     { path: "/dealer/orders/a20b2bdd-2a1f-4322-a50a-fe68a17f4963/", heading: "LOG-01", content: "Інформація про замовлення" },
-    { path: "/order-confirmation/a20b2bdd-2a1f-4322-a50a-fe68a17f4963/", heading: "Замовлення оформлено", content: "Номер замовлення" },
+    { path: "/order-confirmation/a20b2bdd-2a1f-4322-a50a-fe68a17f4963/", heading: "Замовлення створено", content: "Номер замовлення" },
   ]) {
     await openDealerRoute(page, route.path, route.heading, options);
     await expect(page.getByText(route.content, { exact: true })).toBeVisible();
@@ -95,8 +95,6 @@ test("Pages manifest has the deployment root and a dealer-only shortcut contract
     start_url: "/brp-demo/",
   });
 
-  // Task 10 replaces the remaining manager/catalog shortcuts with dealer routes.
-  test.fail();
   expect(manifest.shortcuts).not.toHaveLength(0);
   for (const shortcut of manifest.shortcuts) {
     expect(shortcut.url).toMatch(/^\/brp-demo\/dealer\//);

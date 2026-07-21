@@ -29,6 +29,16 @@ for (const field of ["id", "scope", "start_url"]) {
   }
 }
 
+if (!Array.isArray(manifest.shortcuts) || manifest.shortcuts.length === 0) {
+  throw new Error("manifest must include dealer shortcuts");
+}
+
+for (const shortcut of manifest.shortcuts) {
+  if (typeof shortcut.url !== "string" || !shortcut.url.startsWith(`${basePath}/dealer/`)) {
+    throw new Error(`manifest shortcut must stay in dealer navigation, received ${String(shortcut.url)}`);
+  }
+}
+
 const iconPurposes = new Set(manifest.icons?.map((icon) => icon.purpose));
 if (!iconPurposes.has("any") || !iconPurposes.has("maskable")) {
   throw new Error("manifest must include both any and maskable install icons");
