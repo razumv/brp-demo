@@ -60,10 +60,14 @@
 **Files:**
 - Create: `src/lib/dealer/contracts.ts`
 - Create: `src/lib/dealer/local-adapter.ts`
+- Create: `src/components/dealer/dealer-workflow-provider.tsx`
 - Create: `src/components/dealer/locked-operation.tsx`
+- Create: `src/app/(dealer)/layout.tsx`
+- Move dealer-only route source files under `src/app/(dealer)/**` while preserving their public URLs and static params
 - Create: `tests/e2e/dealer-safe-actions.spec.ts`
 - Modify dealer consumers only; do not change admin call sites
 
+- [ ] Mount the additive client workflow provider in the dealer-only route group; keep the root `DemoStoreProvider`, storage key, state version, login, and admin branch unchanged.
 - [ ] Define typed results for local mutation, local preview, generated artifact, unavailable backend operation, and validation error.
 - [ ] Derive current dealer identity inside the dealer adapter boundary, not from caller-supplied company/actor fields.
 - [ ] Add an accessible reusable lock/reason UI for backend-dependent actions.
