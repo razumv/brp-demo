@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Work only in `/Users/razumv/brp-clone/.worktrees/astryx-dual-design-system` on `codex/astryx-dual-design-system`; preserve unrelated changes.
+- Use `/Users/razumv/brp-clone/.worktrees/astryx-dual-design-system` on `codex/astryx-dual-design-system` as the sole integration worktree. Each delegated implementation or review task must use its own clean worktree/branch derived from that exact integration HEAD, preserve unrelated changes, pass both reviewers there, and be cherry-picked back before the next dependent task starts.
 - Treat `docs/superpowers/specs/2026-07-21-astryx-dual-design-system-design.md` and `docs/superpowers/specs/2026-07-21-astryx-dual-design-system-agent-prompt.md` as the binding product contract.
 - Keep `DesignSystem = "shadcn" | "astryx"`, `ColorMode = "system" | "light" | "dark"`, version `1`, and storage key `brp-appearance-v1` exact.
 - Preserve the current renderer as the server-prerendered and no-preference default; preserve the current default light mode when no saved preference exists.
@@ -45,12 +45,13 @@
 
 - [ ] **Step 1: Prove the isolated worktree and ancestry**
 
-Run:
+Run in the Task 0 worktree, substituting the exact task branch created from the integration HEAD:
 
 ```bash
-test "$(git branch --show-current)" = "codex/astryx-dual-design-system"
+test "$(git branch --show-current)" = "codex/astryx-task0-baseline"
 test "$(git rev-parse --git-common-dir)" = "/Users/razumv/brp-clone/.git"
 git merge-base --is-ancestor e557383 HEAD
+test "$(git rev-parse codex/astryx-dual-design-system)" = "$(git merge-base HEAD codex/astryx-dual-design-system)"
 test -z "$(git status --porcelain)" || {
   echo "Task 0 requires a clean worktree" >&2
   git status --short
