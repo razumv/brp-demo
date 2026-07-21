@@ -18,6 +18,11 @@ export type DealerIdentity = Readonly<{
   company: string;
 }>;
 
+export const dealerCustomerCategories = ["retail", "service", "fleet", "vip"] as const;
+export type DealerCustomerCategory = (typeof dealerCustomerCategories)[number];
+export type DealerCustomer = Customer & { category: DealerCustomerCategory };
+export type DealerCustomerInput = CustomerInput & { category?: DealerCustomerCategory };
+
 type DeepReadonly<T> = T extends readonly (infer Item)[]
   ? readonly DeepReadonly<Item>[]
   : T extends object
@@ -83,7 +88,7 @@ export type DealerOrderDraft = {
 export type DealerLocalState = {
   version: 2;
   ownerKey: string;
-  customers: Customer[];
+  customers: DealerCustomer[];
   equipment: Equipment[];
   cart: CartLine[];
   orders: DealerOrder[];
@@ -150,12 +155,19 @@ export type DealerCommands = {
   }) => Promise<DealerCommandResult<void>>;
   removeCartLine: (input: { partNumber: string }) => Promise<DealerCommandResult<void>>;
   clearCart: () => Promise<DealerCommandResult<void>>;
-  createCustomer: (input: CustomerInput) => Promise<DealerCommandResult<Customer>>;
+  createCustomer: (input: DealerCustomerInput) => Promise<DealerCommandResult<DealerCustomer>>;
   updateCustomer: (input: {
     id: string;
-    customer: CustomerInput;
+    customer: DealerCustomerInput;
   }) => Promise<DealerCommandResult<void>>;
+  deleteCustomer: (input: { id: string }) => Promise<DealerCommandResult<void>>;
   createEquipment: (input: EquipmentInput) => Promise<DealerCommandResult<Equipment>>;
+  updateEquipment: (input: {
+    id: string;
+    customerId: string;
+    equipment: EquipmentInput;
+  }) => Promise<DealerCommandResult<void>>;
+  deleteEquipment: (input: { id: string; customerId: string }) => Promise<DealerCommandResult<void>>;
   updateOrderBuilder: (
     input: Partial<Pick<DealerOrderBuilder, "title" | "customerId" | "po" | "note" | "delivery">>,
   ) => Promise<DealerCommandResult<void>>;

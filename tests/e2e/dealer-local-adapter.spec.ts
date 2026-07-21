@@ -1,11 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { createDealerLocalAdapter } from "@/lib/dealer/local-adapter";
-import type { DealerCommandResult } from "@/lib/dealer/contracts";
+import type { DealerCommandResult, DealerCustomer, DealerCustomerInput } from "@/lib/dealer/contracts";
 import { createInitialDealerState } from "@/lib/dealer/order-state";
 import { initialDemoState } from "@/lib/mock-data";
 import type {
-  Customer,
-  CustomerInput,
   Equipment,
   EquipmentInput,
   OrderInput,
@@ -43,13 +41,16 @@ function createHarness() {
       calls.removeCartLine += 1;
     },
     clearCart() {},
-    addCustomer(input: CustomerInput): Customer {
-      return { ...input, id: "customer-created", createdAt: "2026-07-21T00:00:00.000Z" };
+    addCustomer(input: DealerCustomerInput): DealerCustomer {
+      return { ...input, category: input.category ?? "retail", id: "customer-created", createdAt: "2026-07-21T00:00:00.000Z" };
     },
     updateCustomer() {},
+    deleteCustomer() {},
     addEquipment(input: EquipmentInput): Equipment {
       return { ...input, id: "equipment-created" };
     },
+    updateEquipment() {},
+    deleteEquipment() {},
     updateOrderBuilder() {},
     startOrderDraft() {},
     saveOrderDraft() {

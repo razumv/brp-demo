@@ -1,7 +1,5 @@
 import { getPart } from "@/lib/mock-data";
 import type {
-  Customer,
-  CustomerInput,
   Equipment,
   EquipmentInput,
   OrderInput,
@@ -13,12 +11,15 @@ import type {
   DealerCapability,
   DealerCommandResult,
   DealerCommands,
+  DealerCustomer,
+  DealerCustomerInput,
   DealerExternalOperation,
   DealerLocalState,
   DealerOrder,
   DealerOrderDraft,
   DealerOrderBuilder,
 } from "@/lib/dealer/contracts";
+import { dealerCustomerCategories } from "@/lib/dealer/contracts";
 import { findDealerOrder } from "@/lib/dealer/order-state";
 
 export type DealerStorePort = {
@@ -28,9 +29,12 @@ export type DealerStorePort = {
   setCartQuantity: (partNumber: string, quantity: number) => void;
   removeFromCart: (partNumber: string) => void;
   clearCart: () => void;
-  addCustomer: (input: CustomerInput) => Customer;
-  updateCustomer: (id: string, input: CustomerInput) => void;
+  addCustomer: (input: DealerCustomerInput) => DealerCustomer;
+  updateCustomer: (id: string, input: DealerCustomerInput) => void;
+  deleteCustomer: (id: string) => void;
   addEquipment: (input: EquipmentInput) => Equipment;
+  updateEquipment: (id: string, customerId: string, input: EquipmentInput) => void;
+  deleteEquipment: (id: string, customerId: string) => void;
   updateOrderBuilder: (
     input: Partial<Pick<DealerOrderBuilder, "title" | "customerId" | "po" | "note" | "delivery">>,
   ) => void;
@@ -89,6 +93,14 @@ function sessionRequired<T>(): DealerCommandResult<T> {
   return validationError("session", "dealer-session-required", "Дилерська сесія недоступна.");
 }
 
+function stateMutationError(field: string, error: unknown): DealerCommandResult<never> {
+  return validationError(
+    field,
+    "state-conflict",
+    error instanceof Error ? error.message : "Не вдалося зберегти зміни.",
+  );
+}
+
 export function createDealerLocalAdapter(
   store: DealerStorePort,
   browser: BrowserPort,
@@ -134,6 +146,9 @@ export function createDealerLocalAdapter(
       if (!input.name.trim()) {
         return validationError("name", "required", "Вкажіть ім’я клієнта.");
       }
+      if (input.category && !dealerCustomerCategories.includes(input.category)) {
+        return validationError("category", "invalid-category", "Оберіть категорію клієнта.");
+      }
       return localMutation(store.addCustomer(input));
     },
     async updateCustomer({ id, customer }) {
@@ -141,8 +156,33 @@ export function createDealerLocalAdapter(
       if (!store.state.customers.some((item) => item.id === id)) {
         return validationError("id", "not-found", "Клієнта не знайдено.");
       }
-      store.updateCustomer(id, customer);
-      return localMutation(undefined);
+      if (customer.category && !dealerCustomerCategories.includes(customer.category)) {
+        return validationError("category", "invalid-category", "Оберіть категорію клієнта.");
+      }
+      try {
+        store.updateCustomer(id, customer);
+        return localMutation(undefined);
+      } catch (error) {
+        return stateMutationError("id", error);
+      }
+    },
+    async deleteCustomer({ id }) {
+      if (!store.isReady()) return sessionRequired();
+      if (!store.state.customers.some((item) => item.id === id)) {
+        return validationError("id", "not-found", "Клієнта не знайдено.");
+      }
+      const hasRelatedRecords = store.state.orders.some((order) => order.customerId === id)
+        || store.state.equipment.some((equipment) => equipment.customerId === id)
+        || store.state.workshopOrders.some((order) => order.customerId === id);
+      if (hasRelatedRecords) {
+        return validationError("id", "related-records", "Клієнта неможливо видалити: є пов’язані записи.");
+      }
+      try {
+        store.deleteCustomer(id);
+        return localMutation(undefined);
+      } catch (error) {
+        return stateMutationError("id", error);
+      }
     },
     async createEquipment(input) {
       if (!store.isReady()) return sessionRequired();
@@ -150,6 +190,34 @@ export function createDealerLocalAdapter(
         return validationError("customerId", "not-found", "Клієнта не знайдено.");
       }
       return localMutation(store.addEquipment(input));
+    },
+    async updateEquipment({ id, customerId, equipment }) {
+      if (!store.isReady()) return sessionRequired();
+      const current = store.state.equipment.find((item) => item.id === id);
+      if (!current) return validationError("id", "not-found", "Техніку не знайдено.");
+      if (current.customerId !== customerId || equipment.customerId !== customerId) {
+        return validationError("customerId", "ownership", "Техніка не належить клієнту.");
+      }
+      try {
+        store.updateEquipment(id, customerId, equipment);
+        return localMutation(undefined);
+      } catch (error) {
+        return stateMutationError("id", error);
+      }
+    },
+    async deleteEquipment({ id, customerId }) {
+      if (!store.isReady()) return sessionRequired();
+      const current = store.state.equipment.find((item) => item.id === id);
+      if (!current) return validationError("id", "not-found", "Техніку не знайдено.");
+      if (current.customerId !== customerId) {
+        return validationError("customerId", "ownership", "Техніка не належить клієнту.");
+      }
+      try {
+        store.deleteEquipment(id, customerId);
+        return localMutation(undefined);
+      } catch (error) {
+        return stateMutationError("id", error);
+      }
     },
     async updateOrderBuilder(input) {
       if (!store.isReady()) return sessionRequired();

@@ -2,6 +2,8 @@ import { getPart } from "@/lib/mock-data";
 import type { DemoState, Order, OrderMessage } from "@/lib/types";
 import type {
   DealerAttachmentMetadata,
+  DealerCustomer,
+  DealerCustomerCategory,
   DealerIdentity,
   DealerLocalState,
   DealerOrder,
@@ -10,6 +12,8 @@ import type {
   DealerOrderMessage,
   DealerSnapshot,
 } from "@/lib/dealer/contracts";
+import { dealerCustomerCategories } from "@/lib/dealer/contracts";
+import type { CustomerInput, EquipmentInput } from "@/lib/types";
 
 const sourceFixtureCustomerId = "codex-qa-client";
 const sourceFixtureOrderId = "a20b2bdd-2a1f-4322-a50a-fe68a17f4963";
@@ -95,8 +99,9 @@ export function createInitialDealerState(
   return {
     version: 2,
     ownerKey,
-    customers: scopedCustomers.map((customer) => ({
+    customers: scopedCustomers.map((customer): DealerCustomer => ({
       ...customer,
+      category: "retail",
       ...(customer.id === sourceFixtureCustomerId ? {
         name: "Клієнт Logos",
         phone: "+380 44 000 00 00",
@@ -112,6 +117,77 @@ export function createInitialDealerState(
     builder: initialBuilder(now, submissionKey),
     drafts: [],
   };
+}
+
+export function createDealerCustomer(
+  state: DealerLocalState,
+  input: { customer: CustomerInput; category?: DealerCustomerCategory; id: string; now: string },
+): { state: DealerLocalState; customer: DealerCustomer } {
+  const customer: DealerCustomer = {
+    ...input.customer,
+    category: input.category ?? "retail",
+    id: input.id,
+    createdAt: input.now,
+  };
+  return {
+    customer,
+    state: { ...state, customers: [customer, ...state.customers] },
+  };
+}
+
+export function updateDealerCustomer(
+  state: DealerLocalState,
+  input: { id: string; customer: CustomerInput; category?: DealerCustomerCategory },
+): DealerLocalState {
+  if (!state.customers.some((customer) => customer.id === input.id)) {
+    throw new Error("Клієнта не знайдено.");
+  }
+  return {
+    ...state,
+    customers: state.customers.map((customer) => customer.id === input.id
+      ? { ...customer, ...input.customer, category: input.category ?? customer.category }
+      : customer),
+  };
+}
+
+export function deleteDealerCustomer(state: DealerLocalState, customerId: string): DealerLocalState {
+  const customer = state.customers.find((item) => item.id === customerId);
+  if (!customer) throw new Error("Клієнта не знайдено.");
+  const related = state.orders.some((order) => order.customerId === customerId)
+    || state.equipment.some((equipment) => equipment.customerId === customerId)
+    || state.workshopOrders.some((order) => order.customerId === customerId);
+  if (related) throw new Error("Клієнта неможливо видалити: є пов’язані записи.");
+  return { ...state, customers: state.customers.filter((item) => item.id !== customerId) };
+}
+
+export function updateDealerEquipment(
+  state: DealerLocalState,
+  input: { id: string; customerId: string; equipment: EquipmentInput },
+): DealerLocalState {
+  const equipment = state.equipment.find((item) => item.id === input.id);
+  if (!equipment) throw new Error("Техніку не знайдено.");
+  if (equipment.customerId !== input.customerId || input.equipment.customerId !== input.customerId) {
+    throw new Error("Техніка не належить клієнту.");
+  }
+  if (!state.customers.some((customer) => customer.id === input.customerId)) {
+    throw new Error("Клієнта не знайдено.");
+  }
+  return {
+    ...state,
+    equipment: state.equipment.map((item) => item.id === input.id
+      ? { ...item, ...input.equipment, customerId: input.customerId }
+      : item),
+  };
+}
+
+export function deleteDealerEquipment(
+  state: DealerLocalState,
+  input: { id: string; customerId: string },
+): DealerLocalState {
+  const equipment = state.equipment.find((item) => item.id === input.id);
+  if (!equipment) throw new Error("Техніку не знайдено.");
+  if (equipment.customerId !== input.customerId) throw new Error("Техніка не належить клієнту.");
+  return { ...state, equipment: state.equipment.filter((item) => item.id !== input.id) };
 }
 
 export function updateDealerOrderBuilder(
@@ -450,7 +526,13 @@ function isCartLine(value: unknown) {
 function isCustomer(value: unknown) {
   return isRecord(value) && hasStringFields(value, [
     "id", "name", "phone", "email", "address", "notes", "createdAt",
-  ]);
+  ]) && dealerCustomerCategories.includes(value.category as DealerCustomerCategory);
+}
+
+function isCustomerWithOptionalCategory(value: unknown) {
+  return isRecord(value) && hasStringFields(value, [
+    "id", "name", "phone", "email", "address", "notes", "createdAt",
+  ]) && (value.category === undefined || dealerCustomerCategories.includes(value.category as DealerCustomerCategory));
 }
 
 function isEquipment(value: unknown) {
@@ -545,4 +627,37 @@ export function isDealerLocalState(value: unknown): value is DealerLocalState {
 
 export function isDealerLocalStateForOwner(value: unknown, ownerKey: string): value is DealerLocalState {
   return isDealerLocalState(value) && value.ownerKey === ownerKey;
+}
+
+export function normalizeDealerLocalStateForOwner(value: unknown, ownerKey: string): DealerLocalState | null {
+  if (!isRecord(value) || value.version !== 2 || value.ownerKey !== ownerKey) return null;
+  if (!Array.isArray(value.customers) || !value.customers.every(isCustomerWithOptionalCategory)) return null;
+  if (!Array.isArray(value.equipment) || !value.equipment.every(isEquipment)) return null;
+  if (!Array.isArray(value.cart) || !value.cart.every(isCartLine)) return null;
+  if (!Array.isArray(value.orders) || !value.orders.every(isOrder)) return null;
+  if (!Array.isArray(value.workshopOrders) || !value.workshopOrders.every(isWorkshopOrder)) return null;
+  if (!Array.isArray(value.drafts) || !value.drafts.every(isDraft) || !isBuilder(value.builder)) return null;
+
+  return {
+    version: 2,
+    ownerKey,
+    customers: value.customers.map((customer): DealerCustomer => ({
+      id: customer.id as string,
+      name: customer.name as string,
+      phone: customer.phone as string,
+      email: customer.email as string,
+      address: customer.address as string,
+      notes: customer.notes as string,
+      createdAt: customer.createdAt as string,
+      category: dealerCustomerCategories.includes(customer.category as DealerCustomerCategory)
+        ? customer.category as DealerCustomerCategory
+        : "retail",
+    })),
+    equipment: value.equipment as DealerLocalState["equipment"],
+    cart: value.cart as DealerLocalState["cart"],
+    orders: value.orders as DealerLocalState["orders"],
+    workshopOrders: value.workshopOrders as DealerLocalState["workshopOrders"],
+    drafts: value.drafts as DealerLocalState["drafts"],
+    builder: value.builder as DealerLocalState["builder"],
+  };
 }

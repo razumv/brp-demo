@@ -13,6 +13,8 @@ import {
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import type {
   DealerAttachmentMetadata,
+  DealerCustomer,
+  DealerCustomerInput,
   DealerIdentity,
   DealerLocalState,
   DealerOrderBuilder,
@@ -30,21 +32,24 @@ import {
 } from "@/lib/dealer/identity";
 import {
   appendDealerOrderMessage,
+  createDealerCustomer,
   createEmptyDealerState,
   createInitialDealerState,
   createLocalDealerOrder,
+  deleteDealerCustomer,
+  deleteDealerEquipment,
   deleteDealerOrderDraft,
-  isDealerLocalStateForOwner,
+  normalizeDealerLocalStateForOwner,
   openDealerOrderDraft,
   saveDealerOrderDraft,
   setDealerOrderLineNote,
   startDealerOrderDraft,
+  updateDealerCustomer,
+  updateDealerEquipment,
   updateDealerOrderBuilder,
 } from "@/lib/dealer/order-state";
 import { getPart } from "@/lib/mock-data";
 import type {
-  Customer,
-  CustomerInput,
   Equipment,
   EquipmentInput,
   OrderInput,
@@ -115,7 +120,8 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
       const saved = window.localStorage.getItem(storageKey);
       if (saved) {
         const parsed: unknown = JSON.parse(saved);
-        if (isDealerLocalStateForOwner(parsed, ownerKey)) replaceState(parsed);
+        const normalized = normalizeDealerLocalStateForOwner(parsed, ownerKey);
+        if (normalized) replaceState(normalized);
         else {
           window.localStorage.removeItem(storageKey);
           replaceState(createInitialDealerState(
@@ -197,27 +203,37 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
     clearCart() {
       commit((current) => ({ ...current, cart: [] }));
     },
-    addCustomer(input: CustomerInput): Customer {
-      const customer: Customer = {
-        ...input,
-        id: localId("customer"),
-        createdAt: new Date().toISOString(),
-      };
-      commit((current) => ({ ...current, customers: [customer, ...current.customers] }));
-      return customer;
+    addCustomer(input: DealerCustomerInput): DealerCustomer {
+      let created: DealerCustomer | null = null;
+      commit((current) => {
+        const result = createDealerCustomer(current, {
+          customer: input,
+          category: input.category,
+          id: localId("customer"),
+          now: new Date().toISOString(),
+        });
+        created = result.customer;
+        return result.state;
+      });
+      if (!created) throw new Error("Не вдалося створити клієнта.");
+      return created;
     },
-    updateCustomer(id: string, input: CustomerInput) {
-      commit((current) => ({
-        ...current,
-        customers: current.customers.map((customer) => customer.id === id
-          ? { ...customer, ...input }
-          : customer),
-      }));
+    updateCustomer(id: string, input: DealerCustomerInput) {
+      commit((current) => updateDealerCustomer(current, { id, customer: input, category: input.category }));
+    },
+    deleteCustomer(id: string) {
+      commit((current) => deleteDealerCustomer(current, id));
     },
     addEquipment(input: EquipmentInput): Equipment {
       const equipment: Equipment = { ...input, id: localId("equipment") };
       commit((current) => ({ ...current, equipment: [equipment, ...current.equipment] }));
       return equipment;
+    },
+    updateEquipment(id: string, customerId: string, input: EquipmentInput) {
+      commit((current) => updateDealerEquipment(current, { id, customerId, equipment: input }));
+    },
+    deleteEquipment(id: string, customerId: string) {
+      commit((current) => deleteDealerEquipment(current, { id, customerId }));
     },
     updateOrderBuilder(input: Partial<Pick<DealerOrderBuilder, "title" | "customerId" | "po" | "note" | "delivery">>) {
       commit((current) => updateDealerOrderBuilder(current, input, new Date().toISOString()));
