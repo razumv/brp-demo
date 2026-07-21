@@ -532,26 +532,6 @@ function clearWindowWatchdog(): void {
   delete window.__BRP_ASTRYX_WATCHDOG__;
 }
 
-export function recoverRootToShadcn(preference: AppearancePreferenceV1): void {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const systemPrefersDark =
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const resolved = resolveColorMode(preference.colorMode, systemPrefersDark);
-  root.dataset.designSystem = "shadcn";
-  root.dataset.colorMode = preference.colorMode;
-  root.dataset.resolvedTheme = resolved;
-  root.classList.toggle("dark", resolved === "dark");
-  // The permanently mounted compatibility Theme owns these Astryx markers even
-  // while the semantic renderer has fallen back to shadcn.
-  root.dataset.astryxTheme = "brp-current-compatibility";
-  if (preference.colorMode === "system") root.removeAttribute("data-theme");
-  else root.dataset.theme = preference.colorMode;
-  root.removeAttribute("data-renderer-pending");
-}
-
 export function updateRuntimeThemeColor(
   renderedDesignSystem: "shadcn" | "astryx",
   theme: ResolvedTheme,
@@ -654,6 +634,10 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
       return;
     }
 
+    // The inline watchdog protects only the pre-hydration gap. Once the provider
+    // accepts Astryx intent, its readiness coordinator owns timeout recovery and
+    // the bootstrap must no longer remove attributes owned by the mounted Theme.
+    clearWindowWatchdog();
     const transitionId = ++transitionSequenceRef.current;
     dispatch({type: "request-astryx", preference: normalized, transitionId});
     coordinator.begin(transitionId);
@@ -666,7 +650,6 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     const fallback = lastShadcnPreferenceRef.current;
     const serializedFallback = JSON.stringify(fallback);
     acceptanceGate.remember(fallback);
-    recoverRootToShadcn(fallback);
     dispatch({
       type: "fail",
       error: error.message,
@@ -796,6 +779,7 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     renderedPreference: state.renderedPreference,
     renderedColorMode: state.renderedPreference.colorMode,
     renderedDesignSystem: state.renderedDesignSystem,
+    rendererAttemptId: state.rendererAttemptId,
     rendererTransitionId: state.transitionId,
     resolvedTheme,
     transitionStatus: state.transitionStatus,
@@ -804,7 +788,7 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     registerRendererSlot: coordinator.register,
     markRendererSlotReady: coordinator.markReady,
     failRendererTransition,
-  }), [coordinator.markReady, coordinator.register, failRendererTransition, resolvedTheme, state.desiredPreference, state.error, state.renderedDesignSystem, state.renderedPreference, state.transitionId, state.transitionStatus, updatePreference]);
+  }), [coordinator.markReady, coordinator.register, failRendererTransition, resolvedTheme, state.desiredPreference, state.error, state.renderedDesignSystem, state.renderedPreference, state.rendererAttemptId, state.transitionId, state.transitionStatus, updatePreference]);
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }

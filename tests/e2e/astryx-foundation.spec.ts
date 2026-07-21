@@ -1,10 +1,28 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-const regions = ["light", "dark"] as const;
+async function publishColorMode(page: Page, colorMode: "light" | "dark") {
+  await page.evaluate((nextColorMode) => {
+    const preference = JSON.stringify({
+      version: 1,
+      designSystem: "astryx",
+      colorMode: nextColorMode,
+    });
+    window.localStorage.setItem("brp-appearance-v1", preference);
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "brp-appearance-v1",
+      newValue: preference,
+      storageArea: window.localStorage,
+    }));
+  }, colorMode);
+}
 
-test("renders real Astryx foundation components in light and dark Theme regions", async ({ page }) => {
+test("renders real Astryx foundation components through the official light and dark Theme modes", async ({ page }) => {
+  test.skip(
+    process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE !== "1",
+    "The renderer foundation probe is enabled only for the focused production regression suite.",
+  );
   await page.addInitScript(() => {
     window.localStorage.setItem("brp-appearance-v1", JSON.stringify({
       version: 1,
@@ -17,19 +35,19 @@ test("renders real Astryx foundation components in light and dark Theme regions"
     "data-design-system",
     "astryx",
   );
+  const region = page.getByTestId("renderer-state-preservation-probe");
+  await expect(region).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "neutral");
+  await expect(page.locator('[data-astryx-theme="neutral"]')).toHaveCount(2);
 
-  for (const mode of regions) {
-    const region = page.getByTestId(`astryx-foundation-${mode}`);
-    await expect(region).toBeVisible();
-
+  const assertFoundationGeometry = async () => {
     const controls = [
       region.getByRole("button", { name: "Foundation action" }),
-      region.getByRole("textbox", { name: "Foundation input" }).locator(".."),
-      region.getByTestId(`astryx-foundation-card-${mode}`),
+      region.getByRole("textbox", { name: "Renderer query" }).locator(".."),
+      region.getByTestId("astryx-foundation-card"),
       region.locator("th").first(),
       region.locator("td").first(),
     ];
-
     for (const control of controls) {
       await expect(control).toBeVisible();
       const padding = await control.evaluate((element) => {
@@ -38,21 +56,31 @@ test("renders real Astryx foundation components in light and dark Theme regions"
       });
       expect(padding.some((value) => value !== "0px")).toBe(true);
     }
+  };
+  const buttonColors = () => region
+    .getByRole("button", { name: "Foundation action" })
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, color: style.color };
+    });
 
-    const buttonColors = await region
-      .getByRole("button", { name: "Foundation action" })
-      .evaluate((element) => {
-        const style = getComputedStyle(element);
-        return { background: style.backgroundColor, color: style.color };
-      });
-    expect(buttonColors.background).not.toBe("rgba(0, 0, 0, 0)");
-    expect(buttonColors.color).not.toBe("rgb(31, 35, 40)");
+  await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "light");
+  await expect(region).toHaveAttribute("data-color-mode", "light");
+  await assertFoundationGeometry();
+  const lightColors = await buttonColors();
+  expect(lightColors.background).not.toBe("rgba(0, 0, 0, 0)");
+  await expect(region.getByRole("textbox", { name: "Renderer query" })).toHaveCSS(
+    "font-family",
+    /Figtree Variable.*Inter/,
+  );
 
-    await expect(region.getByRole("textbox", { name: "Foundation input" })).toHaveCSS(
-      "font-family",
-      /Figtree Variable.*Inter/,
-    );
-  }
+  await publishColorMode(page, "dark");
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
+  await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
+  await expect(region).toHaveAttribute("data-color-mode", "dark");
+  await assertFoundationGeometry();
+  const darkColors = await buttonColors();
+  expect(darkColors).not.toEqual(lightColors);
 });
 
 test("preserves the Task 0 current-renderer catalog baseline and control geometry", async ({ page }) => {
@@ -86,6 +114,29 @@ test("preserves the Task 0 current-renderer catalog baseline and control geometr
   }
 
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
+  const compatibilityStyles = await page.evaluate(() => {
+    const wrapper = document.querySelector<HTMLElement>(
+      'body > [data-astryx-theme="brp-current-compatibility"]',
+    );
+    const appRoot = document.querySelector<HTMLElement>("#brp-app-root");
+    if (!wrapper || !appRoot) throw new Error("Compatibility Theme wrapper is missing.");
+    return {
+      appColor: getComputedStyle(appRoot).color,
+      foreground: getComputedStyle(document.documentElement)
+        .getPropertyValue("--foreground")
+        .trim(),
+      htmlDisplay: getComputedStyle(document.documentElement).display,
+      wrapperColor: getComputedStyle(wrapper).color,
+      wrapperDisplay: getComputedStyle(wrapper).display,
+    };
+  });
+  expect(compatibilityStyles).toEqual({
+    appColor: "rgb(31, 35, 40)",
+    foreground: "#1f2328",
+    htmlDisplay: "block",
+    wrapperColor: "rgb(31, 35, 40)",
+    wrapperDisplay: "contents",
+  });
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   const currentScreenshot = await page.screenshot({ animations: "disabled", fullPage: false });

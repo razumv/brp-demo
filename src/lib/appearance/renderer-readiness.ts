@@ -9,6 +9,7 @@ export interface AppearanceTransitionState {
   renderedDesignSystem: DesignSystem;
   transitionStatus: AppearanceTransitionStatus;
   transitionId: number | null;
+  rendererAttemptId: number;
   error: string | null;
 }
 
@@ -44,6 +45,7 @@ export function createInitialAppearanceTransitionState(): AppearanceTransitionSt
     renderedDesignSystem: "shadcn",
     transitionStatus: "idle",
     transitionId: null,
+    rendererAttemptId: 0,
     error: null,
   };
 }
@@ -59,6 +61,7 @@ export function appearanceTransitionReducer(
         desiredPreference: copyPreference(action.preference),
         transitionStatus: "loading-astryx",
         transitionId: action.transitionId,
+        rendererAttemptId: action.transitionId,
         error: null,
       };
     case "commit-astryx":
@@ -80,6 +83,7 @@ export function appearanceTransitionReducer(
         renderedDesignSystem: "shadcn",
         transitionStatus: "idle",
         transitionId: null,
+        rendererAttemptId: state.rendererAttemptId,
         error: null,
       };
     case "fail":
@@ -92,6 +96,7 @@ export function appearanceTransitionReducer(
         renderedDesignSystem: "shadcn",
         transitionStatus: "error",
         transitionId: null,
+        rendererAttemptId: state.rendererAttemptId,
         error: action.error,
       };
     case "report-error":

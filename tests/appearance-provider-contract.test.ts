@@ -19,7 +19,6 @@ import {
   createAppearanceAcceptanceGate,
   createAppearanceWriteCoordinator,
   persistAppearancePreference,
-  recoverRootToShadcn,
   subscribeToResolvedTheme,
   updateRuntimeThemeColor,
 } from "../src/components/providers/appearance-provider";
@@ -1403,62 +1402,34 @@ test("system color mode changes are observed and listener cleanup is exact", () 
   assert.equal(removals, 1);
 });
 
-test("atomic shadcn recovery resolves a saved system mode from matchMedia", () => {
-  const previousDocument = globalThis.document;
-  const previousWindow = globalThis.window;
-  const dataset: Record<string, string> = {
-    astryxTheme: "neutral",
-    rendererPending: "true",
-    theme: "dark",
-  };
-  const classes = new Set<string>();
-  const root = {
-    classList: {
-      toggle(value: string, force?: boolean) {
-        if (force) classes.add(value);
-        else classes.delete(value);
-      },
-    },
-    dataset,
-    removeAttribute(name: string) {
-      const key = name.replace(/^data-/, "").replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-      delete dataset[key];
-    },
-  };
+test("renderer recovery leaves Theme-owned root markers to the permanent Theme", async () => {
+  const source = await readFile("src/components/providers/appearance-provider.tsx", "utf8");
+  const failureHandler = source.slice(
+    source.indexOf("const handleTransitionFailure ="),
+    source.indexOf("useLayoutEffect(() => {", source.indexOf("const handleTransitionFailure =")),
+  );
 
-  Object.defineProperty(globalThis, "document", {
-    configurable: true,
-    value: {documentElement: root},
-  });
-  Object.defineProperty(globalThis, "window", {
-    configurable: true,
-    value: {
-      matchMedia(query: string) {
-        assert.equal(query, "(prefers-color-scheme: dark)");
-        return {matches: true};
-      },
-    },
-  });
+  assert.doesNotMatch(failureHandler, /dataset\.(?:theme|astryxTheme)/);
+  assert.doesNotMatch(failureHandler, /removeAttribute\(["']data-(?:theme|astryx-theme|renderer-pending)/);
+  assert.doesNotMatch(failureHandler, /recoverRootToShadcn/);
+  assert.match(failureHandler, /dispatch\(\{[\s\S]*type: "fail"/);
 
-  try {
-    recoverRootToShadcn({version: 1, designSystem: "shadcn", colorMode: "system"});
-    assert.deepEqual(dataset, {
-      astryxTheme: "brp-current-compatibility",
-      colorMode: "system",
-      designSystem: "shadcn",
-      resolvedTheme: "dark",
-    });
-    assert.equal(classes.has("dark"), true);
-  } finally {
-    Object.defineProperty(globalThis, "document", {
-      configurable: true,
-      value: previousDocument,
-    });
-    Object.defineProperty(globalThis, "window", {
-      configurable: true,
-      value: previousWindow,
-    });
-  }
+  assert.doesNotMatch(source, /dataset\.(?:theme|astryxTheme)\s*=/);
+  assert.doesNotMatch(source, /setAttribute\(["']data-(?:theme|astryx-theme)["']/);
+  assert.doesNotMatch(source, /removeAttribute\(["']data-(?:theme|astryx-theme)["']/);
+});
+
+test("the hydrated provider takes over timeout recovery before requesting Astryx", async () => {
+  const source = await readFile("src/components/providers/appearance-provider.tsx", "utf8");
+  const astryxAcceptance = source.slice(
+    source.indexOf("const transitionId = ++transitionSequenceRef.current") - 240,
+    source.indexOf("startProviderWatchdog(transitionId)") + 45,
+  );
+
+  const clearIndex = astryxAcceptance.indexOf("clearWindowWatchdog()");
+  const requestIndex = astryxAcceptance.indexOf("dispatch({type: \"request-astryx\"");
+  assert.ok(clearIndex >= 0);
+  assert.ok(requestIndex > clearIndex);
 });
 
 test("AppShell delegates color mode and owns no legacy storage or root dark class", async () => {

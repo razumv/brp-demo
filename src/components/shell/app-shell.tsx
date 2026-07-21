@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
@@ -28,13 +27,6 @@ import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { DealerGlobalPartsSearch } from "@/components/shell/global-parts-search";
 import { navForRole } from "@/components/shell/nav-data";
 import { useAppearance } from "@/components/appearance/use-appearance";
-import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
-
-const AstryxShellReadinessSlot = dynamic(
-  () => import("@/components/appearance/renderer-state-preservation-probe")
-    .then((module) => module.RendererStatePreservationProbe),
-  {ssr: false},
-);
 
 function Brand({ role }: { role: Role }) {
   return (
@@ -433,11 +425,6 @@ export function AppShell({
   return (
     <div className="app-shell">
       <header ref={headerRef} className="app-header">
-        <RendererViewSwitch
-          AstryxView={AstryxShellReadinessSlot}
-          currentView={null}
-          slotId={`shell-${role}`}
-        />
         <button ref={mobileMenuButtonRef} type="button" className="icon-button mobile-menu-button" aria-label="Меню" onClick={() => setMobileMenu(true)}><Menu size={20} /></button>
         <Brand role={role} />
         {role === "dealer" ? (

@@ -23,7 +23,11 @@ test("renderer switching is lazy, slot-based, and recovers to the current view",
   const boundary = read("src/components/appearance/astryx-view-boundary.tsx");
 
   assert.match(viewSwitch, /^"use client";/);
-  assert.match(viewSwitch, /AstryxView:\s*React\.ComponentType<AstryxRendererViewProps>/);
+  assert.match(viewSwitch, /loadAstryxView:\s*AstryxRendererViewLoader<Props>/);
+  assert.match(viewSwitch, /astryxViewProps:\s*Props/);
+  assert.match(viewSwitch, /useState\(\(\) => lazy\(loadAstryxView\)\)/);
+  assert.match(viewSwitch, /key=\{rendererAttemptId\}/);
+  assert.match(viewSwitch, /attemptSlotId = `\$\{rendererAttemptId\}:\$\{slotId\}`/);
   assert.match(viewSwitch, /registerRendererSlot/);
   assert.match(viewSwitch, /markRendererSlotReady/);
   assert.match(viewSwitch, /<AstryxViewBoundary/);
@@ -36,15 +40,21 @@ test("the public appearance contract exposes committed renderer preference separ
   const provider = read("src/components/providers/appearance-provider.tsx");
 
   assert.match(context, /renderedPreference:\s*AppearancePreferenceV1/);
+  assert.match(context, /rendererAttemptId:\s*number/);
   assert.match(provider, /renderedPreference:\s*state\.renderedPreference/);
+  assert.match(provider, /rendererAttemptId:\s*state\.rendererAttemptId/);
 });
 
-test("AppShell keeps route children below one stable main while only chrome has a renderer slot", () => {
+test("AppShell keeps route children below one stable main and has no diagnostic readiness slot", () => {
   const shell = read("src/components/shell/app-shell.tsx");
+  const layout = read("src/app/layout.tsx");
+  const probe = read("src/components/appearance/renderer-state-preservation-probe.tsx");
 
-  assert.match(shell, /RendererViewSwitch/);
-  assert.match(shell, /const\s+AstryxShellReadinessSlot\s*=\s+dynamic\(/);
-  assert.match(shell, /ssr:\s*false/);
   assert.match(shell, /<main[^>]*>[\s\S]*\{children\}[\s\S]*<\/main>/);
-  assert.match(shell, /currentView=\{null\}/);
+  assert.doesNotMatch(shell, /RendererStatePreservationProbe|ReadinessSlot/);
+  assert.match(layout, /NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE/);
+  assert.match(probe, /@astryxdesign\/core\/Button/);
+  assert.match(probe, /@astryxdesign\/core\/TextInput/);
+  assert.match(probe, /RendererStateHarnessProps/);
+  assert.doesNotMatch(probe, /<output[^>]*aria-hidden/);
 });

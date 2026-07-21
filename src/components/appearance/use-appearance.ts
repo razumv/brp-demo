@@ -9,6 +9,7 @@ export interface AppearanceContextValue {
   renderedPreference: AppearancePreferenceV1;
   renderedColorMode: AppearancePreferenceV1["colorMode"];
   renderedDesignSystem: DesignSystem;
+  rendererAttemptId: number;
   rendererTransitionId: number | null;
   resolvedTheme: ResolvedTheme;
   transitionStatus: AppearanceTransitionStatus;

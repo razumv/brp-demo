@@ -1,42 +1,39 @@
 "use client";
 
 import {useSyncExternalStore} from "react";
-import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
-import {Link} from "@astryxdesign/core/Link";
-import {
-  proportional,
-  Table,
-} from "@astryxdesign/core/Table";
-import { TextInput } from "@astryxdesign/core/TextInput";
-import { useAppearance } from "@/components/appearance/use-appearance";
-import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
+import {RendererStateHarnessController} from "@/components/appearance/renderer-state-harness-controller";
+import {useAppearance} from "@/components/appearance/use-appearance";
 
-const AstryxFoundationReadinessSlot = dynamic(
-  () => {
-    if (new URLSearchParams(window.location.search).get("renderer-failure") === "import") {
-      return Promise.reject(new Error("Injected Astryx lazy view import failure."));
-    }
-    return import("./renderer-state-preservation-probe").then((module) => module.RendererStatePreservationProbe);
-  },
-  {ssr: false},
-);
+function waitForManualRendererGate(query: URLSearchParams) {
+  if (query.get("renderer-gate") !== "manual") return Promise.resolve();
+  const gateWindow = window as Window & {
+    __BRP_RENDERER_GATE_RELEASED__?: boolean;
+    __BRP_RENDERER_GATE_WAITING__?: boolean;
+  };
+  if (gateWindow.__BRP_RENDERER_GATE_RELEASED__) return Promise.resolve();
+  gateWindow.__BRP_RENDERER_GATE_WAITING__ = true;
+  return new Promise<void>((resolve) => {
+    window.addEventListener("brp:renderer-gate-release", () => {
+      gateWindow.__BRP_RENDERER_GATE_RELEASED__ = true;
+      gateWindow.__BRP_RENDERER_GATE_WAITING__ = false;
+      resolve();
+    }, {once: true});
+  });
+}
 
-type ThemeRegionProps = {
-  mode: "light" | "dark";
-};
-
-const foundationRows = [{ part: "Foundation row" }];
-
-const foundationColumns = [
-  {
-    key: "part",
-    header: "Foundation column",
-    width: proportional(1),
-  },
-];
+function loadAstryxFoundationView() {
+  const query = new URLSearchParams(window.location.search);
+  if (query.get("renderer-failure") === "import") {
+    return Promise.reject(new Error("Injected Astryx lazy view import failure."));
+  }
+  const delay = Number(query.get("renderer-delay") ?? 0);
+  const load = () => import("./renderer-state-preservation-probe")
+    .then((module) => ({default: module.RendererStatePreservationProbe}));
+  const delayPromise = !Number.isFinite(delay) || delay <= 0
+    ? Promise.resolve()
+    : new Promise<void>((resolve) => window.setTimeout(resolve, delay));
+  return Promise.all([waitForManualRendererGate(query), delayPromise]).then(load);
+}
 
 function subscribeToLocation(onStoreChange: () => void) {
   window.addEventListener("popstate", onStoreChange);
@@ -51,56 +48,26 @@ function getServerProbeQuerySnapshot() {
   return false;
 }
 
-function ThemeRegion({ mode }: ThemeRegionProps) {
-  return (
-    <section data-testid={`astryx-foundation-${mode}`}>
-      <Button label="Foundation action" variant="primary" />
-      <TextInput
-        isLabelHidden
-        label="Foundation input"
-        onChange={() => {}}
-        value=""
-      />
-      <Card data-testid={`astryx-foundation-card-${mode}`} padding={4}>
-        Foundation card
-      </Card>
-      <Table columns={foundationColumns} data={foundationRows} />
-      <Link href="/" label="Foundation link">
-        Foundation link
-      </Link>
-    </section>
-  );
-}
-
 /** Gated production probe for validating Astryx's compiled CSS foundation. */
 export function AstryxFoundationProbe() {
-  const pathname = usePathname();
   const appearance = useAppearance();
   const isEnabled = useSyncExternalStore(
     subscribeToLocation,
     getProbeQuerySnapshot,
     getServerProbeQuerySnapshot,
   );
-  const isVisible = pathname === "/login" && isEnabled;
-
-  if (!isVisible) return null;
+  if (!isEnabled) return null;
 
   return (
     <section
-      data-design-system="astryx"
+      data-design-system={appearance.renderedDesignSystem}
       data-provider-color-mode={appearance.desiredPreference.colorMode}
       data-provider-design-system={appearance.desiredPreference.designSystem}
       data-provider-error={appearance.error ?? ""}
       data-provider-status={appearance.transitionStatus}
       data-testid="astryx-foundation-probe"
     >
-      <ThemeRegion mode="light" />
-      <ThemeRegion mode="dark" />
-      <RendererViewSwitch
-        AstryxView={AstryxFoundationReadinessSlot}
-        currentView={null}
-        slotId="astryx-foundation-probe"
-      />
+      <RendererStateHarnessController loadAstryxView={loadAstryxFoundationView} />
     </section>
   );
 }
