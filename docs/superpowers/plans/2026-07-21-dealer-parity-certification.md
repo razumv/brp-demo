@@ -32,13 +32,13 @@
 - Modify: `docs/research/components/customer-management.spec.md`
 - Create: `docs/research/components/dealer-workflow-boundaries.spec.md`
 
-- [ ] Record historical evidence separately from the fresh 2026-07-21 source pass.
-- [ ] Add every dealer route from the user checklist to one parity matrix.
-- [ ] For each control classify: working, correctly locked, enabled/inert, wrong action, or backend contract required.
-- [ ] For each route identify frontend-now behavior versus future `brp-dev1` behavior.
-- [ ] Remove stale multi-tenant/demo-product assumptions; document the current single dealer identity without putting an environment label in the UI.
+- [x] Record historical evidence separately from the fresh 2026-07-21 source pass.
+- [x] Add every dealer route from the user checklist to one parity matrix.
+- [x] For each control classify: working, correctly locked, enabled/inert, wrong action, or backend contract required.
+- [x] For each route identify frontend-now behavior versus future `brp-dev1` behavior.
+- [x] Remove stale multi-tenant/demo-product assumptions; document the current single dealer identity without putting an environment label in the UI.
 - [ ] Capture the source at 1440px and 390px after the user supplies a dealer-authenticated browser session; keep fields explicitly pending until then.
-- [ ] Validate document links and ensure no admin implementation work is included.
+- [x] Validate document links and ensure no admin implementation work is included.
 
 ## Task 2: Add reusable dealer E2E session and Pages harnesses
 
