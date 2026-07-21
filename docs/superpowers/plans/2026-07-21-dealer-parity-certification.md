@@ -49,11 +49,11 @@
 - Create: `tests/e2e/dealer-auth-navigation.spec.ts`
 - Create: `tests/e2e/dealer-pwa-pages.spec.ts`
 
-- [ ] Extract the safe dealer-session fixture from the existing role test.
-- [ ] Test login, direct dealer routes, logout, desktop navigation, and 390px mobile navigation.
-- [ ] Add a Pages-base-path/standalone navigation harness for `out/` without relying on the dev server.
-- [ ] Assert manifest scope/start URL and dealer-only shortcuts.
-- [ ] Run the new specs and record the expected initial failures before production changes.
+- [x] Extract the safe dealer-session fixture from the existing role test.
+- [x] Test login, direct dealer routes, logout, desktop navigation, and 390px mobile navigation.
+- [x] Add a Pages-base-path/standalone navigation harness for `out/` without relying on the dev server.
+- [ ] Assert manifest scope/start URL and dealer-only shortcuts. Scope/start URL pass; the dealer-only shortcut assertion is an intentional expected failure until Task 10.
+- [x] Run the new specs and record the expected initial failures before production changes.
 
 ## Task 3: Define dealer workflow and external-operation contracts
 
