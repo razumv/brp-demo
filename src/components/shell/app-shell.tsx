@@ -24,6 +24,7 @@ import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
+import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { DealerGlobalPartsSearch } from "@/components/shell/global-parts-search";
 import { navForRole } from "@/components/shell/nav-data";
 
@@ -125,6 +126,7 @@ function DealerCartPanel({
 }) {
   const router = useRouter();
   const { snapshot, commands } = useDealerWorkflow();
+  const [cartError, setCartError] = useState("");
   const dialogRef = useRef<HTMLElement>(null);
   useDealerDrawerAccessibility({
     open: true,
@@ -142,6 +144,19 @@ function DealerCartPanel({
     dealerPrice: line.part.dealerPrice,
   })));
 
+  const runCartMutation = async (operation: Promise<DealerCommandResult<void>>) => {
+    const result = await operation;
+    if (result.ok) {
+      setCartError("");
+      return;
+    }
+    setCartError(result.kind === "local-error"
+      ? result.message
+      : result.kind === "validation-error"
+        ? result.issues[0]?.message ?? "Не вдалося оновити кошик."
+        : "Не вдалося оновити кошик.");
+  };
+
   const dialog = (
     <div className="drawer-overlay" role="presentation" onMouseDown={(event) => {
       if (event.currentTarget === event.target) onClose();
@@ -154,6 +169,7 @@ function DealerCartPanel({
           </div>
           <button type="button" className="icon-button" aria-label="Закрити кошик" onClick={onClose}><X size={19} /></button>
         </header>
+        {cartError ? <p className="drawer-error" role="alert">{cartError}</p> : null}
         {lines.length === 0 ? (
           <div className="cart-empty">
             <span><ShoppingCart size={28} /></span>
@@ -169,7 +185,7 @@ function DealerCartPanel({
             <div className="drawer-scroll">
               <div className="drawer-inline-header">
                 <span>До найближчої поставки</span>
-                <button type="button" onClick={() => void commands.clearCart()}><Trash2 size={13} /> Очистити</button>
+                <button type="button" onClick={() => void runCartMutation(commands.clearCart())}><Trash2 size={13} /> Очистити</button>
               </div>
               {lines.map((line) => (
                 <article className="cart-line" key={line.partNumber}>
@@ -178,13 +194,13 @@ function DealerCartPanel({
                       <strong>{line.part.number}</strong>
                       {line.part.description ? <p>{line.part.description}</p> : null}
                     </div>
-                    <button type="button" className="icon-button icon-button-small" aria-label={"Видалити " + line.part.number} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><X size={14} /></button>
+                    <button type="button" className="icon-button icon-button-small" aria-label={"Видалити " + line.part.number} onClick={() => void runCartMutation(commands.removeCartLine({ partNumber: line.partNumber }))}><X size={14} /></button>
                   </div>
                   <div className="cart-line-foot">
                     <div className="quantity-control">
-                      <button type="button" aria-label="Зменшити" onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 })}>−</button>
+                      <button type="button" aria-label="Зменшити" onClick={() => void runCartMutation(commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 }))}>−</button>
                       <span>{line.quantity}</span>
-                      <button type="button" aria-label="Збільшити" onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 })}>+</button>
+                      <button type="button" aria-label="Збільшити" onClick={() => void runCartMutation(commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 }))}>+</button>
                     </div>
                     <strong>{formatMoney(line.quantity * line.part.dealerPrice)}</strong>
                   </div>
@@ -380,7 +396,7 @@ function DealerMobileNavigation({
     <div className="drawer-overlay mobile-nav-overlay" role="presentation" onMouseDown={(event) => {
       if (event.currentTarget === event.target) onClose();
     }}>
-      <aside ref={dialogRef} className="side-drawer mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Навігація" tabIndex={-1}>
+      <aside ref={dialogRef} className="side-drawer mobile-nav-drawer dealer-mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Навігація" tabIndex={-1}>
         <header className="drawer-header"><Brand role="dealer" /><button type="button" className="icon-button" onClick={onClose} aria-label="Закрити меню"><X size={19} /></button></header>
         <div className="drawer-scroll"><DealerRoleNav onNavigate={onClose} /></div>
       </aside>

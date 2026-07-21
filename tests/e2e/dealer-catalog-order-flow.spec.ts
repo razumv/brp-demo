@@ -40,6 +40,7 @@ test("dealer order builder persists and reaches confirmation, list, and detail",
   await page.getByRole("link", { name: "Мої замовлення", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Мої замовлення" })).toBeVisible();
   await page.getByRole("link", { name: new RegExp(`^${code}`) }).first().click();
+  await expect(page).toHaveURL(/\/dealer\/order-detail\?id=dealer-order-/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: code as string, exact: true })).toBeVisible();
   await expect(page.getByText("PO: PO-ORD-42", { exact: true })).toBeVisible();
   await expect(page.getByText("Передзвонити перед комплектацією", { exact: true })).toBeVisible();

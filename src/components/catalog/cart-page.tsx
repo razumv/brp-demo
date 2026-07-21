@@ -17,6 +17,7 @@ import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider"
 import { LockedOperation } from "@/components/dealer/locked-operation";
 import { EmptyState, InlineNotice, Modal, PageHeader, Panel } from "@/components/shared/ui";
 import { getAccessoryProduct } from "@/lib/dealer/accessories-data";
+import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { formatMoney, getPart, orderTotal } from "@/lib/mock-data";
 import { orderConfirmationHref } from "@/lib/order-route-hrefs";
 import styles from "@/components/catalog/catalog.module.css";
@@ -42,6 +43,13 @@ const initialCustomer: CustomerDraft = {
   notes: "",
 };
 
+function commandFailureMessage(result: DealerCommandResult<unknown>, fallback: string) {
+  if (result.ok) return "";
+  if (result.kind === "local-error") return result.message;
+  if (result.kind === "validation-error") return result.issues[0]?.message ?? fallback;
+  return fallback;
+}
+
 export function CartPage() {
   const router = useRouter();
   const { snapshot, commands } = useDealerWorkflow();
@@ -50,6 +58,7 @@ export function CartPage() {
   const [manualFeedback, setManualFeedback] = useState<ManualFeedback | null>(null);
   const [validation, setValidation] = useState<string[]>([]);
   const [draftFeedback, setDraftFeedback] = useState("");
+  const [operationError, setOperationError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerDraft, setCustomerDraft] = useState<CustomerDraft>(initialCustomer);
@@ -65,9 +74,15 @@ export function CartPage() {
   );
   const total = orderTotal(lines.map((line) => ({ quantity: line.quantity, dealerPrice: line.part.dealerPrice })));
 
-  const updateBuilder = (input: Parameters<typeof commands.updateOrderBuilder>[0]) => {
+  const updateBuilder = async (input: Parameters<typeof commands.updateOrderBuilder>[0]) => {
     setDraftFeedback("");
-    void commands.updateOrderBuilder(input);
+    const result = await commands.updateOrderBuilder(input);
+    setOperationError(commandFailureMessage(result, "Не вдалося оновити чернетку."));
+  };
+
+  const runCartMutation = async (operation: Promise<DealerCommandResult<void>>) => {
+    const result = await operation;
+    setOperationError(commandFailureMessage(result, "Не вдалося оновити кошик."));
   };
 
   const addManualPart = async () => {
@@ -81,14 +96,13 @@ export function CartPage() {
     if (!result.ok) {
       setManualFeedback({
         tone: "error",
-        message: result.kind === "validation-error"
-          ? result.issues[0]?.message ?? "Не вдалося додати позицію."
-          : "Не вдалося додати позицію.",
+        message: commandFailureMessage(result, "Не вдалося додати позицію."),
       });
       return;
     }
     setManualPart("");
     setManualFeedback({ tone: "success", message: `${part.number} · ${part.description} додано до замовлення.` });
+    setOperationError("");
     setValidation([]);
   };
 
@@ -109,12 +123,15 @@ export function CartPage() {
       notes: customerDraft.notes.trim(),
     });
     if (!result.ok) {
-      setCustomerError(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося створити клієнта." : "Не вдалося створити клієнта.");
+      setCustomerError(commandFailureMessage(result, "Не вдалося створити клієнта."));
       return;
     }
-    await commands.updateOrderBuilder({ customerId: result.value.id });
+    const selectionResult = await commands.updateOrderBuilder({ customerId: result.value.id });
     setCustomerOpen(false);
     setCustomerError("");
+    setOperationError(selectionResult.ok
+      ? ""
+      : `Клієнта створено, але його не вибрано: ${commandFailureMessage(selectionResult, "не вдалося оновити чернетку.")}`);
     setValidation([]);
     setCustomerDraft(initialCustomer);
   };
@@ -122,9 +139,10 @@ export function CartPage() {
   const saveDraft = async () => {
     const result = await commands.saveOrderDraft();
     if (!result.ok) {
-      setDraftFeedback(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося зберегти чернетку." : "Не вдалося зберегти чернетку.");
+      setDraftFeedback(commandFailureMessage(result, "Не вдалося зберегти чернетку."));
       return;
     }
+    setOperationError("");
     setDraftFeedback(`Чернетку «${result.value.title}» збережено.`);
   };
 
@@ -149,7 +167,7 @@ export function CartPage() {
     if (!result.ok) {
       setValidation(result.kind === "validation-error"
         ? result.issues.map((issue) => issue.message)
-        : ["Не вдалося створити замовлення."]);
+        : [commandFailureMessage(result, "Не вдалося створити замовлення.")]);
       setSubmitting(false);
       return;
     }
@@ -164,6 +182,8 @@ export function CartPage() {
         description="Перевірте позиції, виберіть клієнта та спосіб доставки."
         action={<Link className="button button-outline" href="/catalog">Продовжити покупки</Link>}
       />
+
+      {operationError ? <p className={styles.errorMessage} role="alert">{operationError}</p> : null}
 
       <form className={styles.orderBuilder} onSubmit={submit} noValidate>
         <div className={styles.orderMain}>
@@ -205,7 +225,7 @@ export function CartPage() {
           <Panel className={styles.formPanel}>
             <div className={styles.panelHeading}>
               <div><h2>Позиції</h2><p>{snapshot.cart.length} позицій у чернетці</p></div>
-              {snapshot.cart.length ? <button type="button" className={styles.clearButton} onClick={() => void commands.clearCart()}><Trash2 size={14} /> Очистити все</button> : null}
+              {snapshot.cart.length ? <button type="button" className={styles.clearButton} onClick={() => void runCartMutation(commands.clearCart())}><Trash2 size={14} /> Очистити все</button> : null}
             </div>
 
             <div className={styles.orderTools}>
@@ -268,13 +288,13 @@ export function CartPage() {
                       ) : null}
                     </div>
                     <div className="quantity-control">
-                      <button type="button" aria-label={`Зменшити кількість ${line.part.number}`} onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 })}>−</button>
+                      <button type="button" aria-label={`Зменшити кількість ${line.part.number}`} onClick={() => void runCartMutation(commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity - 1 }))}>−</button>
                       <span>{line.quantity}</span>
-                      <button type="button" aria-label={`Збільшити кількість ${line.part.number}`} onClick={() => void commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 })}>+</button>
+                      <button type="button" aria-label={`Збільшити кількість ${line.part.number}`} onClick={() => void runCartMutation(commands.setCartQuantity({ partNumber: line.partNumber, quantity: line.quantity + 1 }))}>+</button>
                     </div>
                     <span>{formatMoney(line.part.dealerPrice)}</span>
                     <strong>{formatMoney(line.quantity * line.part.dealerPrice)}</strong>
-                    <button type="button" className={styles.removeLine} aria-label={`Видалити ${line.part.number}`} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><Trash2 size={15} /></button>
+                    <button type="button" className={styles.removeLine} aria-label={`Видалити ${line.part.number}`} onClick={() => void runCartMutation(commands.removeCartLine({ partNumber: line.partNumber }))}><Trash2 size={15} /></button>
                   </article>
                 ))}
                 {unresolvedLines.map((line) => (
@@ -283,7 +303,7 @@ export function CartPage() {
                     <span>—</span>
                     <span>—</span>
                     <strong>—</strong>
-                    <button type="button" className={styles.removeLine} aria-label={`Видалити недоступну позицію ${line.partNumber}`} onClick={() => void commands.removeCartLine({ partNumber: line.partNumber })}><Trash2 size={15} /></button>
+                    <button type="button" className={styles.removeLine} aria-label={`Видалити недоступну позицію ${line.partNumber}`} onClick={() => void runCartMutation(commands.removeCartLine({ partNumber: line.partNumber }))}><Trash2 size={15} /></button>
                   </article>
                 ))}
               </div>

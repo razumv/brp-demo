@@ -33,7 +33,7 @@ const featureDefinitions: Record<string, FeatureDefinition> = {
   network: { title: "Дилерська мережа", description: "Доступні запчастини й техніка в дилерській мережі.", icon: Globe2 },
   workshop: { title: "Майстерня", description: "Локальна дошка сервісних робіт та планування.", icon: Wrench },
   "parts-report": { title: "Звіт ЗЧ", description: "Аналітика замовлень запчастин за обраний період.", icon: BarChart3 },
-  bossweb: { title: "Пошук запчастин", description: "Перевіряйте наявність BRP, заміни, ETA і локальний склад перед створенням замовлення.", icon: Search },
+  bossweb: { title: "Пошук запчастин", description: "Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", icon: Search },
   schedule: { title: "Графік поставки", description: "Майбутні поставки техніки, слоти та вільні залишки.", icon: CalendarDays },
 };
 

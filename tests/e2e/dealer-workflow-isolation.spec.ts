@@ -115,6 +115,55 @@ test("blocked dealer persistence keeps the cart unchanged and reports a retryabl
   await expect(page.getByRole("button", { name: "Кошик (0)" })).toBeVisible();
 });
 
+test("cart page reports a retryable failure when a quantity change cannot persist", async ({ page }) => {
+  await page.addInitScript((dealerKey) => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (key === dealerKey && window.sessionStorage.getItem("block-dealer-writes") === "1") {
+        throw new Error("storage blocked");
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  }, DEALER_WORKFLOW_STORAGE_KEY);
+
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Глобальний пошук запчастин" }).fill("507032473");
+  await page.getByRole("button", { name: "Додати 507032473 до кошика" }).click();
+  await page.evaluate(() => window.sessionStorage.setItem("block-dealer-writes", "1"));
+  await page.goto("/cart");
+
+  await page.getByRole("button", { name: "Збільшити кількість 507032473" }).click();
+
+  await expect(page.getByRole("alert").filter({ hasText: "Не вдалося зберегти зміни на пристрої." }))
+    .toHaveText("Не вдалося зберегти зміни на пристрої.");
+  await expect(page.locator(".quantity-control").getByText("1", { exact: true })).toBeVisible();
+});
+
+test("cart drawer reports a retryable failure when a quantity change cannot persist", async ({ page }) => {
+  await page.addInitScript((dealerKey) => {
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (key === dealerKey && window.sessionStorage.getItem("block-dealer-writes") === "1") {
+        throw new Error("storage blocked");
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  }, DEALER_WORKFLOW_STORAGE_KEY);
+
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Глобальний пошук запчастин" }).fill("507032473");
+  await page.getByRole("button", { name: "Додати 507032473 до кошика" }).click();
+  await page.evaluate(() => window.sessionStorage.setItem("block-dealer-writes", "1"));
+  await page.getByRole("button", { name: "Кошик (1)" }).click();
+
+  await page.getByRole("dialog", { name: "Кошик" }).getByRole("button", { name: "Збільшити" }).click();
+
+  await expect(page.getByRole("dialog", { name: "Кошик" }).getByRole("alert"))
+    .toHaveText("Не вдалося зберегти зміни на пристрої.");
+  await expect(page.getByRole("dialog", { name: "Кошик" }).locator(".quantity-control").getByText("1", { exact: true }))
+    .toBeVisible();
+});
+
 test("blocked theme storage does not break the dealer shell", async ({ page }) => {
   await page.addInitScript(() => {
     const originalGetItem = Storage.prototype.getItem;

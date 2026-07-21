@@ -65,6 +65,8 @@ test.describe("dealer operational features on desktop", () => {
     }));
 
     await openDealerRoute(page, "/dealer/bossweb", "Пошук запчастин", dealerSessionOptions);
+    await expect(page.getByText("Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Пошук виконується лише в локальному довіднику. Онлайн-наявність BossWeb, заміни та ETA не завантажуються.", { exact: true })).toBeVisible();
     await expect(page.getByText("COOLANT,EXT LIFE", { exact: true })).toBeVisible();
     await expect(page.getByText(/лише в локальному довіднику/i)).toBeVisible();
     await page.getByRole("searchbox", { name: "Номер запчастини" }).fill("0000000");

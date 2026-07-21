@@ -1418,6 +1418,16 @@ a {
   cursor: pointer;
 }
 
+.drawer-error {
+  margin: 12px 16px 0;
+  padding: 9px 11px;
+  border: 1px solid #efb7bc;
+  border-radius: 5px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 11px;
+}
+
 .cart-empty {
   display: flex;
   flex: 1;
@@ -2067,6 +2077,9 @@ a {
   }
   .side-drawer {
     width: 100%;
+  }
+  .dealer-mobile-nav-drawer {
+    width: min(336px, calc(100% - 48px));
   }
   .login-card {
     width: 100%;
