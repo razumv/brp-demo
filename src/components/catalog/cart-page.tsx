@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   Check,
   Download,
-  FileSpreadsheet,
   PackagePlus,
   Plus,
   ShoppingCart,
@@ -15,6 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { LockedOperation } from "@/components/dealer/locked-operation";
 import { EmptyState, InlineNotice, Modal, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
 import { formatMoney, getPart, orderTotal } from "@/lib/mock-data";
 import { orderConfirmationHref } from "@/lib/order-route-hrefs";
@@ -58,7 +58,6 @@ export function CartPage() {
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerDraft, setCustomerDraft] = useState<CustomerDraft>(initialCustomer);
   const [customerError, setCustomerError] = useState("");
-  const [spreadsheetNotice, setSpreadsheetNotice] = useState("");
 
   const lines = useMemo(() => state.cart.flatMap((line) => {
     const part = getPart(line.partNumber);
@@ -180,12 +179,19 @@ export function CartPage() {
                 <button type="button" className="button button-primary" onClick={addManualPart}><Plus size={15} /> Додати</button>
               </div>
               <div className={styles.spreadsheetButtons}>
-                <button type="button" className="button button-outline" onClick={() => setSpreadsheetNotice("Імпорт Excel показано у локальному демо без завантаження на сервер.")}><Upload size={15} /> Імпорт Excel</button>
-                <button type="button" className="button button-outline" onClick={() => setSpreadsheetNotice("Експорт підготовлено як демонстраційний сценарій.")}><Download size={15} /> Експорт</button>
+                <LockedOperation
+                  icon={<Upload size={15} />}
+                  label="Імпорт Excel"
+                  reason="Імпорт файлів поки недоступний."
+                />
+                <LockedOperation
+                  icon={<Download size={15} />}
+                  label="Експорт"
+                  reason="Експорт файлів поки недоступний."
+                />
               </div>
             </div>
             {manualFeedback ? <p className={manualFeedback.startsWith("977") ? styles.successMessage : styles.errorMessage} aria-live="polite">{manualFeedback}</p> : null}
-            {spreadsheetNotice ? <div className={styles.toolNotice}><FileSpreadsheet size={15} />{spreadsheetNotice}</div> : null}
 
             {lines.length === 0 ? (
               <EmptyState
@@ -247,7 +253,7 @@ export function CartPage() {
               <InlineNotice tone="danger"><span>{validation.map((error) => <span className={styles.validationLine} key={error}>{error}</span>)}</span></InlineNotice>
             ) : null}
             <button type="submit" className="button button-primary button-wide"><Check size={16} /> Перевірити і відправити</button>
-            <p>Замовлення створюється тільки у локальному демо та одразу з’явиться в «Мої замовлення».</p>
+            <p>Замовлення збережеться у цьому браузері та одразу з’явиться в «Мої замовлення».</p>
           </Panel>
         </aside>
       </form>
