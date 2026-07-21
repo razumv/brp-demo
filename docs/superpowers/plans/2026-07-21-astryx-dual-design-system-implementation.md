@@ -19,7 +19,7 @@
 - No user-visible copy may call the application a demo, mockup, clone, temporary frontend, or local implementation.
 - Do not enable any locked or backend-dependent action merely because Astryx provides an enabled-looking primitive.
 - Use exact pinned versions: `@astryxdesign/core@0.1.7`, `@astryxdesign/cli@0.1.7`, `@stylexjs/stylex@0.19.0`; add `@astryxdesign/theme-neutral@0.1.7` only if the installed CLI build path proves it is required.
-- Run the owner-requested command exactly: `npx astryx theme add neutral`. Commit `src/themes/neutral/neutralTheme.ts` and `src/themes/neutral/icons.tsx` as editable source and deterministically build `neutral.css`, `neutral.js`, `neutral.d.ts`, and `neutral.variants.d.ts`.
+- Run the owner-requested command exactly: `npx astryx theme add neutral`. Commit `src/themes/neutral/neutralTheme.ts` and `src/themes/neutral/icons.tsx` as editable source and deterministically build `neutral.css`, `neutral.js`, and `neutral.d.ts`. Commit `neutral.variants.d.ts` only when the pinned CLI actually emits it because the theme introduces custom prop values; do not fabricate the conditional artifact.
 - Use official Astryx MCP `search` then `get` whenever an import, prop, provider, CSS layer, or composition is uncertain; never invent an Astryx component API.
 - Preserve official CSS order: `@layer reset, theme, base, astryx-base, astryx-theme, components, utilities`; import this declaration before every other stylesheet.
 - Bundle Figtree Latin/Latin-Extended locally and use the existing local Inter variable Cyrillic WOFF2 as the explicit fallback; never load remote fonts or claim Figtree contains Cyrillic glyphs.
@@ -104,7 +104,7 @@ git commit -m "test(astryx): freeze migration baseline"
 - Create: `src/themes/neutral/neutral.css` via CLI build
 - Create: `src/themes/neutral/neutral.js` via CLI build
 - Create: `src/themes/neutral/neutral.d.ts` via CLI build
-- Create: `src/themes/neutral/neutral.variants.d.ts` via CLI build
+- Create conditionally: `src/themes/neutral/neutral.variants.d.ts` only when emitted by the pinned CLI build
 - Create: `scripts/check-astryx-theme.mjs`
 - Create: `scripts/test-appearance-production.mjs`
 - Create: `playwright.appearance.config.ts`
