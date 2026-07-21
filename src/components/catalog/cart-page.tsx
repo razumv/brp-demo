@@ -16,6 +16,7 @@ import {
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { LockedOperation } from "@/components/dealer/locked-operation";
 import { EmptyState, InlineNotice, Modal, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import { getAccessoryProduct } from "@/lib/dealer/accessories-data";
 import { formatMoney, getPart, orderTotal } from "@/lib/mock-data";
 import { orderConfirmationHref } from "@/lib/order-route-hrefs";
 import styles from "@/components/catalog/catalog.module.css";
@@ -61,7 +62,7 @@ export function CartPage() {
 
   const lines = useMemo(() => state.cart.flatMap((line) => {
     const part = getPart(line.partNumber);
-    return part ? [{ ...line, part }] : [];
+    return part ? [{ ...line, part, accessory: getAccessoryProduct(line.partNumber) }] : [];
   }), [state.cart]);
   const total = orderTotal(lines.map((line) => ({ quantity: line.quantity, dealerPrice: line.part.dealerPrice })));
 
@@ -208,7 +209,14 @@ export function CartPage() {
                 </div>
                 {lines.map((line) => (
                   <article className={styles.orderLine} key={line.partNumber}>
-                    <div><strong>{line.part.number}</strong><p>{line.part.description}</p><small>{line.part.stock} на складі</small></div>
+                    <div>
+                      <strong>{line.part.number}</strong>
+                      <p>{line.part.description}</p>
+                      <small>{line.part.stock} на складі</small>
+                      {line.accessory?.compatibility.length ? (
+                        <small>Сумісність: {line.accessory.compatibility.join(", ")}</small>
+                      ) : null}
+                    </div>
                     <div className="quantity-control">
                       <button type="button" aria-label={`Зменшити кількість ${line.part.number}`} onClick={() => setCartQuantity(line.partNumber, line.quantity - 1)}>−</button>
                       <span>{line.quantity}</span>
