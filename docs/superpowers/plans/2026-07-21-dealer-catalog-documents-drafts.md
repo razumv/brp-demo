@@ -100,6 +100,10 @@ Run: `npx playwright test tests/e2e/dealer-order-drafts.spec.ts tests/e2e/dealer
 
 Expected: all focused tests and typecheck pass.
 
+- [ ] **Step 6: Commit the documents and drafts workflow**
+
+Run: `git add src/lib/dealer/secondary-data.ts src/components/shell/app-shell.tsx src/components/dealer/features/order-drafts-page.tsx src/components/dealer/features/order-drafts-page.module.css tests/e2e/dealer-order-drafts.spec.ts tests/e2e/dealer-secondary-pages.spec.ts && git commit -m "fix(dealer): restore document and draft controls"`
+
 ### Task 2: Typed accessories vehicle and product facets
 
 **Files:**
@@ -162,6 +166,10 @@ Run: `npx playwright test tests/e2e/dealer-accessory-data.spec.ts`
 
 Expected: all accessory data tests pass.
 
+- [ ] **Step 5: Commit the accessory data contract**
+
+Run: `git add src/lib/dealer/accessories-data.ts tests/e2e/dealer-accessory-data.spec.ts && git commit -m "fix(dealer): restore accessory filter data"`
+
 ### Task 3: Accessories source-style filter interface
 
 **Files:**
@@ -219,6 +227,10 @@ Desktop keeps the vehicle selector and left rail visible. Mobile moves both into
 Run: `npx playwright test tests/e2e/dealer-accessory-data.spec.ts tests/e2e/dealer-accessories-search.spec.ts && npm run typecheck`
 
 Expected: all pass.
+
+- [ ] **Step 6: Commit the accessory filter interface**
+
+Run: `git add src/components/dealer/features/accessories-page.tsx src/components/dealer/features/accessories-page.module.css tests/e2e/dealer-accessories-search.spec.ts && git commit -m "fix(dealer): restore accessory filter workflow"`
 
 ### Task 4: Typed five-level parts catalog cascade
 
@@ -329,6 +341,10 @@ At mobile width, avoid document overflow and keep current/next content usable.
 Run: `npx playwright test tests/e2e/dealer-catalog-order-flow.spec.ts && npm run typecheck`
 
 Expected: exact source path, URL persistence, distinct downstream selections, and mobile overflow checks pass.
+
+- [ ] **Step 7: Commit the parts catalog cascade**
+
+Run: `git add src/lib/dealer/catalog-data.ts src/components/catalog/catalog-router.tsx src/components/catalog/catalog.module.css tests/e2e/dealer-catalog-order-flow.spec.ts docs/research/components/catalog-browser.spec.md && git commit -m "fix(dealer): restore five-level parts catalog"`
 
 ### Task 5: Integrated review, verification, and Pages delivery
 
