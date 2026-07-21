@@ -1,0 +1,414 @@
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.expandButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.expandButton:hover {
+  background: var(--surface-subtle);
+  color: var(--foreground);
+}
+
+.expandButton:focus-visible,
+.unitMobileToggle:focus-visible,
+.slotRow:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+}
+
+.unitTable table {
+  min-width: 1040px;
+}
+
+.unitMobileList {
+  display: none;
+}
+
+.unitMobileCard {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.unitMobileToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.unitMobileToggle > span {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.unitMobileToggle > span:last-child {
+  flex: 0 0 auto;
+  align-items: center;
+  flex-direction: row;
+  gap: 7px;
+}
+
+.unitMobileToggle small {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.unitMobileMeta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px 12px;
+}
+
+.unitMobileMeta > div,
+.unitList dl > div,
+.bossMeta > div {
+  min-width: 0;
+}
+
+.unitMobileMeta dt,
+.unitList dt,
+.bossMeta dt {
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.unitMobileMeta dd,
+.unitList dd,
+.bossMeta dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+
+.unitList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px 12px;
+  list-style: none;
+}
+
+.unitList li {
+  display: grid;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+}
+
+.unitList li > div:first-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.unitList li > div:first-child strong {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.unitList li > div:first-child span {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.unitList dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.timeframe,
+.resultCount {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.scheduleTimeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scheduleTimeline li {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  padding: 16px 8px 0;
+  border-top: 1px solid var(--border);
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+
+.scheduleTimeline li > span {
+  position: absolute;
+  top: -6px;
+  left: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.scheduleTimeline strong {
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.scheduleTimeline small {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.timelineEmpty {
+  margin: 14px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.resultCount {
+  margin: -2px 0 10px;
+  text-align: right;
+}
+
+.slotRow {
+  min-width: 0;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.statusDotBlue {
+  background: var(--blue);
+}
+
+.successMessage {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 32%, var(--border));
+  border-radius: 6px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.lockedNotice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-subtle);
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.lockedNotice > svg {
+  flex: 0 0 auto;
+}
+
+.lockedNotice > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.lockedNotice > button {
+  flex: 0 0 auto;
+}
+
+.workshopColumn {
+  min-height: 350px;
+}
+
+.workshopColumn > div {
+  min-height: inherit;
+}
+
+.workshopColumnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 650;
+}
+
+.workshopColumnHeader strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  font-size: 10px;
+}
+
+.workshopOrderList {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.workshopOrder {
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.workshopOrder h3 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+}
+
+.workshopOrder p,
+.workshopOrder small {
+  display: block;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.workshopOrder small + small {
+  margin-top: 3px;
+}
+
+.bossMeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.bossSearch {
+  margin-top: 12px;
+}
+
+.bossMeta dd {
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .unitTable {
+    display: none;
+  }
+
+  .unitMobileList {
+    display: grid;
+  }
+
+  .scheduleTimeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 20px;
+  }
+
+  .resultCount {
+    text-align: left;
+  }
+
+  .slotRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .slotRow > span:last-child {
+    grid-column: 2;
+    align-items: flex-start;
+  }
+
+  .lockedNotice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .lockedNotice > button {
+    width: 100%;
+  }
+
+  .workshopBoard {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .workshopColumn {
+    min-height: 0;
+  }
+
+  .workshopColumn > div {
+    min-height: 0;
+  }
+
+  .bossMeta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .unitMobileMeta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unitMobileMeta > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .unitMobileToggle {
+    align-items: flex-start;
+  }
+}

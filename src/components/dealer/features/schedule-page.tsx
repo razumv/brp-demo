@@ -8,51 +8,209 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EmptyState, InlineNotice, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
+import {
+  dealerScheduleAsOfDate,
+  dealerScheduleCategoryLabels,
+  dealerScheduleSlots,
+  dealerScheduleStatusLabels,
+  filterDealerScheduleSlots,
+  formatDealerScheduleDate,
+  formatDealerScheduleTimeframe,
+  getDealerScheduleMetrics,
+  getDealerScheduleSlotTotals,
+  getDealerScheduleTimeframe,
+  type DealerScheduleCategoryFilter,
+  type DealerScheduleMetrics,
+  type DealerScheduleSlot,
+} from "@/lib/dealer/schedule-data";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "../common";
-import styles from "../dealer.module.css";
+import dealerStyles from "../dealer.module.css";
+import operationalStyles from "./operational-features.module.css";
 import { FeatureFrame } from "./feature-frame";
 
-const scheduleSlots = [
-  { category: "PWC", title: "PWC март 2026 #1", arrive: "12.06.2026", pay: "20.02.2026", status: "Прибуло", available: "0/24" },
-  { category: "ATV", title: "февраль 2026 #1", arrive: "03.06.2026", pay: "20.02.2026", status: "Прибуло", available: "1/33" },
-  { category: "PWC", title: "март 2026 #2", arrive: "05.06.2026", pay: "20.02.2026", status: "Прибуло", available: "0/36" },
-  { category: "ATV", title: "февраль 2026 #2", arrive: "05.06.2026", pay: "20.02.2026", status: "Прибуло", available: "0/16" },
-  { category: "SSV", title: "март 2026", arrive: "03.06.2026", pay: "20.03.2026", status: "Прибуло", available: "0/2" },
-];
+const scheduleCategoryOptions = [
+  { id: "all", label: "Усі категорії" },
+  ...Array.from(new Set(dealerScheduleSlots.map((slot) => slot.category)), (category) => ({
+    id: category,
+    label: dealerScheduleCategoryLabels[category],
+  })),
+] as const satisfies readonly { id: DealerScheduleCategoryFilter; label: string }[];
 
-const scheduleModels: Array<[string, string, number]> = [
-  ["23TB", "RXP X 325 - Gulfstream Blue Premium", 5],
-  ["22TF", "RXT X 325 - Ice Metal / Manta Green", 2],
-  ["25TB", "GTX PRO 130 (Rental) - White / Neo Mint", 1],
-  ["26TR", "GTX Limited 325 - Teal Metallic", 2],
-  ["13TB", "Wake PRO 230 - Sand / Dazzling Blue", 1],
-];
+function ukrainianCount(value: number, forms: readonly [string, string, string]) {
+  const remainder100 = value % 100;
+  const remainder10 = value % 10;
+  if (remainder100 >= 11 && remainder100 <= 14) return `${value} ${forms[2]}`;
+  if (remainder10 === 1) return `${value} ${forms[0]}`;
+  if (remainder10 >= 2 && remainder10 <= 4) return `${value} ${forms[1]}`;
+  return `${value} ${forms[2]}`;
+}
 
-function ScheduleSlotContent({ slot }: { slot: (typeof scheduleSlots)[number] }) {
-  return <><div className={styles.slotDates}><span><CalendarDays size={15} /> Прибуття: <strong>{slot.arrive}</strong></span><span><CircleDollarSign size={15} /> Оплата: <strong>{slot.pay}</strong></span></div><div className="data-table-wrap"><table className="data-table"><thead><tr><th>SKU</th><th>Модель</th><th>Усього</th><th>Вільно</th></tr></thead><tbody>{scheduleModels.map(([sku, model, total]) => <tr key={sku}><td className={styles.mono}>{sku}</td><td>{model}</td><td>{total}</td><td>0</td></tr>)}</tbody></table></div></>;
+function scheduleResultLabel(metrics: DealerScheduleMetrics) {
+  return `${ukrainianCount(metrics.slots, ["слот", "слоти", "слотів"])} · ${ukrainianCount(metrics.totalUnits, ["одиниця", "одиниці", "одиниць"])} · ${metrics.availableUnits} вільно`;
+}
+
+function ScheduleSlotContent({ slot }: { slot: DealerScheduleSlot }) {
+  return (
+    <>
+      <div className={dealerStyles.slotDates}>
+        <span><CalendarDays size={15} /> Прибуття: <strong>{formatDealerScheduleDate(slot.arrivalDate)}</strong></span>
+        <span><CircleDollarSign size={15} /> Оплата до: <strong>{formatDealerScheduleDate(slot.paymentDueDate)}</strong></span>
+      </div>
+      <div className="data-table-wrap">
+        <table className="data-table">
+          <thead><tr><th>SKU</th><th>Модель</th><th>Усього</th><th>Вільно</th></tr></thead>
+          <tbody>
+            {slot.models.map((model) => (
+              <tr key={model.sku}>
+                <td className={dealerStyles.mono}>{model.sku}</td>
+                <td>{model.model}</td>
+                <td>{model.total}</td>
+                <td>{model.available}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
 
 export function SchedulePage() {
-  const [category, setCategory] = useState("all");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+  const [category, setCategory] = useState<DealerScheduleCategoryFilter>("all");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string>(dealerScheduleSlots[0]?.id ?? "");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const filtered = scheduleSlots.filter((slot) => category === "all" || slot.category === category);
-  const selected = selectedIndex === null ? undefined : filtered[selectedIndex];
+  const filteredSlots = useMemo(
+    () => filterDealerScheduleSlots(dealerScheduleSlots, category, query),
+    [category, query],
+  );
+  const metrics = useMemo(() => getDealerScheduleMetrics(filteredSlots), [filteredSlots]);
+  const timeframe = useMemo(() => getDealerScheduleTimeframe(filteredSlots), [filteredSlots]);
+  const timeframeLabel = useMemo(() => formatDealerScheduleTimeframe(filteredSlots), [filteredSlots]);
+  const selected = filteredSlots.find((slot) => slot.id === selectedId) ?? filteredSlots[0];
+
   return (
     <FeatureFrame feature="schedule">
-      <InlineNotice tone="warning"><strong>20 поставок</strong> з простроченою оплатою — PWC март 2026, ATV февраль 2026.</InlineNotice>
-      <section className={styles.scheduleStats}><StatCard label="Прибуває у липні" value="0" icon={<Truck size={18} />} tone="blue" /><StatCard label="Доступно до замовлення" value="14" icon={<PackageCheck size={18} />} tone="green" /><StatCard label="Одиниць на складі" value="33" icon={<Warehouse size={18} />} tone="orange" /></section>
-      <Panel className={styles.timelineOverview}><SectionHeading title="Хронологія прибуття" /><div className={styles.timelineTrack}><span /><i /><i /><i /><i /></div><div className={styles.months}>{["JAN ’26", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP"].map((month) => <span key={month}>{month}</span>)}</div></Panel>
-      <div className={styles.scheduleTabs}><button type="button" className={styles.activeTextTab}>Майбутні поставки</button><button type="button">Вільні запаси</button></div>
-      <div className={styles.scheduleFilters}><div className="segmented">{[{ id: "all", label: "Усі категорії" }, { id: "PWC", label: "Sea-Doo" }, { id: "ATV", label: "ATV" }, { id: "SSV", label: "SSV" }].map((item) => <button type="button" key={item.id} aria-pressed={category === item.id} onClick={() => { setCategory(item.id); setSelectedIndex(0); }}>{item.label}</button>)}</div><div className="toolbar-search"><Search size={15} /><input placeholder="Пошук SKU або моделі..." /></div></div>
-      <section className={styles.scheduleColumns}>
-        <Panel className={styles.slotList}><SectionHeading title={`Слоти доставки (${filtered.length ? 23 : 0})`} />{filtered.map((slot, index) => <button type="button" className={cn(styles.slotRow, selectedIndex === index && styles.slotRowActive)} onClick={() => { setSelectedIndex(index); setDetailsOpen(true); }} key={slot.title}><StatusBadge tone="neutral">{slot.category}</StatusBadge><span><strong>{slot.title}</strong><small>{slot.arrive} · <em>Оплата до: {slot.pay}</em></small></span><span><i className="dot dot-green" /> {slot.status}<small>{slot.available}</small></span></button>)}</Panel>
-        <Panel className={styles.slotDetail}>{selected ? <><SectionHeading title={selected.title} action={<StatusBadge tone="neutral">{selected.category}</StatusBadge>} /><ScheduleSlotContent slot={selected} /></> : <EmptyState title="Оберіть слот" description="Детальна інформація з’явиться тут." />}</Panel>
+      {metrics.overduePayments ? (
+        <InlineNotice tone="warning">
+          <strong>{ukrainianCount(metrics.overduePayments, ["поставка", "поставки", "поставок"])}</strong> має прострочену дату оплати станом на {formatDealerScheduleDate(dealerScheduleAsOfDate)}.
+        </InlineNotice>
+      ) : null}
+
+      <section className={dealerStyles.scheduleStats} aria-label="Зведення графіка поставки">
+        <StatCard label="Слотів у періоді" value={metrics.slots} icon={<Truck size={18} />} tone="blue" />
+        <StatCard label="Доступно" value={metrics.availableUnits} helper="Вільні одиниці у слотах" icon={<PackageCheck size={18} />} tone="green" />
+        <StatCard label="Одиниць у плані" value={metrics.totalUnits} icon={<Warehouse size={18} />} tone="orange" />
       </section>
-      <Modal open={detailsOpen && Boolean(selected)} onClose={() => setDetailsOpen(false)} title={selected?.title || "Слот доставки"} description="Деталі доступності у вибраній поставці">
+
+      <Panel className={dealerStyles.timelineOverview}>
+        <SectionHeading
+          title="Хронологія прибуття"
+          action={<span className={operationalStyles.timeframe} data-testid="schedule-timeframe">{timeframeLabel}</span>}
+        />
+        {timeframe.length ? (
+          <ol className={operationalStyles.scheduleTimeline} aria-label="Місяці поставок">
+            {timeframe.map((month) => (
+              <li key={month.key}>
+                <span aria-hidden="true" />
+                <strong>{month.label}</strong>
+                <small>{month.key.slice(0, 4)} · {ukrainianCount(month.slotCount, ["слот", "слоти", "слотів"])}</small>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className={operationalStyles.timelineEmpty}>Для поточного фільтра немає дат прибуття.</p>
+        )}
+      </Panel>
+
+      <div className={dealerStyles.scheduleFilters}>
+        <div className="segmented" role="group" aria-label="Категорія техніки">
+          {scheduleCategoryOptions.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              aria-pressed={category === item.id}
+              onClick={() => setCategory(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="toolbar-search">
+          <Search size={15} />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Пошук у графіку поставки"
+            placeholder="SKU, модель або слот…"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </div>
+      </div>
+
+      <p className={operationalStyles.resultCount} data-testid="schedule-result-count" aria-live="polite">
+        {scheduleResultLabel(metrics)}
+      </p>
+
+      <section className={dealerStyles.scheduleColumns}>
+        <Panel className={dealerStyles.slotList}>
+          <SectionHeading title={`Слоти доставки (${filteredSlots.length})`} />
+          {filteredSlots.length ? filteredSlots.map((slot) => {
+            const totals = getDealerScheduleSlotTotals(slot);
+            return (
+              <button
+                type="button"
+                className={cn(
+                  dealerStyles.slotRow,
+                  operationalStyles.slotRow,
+                  selected?.id === slot.id && dealerStyles.slotRowActive,
+                )}
+                onClick={() => {
+                  setSelectedId(slot.id);
+                  setDetailsOpen(true);
+                }}
+                key={slot.id}
+                aria-pressed={selected?.id === slot.id}
+              >
+                <StatusBadge tone="neutral">{slot.category}</StatusBadge>
+                <span>
+                  <strong>{slot.title}</strong>
+                  <small>Прибуття {formatDealerScheduleDate(slot.arrivalDate)} · Оплата до {formatDealerScheduleDate(slot.paymentDueDate)}</small>
+                </span>
+                <span>
+                  <span><i className={cn(operationalStyles.statusDot, slot.status === "in_transit" && operationalStyles.statusDotBlue)} /> {dealerScheduleStatusLabels[slot.status]}</span>
+                  <small>Вільно {totals.availableUnits} з {totals.totalUnits}</small>
+                </span>
+              </button>
+            );
+          }) : (
+            <EmptyState compact title="Слотів не знайдено" description="Змініть категорію або пошуковий запит." />
+          )}
+        </Panel>
+
+        <Panel className={dealerStyles.slotDetail}>
+          {selected ? (
+            <>
+              <SectionHeading title={selected.title} action={<StatusBadge tone="neutral">{selected.category}</StatusBadge>} />
+              <ScheduleSlotContent slot={selected} />
+            </>
+          ) : (
+            <EmptyState title="Слот не вибрано" description="Оберіть доступний слот у списку." />
+          )}
+        </Panel>
+      </section>
+
+      <Modal
+        open={detailsOpen && Boolean(selected)}
+        onClose={() => setDetailsOpen(false)}
+        title={selected?.title ?? "Слот доставки"}
+        description="Моделі, дати та вільні одиниці у вибраному слоті"
+      >
         {selected ? <ScheduleSlotContent slot={selected} /> : null}
       </Modal>
     </FeatureFrame>
