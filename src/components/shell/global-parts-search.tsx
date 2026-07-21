@@ -45,12 +45,7 @@ export function DealerGlobalPartsSearch({
   const desktopRef = useRef<HTMLFormElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
-  const onMobileCloseRef = useRef(onMobileClose);
   const trimmedQuery = query.trim();
-
-  useEffect(() => {
-    onMobileCloseRef.current = onMobileClose;
-  }, [onMobileClose]);
 
   const matchingParts = useMemo(() => {
     const normalizedQuery = trimmedQuery.toLocaleUpperCase("uk-UA");
@@ -111,7 +106,7 @@ export function DealerGlobalPartsSearch({
     const keepFocusInsideDialog = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onMobileCloseRef.current();
+        onMobileClose();
         return;
       }
       if (event.key !== "Tab") return;
@@ -154,7 +149,7 @@ export function DealerGlobalPartsSearch({
 
       returnTarget?.focus({ preventScroll: true });
     };
-  }, [mobileOpen, returnFocusRef]);
+  }, [mobileOpen, onMobileClose, returnFocusRef]);
 
   const updateQuery = (nextQuery: string, surface: "desktop" | "mobile") => {
     onQueryChange(nextQuery);

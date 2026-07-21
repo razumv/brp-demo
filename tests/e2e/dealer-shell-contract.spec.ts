@@ -12,6 +12,14 @@ test("dealer shell keeps cart state in the dealer workflow", async ({ page }) =>
   await page.getByRole("button", { name: "Кошик (1)" }).click();
   const cart = page.getByRole("dialog", { name: "Кошик" });
   await expect(cart).toContainText("507032473");
+  await cart.getByRole("button", { name: "Збільшити" }).click();
+  await expect(cart.locator(".quantity-control")).toContainText("2");
+  await cart.getByRole("button", { name: "Зменшити" }).click();
+  await expect(cart.locator(".quantity-control")).toContainText("1");
+  await cart.getByRole("button", { name: "Видалити 507032473" }).click();
+  await expect(cart.getByText("Кошик порожній", { exact: true })).toBeVisible();
+  await cart.getByRole("button", { name: "Закрити кошик" }).click();
+  await expect(page.getByRole("button", { name: "Кошик (0)" })).toBeFocused();
 });
 
 test("dealer-only header controls with no local action expose an unavailable reason", async ({ page }) => {

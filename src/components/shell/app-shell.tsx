@@ -17,9 +17,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { getPart, formatMoney } from "@/lib/mock-data";
+import { getPart, formatMoney, orderTotal } from "@/lib/mock-data";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
@@ -137,7 +137,10 @@ function DealerCartPanel({
     const part = getPart(line.partNumber);
     return part ? [{ ...line, part }] : [];
   });
-  const total = lines.reduce((sum, line) => sum + line.quantity * line.part.dealerPrice, 0);
+  const total = orderTotal(lines.map((line) => ({
+    quantity: line.quantity,
+    dealerPrice: line.part.dealerPrice,
+  })));
 
   const dialog = (
     <div className="drawer-overlay" role="presentation" onMouseDown={(event) => {
@@ -209,13 +212,14 @@ function DealerCartControl({ inertTargets }: { inertTargets: readonly RefObject<
   const [cartOpen, setCartOpen] = useState(false);
   const cartButtonRef = useRef<HTMLButtonElement>(null);
   const cartCount = snapshot.cart.reduce((sum, line) => sum + line.quantity, 0);
+  const closeCart = useCallback(() => setCartOpen(false), []);
 
   return (
     <>
       <button ref={cartButtonRef} type="button" className="cart-button" aria-label={`Кошик (${cartCount})`} onClick={() => setCartOpen(true)}>
         <ShoppingCart size={17} /><span>Кошик ({cartCount})</span>
       </button>
-      {cartOpen ? <DealerCartPanel onClose={() => setCartOpen(false)} returnFocusRef={cartButtonRef} inertTargets={inertTargets} /> : null}
+      {cartOpen ? <DealerCartPanel onClose={closeCart} returnFocusRef={cartButtonRef} inertTargets={inertTargets} /> : null}
     </>
   );
 }
@@ -403,6 +407,9 @@ export function AppShell({
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const dealerInertTargets = useMemo(() => [headerRef, bodyRef] as const, []);
+  const closeMobileMenu = useCallback(() => setMobileMenu(false), []);
+  const closeMobilePartsSearch = useCallback(() => setMobilePartsSearchOpen(false), []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("brp-clone-theme");
@@ -453,7 +460,7 @@ export function AppShell({
             query={globalQuery}
             onQueryChange={setGlobalQuery}
             mobileOpen={mobilePartsSearchOpen}
-            onMobileClose={() => setMobilePartsSearchOpen(false)}
+            onMobileClose={closeMobilePartsSearch}
             returnFocusRef={mobileSearchButtonRef}
           />
         ) : (
@@ -525,7 +532,7 @@ export function AppShell({
             </div>
           </div>
           {role === "dealer" ? (
-            <DealerCartControl inertTargets={[headerRef, bodyRef]} />
+            <DealerCartControl inertTargets={dealerInertTargets} />
           ) : null}
         </div>
       </header>
@@ -537,7 +544,7 @@ export function AppShell({
 
       {mobileMenu ? (
         role === "dealer"
-          ? <DealerMobileNavigation onClose={() => setMobileMenu(false)} returnFocusRef={mobileMenuButtonRef} inertTargets={[headerRef, bodyRef]} />
+          ? <DealerMobileNavigation onClose={closeMobileMenu} returnFocusRef={mobileMenuButtonRef} inertTargets={dealerInertTargets} />
           : <div className="drawer-overlay mobile-nav-overlay" role="presentation" onMouseDown={(event) => {
             if (event.currentTarget === event.target) setMobileMenu(false);
           }}>

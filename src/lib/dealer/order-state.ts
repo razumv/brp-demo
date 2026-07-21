@@ -155,7 +155,9 @@ export function deleteDealerCustomer(state: DealerLocalState, customerId: string
   if (!customer) throw new Error("Клієнта не знайдено.");
   const related = state.orders.some((order) => order.customerId === customerId)
     || state.equipment.some((equipment) => equipment.customerId === customerId)
-    || state.workshopOrders.some((order) => order.customerId === customerId);
+    || state.workshopOrders.some((order) => order.customerId === customerId)
+    || state.drafts.some((draft) => draft.customerId === customerId)
+    || state.builder.customerId === customerId;
   if (related) throw new Error("Клієнта неможливо видалити: є пов’язані записи.");
   return { ...state, customers: state.customers.filter((item) => item.id !== customerId) };
 }

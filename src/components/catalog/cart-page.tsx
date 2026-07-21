@@ -29,6 +29,11 @@ type CustomerDraft = {
   notes: string;
 };
 
+type ManualFeedback = Readonly<{
+  tone: "success" | "error";
+  message: string;
+}>;
+
 const initialCustomer: CustomerDraft = {
   name: "",
   phone: "",
@@ -42,7 +47,7 @@ export function CartPage() {
   const { snapshot, commands } = useDealerWorkflow();
   const { builder } = snapshot;
   const [manualPart, setManualPart] = useState("");
-  const [manualFeedback, setManualFeedback] = useState("");
+  const [manualFeedback, setManualFeedback] = useState<ManualFeedback | null>(null);
   const [validation, setValidation] = useState<string[]>([]);
   const [draftFeedback, setDraftFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -69,16 +74,21 @@ export function CartPage() {
     const normalized = manualPart.trim();
     const part = getPart(normalized);
     if (!part) {
-      setManualFeedback("Запчастину не знайдено в каталозі.");
+      setManualFeedback({ tone: "error", message: "Запчастину не знайдено в каталозі." });
       return;
     }
     const result = await commands.addCartLine({ partNumber: normalized, quantity: 1 });
     if (!result.ok) {
-      setManualFeedback(result.kind === "validation-error" ? result.issues[0]?.message ?? "Не вдалося додати позицію." : "Не вдалося додати позицію.");
+      setManualFeedback({
+        tone: "error",
+        message: result.kind === "validation-error"
+          ? result.issues[0]?.message ?? "Не вдалося додати позицію."
+          : "Не вдалося додати позицію.",
+      });
       return;
     }
     setManualPart("");
-    setManualFeedback(`${part.number} · ${part.description} додано до замовлення.`);
+    setManualFeedback({ tone: "success", message: `${part.number} · ${part.description} додано до замовлення.` });
     setValidation([]);
   };
 
@@ -208,7 +218,7 @@ export function CartPage() {
                   }
                 }} onChange={(event) => {
                   setManualPart(event.target.value);
-                  setManualFeedback("");
+                  setManualFeedback(null);
                 }} placeholder="Додати за номером, напр. 9779150" />
                 <button type="button" className="button button-primary" onClick={() => void addManualPart()}><Plus size={15} /> Додати</button>
               </div>
@@ -225,7 +235,14 @@ export function CartPage() {
                 />
               </div>
             </div>
-            {manualFeedback ? <p className={getPart(manualFeedback.split(" · ")[0] ?? "") ? styles.successMessage : styles.errorMessage} aria-live="polite">{manualFeedback}</p> : null}
+            {manualFeedback ? (
+              <p
+                className={manualFeedback.tone === "success" ? styles.successMessage : styles.errorMessage}
+                aria-live="polite"
+              >
+                {manualFeedback.message}
+              </p>
+            ) : null}
 
             {snapshot.cart.length === 0 ? (
               <EmptyState

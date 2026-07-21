@@ -28,18 +28,26 @@ export const workshopTransitionCapability = {
 } as const;
 
 export function getWorkshopColumnCounts(orders: readonly WorkshopOrder[]) {
-  return workshopStages.reduce<Record<WorkshopOrder["status"], number>>(
-    (counts, stage) => {
-      counts[stage.id] = orders.filter((order) => order.status === stage.id).length;
-      return counts;
-    },
-    { new: 0, scheduled: 0, in_progress: 0, done: 0 },
-  );
+  const counts: Record<WorkshopOrder["status"], number> = {
+    new: 0,
+    scheduled: 0,
+    in_progress: 0,
+    done: 0,
+  };
+  for (const order of orders) counts[order.status] += 1;
+  return counts;
 }
 
 export function groupWorkshopOrders(orders: readonly WorkshopOrder[]) {
+  const ordersByStage: Record<WorkshopOrder["status"], WorkshopOrder[]> = {
+    new: [],
+    scheduled: [],
+    in_progress: [],
+    done: [],
+  };
+  for (const order of orders) ordersByStage[order.status].push(order);
   return workshopStages.map((stage) => ({
     stage,
-    orders: orders.filter((order) => order.status === stage.id),
+    orders: ordersByStage[stage.id],
   }));
 }

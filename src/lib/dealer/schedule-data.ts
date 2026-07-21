@@ -1,3 +1,5 @@
+import { formatDealerDate, normalizeDealerSearch } from "@/lib/dealer/format";
+
 export type DealerScheduleCategory = "PWC" | "ATV" | "SSV";
 export type DealerScheduleCategoryFilter = "all" | DealerScheduleCategory;
 export type DealerScheduleStatus = "scheduled" | "in_transit";
@@ -111,10 +113,6 @@ const monthLabels = [
   "грудень",
 ] as const;
 
-function normalizeSearchValue(value: string) {
-  return value.trim().toLocaleLowerCase("uk-UA");
-}
-
 function getSlotTotals(slot: DealerScheduleSlot) {
   return slot.models.reduce(
     (totals, model) => ({
@@ -134,7 +132,7 @@ export function filterDealerScheduleSlots(
   category: DealerScheduleCategoryFilter,
   query: string,
 ) {
-  const normalizedQuery = normalizeSearchValue(query);
+  const normalizedQuery = normalizeDealerSearch(query);
 
   return slots.filter((slot) => {
     if (category !== "all" && slot.category !== category) return false;
@@ -144,7 +142,7 @@ export function filterDealerScheduleSlots(
       slot.title,
       slot.category,
       ...slot.models.flatMap((model) => [model.sku, model.model]),
-    ].some((value) => normalizeSearchValue(value).includes(normalizedQuery));
+    ].some((value) => normalizeDealerSearch(value).includes(normalizedQuery));
   });
 }
 
@@ -209,6 +207,5 @@ export function formatDealerScheduleTimeframe(slots: readonly DealerScheduleSlot
 }
 
 export function formatDealerScheduleDate(isoDate: string) {
-  const [year, month, day] = isoDate.split("-");
-  return `${day}.${month}.${year}`;
+  return formatDealerDate(isoDate);
 }

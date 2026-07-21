@@ -32,6 +32,9 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Test dealer state contracts
+        run: npm run test:dealer-state
+
       - name: Build
         run: npm run build
 

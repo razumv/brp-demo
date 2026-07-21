@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@/lib/types";
+import { normalizeDealerSearch } from "@/lib/dealer/format";
 
 export type DocumentType = "invoice" | "waybill";
 export type DocumentStatus = "paid" | "open" | "overdue";
@@ -103,13 +104,9 @@ export const networkUnits = [
   { id: "network-unit-defender", model: "Defender HD10", vin: "3JBKAAA46NJ000202", dealer: "BRP Київ", year: "2025" },
 ] as const satisfies readonly NetworkUnitRow[];
 
-function normalized(value: string) {
-  return value.trim().toLocaleLowerCase("uk-UA");
-}
-
 function matchesQuery(query: string, values: readonly string[]) {
-  const needle = normalized(query);
-  return !needle || values.some((value) => normalized(value).includes(needle));
+  const needle = normalizeDealerSearch(query);
+  return !needle || values.some((value) => normalizeDealerSearch(value).includes(needle));
 }
 
 export function filterDocuments(filters: { query: string; type: "all" | DocumentType; status: "all" | DocumentStatus }) {

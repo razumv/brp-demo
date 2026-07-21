@@ -16,12 +16,9 @@ import { LockedOperation } from "@/components/dealer/locked-operation";
 import { formatDateTime } from "@/components/dealer/common";
 import { EmptyState, Modal, Panel } from "@/components/shared/ui";
 import type { DealerSnapshot } from "@/lib/dealer/contracts";
+import { normalizeDealerSearch } from "@/lib/dealer/format";
 import { FeatureFrame } from "./feature-frame";
 import styles from "./order-drafts-page.module.css";
-
-function normalize(value: string) {
-  return value.trim().toLocaleLowerCase("uk-UA");
-}
 
 function commandError(
   result: { readonly kind: string; readonly issues?: readonly { readonly message: string }[] },
@@ -38,11 +35,15 @@ export function OrderDraftsPage() {
   const [query, setQuery] = useState("");
   const [feedback, setFeedback] = useState("");
   const [pendingDelete, setPendingDelete] = useState<DealerSnapshot["drafts"][number] | null>(null);
+  const customerById = useMemo(
+    () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
+    [snapshot.customers],
+  );
 
   const filtered = useMemo(() => {
-    const needle = normalize(query);
+    const needle = normalizeDealerSearch(query);
     return snapshot.drafts.filter((draft) => {
-      const customer = snapshot.customers.find((item) => item.id === draft.customerId);
+      const customer = customerById.get(draft.customerId);
       const haystack = [
         draft.title,
         draft.po,
@@ -51,7 +52,7 @@ export function OrderDraftsPage() {
       ].join(" ").toLocaleLowerCase("uk-UA");
       return !needle || haystack.includes(needle);
     });
-  }, [query, snapshot.customers, snapshot.drafts]);
+  }, [customerById, query, snapshot.drafts]);
 
   const startDraft = async () => {
     const result = await commands.startOrderDraft();
@@ -103,7 +104,7 @@ export function OrderDraftsPage() {
         {filtered.length ? (
           <div className={styles.draftList}>
             {filtered.map((draft) => {
-              const customer = snapshot.customers.find((item) => item.id === draft.customerId);
+              const customer = customerById.get(draft.customerId);
               const units = draft.lines.reduce((total, line) => total + line.quantity, 0);
               return (
                 <article className={styles.draftCard} key={draft.id}>

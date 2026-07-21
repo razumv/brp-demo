@@ -51,6 +51,10 @@ export function WorkshopPage() {
   const [confirmation, setConfirmation] = useState("");
   const counts = useMemo(() => getWorkshopColumnCounts(snapshot.workshopOrders), [snapshot.workshopOrders]);
   const groups = useMemo(() => groupWorkshopOrders(snapshot.workshopOrders), [snapshot.workshopOrders]);
+  const customerById = useMemo(
+    () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
+    [snapshot.customers],
+  );
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -143,7 +147,7 @@ export function WorkshopPage() {
                     <article className={operationalStyles.workshopOrder} key={order.id}>
                       <StatusBadge tone={stage.tone}>{workshopTypeLabels[order.type]}</StatusBadge>
                       <h3>{order.description}</h3>
-                      <p>{snapshot.customers.find((customer) => customer.id === order.customerId)?.name ?? "Клієнта не знайдено"}</p>
+                      <p>{customerById.get(order.customerId)?.name ?? "Клієнта не знайдено"}</p>
                       {order.mechanic ? <small>Механік: {order.mechanic}</small> : null}
                       {order.scheduledAt ? <small>Заплановано: {formatDateTime(order.scheduledAt)}</small> : null}
                     </article>

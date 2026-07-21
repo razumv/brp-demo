@@ -25,7 +25,7 @@ import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider"
 import { formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { findDealerOrder } from "@/lib/dealer/order-state";
-import type { DealerAttachmentMetadata, DealerCommandResult } from "@/lib/dealer/contracts";
+import type { DealerAttachmentMetadata, DealerCommandResult, DealerSnapshot } from "@/lib/dealer/contracts";
 import type { OrderLine, OrderStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime, OrderStatusBadge, SectionHeading } from "./common";
@@ -43,6 +43,10 @@ const filterStatuses: Array<{ value: "all" | OrderStatus; label: string }> = [
   { value: "done", label: "Виконані" },
   { value: "cancelled", label: "Скасовані" },
 ];
+
+const orderStatusFilters = filterStatuses.filter(
+  (item): item is { value: OrderStatus; label: string } => item.value !== "all",
+);
 
 const sourceLabels: Record<OrderLine["source"], string> = {
   warehouse: "Склад",
@@ -64,11 +68,15 @@ export function DealerOrdersPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | OrderStatus>("all");
   const [layout, setLayout] = useState<Layout>("list");
+  const customerById = useMemo(
+    () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
+    [snapshot.customers],
+  );
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return snapshot.orders.filter((order) => {
-      const customer = snapshot.customers.find((item) => item.id === order.customerId);
+      const customer = customerById.get(order.customerId);
       const haystack = [
         order.code,
         order.company,
@@ -79,12 +87,36 @@ export function DealerOrdersPage() {
       ].join(" ").toLowerCase();
       return (status === "all" || order.status === status) && (!normalized || haystack.includes(normalized));
     });
-  }, [query, snapshot.customers, snapshot.orders, status]);
+  }, [customerById, query, snapshot.orders, status]);
 
-  const counts = useMemo(() => Object.fromEntries(filterStatuses.map((item) => [
-    item.value,
-    item.value === "all" ? snapshot.orders.length : snapshot.orders.filter((order) => order.status === item.value).length,
-  ])) as Record<"all" | OrderStatus, number>, [snapshot.orders]);
+  const counts = useMemo(() => {
+    const next: Record<"all" | OrderStatus, number> = {
+      all: snapshot.orders.length,
+      new: 0,
+      waiting: 0,
+      supplier: 0,
+      ready: 0,
+      sent: 0,
+      done: 0,
+      cancelled: 0,
+    };
+    for (const order of snapshot.orders) next[order.status] += 1;
+    return next;
+  }, [snapshot.orders]);
+
+  const filteredByStatus = useMemo(() => {
+    const buckets: Record<OrderStatus, DealerSnapshot["orders"][number][]> = {
+      new: [],
+      waiting: [],
+      supplier: [],
+      ready: [],
+      sent: [],
+      done: [],
+      cancelled: [],
+    };
+    for (const order of filtered) buckets[order.status].push(order);
+    return buckets;
+  }, [filtered]);
 
   return (
     <main className="page page-narrow">
@@ -139,7 +171,7 @@ export function DealerOrdersPage() {
         ) : layout === "list" ? (
           <div className={styles.orderList}>
             {filtered.map((order) => {
-              const customer = snapshot.customers.find((item) => item.id === order.customerId);
+              const customer = customerById.get(order.customerId);
               return (
                 <Link href={dealerOrderHref(order.id)} className={styles.orderRow} key={order.id}>
                   <span className={styles.orderIcon}><Package size={18} /></span>
@@ -156,13 +188,13 @@ export function DealerOrdersPage() {
           </div>
         ) : (
           <div className={styles.kanbanBoard}>
-            {filterStatuses.filter((item) => item.value !== "all" && counts[item.value] > 0).map((column) => (
+            {orderStatusFilters.filter((item) => counts[item.value] > 0).map((column) => (
               <section className={styles.kanbanColumn} key={column.value}>
                 <header><span>{column.label}</span><strong>{counts[column.value]}</strong></header>
-                {filtered.filter((order) => order.status === column.value).map((order) => (
+                {filteredByStatus[column.value].map((order) => (
                   <Link href={dealerOrderHref(order.id)} className={styles.kanbanCard} key={order.id}>
                     <div><strong>{order.code}</strong><OrderStatusBadge status={order.status} /></div>
-                    <p>{snapshot.customers.find((item) => item.id === order.customerId)?.name || order.company}</p>
+                    <p>{customerById.get(order.customerId)?.name || order.company}</p>
                     <footer><span>{order.lines.length} позицій</span><strong>{formatMoney(orderTotal(order.lines))}</strong></footer>
                   </Link>
                 ))}

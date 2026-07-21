@@ -188,7 +188,7 @@ export function CustomersPage() {
     });
   }, [filter, query, state.customers]);
 
-  const selected = state.customers.find((customer) => customer.id === selectedId) ?? filtered[0];
+  const selected = filtered.find((customer) => customer.id === selectedId) ?? filtered[0];
   const selectedEquipment = selected ? state.equipment.filter((item) => item.customerId === selected.id) : [];
   const selectedOrders = selected ? state.orders.filter((order) => order.customerId === selected.id) : [];
   const selectedSpend = selectedOrders.reduce((sum, order) => sum + orderTotal(order.lines), 0);

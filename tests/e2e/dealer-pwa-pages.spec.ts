@@ -49,6 +49,8 @@ test("Pages export certifies every required route after visible dealer sign-in",
     { path: "/", heading: "Головна", content: "Короткий робочий огляд для Logos." },
     { path: "/catalog/", heading: "Каталог запчастин", content: "Оберіть виробника для перегляду або пошуку запчастин." },
     { path: "/dealer/orders/", heading: "Мої замовлення", content: "Історія, поточні статуси та повідомлення по замовленнях." },
+    { path: "/dealer/order-drafts/", heading: "Чернетки", content: "Незавершені замовлення, збережені для подальшої роботи." },
+    { path: "/dealer/schedule/", heading: "Графік поставки", content: "Майбутні поставки техніки, слоти та вільні залишки." },
     { path: "/dealer/orders/a20b2bdd-2a1f-4322-a50a-fe68a17f4963/", heading: "LOG-01", content: "Інформація про замовлення" },
     { path: "/order-confirmation/a20b2bdd-2a1f-4322-a50a-fe68a17f4963/", heading: "Замовлення створено", content: "Номер замовлення" },
   ]) {
@@ -98,5 +100,16 @@ test("Pages manifest has the deployment root and a dealer-only shortcut contract
   expect(manifest.shortcuts).not.toHaveLength(0);
   for (const shortcut of manifest.shortcuts) {
     expect(shortcut.url).toMatch(/^\/brp-demo\/dealer\//);
+    const shortcutResponse = await request.get(server().url(shortcut.url), { maxRedirects: 0 });
+    expect(shortcutResponse.status(), shortcut.url).toBe(200);
   }
+});
+
+test("Pages registers the generated service worker at the deployment scope", async ({ page }) => {
+  await page.goto(server().url("/brp-demo/login/"));
+
+  await expect.poll(async () => page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration("/brp-demo/");
+    return registration?.scope ?? null;
+  })).toBe(server().url("/brp-demo/"));
 });

@@ -173,7 +173,9 @@ export function createDealerLocalAdapter(
       }
       const hasRelatedRecords = store.state.orders.some((order) => order.customerId === id)
         || store.state.equipment.some((equipment) => equipment.customerId === id)
-        || store.state.workshopOrders.some((order) => order.customerId === id);
+        || store.state.workshopOrders.some((order) => order.customerId === id)
+        || store.state.drafts.some((draft) => draft.customerId === id)
+        || store.state.builder.customerId === id;
       if (hasRelatedRecords) {
         return validationError("id", "related-records", "Клієнта неможливо видалити: є пов’язані записи.");
       }

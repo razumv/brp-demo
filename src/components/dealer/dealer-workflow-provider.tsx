@@ -28,7 +28,7 @@ import {
 import {
   dealerIdentityKey,
   dealerWorkflowStorageKey,
-  getDealerIdentity,
+  getDealerIdentityFromFields,
 } from "@/lib/dealer/identity";
 import {
   appendDealerOrderMessage,
@@ -75,12 +75,16 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
   const [activeOwnerKey, setActiveOwnerKey] = useState<string | null>(null);
   const stateRef = useRef(state);
   const sharedStateRef = useRef(sharedStore.state);
-  const identity = useMemo(() => getDealerIdentity(sharedStore.state), [
-    sharedStore.state.session?.company,
-    sharedStore.state.session?.displayName,
-    sharedStore.state.session?.email,
-    sharedStore.state.session?.role,
-  ]);
+  const sessionRole = sharedStore.state.session?.role ?? null;
+  const sessionEmail = sharedStore.state.session?.email ?? "";
+  const sessionDisplayName = sharedStore.state.session?.displayName ?? "";
+  const sessionCompany = sharedStore.state.session?.company ?? "";
+  const identity = useMemo(() => getDealerIdentityFromFields(
+    sessionRole,
+    sessionEmail,
+    sessionDisplayName,
+    sessionCompany,
+  ), [sessionCompany, sessionDisplayName, sessionEmail, sessionRole]);
   const ownerKey = identity ? dealerIdentityKey(identity) : null;
   const storageKey = identity ? dealerWorkflowStorageKey(identity) : null;
   const ready = Boolean(

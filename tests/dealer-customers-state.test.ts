@@ -48,6 +48,38 @@ test("does not delete a customer with related orders or equipment", () => {
   assert.equal(state.customers.length, 1);
 });
 
+test("does not delete a customer referenced by active or saved order work", () => {
+  const state = createState();
+  const customer = state.customers[0];
+  assert.ok(customer);
+  const withoutCompletedRelations = {
+    ...state,
+    orders: [],
+    equipment: [],
+    workshopOrders: [],
+    builder: { ...state.builder, customerId: customer.id },
+  };
+
+  assert.throws(() => deleteDealerCustomer(withoutCompletedRelations, customer.id), /пов’язані записи/i);
+
+  const withSavedDraft = {
+    ...withoutCompletedRelations,
+    builder: { ...withoutCompletedRelations.builder, customerId: "" },
+    drafts: [{
+      id: "draft-customer",
+      title: "Замовлення клієнта",
+      customerId: customer.id,
+      po: "",
+      note: "",
+      delivery: "standard" as const,
+      lines: [],
+      createdAt: "2026-07-21T10:00:00.000Z",
+      updatedAt: "2026-07-21T10:00:00.000Z",
+    }],
+  };
+  assert.throws(() => deleteDealerCustomer(withSavedDraft, customer.id), /пов’язані записи/i);
+});
+
 test("updates and deletes equipment only for the owning customer", () => {
   const state = createState();
   const customer = state.customers[0];

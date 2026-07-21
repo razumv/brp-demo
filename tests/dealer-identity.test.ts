@@ -20,6 +20,21 @@ test("identity resolves only from an authenticated dealer session", () => {
       expiresAt: null,
     },
   }), null);
+  assert.deepEqual(getDealerIdentity({
+    ...initialDemoState,
+    session: {
+      role: "dealer",
+      email: " Dealer@One.UA ",
+      displayName: " Олена ",
+      company: " Logos ",
+      remember: true,
+      expiresAt: null,
+    },
+  }), {
+    email: "dealer@one.ua",
+    displayName: "Олена",
+    company: "Logos",
+  });
 });
 
 test("persistence keys are stable per dealer and isolated across identities", () => {

@@ -1,3 +1,5 @@
+import { formatDealerDate, normalizeDealerSearch } from "@/lib/dealer/format";
+
 export type DealerUnitStage = "incoming" | "stock" | "sold";
 export type DealerUnitTab = "summary" | DealerUnitStage;
 
@@ -220,16 +222,12 @@ export const dealerUnitRecords = [
   },
 ] as const satisfies readonly DealerUnitRecord[];
 
-function normalizeSearchValue(value: string) {
-  return value.trim().toLocaleLowerCase("uk-UA");
-}
-
 export function filterDealerUnitRecords(
   records: readonly DealerUnitRecord[],
   tab: DealerUnitTab,
   query: string,
 ) {
-  const normalizedQuery = normalizeSearchValue(query);
+  const normalizedQuery = normalizeDealerSearch(query);
 
   return records.filter((record) => {
     if (tab !== "summary" && record.stage !== tab) return false;
@@ -242,7 +240,7 @@ export function filterDealerUnitRecords(
       record.sku,
       record.vin ?? "",
       record.engineNumber ?? "",
-    ].some((value) => normalizeSearchValue(value).includes(normalizedQuery));
+    ].some((value) => normalizeDealerSearch(value).includes(normalizedQuery));
   });
 }
 
@@ -286,6 +284,5 @@ export function getDealerUnitCounts(records: readonly DealerUnitRecord[]): Deale
 }
 
 export function formatDealerUnitDate(isoDate: string) {
-  const [year, month, day] = isoDate.split("-");
-  return `${day}.${month}.${year}`;
+  return formatDealerDate(isoDate);
 }

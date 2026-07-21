@@ -1,18 +1,32 @@
 import type { DealerIdentity } from "@/lib/dealer/contracts";
-import type { DemoState } from "@/lib/types";
+import type { DemoState, Role } from "@/lib/types";
 
 export const DEALER_WORKFLOW_STORAGE_PREFIX = "brp-dealer-workflow-v2";
 
-export function getDealerIdentity(state: DemoState): DealerIdentity | null {
-  const session = state.session;
-  if (session?.role !== "dealer") return null;
+export function getDealerIdentityFromFields(
+  role: Role | null,
+  emailValue: string,
+  displayNameValue: string,
+  companyValue: string,
+): DealerIdentity | null {
+  if (role !== "dealer") return null;
 
-  const email = session.email.trim().toLocaleLowerCase("en-US");
-  const displayName = session.displayName.trim();
-  const company = session.company.trim();
+  const email = emailValue.trim().toLocaleLowerCase("en-US");
+  const displayName = displayNameValue.trim();
+  const company = companyValue.trim();
   if (!email || !displayName || !company) return null;
 
   return { email, displayName, company };
+}
+
+export function getDealerIdentity(state: DemoState): DealerIdentity | null {
+  const session = state.session;
+  return getDealerIdentityFromFields(
+    session?.role ?? null,
+    session?.email ?? "",
+    session?.displayName ?? "",
+    session?.company ?? "",
+  );
 }
 
 export function dealerIdentityKey(identity: DealerIdentity) {
