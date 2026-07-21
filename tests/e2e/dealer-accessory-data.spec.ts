@@ -102,12 +102,12 @@ test("vehicle fitment groups compose with product and checkbox facets", () => {
 test("vehicle option cascade excludes descendants outside selected ancestors", () => {
   const options = accessoryVehicleOptions(ACCESSORY_PRODUCTS, {
     ...defaults,
-    year: "2026",
+    year: "2024",
     model: "Outlander",
   });
 
   expect(options.models).toContain("Outlander");
-  expect(options.models).not.toContain("Sea-Doo");
+  expect(options.models).not.toContain("GTX");
   expect(options.trims).toContain("MAX XT");
   expect(options.trims).not.toContain("GTX Limited");
   expect(options.engines).toEqual([]);

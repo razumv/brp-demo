@@ -2,7 +2,7 @@
 
 ## Overview
 - Target files: `src/components/catalog/catalog-router.tsx`, `src/lib/dealer/catalog-data.ts`
-- Source screenshot: `/var/folders/pr/9bzjzvj91k15pgtgdy3w0j4c0000gn/T/codex-clipboard-57bb5aa1-e003-4ede-a295-394314812826.png`
+- Source evidence: user-provided BRP Parts Catalog capture inspected on 2026-07-21; the exact selected path and visible diagram labels are recorded below so the specification remains reviewable without a machine-local attachment.
 - Interaction model: click-driven, URL/query-backed hierarchy
 - Supported source branch: `Can-Am SXS` → `2021` → `005 - SSV - North America - Maverick Trail Series` → `002 - Maverick Trail 1000 - BASE_DPS - North America, 2021`
 
@@ -55,4 +55,4 @@ Breadcrumbs → horizontally contained catalog viewport → one grid with catego
 ## Responsive Behavior
 - Desktop: all resolved columns share the full dealer content width.
 - Tablet: the same grid remains intact and scrolls internally when its 210px minimum columns exceed the available width.
-- Mobile (390px): the document remains viewport-width; only the cascade viewport scrolls horizontally. Columns remain 210px wide and 620px high so selected/current rows remain usable without collapsing the hierarchy.
+- Mobile (390px): the document remains viewport-width; only the cascade viewport scrolls horizontally. Columns remain 210px wide and 620px high, and the viewport opens on the resolved current/next panes so the selected path is immediately usable without collapsing the hierarchy.

@@ -128,7 +128,7 @@ export function OrderDraftsPage() {
           >
             <SlidersHorizontal size={15} aria-hidden="true" />
             <span className={styles.filterTriggerLabel}>Фільтри чернеток</span>
-            {activeFilterCount ? <span className={styles.filterCount}>{activeFilterCount}</span> : null}
+            {activeFilterCount ? <span className={styles.filterCount} data-filter-count>{activeFilterCount}</span> : null}
           </button>
           <LockedOperation label="Excel" icon={<FileSpreadsheet size={14} />} reason="Імпорт і експорт файлів недоступні." />
         </div>

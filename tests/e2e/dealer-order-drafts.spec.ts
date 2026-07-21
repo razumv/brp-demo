@@ -42,7 +42,14 @@ test("draft filters change visible records, compose with search, and reset", asy
 
   await page.getByLabel("Вміст чернетки").selectOption("empty");
   await page.getByLabel("Покупець чернетки").selectOption("assigned");
-  await expect(page.getByRole("button", { name: "Фільтри чернеток, активних: 2" })).toBeVisible();
+  const activeTrigger = page.getByRole("button", { name: "Фільтри чернеток, активних: 2" });
+  await expect(activeTrigger).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await activeTrigger.click();
+  await expect(activeTrigger).toHaveAttribute("aria-expanded", "false");
+  await expect(activeTrigger.locator("[data-filter-count]")).toHaveText("2");
+  await expect(activeTrigger.locator("[data-filter-count]")).toBeVisible();
+  await activeTrigger.click();
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
   await page.getByLabel("Пошук чернеток").fill("без покупця");
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeHidden();

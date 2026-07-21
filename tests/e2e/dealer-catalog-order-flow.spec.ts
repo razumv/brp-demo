@@ -132,19 +132,24 @@ test("SXS catalog preserves the source five-column selection in the URL", async 
   await expect(breadcrumb).toContainText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021");
 });
 
-test("catalog selection changes clear invalid downstream descendants", async ({ page }) => {
+test("catalog ancestors clear descendants while unsupported nodes remain unavailable", async ({ page }) => {
   await page.goto("/catalog/CAN_OFF_EN_US/sxs?year=2021&series=005&model=002");
 
   const cascade = page.getByRole("region", { name: "Навігація каталогу" });
-  await page.getByRole("link", { name: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021", exact: true }).click();
-  await expect(page).toHaveURL(/series=005&model=001$/);
-  await expect(cascade.getByText("01- Rotax - Crankcase", { exact: true })).toHaveCount(0);
-  await expect(cascade.locator('[aria-current="page"]', { hasText: "001 - Maverick Trail 800" })).toHaveCount(1);
+  await expect(cascade.getByRole("link", { name: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021", exact: true })).toHaveCount(0);
+  await expect(cascade.locator('[aria-disabled="true"]', { hasText: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021" })).toHaveCount(1);
+  await expect(cascade.getByRole("link", { name: "011 - SSV - CE - Traxter Series", exact: true })).toHaveCount(0);
+  await expect(cascade.locator('[aria-disabled="true"]', { hasText: "011 - SSV - CE - Traxter Series" })).toHaveCount(1);
 
-  await page.getByRole("link", { name: "011 - SSV - CE - Traxter Series", exact: true }).click();
-  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=011$/);
+  const breadcrumb = page.getByRole("navigation", { name: "Хлібні крихти" });
+  await breadcrumb.getByRole("link", { name: "005 - SSV - North America - Maverick Trail Series", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005$/);
+  await expect(cascade.getByText("01- Rotax - Crankcase", { exact: true })).toHaveCount(0);
+  await expect(cascade.getByText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", { exact: true })).toBeVisible();
+
+  await breadcrumb.getByRole("link", { name: "2021", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021$/);
   await expect(cascade.getByText("001 - Maverick Trail 800 - BASE_DPS - North America, 2021", { exact: true })).toHaveCount(0);
-  await expect(cascade.getByText("Моделі для цієї серії не підтверджені джерелом.", { exact: true })).toBeVisible();
 });
 
 test("legacy ATV 2026 series browsing still opens the supported model route", async ({ page }) => {
@@ -169,10 +174,20 @@ test("five-column catalog contains its horizontal overflow at 390px", async ({ p
     overflowY: window.getComputedStyle(element).overflowY,
     scrollsVertically: element.scrollHeight > element.clientHeight,
   }))).toEqual({ overflowY: "auto", scrollsVertically: true });
-
-  await cascade.getByRole("link", { name: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021", exact: true }).scrollIntoViewIfNeeded();
-  await cascade.getByRole("link", { name: "001 - Maverick Trail 800 - BASE_DPS - North America, 2021", exact: true }).click();
-  await expect(page).toHaveURL(/model=001$/);
+  await expect.poll(() => cascade.locator('[data-catalog-column="diagrams"]').evaluate((column) => {
+    const viewport = column.parentElement?.parentElement;
+    if (!viewport) return false;
+    const columnRect = column.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    return columnRect.left >= viewportRect.left && columnRect.right <= viewportRect.right;
+  })).toBe(true);
+  await expect.poll(() => cascade.locator('[data-selected="true"]', { hasText: "002 - Maverick Trail 1000" }).evaluate((row) => {
+    const viewport = row.closest('[aria-label="Навігація каталогу"]');
+    if (!viewport) return false;
+    const rowRect = row.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+    return rowRect.right > viewportRect.left && rowRect.left < viewportRect.right;
+  })).toBe(true);
 });
 
 test("five catalog columns fit the available dealer content at 1440px", async ({ page }) => {

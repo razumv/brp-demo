@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -291,16 +291,16 @@ function getCascadeHref(node: DealerCatalogNode, selection: ResolvedCatalogSelec
 
   const params = new URLSearchParams();
   if (node.kind === "year") {
-    if (!node.children) return undefined;
+    if (!node.children?.length) return undefined;
     params.set("year", node.id);
   }
   if (node.kind === "series") {
-    if (!node.children || !selection.year) return undefined;
+    if (!node.children?.length || !selection.year) return undefined;
     params.set("year", selection.year.id);
     params.set("series", node.id);
   }
   if (node.kind === "model") {
-    if (!node.children || !selection.year || !selection.series) return undefined;
+    if (!node.children?.length || !selection.year || !selection.series) return undefined;
     params.set("year", selection.year.id);
     params.set("series", selection.series.id);
     params.set("model", node.id);
@@ -344,6 +344,7 @@ function CascadeRow({
 
 function CatalogCascade() {
   const searchParams = useSearchParams();
+  const viewportRef = useRef<HTMLElement>(null);
   const selection = resolveCatalogSelection("sxs", {
     year: searchParams.get("year"),
     series: searchParams.get("series"),
@@ -387,6 +388,27 @@ function CatalogCascade() {
     });
   }
 
+  const focusColumnId = selection.model
+    ? "diagrams"
+    : selection.series
+      ? "models"
+      : selection.year
+        ? "series"
+        : "years";
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || !window.matchMedia("(max-width: 767px)").matches) return;
+
+    const target = viewport.querySelector<HTMLElement>(`[data-catalog-column="${focusColumnId}"]`);
+    if (!target) return;
+
+    viewport.scrollLeft = Math.max(
+      0,
+      target.offsetLeft + target.offsetWidth - viewport.clientWidth,
+    );
+  }, [focusColumnId]);
+
   const breadcrumbItems = [
     { label: "Can-Am Off-Road", href: `/catalog/${CATALOG_IDS.brand}` },
     ...selection.path.map((node, index) => ({
@@ -398,7 +420,7 @@ function CatalogCascade() {
   return (
     <CatalogPage wide>
       <Breadcrumbs items={breadcrumbItems} />
-      <section className={styles.cascadeViewport} aria-label="Навігація каталогу">
+      <section ref={viewportRef} className={styles.cascadeViewport} aria-label="Навігація каталогу">
         <div className={styles.cascadeGrid} data-column-count={columns.length}>
           {columns.map((column) => (
             <section className={styles.browserColumn} aria-label={column.label} data-catalog-column={column.id} key={column.id}>
