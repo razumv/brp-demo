@@ -13,8 +13,10 @@ import {
   UsersRound,
 } from "lucide-react";
 import { InlineNotice, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import styles from "./dealer.module.css";
+
+const accessReasonId = "team-access-lock-reason";
 
 const permissions = [
   { label: "Каталог", helper: "Читання", icon: BookOpen, enabled: true },
@@ -25,9 +27,16 @@ const permissions = [
 ];
 
 export function TeamAccessPage() {
-  const { state } = useDemoStore();
-  const name = state.session?.displayName || "Финансы";
-  const email = state.session?.email || "dealer@logos.local";
+  const { identity } = useDealerWorkflow();
+  if (!identity) {
+    return (
+      <main className="auth-loading" aria-live="polite">
+        <span className="skeleton" />
+        <p>Завантажуємо дані облікового запису…</p>
+      </main>
+    );
+  }
+  const { displayName: name, email } = identity;
 
   return (
     <main className="page page-narrow">
@@ -39,7 +48,7 @@ export function TeamAccessPage() {
       />
 
       <InlineNotice>
-        Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.
+        <span id={accessReasonId}>Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.</span>
       </InlineNotice>
 
       <Panel className={styles.teamUsersPanel}>
@@ -47,7 +56,7 @@ export function TeamAccessPage() {
         <div className="data-table-wrap">
           <table className="data-table">
             <thead><tr><th>Назва</th><th>Email</th><th>Роль</th><th>Статус доступу</th><th>Профіль</th></tr></thead>
-            <tbody><tr><td><strong>{name}</strong></td><td>{email}</td><td>Головний дилер</td><td><StatusBadge tone="green">Основний акаунт</StatusBadge></td><td><button type="button" className="button button-outline" disabled>Оберіть профіль</button></td></tr></tbody>
+            <tbody><tr><td><strong>{name}</strong></td><td>{email}</td><td>Головний дилер</td><td><StatusBadge tone="green">Основний акаунт</StatusBadge></td><td><button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}>Оберіть профіль</button></td></tr></tbody>
           </table>
         </div>
       </Panel>
@@ -59,23 +68,23 @@ export function TeamAccessPage() {
         </header>
         <div className={styles.accountBadges}><StatusBadge tone="neutral">Головний дилер</StatusBadge><StatusBadge tone="green">Основний акаунт</StatusBadge><StatusBadge tone="neutral">Оберіть профіль</StatusBadge></div>
         <div className={styles.accountControls}>
-          <label className="field"><span>Ім&apos;я акаунта</span><input value={name} readOnly disabled /></label>
-          <button type="button" className="button button-outline" disabled>Зберегти ім&apos;я</button>
+          <label className="field"><span>Ім&apos;я акаунта</span><input value={name} readOnly disabled aria-describedby={accessReasonId} /></label>
+          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}>Зберегти ім&apos;я</button>
           <span className={styles.quickLabel}>Швидкий доступ</span>
-          <button type="button" className="button button-outline" disabled><ShieldCheck size={15} /> Дати Full Access</button>
-          <button type="button" className="button button-outline" disabled><LockKeyhole size={15} /> Без доступу</button>
+          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}><ShieldCheck size={15} /> Дати Full Access</button>
+          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}><LockKeyhole size={15} /> Без доступу</button>
         </div>
       </Panel>
 
       <Panel className={styles.permissionsPanel}>
-        <header><div><h2>Права профілю</h2><p>Показані лише функції, доступні вашій компанії.</p></div><button type="button" className="button button-primary" disabled><Save size={14} /> Зберегти</button></header>
+        <header><div><h2>Права профілю</h2><p>Показані лише функції, доступні вашій компанії.</p></div><button type="button" className="button button-primary" disabled aria-describedby={accessReasonId}><Save size={14} /> Зберегти</button></header>
         <div>
           {permissions.map(({ label, helper, icon: Icon, enabled }, index) => (
             <div className={styles.permissionRow} key={`${label}-${helper}-${index}`}>
               <span className={styles.permissionIcon}>{enabled ? <CheckCircle2 size={17} /> : <Icon size={17} />}</span>
               <span><strong>{label}</strong><small>{helper}</small></span>
               <label className={styles.switch} title="Керується адміністратором">
-                <input type="checkbox" checked={enabled} disabled readOnly />
+                <input type="checkbox" checked={enabled} disabled readOnly aria-describedby={accessReasonId} />
                 <i />
               </label>
             </div>

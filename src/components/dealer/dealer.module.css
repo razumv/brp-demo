@@ -644,8 +644,15 @@
 .lineNote {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 5px;
+}
+
+.lineNoteError {
+  flex-basis: 100%;
+  color: var(--red);
+  font-size: 10px;
 }
 
 .lineNote input {
@@ -787,6 +794,37 @@
   white-space: pre-wrap;
 }
 
+.messageAttachments {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.messageAttachments li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 9px;
+}
+
+.messageAttachments li span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messageAttachments li small {
+  margin-left: auto;
+  color: var(--muted-foreground);
+}
+
 .message time {
   color: var(--muted-foreground);
   font-size: 9px;
@@ -878,6 +916,37 @@
 .attachmentPreview button {
   width: 17px;
   height: 17px;
+}
+
+.chatError {
+  margin: 6px 0 0;
+  color: var(--red);
+  font-size: 10px;
+}
+
+.chatStatus {
+  margin: 6px 0 0;
+  color: var(--green);
+  font-size: 10px;
+}
+
+.attachmentDisclosure {
+  margin: 5px 0 0;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+@media (max-width: 767px) {
+  .chatComposer button,
+  .attachButton {
+    width: 44px;
+    height: 44px;
+  }
+
+  .chatComposer > div {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
 }
 
 .timelinePanel {
@@ -1056,7 +1125,7 @@
 
 .customerDetailHeader {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 36px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
 }
@@ -1146,10 +1215,32 @@
   color: var(--blue);
 }
 
-.equipmentGrid article > div {
+.equipmentGrid article > div:not(.equipmentActions) {
   display: flex;
   min-width: 0;
   flex-direction: column;
+}
+
+.customerHeaderActions,
+.equipmentActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.equipmentActions {
+  margin-left: auto;
+}
+
+.deleteConfirm {
+  display: grid;
+  gap: 12px;
+}
+
+.deleteConfirm > p:not(.formError) {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
 }
 
 .equipmentGrid small {
@@ -2348,7 +2439,7 @@
   }
 
   .customerDetailHeader {
-    grid-template-columns: 42px minmax(0, 1fr) 32px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     gap: 9px;
   }
 

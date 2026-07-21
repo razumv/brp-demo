@@ -1,4 +1,5 @@
 import type { DemoState, Part } from "@/lib/types";
+import { getDealerAccessoryCartPart } from "@/lib/dealer/accessories-data";
 import { GLOBAL_PARTS_SEARCH_FIXTURES } from "@/lib/global-parts-search-data";
 import { publicAssetPath } from "@/lib/public-base-path";
 
@@ -173,10 +174,11 @@ export const initialDemoState: DemoState = {
 
 export function getPart(partNumber: string) {
   return parts.find((part) => part.number === partNumber)
-    ?? globalPartsSearchCartParts.find((part) => part.number === partNumber);
+    ?? globalPartsSearchCartParts.find((part) => part.number === partNumber)
+    ?? getDealerAccessoryCartPart(partNumber);
 }
 
-export function orderTotal(lines: { quantity: number; dealerPrice: number }[]) {
+export function orderTotal(lines: readonly { quantity: number; dealerPrice: number }[]) {
   return lines.reduce((total, line) => total + line.quantity * line.dealerPrice, 0);
 }
 

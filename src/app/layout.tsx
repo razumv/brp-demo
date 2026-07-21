@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: "BRP Parts Catalog",
     template: "%s · BRP",
   },
-  description: "Interactive BRP parts catalog and dealer operations demonstration.",
+  description: "Каталог BRP, дилерський портал і робочі інструменти.",
   applicationName: "BRP Parts Catalog",
   manifest: publicAssetPath("/manifest.webmanifest"),
   icons: {

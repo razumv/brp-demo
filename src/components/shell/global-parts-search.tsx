@@ -3,7 +3,7 @@
 import { Check, PackageCheck, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import {
   GLOBAL_PARTS_SEARCH_FIXTURES,
   GLOBAL_PARTS_SEARCH_TABS,
@@ -35,20 +35,17 @@ export function DealerGlobalPartsSearch({
   onMobileClose,
   returnFocusRef,
 }: DealerGlobalPartsSearchProps) {
-  const { addToCart } = useDemoStore();
+  const { commands } = useDealerWorkflow();
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<GlobalPartsSearchTab>("all");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [addedParts, setAddedParts] = useState<Record<string, boolean>>({});
+  const [addingParts, setAddingParts] = useState<Record<string, boolean>>({});
+  const [failedParts, setFailedParts] = useState<Record<string, boolean>>({});
   const desktopRef = useRef<HTMLFormElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
-  const onMobileCloseRef = useRef(onMobileClose);
   const trimmedQuery = query.trim();
-
-  useEffect(() => {
-    onMobileCloseRef.current = onMobileClose;
-  }, [onMobileClose]);
 
   const matchingParts = useMemo(() => {
     const normalizedQuery = trimmedQuery.toLocaleUpperCase("uk-UA");
@@ -109,7 +106,7 @@ export function DealerGlobalPartsSearch({
     const keepFocusInsideDialog = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onMobileCloseRef.current();
+        onMobileClose();
         return;
       }
       if (event.key !== "Tab") return;
@@ -152,11 +149,12 @@ export function DealerGlobalPartsSearch({
 
       returnTarget?.focus({ preventScroll: true });
     };
-  }, [mobileOpen, returnFocusRef]);
+  }, [mobileOpen, onMobileClose, returnFocusRef]);
 
   const updateQuery = (nextQuery: string, surface: "desktop" | "mobile") => {
     onQueryChange(nextQuery);
     setAddedParts({});
+    setFailedParts({});
     if (surface === "desktop") setDesktopOpen(Boolean(nextQuery.trim()));
   };
 
@@ -164,6 +162,7 @@ export function DealerGlobalPartsSearch({
     onQueryChange("");
     setActiveTab("all");
     setAddedParts({});
+    setFailedParts({});
     if (surface === "desktop") setDesktopOpen(false);
     else mobileInputRef.current?.focus();
   };
@@ -176,11 +175,29 @@ export function DealerGlobalPartsSearch({
       [partNumber]: Math.min(99, Math.max(1, (current[partNumber] ?? 1) + delta)),
     }));
     setAddedParts((current) => ({ ...current, [partNumber]: false }));
+    setFailedParts((current) => ({ ...current, [partNumber]: false }));
   };
 
-  const addPart = (partNumber: string) => {
-    addToCart(partNumber, quantityFor(partNumber));
-    setAddedParts((current) => ({ ...current, [partNumber]: true }));
+  const addPart = async (partNumber: string) => {
+    if (addingParts[partNumber]) return;
+    setAddingParts((current) => ({ ...current, [partNumber]: true }));
+    setAddedParts((current) => ({ ...current, [partNumber]: false }));
+    setFailedParts((current) => ({ ...current, [partNumber]: false }));
+    try {
+      const result = await commands.addCartLine({
+        partNumber,
+        quantity: quantityFor(partNumber),
+      });
+      if (result.ok) {
+        setAddedParts((current) => ({ ...current, [partNumber]: true }));
+      } else {
+        setFailedParts((current) => ({ ...current, [partNumber]: true }));
+      }
+    } catch {
+      setFailedParts((current) => ({ ...current, [partNumber]: true }));
+    } finally {
+      setAddingParts((current) => ({ ...current, [partNumber]: false }));
+    }
   };
 
   const renderResults = (panelId: string) => {
@@ -251,17 +268,22 @@ export function DealerGlobalPartsSearch({
                   <button
                     type="button"
                     className="global-parts-add"
-                    onClick={() => addPart(part.number)}
+                    disabled={addingParts[part.number]}
+                    onClick={() => void addPart(part.number)}
                     aria-label={`Додати ${part.number} до кошика`}
                   >
-                    {addedParts[part.number] ? <><Check size={13} /> Додано</> : "+ Кошик"}
+                    {addedParts[part.number]
+                      ? <><Check size={13} /> Додано</>
+                      : addingParts[part.number]
+                        ? "Додаємо…"
+                        : failedParts[part.number] ? "Повторити" : "+ Кошик"}
                   </button>
                 </article>
               ))}
             </div>
           ) : (
             <div className="global-parts-empty">
-              Немає локальних результатів для цього фільтра.
+              Немає результатів для цього фільтра.
             </div>
           )}
         </div>
@@ -287,7 +309,7 @@ export function DealerGlobalPartsSearch({
           aria-expanded={desktopOpen && Boolean(trimmedQuery)}
           aria-haspopup="dialog"
           autoComplete="off"
-          placeholder="напр. 507032417, brake..."
+          placeholder="напр. 507032473, brake..."
           role="combobox"
           value={query}
           onFocus={() => {
@@ -330,7 +352,7 @@ export function DealerGlobalPartsSearch({
               aria-expanded={Boolean(trimmedQuery)}
               aria-haspopup="dialog"
               autoComplete="off"
-              placeholder="напр. 507032417, brake..."
+              placeholder="напр. 507032473, brake..."
               role="combobox"
               value={query}
               onChange={(event) => updateQuery(event.target.value, "mobile")}

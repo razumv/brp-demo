@@ -1,0 +1,187 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.toolbar,
+.filterGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.searchField {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted-foreground);
+}
+
+.searchField:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 1px var(--orange);
+}
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.selectField {
+  display: grid;
+  min-width: 130px;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.selectField select {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border-radius: 7px;
+  background: var(--surface-subtle);
+}
+
+.tabs button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.tabs button[aria-selected="true"],
+.tabs button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--shadow-card);
+}
+
+.tableRegion {
+  overflow-x: auto;
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+}
+
+.tableRegion:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.tableRegion table {
+  min-width: 600px;
+}
+
+.tableRegion td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.negativeAmount {
+  color: var(--green);
+}
+
+.modalForm {
+  display: grid;
+  gap: 14px;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.linkCode {
+  color: var(--orange);
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.linkCode:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .toolbar,
+  .filterGrid {
+    align-items: stretch;
+  }
+
+  .toolbar > *,
+  .filterGrid > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .searchField,
+  .selectField select,
+  .tabs button,
+  .formActions :global(button) {
+    min-height: 44px;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tabs button {
+    width: 100%;
+  }
+
+  .tableRegion {
+    margin-inline: -2px;
+  }
+
+  .tableRegion table {
+    min-width: 520px;
+  }
+
+  .formActions {
+    justify-content: stretch;
+  }
+}

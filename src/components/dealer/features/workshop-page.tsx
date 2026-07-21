@@ -1,0 +1,217 @@
+"use client";
+
+import {
+  CalendarDays,
+  Check,
+  FileClock,
+  LockKeyhole,
+  Plus,
+  Wrench,
+} from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
+import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
+import {
+  getWorkshopColumnCounts,
+  groupWorkshopOrders,
+  workshopStages,
+  workshopTransitionCapability,
+  workshopTypeLabels,
+} from "@/lib/dealer/workshop-data";
+import type { WorkshopOrderInput } from "@/lib/types";
+import { formatDateTime } from "../common";
+import dealerStyles from "../dealer.module.css";
+import operationalStyles from "./operational-features.module.css";
+import { FeatureFrame } from "./feature-frame";
+
+const stageIcons = {
+  new: FileClock,
+  scheduled: CalendarDays,
+  in_progress: Wrench,
+  done: Check,
+} as const;
+
+function emptyWorkshopForm(customerId: string): WorkshopOrderInput {
+  return {
+    type: "maintenance",
+    customerId,
+    description: "",
+    mechanic: "",
+    scheduledAt: "",
+    notes: "",
+  };
+}
+
+export function WorkshopPage() {
+  const { snapshot, commands } = useDealerWorkflow();
+  const firstCustomerId = snapshot.customers[0]?.id ?? "";
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<WorkshopOrderInput>(() => emptyWorkshopForm(firstCustomerId));
+  const [error, setError] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const counts = useMemo(() => getWorkshopColumnCounts(snapshot.workshopOrders), [snapshot.workshopOrders]);
+  const groups = useMemo(() => groupWorkshopOrders(snapshot.workshopOrders), [snapshot.workshopOrders]);
+  const customerById = useMemo(
+    () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
+    [snapshot.customers],
+  );
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!form.customerId || !form.description.trim()) {
+      setError("Оберіть клієнта та опишіть роботу.");
+      return;
+    }
+
+    const result = await commands.createWorkshopOrder({
+      ...form,
+      description: form.description.trim(),
+      mechanic: form.mechanic.trim(),
+      notes: form.notes.trim(),
+    });
+    if (!result.ok) {
+      setError(result.kind === "validation-error"
+        ? result.issues[0]?.message ?? "Не вдалося створити замовлення-наряд."
+        : "Не вдалося створити замовлення-наряд.");
+      return;
+    }
+    setForm(emptyWorkshopForm(form.customerId));
+    setOpen(false);
+    setError("");
+    setConfirmation("Замовлення-наряд створено.");
+  };
+
+  return (
+    <FeatureFrame
+      feature="workshop"
+      action={(
+        <button
+          type="button"
+          className="button button-primary"
+          disabled={!snapshot.customers.length}
+          onClick={() => {
+            setForm((current) => ({ ...current, customerId: current.customerId || firstCustomerId }));
+            setError("");
+            setConfirmation("");
+            setOpen(true);
+          }}
+        >
+          <Plus size={15} /> Нове замовлення-наряд
+        </button>
+      )}
+    >
+      {confirmation ? <p className={operationalStyles.successMessage} role="status">{confirmation}</p> : null}
+
+      <section className={dealerStyles.workshopStats} aria-label="Зведення майстерні">
+        {workshopStages.map((stage) => {
+          const Icon = stageIcons[stage.id];
+          return (
+            <StatCard
+              key={stage.id}
+              label={stage.label}
+              value={counts[stage.id]}
+              icon={<Icon size={18} />}
+              tone={stage.tone}
+            />
+          );
+        })}
+      </section>
+
+      <div className={operationalStyles.lockedNotice} role="note">
+        <LockKeyhole size={16} aria-hidden="true" />
+        <span id="workshop-transition-reason">{workshopTransitionCapability.reason}</span>
+        <button
+          type="button"
+          className="button button-outline"
+          disabled
+          aria-describedby="workshop-transition-reason"
+        >
+          Зміна статусу недоступна
+        </button>
+      </div>
+
+      <div className={`${dealerStyles.workshopBoard} ${operationalStyles.workshopBoard}`}>
+        {groups.map(({ stage, orders }) => (
+          <Panel
+            className={`${dealerStyles.workshopColumn} ${operationalStyles.workshopColumn}`}
+            key={stage.id}
+          >
+            <div data-testid="workshop-column">
+              <header className={operationalStyles.workshopColumnHeader}>
+                <span>{stage.label}</span>
+                <strong>{orders.length}</strong>
+              </header>
+              {orders.length ? (
+                <div className={operationalStyles.workshopOrderList}>
+                  {orders.map((order) => (
+                    <article className={operationalStyles.workshopOrder} key={order.id}>
+                      <StatusBadge tone={stage.tone}>{workshopTypeLabels[order.type]}</StatusBadge>
+                      <h3>{order.description}</h3>
+                      <p>{customerById.get(order.customerId)?.name ?? "Клієнта не знайдено"}</p>
+                      {order.mechanic ? <small>Механік: {order.mechanic}</small> : null}
+                      {order.scheduledAt ? <small>Заплановано: {formatDateTime(order.scheduledAt)}</small> : null}
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState compact title="Поки порожньо" description="Замовлень на цьому етапі немає." />
+              )}
+            </div>
+          </Panel>
+        ))}
+      </div>
+
+      <Modal
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setError("");
+        }}
+        title="Нове замовлення-наряд"
+        description="Заповніть дані нового сервісного замовлення"
+      >
+        <form className={dealerStyles.modalForm} onSubmit={submit}>
+          <label className="field">
+            <span>Тип роботи</span>
+            <select
+              value={form.type}
+              onChange={(event) => setForm({ ...form, type: event.target.value as WorkshopOrderInput["type"] })}
+            >
+              {Object.entries(workshopTypeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span>Клієнт *</span>
+            <select value={form.customerId} onChange={(event) => setForm({ ...form, customerId: event.target.value })}>
+              <option value="">Оберіть клієнта</option>
+              {snapshot.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span>Опис *</span>
+            <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+          </label>
+          <div className={dealerStyles.formGrid}>
+            <label className="field">
+              <span>Механік</span>
+              <input value={form.mechanic} onChange={(event) => setForm({ ...form, mechanic: event.target.value })} autoComplete="off" />
+            </label>
+            <label className="field">
+              <span>Заплановано</span>
+              <input type="datetime-local" value={form.scheduledAt} onChange={(event) => setForm({ ...form, scheduledAt: event.target.value })} />
+            </label>
+          </div>
+          <label className="field">
+            <span>Нотатки</span>
+            <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+          </label>
+          {error ? <p className={dealerStyles.formError} role="alert">{error}</p> : null}
+          <div className={dealerStyles.formActions}>
+            <button type="button" className="button button-outline" onClick={() => setOpen(false)}>Скасувати</button>
+            <button type="submit" className="button button-primary">Створити замовлення-наряд</button>
+          </div>
+        </form>
+      </Modal>
+    </FeatureFrame>
+  );
+}

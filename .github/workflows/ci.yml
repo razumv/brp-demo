@@ -32,6 +32,9 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Test dealer state contracts
+        run: npm run test:dealer-state
+
       - name: Build
         run: npm run build
 
@@ -41,5 +44,5 @@ jobs:
       - name: Test admin responsive contract
         run: npm run test:e2e
 
-      - name: Build and validate PWA export
-        run: npm run build:pages
+      - name: Test dealer Pages PWA contract
+        run: npm run test:e2e:dealer-pages

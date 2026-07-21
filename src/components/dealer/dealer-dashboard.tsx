@@ -19,8 +19,8 @@ import {
   WalletCards,
   Wrench,
 } from "lucide-react";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { PageHeader, Panel, StatCard } from "@/components/shared/ui";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { formatDate, OrderStatusBadge } from "./common";
@@ -39,14 +39,14 @@ const shortcuts = [
 ];
 
 export function DealerDashboard() {
-  const { state } = useDemoStore();
-  const processing = state.orders.filter((order) => !["done", "cancelled"].includes(order.status));
-  const completed = state.orders.filter((order) => order.status === "done");
-  const totalSpend = state.orders
+  const { snapshot } = useDealerWorkflow();
+  const processing = snapshot.orders.filter((order) => !["done", "cancelled"].includes(order.status));
+  const completed = snapshot.orders.filter((order) => order.status === "done");
+  const totalSpend = snapshot.orders
     .filter((order) => order.status !== "cancelled")
     .reduce((sum, order) => sum + orderTotal(order.lines), 0);
   const now = new Date();
-  const monthSpend = state.orders
+  const monthSpend = snapshot.orders
     .filter((order) => {
       const created = new Date(order.createdAt);
       return order.status !== "cancelled"
@@ -72,8 +72,8 @@ export function DealerDashboard() {
         <StatCard
           icon={<ClipboardList size={18} />}
           label="Усього замовлень"
-          value={state.orders.length}
-          helper={state.orders.length ? "За весь час" : "Немає відкритих замовлень"}
+          value={snapshot.orders.length}
+          helper={snapshot.orders.length ? "За весь час" : "Немає відкритих замовлень"}
         />
         <StatCard
           icon={<PackageCheck size={18} />}
@@ -105,9 +105,9 @@ export function DealerDashboard() {
               Переглянути все <ArrowRight size={15} />
             </Link>
           </header>
-          {state.orders.length ? (
+          {snapshot.orders.length ? (
             <div className={styles.recentOrders}>
-              {state.orders.slice(0, 5).map((order) => (
+              {snapshot.orders.slice(0, 5).map((order) => (
                 <Link href={dealerOrderHref(order.id)} className={styles.recentOrder} key={order.id}>
                   <span className={styles.orderIcon}><Package size={17} /></span>
                   <span className={styles.recentMain}>
@@ -166,9 +166,9 @@ export function DealerDashboard() {
 
       <section className={styles.summaryGrid} aria-label="Додаткові показники">
         <Panel className={styles.summaryCard}><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{state.customers.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{state.workshopOrders.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{state.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></Panel>
+        <Panel className={styles.summaryCard}><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></Panel>
+        <Panel className={styles.summaryCard}><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></Panel>
+        <Panel className={styles.summaryCard}><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></Panel>
       </section>
     </main>
   );

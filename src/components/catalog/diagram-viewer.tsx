@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -19,7 +19,7 @@ import {
   Share2,
   ShoppingCart,
 } from "lucide-react";
-import { useDemoStore } from "@/components/providers/demo-store-provider";
+import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { CATALOG_IDS, diagramNames, formatMoney, parts } from "@/lib/mock-data";
 import { publicAssetPath } from "@/lib/public-base-path";
 import styles from "@/components/catalog/catalog.module.css";
@@ -149,13 +149,16 @@ function DiagramCanvas({
 }
 
 export function DiagramViewer() {
-  const { state, addToCart } = useDemoStore();
+  const { snapshot, commands } = useDealerWorkflow();
   const [diagramIndex, setDiagramIndex] = useState(0);
   const [mobileTab, setMobileTab] = useState<MobileTab>("schema");
   const [zoom, setZoom] = useState<ZoomLevel>(1);
   const [calloutsVisible, setCalloutsVisible] = useState(true);
   const [addedPart, setAddedPart] = useState("");
   const [shared, setShared] = useState(false);
+  const [commandError, setCommandError] = useState("");
+  const shareAttemptRef = useRef(0);
+  const shareTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("diagram");
@@ -165,22 +168,58 @@ export function DiagramViewer() {
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  const cartCount = useMemo(() => state.cart.reduce((sum, line) => sum + line.quantity, 0), [state.cart]);
+  useEffect(() => () => {
+    shareAttemptRef.current += 1;
+    if (shareTimeoutRef.current !== null) {
+      window.clearTimeout(shareTimeoutRef.current);
+    }
+  }, []);
+
+  const cartCount = useMemo(() => snapshot.cart.reduce((sum, line) => sum + line.quantity, 0), [snapshot.cart]);
   const title = diagramNames[diagramIndex];
 
-  const addPart = (partNumber: string) => {
-    addToCart(partNumber, 1, CATALOG_IDS.diagram);
+  const addPart = async (partNumber: string) => {
+    setCommandError("");
+    const result = await commands.addCartLine({
+      partNumber,
+      quantity: 1,
+      sourceDiagramId: CATALOG_IDS.diagram,
+    });
+    if (!result.ok) {
+      const message = result.kind === "validation-error"
+        ? result.issues[0]?.message
+        : null;
+      setCommandError(message ?? "Не вдалося додати запчастину.");
+      return;
+    }
     setAddedPart(partNumber);
   };
 
   const share = async () => {
-    try {
-      await navigator.clipboard?.writeText(window.location.href);
-    } catch {
-      // The demo still gives visible feedback when clipboard access is unavailable.
+    const attempt = shareAttemptRef.current + 1;
+    shareAttemptRef.current = attempt;
+    if (shareTimeoutRef.current !== null) {
+      window.clearTimeout(shareTimeoutRef.current);
+      shareTimeoutRef.current = null;
+    }
+    setCommandError("");
+    const result = await commands.copyText({ text: window.location.href });
+    if (attempt !== shareAttemptRef.current) return;
+    if (!result.ok) {
+      setShared(false);
+      setCommandError(
+        result.kind === "local-error"
+          ? result.message
+          : "Не вдалося скопіювати посилання.",
+      );
+      return;
     }
     setShared(true);
-    window.setTimeout(() => setShared(false), 1800);
+    shareTimeoutRef.current = window.setTimeout(() => {
+      if (attempt !== shareAttemptRef.current) return;
+      shareTimeoutRef.current = null;
+      setShared(false);
+    }, 1800);
   };
 
   return (
@@ -223,6 +262,7 @@ export function DiagramViewer() {
           <button type="button" className={styles.secondaryAction} onClick={() => window.print()}><Printer size={16} /><span>Друк</span></button>
           <button type="button" className={styles.secondaryAction} onClick={share}><Share2 size={16} /><span>{shared ? "Скопійовано" : "Поділитися"}</span></button>
           <Link className={styles.diagramCart} href="/cart"><ShoppingCart size={16} /><span>Кошик ({cartCount})</span></Link>
+          {commandError ? <span className={styles.errorMessage} role="alert">{commandError}</span> : null}
         </div>
       </header>
 
