@@ -37,6 +37,8 @@
     "pwa:validate": "node scripts/validate-pwa.mjs",
     "start": "next start",
     "test:e2e": "playwright test",
+    "test:e2e:dealer": "playwright test -c playwright.dealer.config.ts",
+    "test:e2e:dealer-pages": "node scripts/test-dealer-pages.mjs",
     "test:e2e:mobile": "playwright test tests/e2e/admin-mobile-contract.spec.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
