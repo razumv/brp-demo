@@ -1,0 +1,276 @@
+.currentPanel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.currentHeader,
+.astryxHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.currentHeaderIcon,
+.astryxHeaderIcon {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.currentHeader h2,
+.currentHeader p {
+  margin: 0;
+}
+
+.currentHeader h2 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.currentHeader p {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.currentBody,
+.astryxBody {
+  display: grid;
+  gap: 20px;
+  padding: 16px;
+}
+
+.currentFieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.currentFieldset > legend {
+  margin-bottom: 8px;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 15px;
+  text-transform: uppercase;
+}
+
+.currentChoiceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.currentChoiceCard {
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.currentChoiceCard:hover {
+  background: var(--surface-subtle);
+}
+
+.currentChoiceCard:has(input:checked) {
+  border-color: color-mix(in srgb, var(--orange) 70%, var(--border));
+  background: color-mix(in srgb, var(--orange-soft) 44%, var(--surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--orange) 24%, transparent);
+}
+
+.currentChoiceCard:has(input:focus-visible) {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.currentChoiceCard > input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--orange);
+}
+
+.currentChoiceCopy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.currentChoiceTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 19px;
+}
+
+.currentChoiceDescription {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.currentBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 19px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.currentSegmented {
+  display: grid;
+  width: min(100%, 440px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+}
+
+.currentSegmented label {
+  position: relative;
+  cursor: pointer;
+}
+
+.currentSegmented input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.currentSegmented span {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.currentSegmented input:checked + span {
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--shadow-card);
+}
+
+.currentSegmented input:focus-visible + span {
+  outline: 2px solid var(--orange);
+  outline-offset: 1px;
+}
+
+.currentChoiceCard:has(input:disabled),
+.currentSegmented label:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.currentError,
+.astryxError {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--red) 28%, var(--border));
+  border-radius: 6px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.astryxPanel {
+  box-shadow: var(--shadow-card);
+}
+
+.astryxHeader {
+  border-bottom-color: var(--color-border, var(--border));
+}
+
+.astryxHeaderCopy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.astryxRadioList :global([role="radiogroup"]) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.astryxRadioItem {
+  min-width: 0;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid var(--color-border, var(--border));
+  border-radius: var(--radius-container, 8px);
+  background: var(--color-background-card, var(--surface));
+}
+
+.astryxRadioItem:has(input:checked) {
+  border-color: var(--color-accent, var(--orange));
+  box-shadow: 0 0 0 1px var(--color-accent, var(--orange));
+}
+
+.astryxModeGroup {
+  display: grid;
+  width: min(100%, 440px);
+  gap: 8px;
+}
+
+@media (max-width: 639px) {
+  .currentHeader,
+  .astryxHeader {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .currentHeader h2 {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .currentBody,
+  .astryxBody {
+    gap: 16px;
+    padding: 14px 12px;
+  }
+
+  .currentChoiceGrid,
+  .astryxRadioList :global([role="radiogroup"]) {
+    grid-template-columns: 1fr;
+  }
+
+  .currentSegmented,
+  .astryxModeGroup {
+    width: 100%;
+  }
+}

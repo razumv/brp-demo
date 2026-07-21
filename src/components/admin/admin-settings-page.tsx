@@ -34,6 +34,7 @@ import {
   type QueueMetric,
   type SettingsSectionId,
 } from "@/lib/admin-settings-data";
+import {AppearanceSettingsSection} from "@/components/appearance/appearance-settings-section";
 import styles from "./admin-settings.module.css";
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: string | number }>;
@@ -153,6 +154,7 @@ function DatabasePanel() {
 }
 
 const sectionRenderers: Readonly<Record<SettingsSectionId, () => React.ReactNode>> = {
+  appearance: () => <AppearanceSettingsSection />,
   workers: () => <WorkerPanel />,
   queue: () => <QueuePanel />,
   database: () => <DatabasePanel />,

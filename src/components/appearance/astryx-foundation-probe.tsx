@@ -1,6 +1,6 @@
 "use client";
 
-import {useSyncExternalStore} from "react";
+import {lazy, Suspense, useSyncExternalStore} from "react";
 import {RendererStateHarnessController} from "@/components/appearance/renderer-state-harness-controller";
 import {useAppearance} from "@/components/appearance/use-appearance";
 
@@ -66,22 +66,30 @@ function subscribeToLocation(onStoreChange: () => void) {
 }
 
 function getProbeQuerySnapshot() {
-  return new URLSearchParams(window.location.search).get("astryx-foundation-probe") === "1";
+  const query = new URLSearchParams(window.location.search);
+  if (query.get("brp-ui-facade-probe") === "1") return "facade";
+  if (query.get("astryx-foundation-probe") === "1") return "foundation";
+  return "none";
 }
 
 function getServerProbeQuerySnapshot() {
-  return false;
+  return "none";
 }
+
+const BrpUiFacadeProbe = lazy(() => import("./brp-ui-facade-probe"));
 
 /** Gated production probe for validating Astryx's compiled CSS foundation. */
 export function AstryxFoundationProbe() {
   const appearance = useAppearance();
-  const isEnabled = useSyncExternalStore(
+  const probe = useSyncExternalStore(
     subscribeToLocation,
     getProbeQuerySnapshot,
     getServerProbeQuerySnapshot,
   );
-  if (!isEnabled) return null;
+  if (probe === "none") return null;
+  if (probe === "facade") {
+    return <Suspense fallback={null}><BrpUiFacadeProbe /></Suspense>;
+  }
   const query = new URLSearchParams(window.location.search);
   const loadSecondaryAstryxView = query.get("renderer-second-slot") === "1"
     ? loadSecondaryAstryxFoundationView
