@@ -244,3 +244,111 @@ test("failed writes preserve an earlier acknowledged preference", async () => {
 
   assert.deepEqual(await repository.read(), initial);
 });
+
+test("a throwing local observer cannot reject an acknowledged write or block later observers", async () => {
+  const harness = createRepositoryHarness();
+  const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
+  const preference = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
+  let observed: unknown = null;
+  let persistedWhenObserved: string | null = null;
+
+  repository.subscribe(() => {
+    throw new Error("observer failure");
+  });
+  repository.subscribe((received) => {
+    observed = received;
+    persistedWhenObserved = harness.get(APPEARANCE_STORAGE_KEY);
+  });
+
+  await repository.write(preference);
+
+  assert.deepEqual(observed, preference);
+  assert.equal(persistedWhenObserved, JSON.stringify(preference));
+  assert.equal(harness.get(APPEARANCE_STORAGE_KEY), JSON.stringify(preference));
+});
+
+test("a throwing cross-tab observer cannot block later observers", () => {
+  const harness = createRepositoryHarness();
+  const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
+  const preference = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
+  let observed: unknown = null;
+
+  repository.subscribe(() => {
+    throw new Error("observer failure");
+  });
+  repository.subscribe((received) => {
+    observed = received;
+  });
+
+  assert.doesNotThrow(() => {
+    harness.emitStorage(APPEARANCE_STORAGE_KEY, JSON.stringify(preference));
+  });
+  assert.deepEqual(observed, preference);
+});
+
+test("repository boundaries do not expose mutable last-known-good state", async () => {
+  const harness = createRepositoryHarness();
+  const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
+  const supplied: {version: 1; designSystem: "shadcn" | "astryx"; colorMode: "light" | "dark" | "system"} = {
+    version: 1,
+    designSystem: "shadcn",
+    colorMode: "light",
+  };
+  let secondObserverValue: unknown = null;
+
+  repository.subscribe((received) => {
+    received.designSystem = "astryx";
+  });
+  repository.subscribe((received) => {
+    secondObserverValue = received;
+  });
+  await repository.write(supplied);
+  supplied.designSystem = "astryx";
+
+  const returned = await repository.read();
+  assert.ok(returned);
+  returned.colorMode = "dark";
+  harness.set(APPEARANCE_STORAGE_KEY, "not-json");
+
+  assert.deepEqual(secondObserverValue, {
+    version: 1,
+    designSystem: "shadcn",
+    colorMode: "light",
+  });
+  const recovered = await repository.read();
+  assert.deepEqual(recovered, {
+    version: 1,
+    designSystem: "shadcn",
+    colorMode: "light",
+  });
+  assert.ok(recovered);
+  recovered.designSystem = "astryx";
+  assert.deepEqual(await repository.read(), {
+    version: 1,
+    designSystem: "shadcn",
+    colorMode: "light",
+  });
+});
+
+test("duplicate subscriptions stay independent until their own unsubscribe", async () => {
+  const harness = createRepositoryHarness();
+  const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
+  let calls = 0;
+  const listener = () => {
+    calls++;
+  };
+  const firstUnsubscribe = repository.subscribe(listener);
+  const secondUnsubscribe = repository.subscribe(listener);
+
+  await repository.write({version: 1, designSystem: "shadcn", colorMode: "light"});
+  assert.equal(calls, 2);
+  assert.equal(harness.listenerCount(), 1);
+
+  firstUnsubscribe();
+  await repository.write({version: 1, designSystem: "astryx", colorMode: "dark"});
+  assert.equal(calls, 3);
+  assert.equal(harness.listenerCount(), 1);
+
+  secondUnsubscribe();
+  assert.equal(harness.listenerCount(), 0);
+});

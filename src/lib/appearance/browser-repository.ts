@@ -27,8 +27,20 @@ export interface BrowserAppearanceRepositoryDependencies {
   removeStorageListener(listener: (event: AppearanceStorageEvent) => void): void;
 }
 
+type AppearanceListener = (preference: AppearancePreferenceV1) => void;
+
+function copyAppearancePreference(
+  preference: AppearancePreferenceV1,
+): AppearancePreferenceV1 {
+  return {
+    version: 1,
+    designSystem: preference.designSystem,
+    colorMode: preference.colorMode,
+  };
+}
+
 export class BrowserAppearancePreferencesRepository implements AppearancePreferencesRepository {
-  private readonly listeners = new Set<(preference: AppearancePreferenceV1) => void>();
+  private readonly listeners = new Set<AppearanceListener>();
   private lastKnownGood: AppearancePreferenceV1 | null = null;
   private listening = false;
 
@@ -39,25 +51,25 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
       this.dependencies.storage.getItem(APPEARANCE_STORAGE_KEY),
     );
     if (current) {
-      this.lastKnownGood = current;
-      return current;
+      this.lastKnownGood = copyAppearancePreference(current);
+      return copyAppearancePreference(this.lastKnownGood);
     }
 
     const migrated = migrateLegacyTheme(
       this.dependencies.storage.getItem(LEGACY_THEME_STORAGE_KEY),
     );
     if (!migrated) {
-      return this.lastKnownGood;
+      return this.lastKnownGood ? copyAppearancePreference(this.lastKnownGood) : null;
     }
 
     this.dependencies.storage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(migrated));
-    this.lastKnownGood = migrated;
+    this.lastKnownGood = copyAppearancePreference(migrated);
     try {
       this.dependencies.storage.removeItem(LEGACY_THEME_STORAGE_KEY);
     } catch {
-      // The v1 preference is already durable; a later read can retry legacy cleanup.
+      // The v1 record now has precedence; leaving the legacy value is non-fatal.
     }
-    return migrated;
+    return copyAppearancePreference(this.lastKnownGood);
   }
 
   async write(preference: AppearancePreferenceV1): Promise<void> {
@@ -67,19 +79,20 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
     }
 
     this.dependencies.storage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(normalized));
-    this.lastKnownGood = normalized;
-    this.publish(normalized);
+    this.lastKnownGood = copyAppearancePreference(normalized);
+    this.publish(this.lastKnownGood);
   }
 
-  subscribe(listener: (preference: AppearancePreferenceV1) => void): () => void {
-    this.listeners.add(listener);
+  subscribe(listener: AppearanceListener): () => void {
+    const registration: AppearanceListener = (preference) => listener(preference);
+    this.listeners.add(registration);
     if (!this.listening) {
       this.dependencies.addStorageListener(this.handleStorageEvent);
       this.listening = true;
     }
 
     return () => {
-      this.listeners.delete(listener);
+      this.listeners.delete(registration);
       if (this.listeners.size === 0 && this.listening) {
         this.dependencies.removeStorageListener(this.handleStorageEvent);
         this.listening = false;
@@ -97,13 +110,17 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
       return;
     }
 
-    this.lastKnownGood = preference;
-    this.publish(preference);
+    this.lastKnownGood = copyAppearancePreference(preference);
+    this.publish(this.lastKnownGood);
   };
 
   private publish(preference: AppearancePreferenceV1): void {
     for (const listener of this.listeners) {
-      listener(preference);
+      try {
+        listener(copyAppearancePreference(preference));
+      } catch {
+        // Observer code is isolated so durable persistence and other observers continue.
+      }
     }
   }
 }
