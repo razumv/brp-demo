@@ -22,7 +22,7 @@ This inventory was reconciled against `src/app/**/page.tsx`, each `generateStati
 | `/admin/integrations/bossweb/page.tsx` | `/admin/integrations/bossweb` | `src/components/shell/app-shell.tsx` → `src/components/admin/admin-integrations-page.tsx` (`AdminBossWebIntegrationsPage`) | no dedicated route test | mapping table | 13 |
 | `/admin/settlements/mapping/page.tsx` | `/admin/settlements/mapping` | `src/components/shell/app-shell.tsx` → `src/components/admin/admin-integrations-page.tsx` (`AdminDealerMappingPage`) | no dedicated route test | mapping table | 13 |
 | `/login/page.tsx` | `/login` | `src/components/shell/login-screen.tsx` | `dealer-login-role`, `dealer-auth-navigation` | shared auth surface | 6 |
-| `/offline/page.tsx` | `/offline` | `src/app/offline/page.tsx` and `src/app/offline.module.css` | `dealer-pwa-pages` | PWA offline shell | 6 |
+| `/offline/page.tsx` | `/offline` | `src/app/offline/page.tsx` and `src/app/offline/offline.module.css` | `dealer-pwa-pages` | PWA offline shell | 6 |
 
 ### Admin feature dispatch (`AdminFeaturePage`)
 
