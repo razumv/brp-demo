@@ -42,6 +42,23 @@ test("every accessories control filters or sorts the same typed records", () => 
 });
 
 test("family and product category compose without treating category as a family", () => {
+  const advex = ACCESSORY_PRODUCTS[0]!;
+  const crossFamilyLighting = [
+    advex,
+    {
+      ...advex,
+      id: "sea-doo-lighting",
+      sku: "295100836",
+      activeReplacementNumber: "295100836",
+      title: "Sea-Doo Lighting Fixture",
+      family: "Sea-Doo" as const,
+      compatibility: ["Sea-Doo" as const],
+      fitments: [
+        { year: "2026", model: "GTX" as const, trim: "GTX Limited" as const, engine: "Rotax 1630 ACE" as const },
+      ],
+      featuredRank: 2,
+    },
+  ];
   const categoryOnly = { ...defaults, category: "Lighting" as const };
   const familyAndCategory = {
     ...defaults,
@@ -49,12 +66,11 @@ test("family and product category compose without treating category as a family"
     category: "Lighting" as const,
   };
 
-  expect(filterAccessories(ACCESSORY_PRODUCTS, categoryOnly).map((item) => item.sku))
-    .toEqual(["929085"]);
+  expect(filterAccessories(crossFamilyLighting, categoryOnly).map((item) => item.sku))
+    .toEqual(["929085", "295100836"]);
   expect(categoryOnly.family).toBe("all");
-  expect(filterAccessories(ACCESSORY_PRODUCTS, familyAndCategory).every((item) => (
-    item.family === "Can-Am Off-Road" && item.category === "Lighting"
-  ))).toBe(true);
+  expect(filterAccessories(crossFamilyLighting, familyAndCategory).map((item) => item.sku))
+    .toEqual(["929085"]);
 });
 
 test("vehicle fitment groups compose with product and checkbox facets", () => {
