@@ -122,6 +122,7 @@ export interface AppearanceWriteCoordinatorCallbacks {
 export interface AppearanceWriteCoordinator {
   write(preference: AppearancePreferenceV1): Promise<boolean>;
   shouldSuppressPublication(preference: AppearancePreferenceV1): boolean;
+  rememberDurablePreference(preference: AppearancePreferenceV1): void;
   dispose(): void;
 }
 
@@ -129,11 +130,18 @@ export function createAppearanceWriteCoordinator(
   repository: AppearancePreferencesRepository,
   callbacks: AppearanceWriteCoordinatorCallbacks,
 ): AppearanceWriteCoordinator {
-  type Intent = {generation: number; preference: AppearancePreferenceV1};
+  type IntentStatus = "pending" | "acknowledged" | "failed";
+  type Intent = {
+    generation: number;
+    preference: AppearancePreferenceV1;
+    status: IntentStatus;
+  };
 
   let active = true;
   let generation = 0;
   let latestIntent: Intent | null = null;
+  let lastAcknowledgedDurable: AppearancePreferenceV1 | null = null;
+  let lastKnownDurableWrite: AppearancePreferenceV1 | null = null;
   let repairChain = Promise.resolve();
   const pendingPublications = new Map<string, number>();
   const serialize = (preference: AppearancePreferenceV1) => JSON.stringify(preference);
@@ -147,9 +155,55 @@ export function createAppearanceWriteCoordinator(
     trackPending(preference, 1);
     try {
       await repository.write(preference);
+      lastKnownDurableWrite = {
+        version: 1,
+        designSystem: preference.designSystem,
+        colorMode: preference.colorMode,
+      };
       if (active) callbacks.invalidatePendingRead();
     } finally {
       trackPending(preference, -1);
+    }
+  };
+  const rememberDurablePreference = (preference: AppearancePreferenceV1) => {
+    lastAcknowledgedDurable = {
+      version: 1,
+      designSystem: preference.designSystem,
+      colorMode: preference.colorMode,
+    };
+    lastKnownDurableWrite = {...lastAcknowledgedDurable};
+  };
+  const acknowledgeIntent = (intent: Intent) => {
+    if (intent.status === "acknowledged") return;
+    intent.status = "acknowledged";
+    rememberDurablePreference(intent.preference);
+    callbacks.onAcknowledged(intent.preference);
+  };
+  const adoptLastKnownDurableWrite = () => {
+    if (!lastKnownDurableWrite) return;
+    if (
+      lastAcknowledgedDurable &&
+      serialize(lastKnownDurableWrite) === serialize(lastAcknowledgedDurable)
+    ) {
+      return;
+    }
+    rememberDurablePreference(lastKnownDurableWrite);
+    callbacks.onAcknowledged(lastKnownDurableWrite);
+  };
+  const restoreLastAcknowledgedDurable = async () => {
+    if (!lastAcknowledgedDurable) {
+      callbacks.onError(new Error("Appearance durability rollback has no acknowledged baseline."));
+      adoptLastKnownDurableWrite();
+      return;
+    }
+    const rollback = {...lastAcknowledgedDurable};
+    try {
+      await writeRepository(rollback);
+    } catch (error) {
+      if (active) {
+        callbacks.onError(error);
+        adoptLastKnownDurableWrite();
+      }
     }
   };
   const repairLatestDurableIntent = () => {
@@ -159,12 +213,24 @@ export function createAppearanceWriteCoordinator(
         try {
           await writeRepository(target.preference);
         } catch (error) {
-          if (active && latestIntent?.generation === target.generation) {
+          if (!active || latestIntent?.generation !== target.generation) continue;
+          if (target.status === "pending") {
+            target.status = "failed";
+            callbacks.onError(error);
+          } else if (target.status === "acknowledged") {
             callbacks.onError(error);
           }
+          await restoreLastAcknowledgedDurable();
           return;
         }
-        if (!active || latestIntent?.generation === target.generation) return;
+        if (!active) return;
+        if (latestIntent?.generation !== target.generation) continue;
+        if (target.status === "failed") {
+          await restoreLastAcknowledgedDurable();
+          return;
+        }
+        acknowledgeIntent(target);
+        return;
       }
     };
     repairChain = repairChain.then(repair, repair);
@@ -180,12 +246,21 @@ export function createAppearanceWriteCoordinator(
         }
         return false;
       }
-      const intent = {generation: ++generation, preference: normalized};
+      const intent: Intent = {
+        generation: ++generation,
+        preference: normalized,
+        status: "pending",
+      };
       latestIntent = intent;
       try {
         await writeRepository(normalized);
       } catch (error) {
-        if (active && latestIntent?.generation === intent.generation) callbacks.onError(error);
+        if (intent.status === "acknowledged") return true;
+        const alreadyFailed = intent.status === "failed";
+        intent.status = "failed";
+        if (active && !alreadyFailed && latestIntent?.generation === intent.generation) {
+          callbacks.onError(error);
+        }
         return false;
       }
       if (!active) return false;
@@ -193,17 +268,23 @@ export function createAppearanceWriteCoordinator(
         await repairLatestDurableIntent();
         return false;
       }
-      callbacks.onAcknowledged(normalized);
+      acknowledgeIntent(intent);
       return true;
     },
     shouldSuppressPublication(preference) {
       const normalized = normalizeAppearancePreference(preference);
       return normalized ? (pendingPublications.get(serialize(normalized)) ?? 0) > 0 : false;
     },
+    rememberDurablePreference(preference) {
+      const normalized = normalizeAppearancePreference(preference);
+      if (normalized) rememberDurablePreference(normalized);
+    },
     dispose() {
       active = false;
       generation++;
       latestIntent = null;
+      lastAcknowledgedDurable = null;
+      lastKnownDurableWrite = null;
       pendingPublications.clear();
     },
   };
@@ -461,9 +542,11 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
       : null;
     writeCoordinatorRef.current = writer;
     if (repository && writer) {
+      writer.rememberDurablePreference(bootstrap ?? stateRef.current.renderedPreference);
       connection = connectAppearanceRepository(repository, {
         onPreference(preference) {
           if (writer.shouldSuppressPublication(preference)) return;
+          writer.rememberDurablePreference(preference);
           acceptPreference(preference);
         },
         onError(error) {

@@ -27,6 +27,48 @@ import {
 const DEFAULT = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
 const ASTRYX_SYSTEM = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
 
+type DeferredAppearanceWrite = {
+  preference: AppearancePreferenceV1;
+  reject(error: Error): void;
+  resolve(): void;
+};
+
+function createDeferredDurabilityHarness() {
+  const pending: DeferredAppearanceWrite[] = [];
+  let durablePreference: AppearancePreferenceV1 | null = null;
+  let seedBaseline = true;
+  const repository: AppearancePreferencesRepository = {
+    async read() {
+      return durablePreference;
+    },
+    write(preference) {
+      if (seedBaseline) {
+        seedBaseline = false;
+        durablePreference = preference;
+        return Promise.resolve();
+      }
+      return new Promise<void>((resolve, reject) => {
+        pending.push({
+          preference,
+          reject,
+          resolve() {
+            durablePreference = preference;
+            resolve();
+          },
+        });
+      });
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  return {
+    getDurablePreference: () => durablePreference,
+    pending,
+    repository,
+  };
+}
+
 function AppearanceProbe() {
   const appearance = useAppearance();
   return createElement("output", {
@@ -383,6 +425,136 @@ test("reverse-order write acknowledgements commit only the latest user intent", 
   assert.deepEqual(acknowledged, [second]);
   assert.deepEqual(durablePreference, second);
   assert.equal(invalidations, 3);
+});
+
+test("a failed latest intent rolls a later stale success back to the last acknowledged durable preference", async () => {
+  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  const secondResult = coordinator.write(second);
+  assert.deepEqual(pending.map(({preference}) => preference), [first, second]);
+
+  pending[1]?.reject(new Error("latest write failed"));
+  assert.equal(await secondResult, false);
+  pending[0]?.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(pending[2]?.preference, second);
+  pending[2]?.reject(new Error("latest repair failed"));
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  assert.deepEqual(pending[3]?.preference, baseline);
+  pending[3]?.resolve();
+  assert.equal(await firstResult, false);
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(getDurablePreference(), baseline);
+  assert.deepEqual(errors, ["Error: latest write failed"]);
+});
+
+test("a successful repair of an already failed latest intent is still rolled back", async () => {
+  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  const secondResult = coordinator.write(second);
+  pending[1]?.reject(new Error("latest write failed"));
+  assert.equal(await secondResult, false);
+  pending[0]?.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  pending[2]?.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  assert.deepEqual(pending[3]?.preference, baseline);
+  pending[3]?.resolve();
+  assert.equal(await firstResult, false);
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(getDurablePreference(), baseline);
+  assert.deepEqual(errors, ["Error: latest write failed"]);
+});
+
+test("a failed repair after latest success restores the latest acknowledged durable preference", async () => {
+  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  const secondResult = coordinator.write(second);
+  pending[1]?.resolve();
+  assert.equal(await secondResult, true);
+  pending[0]?.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  pending[2]?.reject(new Error("latest repair failed"));
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  assert.deepEqual(pending[3]?.preference, second);
+  pending[3]?.resolve();
+  assert.equal(await firstResult, false);
+  assert.deepEqual(acknowledged, [second]);
+  assert.deepEqual(getDurablePreference(), second);
+  assert.deepEqual(errors, ["Error: latest repair failed"]);
+});
+
+test("a failed ultimate rollback explicitly adopts the last known durable value", async () => {
+  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  const secondResult = coordinator.write(second);
+  pending[1]?.reject(new Error("latest write failed"));
+  assert.equal(await secondResult, false);
+  pending[0]?.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  pending[2]?.reject(new Error("latest repair failed"));
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  pending[3]?.reject(new Error("rollback failed"));
+
+  assert.equal(await firstResult, false);
+  assert.deepEqual(getDurablePreference(), first);
+  assert.deepEqual(acknowledged, [first]);
+  assert.deepEqual(errors, ["Error: latest write failed", "Error: rollback failed"]);
 });
 
 test("an acknowledged write invalidates an older pending initial read without adapter publication", async () => {
