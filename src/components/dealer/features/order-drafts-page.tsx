@@ -67,6 +67,9 @@ export function OrderDraftsPage() {
 
   const activeFilterCount = Number(content !== "all") + Number(buyer !== "all");
   const filterPanelId = "draft-filters";
+  const filterTriggerLabel = activeFilterCount
+    ? `Фільтри чернеток, активних: ${activeFilterCount}`
+    : "Фільтри чернеток";
 
   const resetFilters = () => {
     setContent("all");
@@ -118,7 +121,7 @@ export function OrderDraftsPage() {
           <button
             type="button"
             className={styles.filterTrigger}
-            aria-label="Фільтри чернеток"
+            aria-label={filterTriggerLabel}
             aria-controls={filterPanelId}
             aria-expanded={filtersOpen}
             onClick={() => setFiltersOpen((current) => !current)}
