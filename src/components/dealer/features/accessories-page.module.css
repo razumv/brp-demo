@@ -82,8 +82,65 @@
   gap: 16px;
 }
 
+.filterControls {
+  display: contents;
+}
+
+.vehicleSelector {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.vehicleMode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vehicleMode button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.vehicleMode button[aria-selected="true"] {
+  border-color: color-mix(in srgb, var(--orange) 35%, transparent);
+  background: var(--orange);
+  color: #fff;
+}
+
+.vehicleMode button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.vehicleFields {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.55fr) repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vinNotice {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .filterRail {
   display: grid;
+  grid-column: 1;
   gap: 14px;
   padding: 14px;
 }
@@ -95,7 +152,7 @@
   gap: 8px;
 }
 
-.filterToggle,
+.filterHeader > span,
 .filterHeader button {
   display: inline-flex;
   align-items: center;
@@ -118,15 +175,6 @@
 
 .filterHeader button:hover {
   color: var(--foreground);
-}
-
-.filterToggle {
-  cursor: default !important;
-  color: var(--foreground) !important;
-}
-
-.filterToggle svg:last-child {
-  display: none;
 }
 
 .filterBody {
@@ -185,6 +233,7 @@
 }
 
 .productsSection {
+  grid-column: 2;
   min-width: 0;
 }
 
@@ -229,6 +278,11 @@
 .productToolbar select {
   width: 170px;
   flex: 0 0 auto;
+}
+
+.mobileFilterTrigger,
+.mobileSort {
+  display: none;
 }
 
 .resultCount {
@@ -494,6 +548,10 @@
     grid-template-columns: 200px minmax(0, 1fr);
   }
 
+  .vehicleFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .productGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -514,6 +572,39 @@
   }
 
   .accessoryLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filterControls {
+    display: none;
+    width: 100%;
+    gap: 12px;
+    order: 1;
+  }
+
+  .filterControlsExpanded {
+    display: grid;
+  }
+
+  .vehicleSelector,
+  .filterRail,
+  .productsSection {
+    width: 100%;
+  }
+
+  .productsSection {
+    display: contents;
+  }
+
+  .vehicleSelector,
+  .filterRail {
+    grid-column: auto;
+  }
+
+  .vehicleFields,
+  .filterSelects {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -521,45 +612,50 @@
     gap: 12px;
   }
 
-  .filterToggle {
-    cursor: pointer !important;
-  }
-
-  .filterToggle svg:last-child {
-    display: block;
-    transition: transform 120ms;
-  }
-
-  .filterToggle[aria-expanded="true"] svg:last-child {
-    transform: rotate(180deg);
-  }
-
-  .filterBody {
-    display: none;
-  }
-
-  .filterBodyExpanded {
-    display: grid;
-  }
-
-  .filterSelects {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .filterSelects > :last-child {
-    grid-column: 1 / -1;
-  }
-
   .filterGroup > div {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobileSort {
+    display: grid;
+    gap: 5px;
+    color: var(--muted-foreground);
+    font-size: 10px;
+  }
+
+  .mobileSort select {
+    width: 100%;
   }
 
   .productToolbar {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    order: 0;
+    width: 100%;
   }
 
-  .productToolbar select {
+  .toolbarSort {
+    display: none;
+  }
+
+  .mobileFilterTrigger {
+    display: inline-grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    place-items: center;
+    background: var(--surface-subtle);
+    color: var(--foreground);
+    cursor: pointer;
+  }
+
+  .resultCount,
+  .productGrid,
+  .emptyState {
+    order: 2;
     width: 100%;
   }
 

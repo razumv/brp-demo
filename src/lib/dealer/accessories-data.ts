@@ -51,13 +51,11 @@ export type AccessoryProduct = Readonly<{
 
 export type AccessoryFilters = Readonly<{
   family: AccessoryFamily | "all";
-  /** Optional until the filter interface adopts the category selector. */
-  category?: AccessoryCategory | "all";
+  category: AccessoryCategory | "all";
   year: string | "all";
-  /** Optional until the filter interface adopts the vehicle cascade. */
-  model?: AccessoryModel | "all";
-  trim?: AccessoryTrim | "all";
-  engine?: AccessoryEngine | "all";
+  model: AccessoryModel | "all";
+  trim: AccessoryTrim | "all";
+  engine: AccessoryEngine | "all";
   compatibility: readonly AccessoryCompatibility[];
   purposes: readonly AccessoryPurpose[];
   query: string;
@@ -233,9 +231,9 @@ function matchesVehicleFilter(
   filters: AccessoryFilters,
 ) {
   return (filters.year === "all" || fitment.year === filters.year)
-    && (!filters.model || filters.model === "all" || fitment.model === filters.model)
-    && (!filters.trim || filters.trim === "all" || fitment.trim === filters.trim)
-    && (!filters.engine || filters.engine === "all" || fitment.engine === filters.engine);
+    && (filters.model === "all" || fitment.model === filters.model)
+    && (filters.trim === "all" || fitment.trim === filters.trim)
+    && (filters.engine === "all" || fitment.engine === filters.engine);
 }
 
 function unique<T>(values: readonly T[]) {
@@ -262,10 +260,10 @@ export function accessoryVehicleOptions(
   const withYear = fitments.filter((fitment) => (
     filters.year === "all" || fitment.year === filters.year
   ));
-  const withModel = !filters.model || filters.model === "all"
+  const withModel = filters.model === "all"
     ? []
     : withYear.filter((fitment) => fitment.model === filters.model);
-  const withTrim = !filters.trim || filters.trim === "all"
+  const withTrim = filters.trim === "all"
     ? []
     : withModel.filter((fitment) => fitment.trim === filters.trim);
 
@@ -303,7 +301,7 @@ export function filterAccessories(
     const searchable = `${product.title} ${product.sku} ${product.activeReplacementNumber} ${product.family}`
       .toLocaleLowerCase("uk-UA");
     const matchesFamily = filters.family === "all" || product.family === filters.family;
-    const matchesCategory = !filters.category || filters.category === "all" || product.category === filters.category;
+    const matchesCategory = filters.category === "all" || product.category === filters.category;
     const matchesVehicle = product.fitments.some((fitment) => matchesVehicleFilter(fitment, filters));
     const matchesCompatibility = includesAny(product.compatibility, filters.compatibility);
     const matchesPurpose = includesAny(product.purposes, filters.purposes);

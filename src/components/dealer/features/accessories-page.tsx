@@ -2,7 +2,6 @@
 
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   Image as ImageIcon,
   RotateCcw,
@@ -11,23 +10,27 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { Modal, Panel, StatusBadge } from "@/components/shared/ui";
 import {
+  ACCESSORY_CATEGORY_OPTIONS,
   ACCESSORY_COMPATIBILITY_OPTIONS,
   ACCESSORY_FAMILY_CARDS,
-  ACCESSORY_FAMILY_OPTIONS,
   ACCESSORY_PRODUCTS,
   ACCESSORY_PURPOSE_OPTIONS,
-  ACCESSORY_YEAR_OPTIONS,
+  accessoryVehicleOptions,
   filterAccessories,
+  updateAccessoryVehicleFilter,
+  type AccessoryCategory,
   type AccessoryCompatibility,
-  type AccessoryFamily,
+  type AccessoryEngine,
   type AccessoryFilters,
+  type AccessoryModel,
   type AccessoryPurpose,
   type AccessorySort,
   type AccessoryStockFilter,
+  type AccessoryTrim,
 } from "@/lib/dealer/accessories-data";
 import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { formatMoney, getPart } from "@/lib/mock-data";
@@ -37,7 +40,11 @@ import styles from "./accessories-page.module.css";
 
 const defaultFilters: AccessoryFilters = {
   family: "all",
+  category: "all",
   year: "all",
+  model: "all",
+  trim: "all",
+  engine: "all",
   compatibility: [],
   purposes: [],
   query: "",
@@ -59,6 +66,7 @@ export function AccessoriesPage() {
   const [filters, setFilters] = useState<AccessoryFilters>(defaultFilters);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const vehicleYearRef = useRef<HTMLSelectElement>(null);
   const [added, setAdded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState("");
@@ -66,6 +74,10 @@ export function AccessoriesPage() {
   const selectedCartPart = selected ? getPart(selected.sku) : undefined;
   const products = useMemo(
     () => filterAccessories(ACCESSORY_PRODUCTS, filters),
+    [filters],
+  );
+  const vehicleOptions = useMemo(
+    () => accessoryVehicleOptions(ACCESSORY_PRODUCTS, filters),
     [filters],
   );
 
@@ -91,6 +103,22 @@ export function AccessoriesPage() {
     setSelectedId(id);
     setAdded(false);
     setAddError("");
+  };
+
+  const updateVehicleFilter = (
+    update: Parameters<typeof updateAccessoryVehicleFilter>[1],
+  ) => {
+    setFilters((current) => updateAccessoryVehicleFilter(current, update));
+  };
+
+  const toggleFilters = () => {
+    setFiltersExpanded((current) => {
+      const next = !current;
+      if (next) {
+        window.requestAnimationFrame(() => vehicleYearRef.current?.focus());
+      }
+      return next;
+    });
   };
 
   const addSelectedProduct = async () => {
@@ -140,96 +168,160 @@ export function AccessoriesPage() {
       </section>
 
       <div className={styles.accessoryLayout}>
-        <Panel className={styles.filterRail}>
-          <header className={styles.filterHeader}>
-            <button
-              type="button"
-              className={styles.filterToggle}
-              aria-expanded={filtersExpanded}
-              onClick={() => setFiltersExpanded((current) => !current)}
-            >
-              <SlidersHorizontal size={16} /><strong>Фільтри</strong><ChevronDown size={14} />
-            </button>
-            <button type="button" onClick={() => setFilters(defaultFilters)}>
-              <RotateCcw size={13} /> Очистити
-            </button>
-          </header>
-
-          <div className={cn(styles.filterBody, filtersExpanded && styles.filterBodyExpanded)}>
-            <div className={styles.filterSelects}>
+        <div
+          className={cn(styles.filterControls, filtersExpanded && styles.filterControlsExpanded)}
+          id="accessory-filter-panel"
+        >
+          <section className={styles.vehicleSelector} aria-label="Підбір техніки">
+            <div className={styles.vehicleMode} role="tablist" aria-label="Спосіб підбору техніки">
+              <button type="button" role="tab" aria-selected="true">За моделлю</button>
+              <button type="button" role="tab" aria-selected="false" disabled>За VIN</button>
+            </div>
+            <div className={styles.vehicleFields}>
               <label className="field">
-                <span>Категорія</span>
+                <span>Рік техніки</span>
                 <select
-                  aria-label="Категорія"
-                  value={filters.family}
-                  onChange={(event) => setFilters((current) => ({
-                    ...current,
-                    family: event.target.value as AccessoryFamily | "all",
-                  }))}
-                >
-                  <option value="all">Усі категорії</option>
-                  {ACCESSORY_FAMILY_OPTIONS.map((item) => <option value={item} key={item}>{item}</option>)}
-                </select>
-              </label>
-              <label className="field">
-                <span>Рік</span>
-                <select
-                  aria-label="Рік"
+                  aria-label="Рік техніки"
+                  ref={vehicleYearRef}
                   value={filters.year}
-                  onChange={(event) => setFilters((current) => ({ ...current, year: event.target.value }))}
+                  onChange={(event) => updateVehicleFilter({ year: event.target.value })}
                 >
                   <option value="all">Усі роки</option>
-                  {ACCESSORY_YEAR_OPTIONS.map((item) => <option value={item} key={item}>{item}</option>)}
+                  {vehicleOptions.years.map((item) => <option value={item} key={item}>{item}</option>)}
                 </select>
               </label>
               <label className="field">
-                <span>Наявність</span>
+                <span>Модель техніки</span>
                 <select
-                  aria-label="Наявність"
-                  value={filters.stock}
-                  onChange={(event) => setFilters((current) => ({
-                    ...current,
-                    stock: event.target.value as AccessoryStockFilter,
-                  }))}
+                  aria-label="Модель техніки"
+                  value={filters.model}
+                  disabled={filters.year === "all" || vehicleOptions.models.length === 0}
+                  onChange={(event) => updateVehicleFilter({ model: event.target.value as AccessoryModel | "all" })}
                 >
-                  <option value="all">Усі</option>
-                  <option value="in-stock">В наявності</option>
-                  <option value="under-order">Під замовлення</option>
+                  <option value="all">Усі моделі</option>
+                  {vehicleOptions.models.map((item) => <option value={item} key={item}>{item}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>Комплектація техніки</span>
+                <select
+                  aria-label="Комплектація техніки"
+                  value={filters.trim}
+                  disabled={filters.model === "all" || vehicleOptions.trims.length === 0}
+                  onChange={(event) => updateVehicleFilter({ trim: event.target.value as AccessoryTrim | "all" })}
+                >
+                  <option value="all">Усі комплектації</option>
+                  {vehicleOptions.trims.map((item) => <option value={item} key={item}>{item}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>Двигун техніки</span>
+                <select
+                  aria-label="Двигун техніки"
+                  value={filters.engine}
+                  disabled={filters.trim === "all" || vehicleOptions.engines.length === 0}
+                  onChange={(event) => updateVehicleFilter({ engine: event.target.value as AccessoryEngine | "all" })}
+                >
+                  <option value="all">Усі двигуни</option>
+                  {vehicleOptions.engines.map((item) => <option value={item} key={item}>{item}</option>)}
                 </select>
               </label>
             </div>
-            <details className={styles.filterGroup} open>
-              <summary>Сумісність <span>{ACCESSORY_COMPATIBILITY_OPTIONS.length}</span></summary>
-              <div>
-                {ACCESSORY_COMPATIBILITY_OPTIONS.map((item) => (
-                  <label key={item}>
-                    <input
-                      type="checkbox"
-                      checked={filters.compatibility.includes(item)}
-                      onChange={(event) => updateCompatibility(item, event.target.checked)}
-                    />
-                    {item}
-                  </label>
-                ))}
+            <p className={styles.vinNotice} role="note">
+              Підбір за VIN поки недоступний. Використовуйте модель, комплектацію та двигун.
+            </p>
+          </section>
+
+          <Panel className={styles.filterRail}>
+            <header className={styles.filterHeader}>
+              <span><SlidersHorizontal size={16} /><strong>Фільтри</strong></span>
+              <button type="button" onClick={() => setFilters(defaultFilters)}>
+                <RotateCcw size={13} /> Очистити
+              </button>
+            </header>
+
+            <div className={styles.filterBody}>
+              <div className={styles.filterSelects}>
+                <label className="field">
+                  <span>Категорія товару</span>
+                  <select
+                    aria-label="Категорія товару"
+                    value={filters.category}
+                    onChange={(event) => setFilters((current) => ({
+                      ...current,
+                      category: event.target.value as AccessoryCategory | "all",
+                    }))}
+                  >
+                    <option value="all">Усі категорії</option>
+                    {ACCESSORY_CATEGORY_OPTIONS.map((item) => <option value={item} key={item}>{item}</option>)}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Наявність</span>
+                  <select
+                    aria-label="Наявність"
+                    value={filters.stock}
+                    onChange={(event) => setFilters((current) => ({
+                      ...current,
+                      stock: event.target.value as AccessoryStockFilter,
+                    }))}
+                  >
+                    <option value="all">Усі</option>
+                    <option value="in-stock">В наявності</option>
+                    <option value="under-order">Під замовлення</option>
+                  </select>
+                </label>
               </div>
-            </details>
-            <details className={styles.filterGroup} open>
-              <summary>Призначення <span>{ACCESSORY_PURPOSE_OPTIONS.length}</span></summary>
-              <div>
-                {ACCESSORY_PURPOSE_OPTIONS.map((item) => (
-                  <label key={item}>
-                    <input
-                      type="checkbox"
-                      checked={filters.purposes.includes(item)}
-                      onChange={(event) => updatePurpose(item, event.target.checked)}
-                    />
-                    {item}
-                  </label>
-                ))}
-              </div>
-            </details>
-          </div>
-        </Panel>
+              <details className={styles.filterGroup} open>
+                <summary>Сумісність <span>{ACCESSORY_COMPATIBILITY_OPTIONS.length}</span></summary>
+                <div>
+                  {ACCESSORY_COMPATIBILITY_OPTIONS.map((item) => (
+                    <label key={item}>
+                      <input
+                        type="checkbox"
+                        checked={filters.compatibility.includes(item)}
+                        onChange={(event) => updateCompatibility(item, event.target.checked)}
+                      />
+                      {item}
+                    </label>
+                  ))}
+                </div>
+              </details>
+              <details className={styles.filterGroup} open>
+                <summary>Призначення <span>{ACCESSORY_PURPOSE_OPTIONS.length}</span></summary>
+                <div>
+                  {ACCESSORY_PURPOSE_OPTIONS.map((item) => (
+                    <label key={item}>
+                      <input
+                        type="checkbox"
+                        checked={filters.purposes.includes(item)}
+                        onChange={(event) => updatePurpose(item, event.target.checked)}
+                      />
+                      {item}
+                    </label>
+                  ))}
+                </div>
+              </details>
+            </div>
+          </Panel>
+
+          <label className={styles.mobileSort}>
+            <span>Сортування</span>
+            <select
+              className="select"
+              aria-label="Сортування фільтрів"
+              value={filters.sort}
+              onChange={(event) => setFilters((current) => ({
+                ...current,
+                sort: event.target.value as AccessorySort,
+              }))}
+            >
+              <option value="featured">Рекомендовані</option>
+              <option value="price-asc">Ціна: від нижчої</option>
+              <option value="price-desc">Ціна: від вищої</option>
+            </select>
+          </label>
+        </div>
 
         <section className={styles.productsSection} aria-label="Аксесуари">
           <div className={styles.productToolbar}>
@@ -243,8 +335,18 @@ export function AccessoriesPage() {
                 placeholder="Назва або артикул..."
               />
             </label>
+            <button
+              type="button"
+              className={styles.mobileFilterTrigger}
+              aria-label="Фільтри аксесуарів"
+              aria-expanded={filtersExpanded}
+              aria-controls="accessory-filter-panel"
+              onClick={toggleFilters}
+            >
+              <SlidersHorizontal size={18} />
+            </button>
             <select
-              className="select"
+              className={cn("select", styles.toolbarSort)}
               aria-label="Сортування"
               value={filters.sort}
               onChange={(event) => setFilters((current) => ({
