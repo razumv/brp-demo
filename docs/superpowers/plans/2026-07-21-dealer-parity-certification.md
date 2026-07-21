@@ -87,10 +87,10 @@
 - Create: `src/components/dealer/features/secondary-data-pages.tsx`
 - Create: `src/components/dealer/features/feature-frame.tsx`
 
-- [ ] Add route-render smoke assertions before refactoring.
-- [ ] Move code in isolated commits while preserving route exports and visible behavior.
-- [ ] Keep feature ownership separated so later tasks do not edit the same monolith concurrently.
-- [ ] Run route smoke tests, typecheck, and lint.
+- [x] Add route-render smoke assertions before refactoring.
+- [x] Move code in isolated commits while preserving route exports and visible behavior.
+- [x] Keep feature ownership separated so later tasks do not edit the same monolith concurrently.
+- [x] Run route smoke tests, typecheck, and lint.
 
 ## Task 5: Correct accessories and global parts search
 
