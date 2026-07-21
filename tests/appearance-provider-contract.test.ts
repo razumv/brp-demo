@@ -108,6 +108,29 @@ test("hydrated Astryx intent remains distinct from committed shadcn", () => {
   assert.equal(loading.transitionStatus, "loading-astryx");
 });
 
+test("Astryx readiness preserves a repository error reported during loading", () => {
+  const initial = createInitialAppearanceTransitionState();
+  const loading = appearanceTransitionReducer(initial, {
+    type: "request-astryx",
+    preference: ASTRYX_SYSTEM,
+    transitionId: 1,
+  });
+  const errored = appearanceTransitionReducer(loading, {
+    type: "report-error",
+    error: "repository read failed",
+  });
+  const committed = appearanceTransitionReducer(errored, {
+    type: "commit-astryx",
+    transitionId: 1,
+  });
+
+  assert.deepEqual(committed.desiredPreference, ASTRYX_SYSTEM);
+  assert.deepEqual(committed.renderedPreference, ASTRYX_SYSTEM);
+  assert.equal(committed.renderedDesignSystem, "astryx");
+  assert.equal(committed.transitionStatus, "error");
+  assert.equal(committed.error, "repository read failed");
+});
+
 function createFrameHarness() {
   const callbacks = new Map<number, () => void>();
   const canceled: number[] = [];
@@ -461,6 +484,40 @@ test("a delayed correlated local echo stays suppressed after its write is acknow
   assert.deepEqual(visible, [ASTRYX_SYSTEM]);
 });
 
+test("a local operation ID from another coordinator is not suppressed", async () => {
+  let firstOperationId: string | null = null;
+  const repository: AppearancePreferencesRepository = {
+    async read() {
+      return null;
+    },
+    async write(_preference, context) {
+      firstOperationId = context?.operationId ?? null;
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const first = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: () => undefined,
+    onError: (error) => assert.fail(String(error)),
+  });
+  const second = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: () => undefined,
+    onError: (error) => assert.fail(String(error)),
+  });
+
+  assert.equal(await first.write(ASTRYX_SYSTEM), true);
+  assert.ok(firstOperationId);
+  const context = {
+    origin: "local-write",
+    operationId: firstOperationId,
+  } as const;
+  assert.equal(first.acceptPublication(ASTRYX_SYSTEM, context), false);
+  assert.equal(second.acceptPublication(ASTRYX_SYSTEM, context), true);
+});
+
 test("repository writes are serialized and only the latest queued user intent commits", async () => {
   const releases = new Map<string, Array<() => void>>();
   let durablePreference: AppearancePreferenceV1 | null = null;
@@ -507,7 +564,7 @@ test("repository writes are serialized and only the latest queued user intent co
   assert.equal(invalidations, 4);
 });
 
-test("a failed latest intent rolls a later stale success back to the last acknowledged durable preference", async () => {
+test("a failed latest intent adopts the guarded durable read after a stale success", async () => {
   const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
   const acknowledged: AppearancePreferenceV1[] = [];
   const errors: string[] = [];
@@ -532,13 +589,12 @@ test("a failed latest intent rolls a later stale success back to the last acknow
   assert.deepEqual(pending[1]?.preference, second);
   pending[1]?.reject(new Error("latest write failed"));
   assert.equal(await secondResult, false);
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  assert.deepEqual(pending[2]?.preference, baseline);
-  pending[2]?.resolve();
+  await flushCoordinator();
   assert.equal(await firstResult, false);
-  assert.deepEqual(acknowledged, []);
-  assert.deepEqual(getDurablePreference(), baseline);
+  assert.deepEqual(acknowledged, [first]);
+  assert.deepEqual(getDurablePreference(), first);
   assert.deepEqual(errors, ["Error: latest write failed"]);
+  assert.equal(pending.length, 2);
 });
 
 test("an already failed latest intent is never retried as authoritative", async () => {
@@ -551,30 +607,24 @@ test("an already failed latest intent is never retried as authoritative", async 
     onError: (error) => errors.push(String(error)),
   });
   const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
-  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
   const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
 
   assert.equal(await coordinator.write(baseline), true);
   acknowledged.length = 0;
-  const firstResult = coordinator.write(first);
-  await Promise.resolve();
   const secondResult = coordinator.write(second);
-  pending[0]?.resolve();
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[1]?.reject(new Error("latest write failed"));
+  await Promise.resolve();
+  pending[0]?.reject(new Error("latest write failed"));
   assert.equal(await secondResult, false);
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  assert.deepEqual(pending[2]?.preference, baseline);
-  pending[2]?.resolve();
-  assert.equal(await firstResult, false);
-  assert.equal(pending.length, 3);
+  await flushCoordinator();
+  assert.equal(pending.length, 1);
   assert.deepEqual(acknowledged, []);
   assert.deepEqual(getDurablePreference(), baseline);
   assert.deepEqual(errors, ["Error: latest write failed"]);
 });
 
 test("a failed convergence is retried once before restoring durable authority", async () => {
-  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+  const {getDurablePreference, pending, repository, setDurablePreference} =
+    createDeferredDurabilityHarness();
   const acknowledged: AppearancePreferenceV1[] = [];
   const errors: string[] = [];
   const coordinator = createAppearanceWriteCoordinator(repository, {
@@ -584,31 +634,33 @@ test("a failed convergence is retried once before restoring durable authority", 
   });
   const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
   const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
-  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
 
   assert.equal(await coordinator.write(baseline), true);
   acknowledged.length = 0;
   const firstResult = coordinator.write(first);
   await Promise.resolve();
-  const secondResult = coordinator.write(second);
+  setDurablePreference(external);
+  assert.equal(coordinator.acceptPublication(external, {
+    origin: "external",
+    operationId: null,
+  }), true);
   pending[0]?.resolve();
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[1]?.reject(new Error("latest write failed"));
-  assert.equal(await secondResult, false);
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[2]?.reject(new Error("latest repair failed"));
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-  assert.deepEqual(pending[3]?.preference, baseline);
-  pending[3]?.resolve();
+  await flushCoordinator();
+  assert.deepEqual(pending[1]?.preference, external);
+  pending[1]?.reject(new Error("latest repair failed"));
+  await flushCoordinator();
+  assert.deepEqual(pending[2]?.preference, external);
+  pending[2]?.resolve();
   assert.equal(await firstResult, false);
   assert.deepEqual(acknowledged, []);
-  assert.deepEqual(getDurablePreference(), baseline);
-  assert.deepEqual(errors, ["Error: latest write failed", "Error: latest repair failed"]);
+  assert.deepEqual(getDurablePreference(), external);
+  assert.deepEqual(errors, ["Error: latest repair failed"]);
 });
 
-test("a failed ultimate rollback explicitly adopts the last known durable value", async () => {
-  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+test("a terminal failed convergence adopts only the guarded durable read", async () => {
+  const {getDurablePreference, pending, repository, setDurablePreference} =
+    createDeferredDurabilityHarness();
   const acknowledged: AppearancePreferenceV1[] = [];
   const errors: string[] = [];
   const coordinator = createAppearanceWriteCoordinator(repository, {
@@ -618,77 +670,75 @@ test("a failed ultimate rollback explicitly adopts the last known durable value"
   });
   const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
   const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
-  const second = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
 
   assert.equal(await coordinator.write(baseline), true);
   acknowledged.length = 0;
   const firstResult = coordinator.write(first);
   await Promise.resolve();
-  const secondResult = coordinator.write(second);
+  setDurablePreference(external);
+  assert.equal(coordinator.acceptPublication(external, {
+    origin: "external",
+    operationId: null,
+  }), true);
   pending[0]?.resolve();
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[1]?.reject(new Error("latest write failed"));
-  assert.equal(await secondResult, false);
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[2]?.reject(new Error("latest repair failed"));
-  await new Promise<void>((resolve) => setTimeout(resolve, 0));
-  pending[3]?.reject(new Error("rollback failed"));
+  await flushCoordinator();
+  pending[1]?.reject(new Error("latest repair failed"));
+  await flushCoordinator();
+  pending[2]?.reject(new Error("rollback failed"));
   await flushCoordinator();
 
   assert.equal(await firstResult, false);
   assert.deepEqual(getDurablePreference(), first);
   assert.deepEqual(acknowledged, [first]);
   assert.deepEqual(errors, [
-    "Error: latest write failed",
     "Error: latest repair failed",
     "Error: rollback failed",
   ]);
 });
 
-test("a newer local preference commits after an older rollback finishes", async () => {
-  const {getDurablePreference, pending, repository} = createDeferredDurabilityHarness();
+test("a newer local preference commits after an older convergence write finishes", async () => {
+  const {getDurablePreference, pending, repository, setDurablePreference} =
+    createDeferredDurabilityHarness();
   const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
   const coordinator = createAppearanceWriteCoordinator(repository, {
     invalidatePendingRead: () => undefined,
     onAcknowledged: (preference) => acknowledged.push(preference),
-    onError: () => undefined,
+    onError: (error) => errors.push(String(error)),
   });
   const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
   const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
-  const failed = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
   const newer = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
 
   assert.equal(await coordinator.write(baseline), true);
   acknowledged.length = 0;
   const firstResult = coordinator.write(first);
   await Promise.resolve();
-  const failedResult = coordinator.write(failed);
-  assert.deepEqual(pending[0]?.preference, first);
+  setDurablePreference(external);
+  assert.equal(coordinator.acceptPublication(external, {
+    origin: "external",
+    operationId: null,
+  }), true);
   pending[0]?.resolve();
   await flushCoordinator();
-  assert.deepEqual(pending[1]?.preference, failed);
-  pending[1]?.reject(new Error("latest write failed"));
-  assert.equal(await failedResult, false);
-  await flushCoordinator();
-  assert.deepEqual(pending[2]?.preference, baseline);
-  pending[2]?.reject(new Error("latest repair failed"));
-  await flushCoordinator();
-  assert.deepEqual(pending[3]?.preference, baseline);
+  assert.deepEqual(pending[1]?.preference, external);
 
   const newerResult = coordinator.write(newer);
-  assert.equal(pending.length, 4);
-  pending[3]?.resolve();
+  pending[1]?.reject(new Error("stale repair failed"));
   await flushCoordinator();
-  assert.deepEqual(pending[4]?.preference, newer);
-  pending[4]?.resolve();
+  assert.deepEqual(pending[2]?.preference, newer);
+  pending[2]?.resolve();
   assert.equal(await newerResult, true);
   assert.equal(await firstResult, false);
   assert.deepEqual(acknowledged, [newer]);
   assert.deepEqual(getDurablePreference(), newer);
-  assert.equal(pending.length, 5);
+  assert.deepEqual(errors, ["Error: stale repair failed"]);
+  assert.equal(pending.length, 3);
 });
 
-test("an external authoritative preference repairs over an older rollback", async () => {
+test("a newer external authority repairs over an older convergence write", async () => {
   const {getDurablePreference, pending, repository, setDurablePreference} =
     createDeferredDurabilityHarness();
   const visible: AppearancePreferenceV1[] = [];
@@ -699,36 +749,38 @@ test("an external authoritative preference repairs over an older rollback", asyn
   });
   const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
   const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
-  const failed = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
-  const external = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const newerExternal = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
 
   assert.equal(await coordinator.write(baseline), true);
   visible.length = 0;
   const firstResult = coordinator.write(first);
   await Promise.resolve();
-  const failedResult = coordinator.write(failed);
-  pending[0]?.resolve();
-  await flushCoordinator();
-  pending[1]?.reject(new Error("latest write failed"));
-  assert.equal(await failedResult, false);
-  await flushCoordinator();
-  assert.deepEqual(pending[2]?.preference, baseline);
-
   setDurablePreference(external);
   assert.equal(coordinator.acceptPublication(external, {
     origin: "external",
     operationId: null,
   }), true);
   visible.push(external);
-  pending[2]?.resolve();
+  pending[0]?.resolve();
+  await flushCoordinator();
+  assert.deepEqual(pending[1]?.preference, external);
+
+  setDurablePreference(newerExternal);
+  assert.equal(coordinator.acceptPublication(newerExternal, {
+    origin: "external",
+    operationId: null,
+  }), true);
+  visible.push(newerExternal);
+  pending[1]?.resolve();
   await flushCoordinator();
 
-  assert.deepEqual(pending[3]?.preference, external);
-  pending[3]?.resolve();
+  assert.deepEqual(pending[2]?.preference, newerExternal);
+  pending[2]?.resolve();
   assert.equal(await firstResult, false);
-  assert.deepEqual(visible, [external]);
-  assert.deepEqual(getDurablePreference(), external);
-  assert.equal(pending.length, 4);
+  assert.deepEqual(visible, [external, newerExternal]);
+  assert.deepEqual(getDurablePreference(), newerExternal);
+  assert.equal(pending.length, 3);
 });
 
 test("an external authority repairs a stale local write that completes later", async () => {
@@ -770,6 +822,94 @@ test("an external authority repairs a stale local write that completes later", a
   assert.deepEqual(visible.at(-1), external);
   assert.deepEqual(getDurablePreference(), external);
   assert.equal(pending.length, 2);
+});
+
+test("a rejected stale local write repairs its possible partial commit to external authority", async () => {
+  const {getDurablePreference, pending, repository, setDurablePreference} =
+    createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  await Promise.resolve();
+  assert.deepEqual(pending[0]?.preference, first);
+
+  setDurablePreference(external);
+  assert.equal(coordinator.acceptPublication(external, {
+    origin: "external",
+    operationId: null,
+  }), true);
+  setDurablePreference(first);
+  pending[0]?.reject(new Error("stale local response lost"));
+
+  assert.equal(await firstResult, false);
+  await flushCoordinator();
+  assert.deepEqual(pending[1]?.preference, external);
+  pending[1]?.resolve();
+  await flushCoordinator();
+
+  assert.deepEqual(getDurablePreference(), external);
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(errors, ["Error: stale local response lost"]);
+  assert.equal(pending.length, 2);
+});
+
+test("a rejected stale convergence repair reconverges to newer external authority", async () => {
+  const {getDurablePreference, pending, repository, setDurablePreference} =
+    createDeferredDurabilityHarness();
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  const baseline = {version: 1, designSystem: "shadcn", colorMode: "light"} as const;
+  const first = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
+  const external = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
+  const newerExternal = {version: 1, designSystem: "astryx", colorMode: "light"} as const;
+
+  assert.equal(await coordinator.write(baseline), true);
+  acknowledged.length = 0;
+  const firstResult = coordinator.write(first);
+  await Promise.resolve();
+  setDurablePreference(external);
+  assert.equal(coordinator.acceptPublication(external, {
+    origin: "external",
+    operationId: null,
+  }), true);
+  pending[0]?.resolve();
+  await flushCoordinator();
+  assert.deepEqual(pending[1]?.preference, external);
+
+  setDurablePreference(newerExternal);
+  assert.equal(coordinator.acceptPublication(newerExternal, {
+    origin: "external",
+    operationId: null,
+  }), true);
+  setDurablePreference(external);
+  pending[1]?.reject(new Error("stale repair response lost"));
+
+  assert.equal(await firstResult, false);
+  await flushCoordinator();
+  assert.deepEqual(pending[2]?.preference, newerExternal);
+  pending[2]?.resolve();
+  await flushCoordinator();
+
+  assert.deepEqual(getDurablePreference(), newerExternal);
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(errors, ["Error: stale repair response lost"]);
+  assert.equal(pending.length, 3);
 });
 
 test("A then B then external X then local D converges to D with one serialized writer", async () => {
@@ -832,10 +972,11 @@ test("a same-value authoritative publication survives a concurrent local write f
     },
   };
   const visible: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
   const coordinator = createAppearanceWriteCoordinator(repository, {
     invalidatePendingRead: () => undefined,
     onAcknowledged: (preference) => visible.push(preference),
-    onError: () => undefined,
+    onError: (error) => errors.push(String(error)),
   });
   coordinator.rememberDurablePreference(DEFAULT);
   connectAppearanceRepository(repository, {
@@ -860,6 +1001,191 @@ test("a same-value authoritative publication survives a concurrent local write f
   assert.equal(await writeResult, false);
   assert.deepEqual(visible, [ASTRYX_SYSTEM]);
   assert.deepEqual(durablePreference, ASTRYX_SYSTEM);
+  assert.deepEqual(errors, ["Error: local backend request failed"]);
+});
+
+test("a partial commit followed by rejection adopts the verified durable value and retains the error", async () => {
+  let durablePreference: AppearancePreferenceV1 | null = DEFAULT;
+  const writes: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const events: string[] = [];
+  const repository: AppearancePreferencesRepository = {
+    async read() {
+      return durablePreference;
+    },
+    async write(preference) {
+      writes.push(preference);
+      durablePreference = preference;
+      throw new Error(writes.length === 1 ? "local response lost" : "repair response lost");
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged(preference) {
+      acknowledged.push(preference);
+      events.push(`ack:${preference.designSystem}/${preference.colorMode}`);
+    },
+    onError(error) {
+      errors.push(String(error));
+      events.push(`error:${String(error)}`);
+    },
+  });
+  coordinator.rememberDurablePreference(DEFAULT);
+
+  assert.equal(await coordinator.write(ASTRYX_SYSTEM), false);
+  await flushCoordinator();
+
+  assert.deepEqual(writes, [ASTRYX_SYSTEM]);
+  assert.deepEqual(durablePreference, ASTRYX_SYSTEM);
+  assert.deepEqual(acknowledged, [ASTRYX_SYSTEM]);
+  assert.deepEqual(errors, ["Error: local response lost"]);
+  assert.deepEqual(events, [
+    "ack:astryx/system",
+    "error:Error: local response lost",
+  ]);
+});
+
+test("a failed recovery read blocks automatic repair until a later intent succeeds", async () => {
+  let durablePreference: AppearancePreferenceV1 | null = DEFAULT;
+  let failRead = true;
+  let partialCommit = true;
+  const writes: AppearancePreferenceV1[] = [];
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const repository: AppearancePreferencesRepository = {
+    async read() {
+      if (failRead) throw new Error("recovery read failed");
+      return durablePreference;
+    },
+    async write(preference) {
+      writes.push(preference);
+      durablePreference = preference;
+      if (partialCommit) {
+        partialCommit = false;
+        throw new Error("local response lost");
+      }
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  coordinator.rememberDurablePreference(DEFAULT);
+
+  assert.equal(await coordinator.write(ASTRYX_SYSTEM), false);
+  await flushCoordinator();
+  assert.deepEqual(writes, [ASTRYX_SYSTEM]);
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(errors, [
+    "Error: local response lost",
+    "Error: recovery read failed",
+  ]);
+
+  failRead = false;
+  const latest = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
+  assert.equal(await coordinator.write(latest), true);
+  assert.deepEqual(writes, [ASTRYX_SYSTEM, latest]);
+  assert.deepEqual(durablePreference, latest);
+  assert.deepEqual(acknowledged, [latest]);
+});
+
+test("an external publication invalidates an uncertain recovery read", async () => {
+  let durablePreference: AppearancePreferenceV1 | null = DEFAULT;
+  let releaseRead: ((preference: AppearancePreferenceV1 | null) => void) | null = null;
+  const writes: AppearancePreferenceV1[] = [];
+  const repository: AppearancePreferencesRepository = {
+    read() {
+      return new Promise((resolve) => {
+        releaseRead = resolve;
+      });
+    },
+    async write(preference) {
+      writes.push(preference);
+      durablePreference = preference;
+      throw new Error("local response lost");
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const errors: string[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: (error) => errors.push(String(error)),
+  });
+  coordinator.rememberDurablePreference(DEFAULT);
+
+  const result = coordinator.write(ASTRYX_SYSTEM);
+  await flushCoordinator();
+  assert.ok(releaseRead);
+  durablePreference = {version: 1, designSystem: "shadcn", colorMode: "dark"};
+  assert.equal(coordinator.acceptPublication(durablePreference, {
+    origin: "external",
+    operationId: null,
+  }), true);
+  (releaseRead as (preference: AppearancePreferenceV1 | null) => void)(ASTRYX_SYSTEM);
+
+  assert.equal(await result, false);
+  await flushCoordinator();
+  assert.deepEqual(writes, [ASTRYX_SYSTEM]);
+  assert.deepEqual(durablePreference, {
+    version: 1,
+    designSystem: "shadcn",
+    colorMode: "dark",
+  });
+  assert.deepEqual(acknowledged, []);
+  assert.deepEqual(errors, ["Error: local response lost"]);
+});
+
+test("a newer local intent invalidates an uncertain recovery read", async () => {
+  let durablePreference: AppearancePreferenceV1 | null = DEFAULT;
+  let releaseRead: ((preference: AppearancePreferenceV1 | null) => void) | null = null;
+  const writes: AppearancePreferenceV1[] = [];
+  const latest = {version: 1, designSystem: "astryx", colorMode: "dark"} as const;
+  const repository: AppearancePreferencesRepository = {
+    read() {
+      return new Promise((resolve) => {
+        releaseRead = resolve;
+      });
+    },
+    async write(preference) {
+      writes.push(preference);
+      durablePreference = preference;
+      if (writes.length === 1) throw new Error("local response lost");
+    },
+    subscribe() {
+      return () => undefined;
+    },
+  };
+  const acknowledged: AppearancePreferenceV1[] = [];
+  const coordinator = createAppearanceWriteCoordinator(repository, {
+    invalidatePendingRead: () => undefined,
+    onAcknowledged: (preference) => acknowledged.push(preference),
+    onError: () => undefined,
+  });
+  coordinator.rememberDurablePreference(DEFAULT);
+
+  const firstResult = coordinator.write(ASTRYX_SYSTEM);
+  await flushCoordinator();
+  assert.ok(releaseRead);
+  const latestResult = coordinator.write(latest);
+  (releaseRead as (preference: AppearancePreferenceV1 | null) => void)(ASTRYX_SYSTEM);
+
+  assert.equal(await firstResult, false);
+  assert.equal(await latestResult, true);
+  assert.deepEqual(writes, [ASTRYX_SYSTEM, latest]);
+  assert.deepEqual(durablePreference, latest);
+  assert.deepEqual(acknowledged, [latest]);
 });
 
 test("a user intent invalidates an older pending initial repository read immediately", async () => {
@@ -1152,4 +1478,16 @@ test("renderer fallback persistence is routed through the race-safe writer", asy
 
   assert.match(failureHandler, /writeCoordinatorRef\.current/);
   assert.match(failureHandler, /writer\.write\(fallback\)/);
+});
+
+test("initial repository read failures are report-only and never invoke renderer fallback", async () => {
+  const source = await readFile("src/components/providers/appearance-provider.tsx", "utf8");
+  const connectionBlock = source.slice(
+    source.indexOf("connection = connectAppearanceRepository"),
+    source.indexOf("return () =>", source.indexOf("connection = connectAppearanceRepository")),
+  );
+
+  assert.match(connectionBlock, /onError\(error\)[\s\S]*dispatch\(\{type: "report-error"/);
+  assert.doesNotMatch(connectionBlock, /handleTransitionFailure/);
+  assert.doesNotMatch(connectionBlock, /writer\.write/);
 });

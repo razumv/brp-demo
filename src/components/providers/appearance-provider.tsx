@@ -14,6 +14,7 @@ import {
 import {AppearanceContext, type AppearanceContextValue} from "@/components/appearance/use-appearance";
 import {
   createBrowserAppearanceRepository,
+  DEFAULT_APPEARANCE_PREFERENCE,
   normalizeAppearancePreference,
   resolveColorMode,
   type AppearancePreferenceV1,
@@ -138,6 +139,20 @@ export interface AppearanceWriteCoordinator {
 }
 
 let appearanceWriteCoordinatorSequence = 0;
+const appearanceOperationSessionNamespace = (() => {
+  try {
+    if (typeof globalThis.crypto?.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+    if (typeof globalThis.crypto?.getRandomValues === "function") {
+      const values = globalThis.crypto.getRandomValues(new Uint32Array(4));
+      return Array.from(values, (value) => value.toString(36)).join("-");
+    }
+  } catch {
+    // Fall through to a dependency-free namespace for restricted runtimes.
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+})();
 
 export function createAppearanceWriteCoordinator(
   repository: AppearancePreferencesRepository,
@@ -151,7 +166,8 @@ export function createAppearanceWriteCoordinator(
   };
 
   const coordinatorId = ++appearanceWriteCoordinatorSequence;
-  const issuedOperationIds = new Set<string>();
+  const operationIdPrefix =
+    `appearance-${appearanceOperationSessionNamespace}-${coordinatorId}-`;
   const serialize = (preference: AppearancePreferenceV1) => JSON.stringify(preference);
   const copyPreference = (preference: AppearancePreferenceV1): AppearancePreferenceV1 => ({
     version: 1,
@@ -171,6 +187,7 @@ export function createAppearanceWriteCoordinator(
   let runningIntent: Intent | null = null;
   let authoritativePreference: AppearancePreferenceV1 | null = null;
   let lastKnownDurableWrite: AppearancePreferenceV1 | null = null;
+  let convergenceBlockedEpoch: number | null = null;
   let flushPromise: Promise<void> | null = null;
 
   const settleIntent = (intent: Intent, result: boolean) => {
@@ -197,21 +214,64 @@ export function createAppearanceWriteCoordinator(
     authorityEpoch++;
     authoritativePreference = accepted;
     lastKnownDurableWrite = copyPreference(accepted);
+    convergenceBlockedEpoch = null;
     if (supersedeLocal) supersedeLatestIntent();
     if (notify) callbacks.onAcknowledged(accepted);
   };
-  const adoptLastKnownDurableWrite = () => {
-    if (!lastKnownDurableWrite) return;
-    if (isSamePreference(lastKnownDurableWrite, authoritativePreference)) return;
-    advanceAuthority(lastKnownDurableWrite, {notify: true, supersedeLocal: true});
-  };
   const writeRepository = async (preference: AppearancePreferenceV1) => {
-    const operationId = `appearance-${coordinatorId}-${++operationSequence}`;
-    issuedOperationIds.add(operationId);
+    const operationId = `${operationIdPrefix}${++operationSequence}`;
     await repository.write(preference, {operationId});
     if (!active) return;
     lastKnownDurableWrite = copyPreference(preference);
+    convergenceBlockedEpoch = null;
     callbacks.invalidatePendingRead();
+  };
+
+  type ReconciliationGuard = {
+    authorityEpoch: number;
+    generation: number;
+    intent: Intent | null;
+  };
+  type ReconciliationResult =
+    | {status: "current"; preference: AppearancePreferenceV1}
+    | {status: "failed"; error: unknown}
+    | {status: "stale"};
+  const isCurrentGuard = (guard: ReconciliationGuard) =>
+    active &&
+    authorityEpoch === guard.authorityEpoch &&
+    generation === guard.generation &&
+    latestIntent === guard.intent;
+  const reconcileDurablePreference = async (
+    guard: ReconciliationGuard,
+  ): Promise<ReconciliationResult> => {
+    if (!isCurrentGuard(guard)) return {status: "stale"};
+    let readPreference: AppearancePreferenceV1 | null;
+    try {
+      readPreference = await repository.read();
+    } catch (error) {
+      if (!isCurrentGuard(guard)) return {status: "stale"};
+      convergenceBlockedEpoch = guard.authorityEpoch;
+      return {status: "failed", error};
+    }
+    if (!isCurrentGuard(guard)) return {status: "stale"};
+    const normalized = readPreference === null
+      ? DEFAULT_APPEARANCE_PREFERENCE
+      : normalizeAppearancePreference(readPreference);
+    if (!normalized) {
+      convergenceBlockedEpoch = guard.authorityEpoch;
+      return {
+        status: "failed",
+        error: new TypeError("Appearance repository returned an invalid preference."),
+      };
+    }
+    const verified = copyPreference(normalized);
+    lastKnownDurableWrite = verified;
+    convergenceBlockedEpoch = null;
+    return {status: "current", preference: verified};
+  };
+  const adoptVerifiedDurablePreference = (preference: AppearancePreferenceV1) => {
+    const notify = !isSamePreference(preference, authoritativePreference);
+    advanceAuthority(preference, {notify, supersedeLocal: false});
   };
 
   const runLocalIntent = async (intent: Intent) => {
@@ -225,15 +285,25 @@ export function createAppearanceWriteCoordinator(
     try {
       await writeRepository(intent.preference);
     } catch (error) {
-      if (
-        active &&
-        latestIntent === intent &&
-        intent.status === "running" &&
-        authorityEpoch === startEpoch
-      ) {
+      if (active) lastKnownDurableWrite = null;
+      const guard = {
+        authorityEpoch: startEpoch,
+        generation,
+        intent,
+      };
+      const reconciliation = await reconcileDurablePreference(guard);
+      if (latestIntent === intent) {
+        latestIntent = null;
+        if (reconciliation.status === "current") {
+          adoptVerifiedDurablePreference(reconciliation.preference);
+        }
+      }
+      if (active) {
         callbacks.onError(error);
       }
-      if (latestIntent === intent) latestIntent = null;
+      if (active && reconciliation.status === "failed") {
+        callbacks.onError(reconciliation.error);
+      }
       settleIntent(intent, false);
       if (runningIntent === intent) runningIntent = null;
       return;
@@ -268,16 +338,36 @@ export function createAppearanceWriteCoordinator(
       try {
         await writeRepository(target);
       } catch (error) {
-        if (!active) return;
-        if (
-          authorityEpoch !== targetEpoch ||
-          generation !== targetGeneration ||
-          latestIntent !== null
-        ) {
+        if (active) lastKnownDurableWrite = null;
+        const guard = {
+          authorityEpoch: targetEpoch,
+          generation: targetGeneration,
+          intent: null,
+        };
+        if (!isCurrentGuard(guard)) {
+          if (active) callbacks.onError(error);
+          return;
+        }
+        const reconciliation = await reconcileDurablePreference(guard);
+        if (reconciliation.status === "stale") {
+          if (active) callbacks.onError(error);
+          return;
+        }
+        if (reconciliation.status === "failed") {
+          callbacks.onError(error);
+          callbacks.onError(reconciliation.error);
+          return;
+        }
+        if (isSamePreference(reconciliation.preference, target)) {
+          callbacks.onError(error);
+          return;
+        }
+        if (attempt === 1) {
+          adoptVerifiedDurablePreference(reconciliation.preference);
+          callbacks.onError(error);
           return;
         }
         callbacks.onError(error);
-        if (attempt === 1) adoptLastKnownDurableWrite();
         continue;
       }
       return;
@@ -287,6 +377,7 @@ export function createAppearanceWriteCoordinator(
   const needsFlush = () =>
     latestIntent?.status === "queued" ||
     (authoritativePreference !== null &&
+      convergenceBlockedEpoch !== authorityEpoch &&
       !isSamePreference(lastKnownDurableWrite, authoritativePreference));
   const runFlush = async () => {
     while (active) {
@@ -297,6 +388,7 @@ export function createAppearanceWriteCoordinator(
       }
       if (
         authoritativePreference &&
+        convergenceBlockedEpoch !== authorityEpoch &&
         !isSamePreference(lastKnownDurableWrite, authoritativePreference)
       ) {
         await runConvergenceAttempt();
@@ -348,7 +440,7 @@ export function createAppearanceWriteCoordinator(
       if (
         context.origin === "local-write" &&
         context.operationId !== null &&
-        issuedOperationIds.has(context.operationId)
+        context.operationId.startsWith(operationIdPrefix)
       ) {
         return false;
       }
@@ -372,7 +464,7 @@ export function createAppearanceWriteCoordinator(
       runningIntent = null;
       authoritativePreference = null;
       lastKnownDurableWrite = null;
-      issuedOperationIds.clear();
+      convergenceBlockedEpoch = null;
     },
   };
 }
@@ -636,7 +728,7 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
           acceptPreference(preference);
         },
         onError(error) {
-          handleTransitionFailureRef.current(new Error(formatError(error)), stateRef.current.transitionId);
+          dispatch({type: "report-error", error: formatError(error)});
         },
       });
     }

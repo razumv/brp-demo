@@ -69,9 +69,9 @@ export function appearanceTransitionReducer(
         ...state,
         renderedPreference: copyPreference(state.desiredPreference),
         renderedDesignSystem: "astryx",
-        transitionStatus: "ready",
+        transitionStatus: state.error ? "error" : "ready",
         transitionId: null,
-        error: null,
+        error: state.error,
       };
     case "commit-shadcn":
       return {

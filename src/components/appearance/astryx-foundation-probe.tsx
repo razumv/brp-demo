@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@astryxdesign/core/Button";
@@ -13,6 +13,7 @@ import {
 } from "@astryxdesign/core/Table";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { Theme } from "@astryxdesign/core/theme";
+import { useAppearance } from "@/components/appearance/use-appearance";
 import { neutralTheme } from "@/themes/neutral/neutral";
 
 type ThemeRegionProps = {
@@ -66,16 +67,42 @@ function ThemeRegion({ mode }: ThemeRegionProps) {
 /** Gated production probe for validating Astryx's compiled CSS foundation. */
 export function AstryxFoundationProbe() {
   const pathname = usePathname();
+  const appearance = useAppearance();
+  const {markRendererSlotReady, registerRendererSlot} = appearance;
   const isEnabled = useSyncExternalStore(
     subscribeToLocation,
     getProbeQuerySnapshot,
     getServerProbeQuerySnapshot,
   );
+  const isVisible = pathname === "/login" && isEnabled;
 
-  if (pathname !== "/login" || !isEnabled) return null;
+  useLayoutEffect(() => {
+    if (!isVisible) return;
+    const unregister = registerRendererSlot("astryx-foundation-probe");
+    const frame = window.requestAnimationFrame(() => {
+      markRendererSlotReady("astryx-foundation-probe");
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      unregister();
+    };
+  }, [
+    markRendererSlotReady,
+    registerRendererSlot,
+    isVisible,
+  ]);
+
+  if (!isVisible) return null;
 
   return (
-    <section data-design-system="astryx" data-testid="astryx-foundation-probe">
+    <section
+      data-design-system="astryx"
+      data-provider-color-mode={appearance.desiredPreference.colorMode}
+      data-provider-design-system={appearance.desiredPreference.designSystem}
+      data-provider-error={appearance.error ?? ""}
+      data-provider-status={appearance.transitionStatus}
+      data-testid="astryx-foundation-probe"
+    >
       <LinkProvider component={NextLink}>
         <LayerProvider>
           <Theme mode="light" theme={neutralTheme}>

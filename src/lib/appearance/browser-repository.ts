@@ -132,7 +132,13 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
   ): void {
     for (const listener of this.listeners) {
       try {
-        listener(copyAppearancePreference(preference), context);
+        listener(
+          copyAppearancePreference(preference),
+          Object.freeze({
+            origin: context.origin,
+            operationId: context.operationId,
+          }),
+        );
       } catch {
         // Observer code is isolated so durable persistence and other observers continue.
       }

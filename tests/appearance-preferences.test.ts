@@ -294,6 +294,31 @@ test("a throwing cross-tab observer cannot block later observers", () => {
   assert.deepEqual(observed, preference);
 });
 
+test("publication context is frozen and isolated for every observer", async () => {
+  const harness = createRepositoryHarness();
+  const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
+  const contexts: unknown[] = [];
+  repository.subscribe((_preference, context) => {
+    contexts.push(context);
+    (context as {operationId: string | null}).operationId = "mutated";
+  });
+  repository.subscribe((_preference, context) => contexts.push(context));
+
+  await repository.write(
+    {version: 1, designSystem: "astryx", colorMode: "dark"},
+    {operationId: "original-operation"},
+  );
+
+  assert.equal(contexts.length, 2);
+  assert.notEqual(contexts[0], contexts[1]);
+  assert.equal(Object.isFrozen(contexts[0]), true);
+  assert.equal(Object.isFrozen(contexts[1]), true);
+  assert.deepEqual(contexts[1], {
+    origin: "local-write",
+    operationId: "original-operation",
+  });
+});
+
 test("repository boundaries do not expose mutable last-known-good state", async () => {
   const harness = createRepositoryHarness();
   const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);

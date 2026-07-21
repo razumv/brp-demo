@@ -199,3 +199,62 @@ test("blocked storage keeps the visible shadcn light fallback without an effect 
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true");
   expect(pageErrors).toEqual([]);
 });
+
+test("a provider read failure keeps a validated Astryx bootstrap and reports the error", async ({page}) => {
+  test.skip(
+    process.env.NEXT_PUBLIC_APPEARANCE_FOUNDATION_PROBE !== "1",
+    "The provider state probe is compiled only for the focused production regression suite.",
+  );
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.addInitScript(() => {
+    const key = "brp-appearance-v1";
+    const preference = {version: 1, designSystem: "astryx", colorMode: "dark"};
+    window.localStorage.setItem(key, JSON.stringify(preference));
+
+    const observedWindow = window as typeof window & {
+      __brpAppearanceWrites?: string[];
+    };
+    observedWindow.__brpAppearanceWrites = [];
+    const storagePrototype = Storage.prototype;
+    const originalGetItem = storagePrototype.getItem;
+    const originalSetItem = storagePrototype.setItem;
+    let preferenceReads = 0;
+    storagePrototype.getItem = function getItem(storageKey) {
+      if (storageKey === key) {
+        preferenceReads++;
+        if (preferenceReads === 2) {
+          throw new DOMException("repository read failed", "UnknownError");
+        }
+      }
+      return originalGetItem.call(this, storageKey);
+    };
+    storagePrototype.setItem = function setItem(storageKey, value) {
+      if (storageKey === key) observedWindow.__brpAppearanceWrites?.push(value);
+      return originalSetItem.call(this, storageKey, value);
+    };
+  });
+
+  await page.goto("/login?astryx-foundation-probe=1", {waitUntil: "domcontentloaded"});
+  const probe = page.getByTestId("astryx-foundation-probe");
+  await expect(probe).toHaveAttribute("data-provider-design-system", "astryx");
+  await expect(probe).toHaveAttribute("data-provider-color-mode", "dark");
+  await expect(probe).toHaveAttribute("data-provider-status", "error");
+  await expect(probe).toHaveAttribute("data-provider-error", "repository read failed");
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
+  await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
+  await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true");
+
+  const storageState = await page.evaluate(() => ({
+    preference: JSON.parse(window.localStorage.getItem("brp-appearance-v1") ?? "null"),
+    writes: (window as typeof window & {__brpAppearanceWrites?: string[]})
+      .__brpAppearanceWrites ?? [],
+  }));
+  expect(storageState.preference).toEqual({
+    version: 1,
+    designSystem: "astryx",
+    colorMode: "dark",
+  });
+  expect(storageState.writes).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
