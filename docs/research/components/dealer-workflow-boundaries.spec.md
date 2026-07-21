@@ -31,6 +31,21 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 | KPI, attention, and summary cards | **working local** — values re-render from local orders, customers, workshop records, and cart. |
 | Remote dashboard feed | **backend contract required** — no network read exists; future data must be scoped to Logos. |
 
+<a id="controls-dealer-shell"></a>
+### Dealer shell
+
+| Control family | Classification and observable effect / lock reason |
+|---|---|
+| Desktop navigation and brand link | **working local** — links change route, active state follows the URL, and the order badge follows local order count. |
+| Mobile menu button, close button, backdrop close, nav-link close | **working local** for visible open/close/navigation. The drawer declares modal semantics but lacks initial focus, focus containment, Escape close, background inertness, and return focus, so that modal behavior is a **wrong action** until completed. |
+| Theme | **working local** — toggles the document class and persists light/dark choice in local storage. |
+| Profile popover and Logout | **working local** — popover visibility changes; Logout clears the local session and routes to login. |
+| Cart button/drawer, line quantity/remove/clear, catalog/checkout navigation | **working local** — drawer/local cart/route changes as labeled. Its dialog also lacks a complete Escape/focus/return contract and must receive the same frontend drawer correction. |
+| Identity | **working local** read projection — renders the current session identity with Logos / Финансы fallback. A future remote identity read is **backend contract required**. |
+| Client-view button | **enabled inert** — it has no handler or visible effect. Implement only after source/authorization semantics are known, or lock/remove it. |
+| Language menu | Menu open/close is **working local**; each language choice is **wrong action** and **enabled inert** for its label because it only closes the menu and leaves UA/content unchanged. Preference persistence is **backend contract required** if it becomes remote. |
+| Notifications | **enabled inert** — button has no handler or panel. Remote notification read/state is **backend contract required**. |
+
 <a id="controls-global-search"></a>
 ### Global parts search
 
@@ -67,7 +82,8 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 |---|---|
 | Previous/next/select diagram, callouts, zoom/reset, mobile schema/parts tabs | **working local** — selected diagram/viewer state changes with bounded values. |
 | Row Add to cart and cart link | **working local** — the clicked row SKU enters local cart and visible feedback/cart count changes. |
-| Print and Share | **working local** — invokes browser print or copies the current URL with feedback. |
+| Print | **working local** — invokes the browser print surface. |
+| Share | **wrong action** — clipboard failure is swallowed and the UI still reports success. Report success only after the write resolves; expose failure/fallback otherwise. |
 | Remote diagram/price/availability/cart persistence | **backend contract required** — current assets and rows remain local fixtures. |
 
 <a id="controls-cart"></a>
@@ -116,9 +132,9 @@ No user-facing explanation may use demo/test/environment labels. A native `title
 
 | Control family | Classification and observable effect / lock reason |
 |---|---|
-| Profile selection, name save, quick access, permission switches, Save | **correctly locked/absent** — disabled; the page notice/footer says rights and team composition are managed elsewhere. Associate that explanation with each control for focus/touch. |
-| Add employee | **correctly locked/absent** — no dealer-side control is rendered. |
-| Remote access read | **backend contract required** — a scoped read may be added; no write port is authorized. |
+| Profile selection, name save, quick access, permission switches, Save | Operational effects are absent and **backend contract required**. The controls are disabled, but the page notice/footer is not programmatically/focus/touch-associated with each lock, so the rendered locks are not yet classified as correctly locked. |
+| Add employee | Operational effect is absent; no dealer-side control is rendered. Do not introduce one without fresh source and authorization evidence. |
+| Remote access read/write | A scoped read is **backend contract required**; no write port is authorized. Frontend now must complete lock explanation association without enabling writes. |
 
 <a id="controls-accessories"></a>
 ### Accessories `/dealer/accessories`
