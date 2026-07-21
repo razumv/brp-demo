@@ -2,11 +2,13 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { chromium } from "playwright";
 
 const baseUrl = process.env.BASELINE_BASE_URL ?? "http://127.0.0.1:3107";
 const outputDirectory = path.resolve("docs/design-references/astryx-baseline");
 const manifestPath = path.resolve("docs/research/astryx-baseline-manifest.json");
+const applicationBaselineSha = "f356dd9863db073d966d7ef83b3fee8ef39d7a5d";
 const viewports = [390, 768, 1280, 1440];
 const themes = ["light", "dark"];
 
@@ -47,6 +49,26 @@ function pngDimensions(buffer) {
 
 function expectedTarget(filename) {
   return captureTargets.find((target) => target.filename === filename);
+}
+
+function expectedHeight(width) {
+  return width < 768 ? 844 : 1000;
+}
+
+function expectedFilenames() {
+  return captureTargets.map((target) => target.filename).sort();
+}
+
+function verifySourceSha(manifest) {
+  if (manifest.sourceSha !== applicationBaselineSha) {
+    throw new Error(`Manifest source SHA must be the common application baseline ${applicationBaselineSha}`);
+  }
+  try {
+    execFileSync("git", ["rev-parse", "--verify", `${manifest.sourceSha}^{commit}`], { stdio: "ignore" });
+    execFileSync("git", ["merge-base", "--is-ancestor", manifest.sourceSha, "HEAD"], { stdio: "ignore" });
+  } catch {
+    throw new Error(`Manifest source SHA is not an ancestor of this integration-ready branch: ${manifest.sourceSha}`);
+  }
 }
 
 async function authenticatedPage(browser, role, theme, width) {
@@ -114,7 +136,7 @@ async function writeManifest(observations = new Map()) {
       route: target.path,
       role: target.role,
       theme: target.theme,
-      viewport: { width: target.width, height: target.width < 768 ? 844 : 1000 },
+      viewport: { width: target.width, height: expectedHeight(target.width) },
       finalUrl: observations.get(target.filename)?.finalUrl ?? `${baseUrl}${target.path}`,
       rootTheme: observations.get(target.filename)?.rootTheme ?? {
         asserted: false,
@@ -129,7 +151,7 @@ async function writeManifest(observations = new Map()) {
   }));
   await fs.writeFile(manifestPath, JSON.stringify({
     schemaVersion: 1,
-    sourceSha: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+    sourceSha: applicationBaselineSha,
     captureBaseUrl: baseUrl,
     captureTargets: routes,
     screenshots: files,
@@ -138,25 +160,56 @@ async function writeManifest(observations = new Map()) {
 
 async function verifyManifest() {
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  verifySourceSha(manifest);
+  if (!isDeepStrictEqual(manifest.captureTargets, routes)) {
+    throw new Error("Manifest captureTargets differ from the declared route contract");
+  }
   if (manifest.screenshots.length !== captureTargets.length) throw new Error(`Expected ${captureTargets.length} manifest screenshots`);
+  const expectedFiles = expectedFilenames();
+  const manifestFilenames = manifest.screenshots.map((entry) => entry.filename);
+  const sortedManifestFilenames = [...manifestFilenames].sort();
+  if (new Set(manifestFilenames).size !== manifestFilenames.length) {
+    throw new Error("Manifest contains duplicate screenshot filenames");
+  }
+  if (!isDeepStrictEqual(sortedManifestFilenames, expectedFiles)) {
+    throw new Error("Manifest screenshot filenames differ from the exact declared target set");
+  }
   const actualFiles = (await fs.readdir(outputDirectory)).filter((file) => file.endsWith(".png")).sort();
-  if (actualFiles.length !== captureTargets.length) throw new Error(`Expected ${captureTargets.length} PNGs, found ${actualFiles.length}`);
+  if (!isDeepStrictEqual(actualFiles, expectedFiles)) {
+    throw new Error("PNG directory differs from the exact declared target set");
+  }
+  let captureOrigin;
+  try {
+    captureOrigin = new URL(manifest.captureBaseUrl).origin;
+  } catch {
+    throw new Error(`Manifest captureBaseUrl is not a valid URL: ${manifest.captureBaseUrl}`);
+  }
   for (const entry of manifest.screenshots) {
     const target = expectedTarget(entry.filename);
     if (!target) throw new Error(`Unexpected manifest entry ${entry.filename}`);
+    const targetViewport = { width: target.width, height: expectedHeight(target.width) };
+    if (entry.route !== target.path || entry.role !== target.role || entry.theme !== target.theme || !isDeepStrictEqual(entry.viewport, targetViewport)) {
+      throw new Error(`Manifest metadata differs from declared target for ${entry.filename}`);
+    }
     const png = await fs.readFile(path.join(outputDirectory, entry.filename));
     const dimensions = pngDimensions(png);
     const sha256 = createHash("sha256").update(png).digest("hex");
     if (entry.png.bytes !== png.length || entry.png.sha256 !== sha256 || entry.png.width !== dimensions.width || entry.png.height !== dimensions.height) {
       throw new Error(`Checksum or dimensions differ for ${entry.filename}`);
     }
-    if (new URL(entry.finalUrl).pathname !== target.path) throw new Error(`Unexpected final URL in manifest for ${entry.filename}`);
+    if (dimensions.width !== targetViewport.width || dimensions.height !== targetViewport.height) {
+      throw new Error(`PNG dimensions differ from the declared viewport for ${entry.filename}`);
+    }
+    let finalUrl;
+    try {
+      finalUrl = new URL(entry.finalUrl);
+    } catch {
+      throw new Error(`Manifest final URL is not valid for ${entry.filename}`);
+    }
+    if (finalUrl.origin !== captureOrigin || finalUrl.pathname !== target.path) throw new Error(`Unexpected final URL in manifest for ${entry.filename}`);
     const expectedDark = target.themeParticipant === false ? false : target.theme === "dark";
     if (entry.rootTheme?.dark !== expectedDark || entry.rootTheme?.expectedDark !== expectedDark) throw new Error(`Missing or incorrect root-theme assertion for ${entry.filename}`);
     if (entry.stylesheet?.status !== 200 || /Times New Roman/i.test(entry.stylesheet?.bodyFontFamily ?? "")) throw new Error(`Missing application stylesheet assertion for ${entry.filename}`);
-  }
-  for (const target of captureTargets) {
-    if (!actualFiles.includes(target.filename)) throw new Error(`Missing ${target.filename}`);
   }
   console.log(JSON.stringify({ verifiedScreenshots: captureTargets.length, manifestPath }, null, 2));
 }
