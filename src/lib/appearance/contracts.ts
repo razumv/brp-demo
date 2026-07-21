@@ -8,10 +8,24 @@ export interface AppearancePreferenceV1 {
   colorMode: ColorMode;
 }
 
+export interface AppearanceWriteContext {
+  operationId: string;
+}
+
+export interface AppearancePublicationContext {
+  origin: "local-write" | "external";
+  operationId: string | null;
+}
+
 export interface AppearancePreferencesRepository {
   read(): Promise<AppearancePreferenceV1 | null>;
-  write(preference: AppearancePreferenceV1): Promise<void>;
-  subscribe(listener: (preference: AppearancePreferenceV1) => void): () => void;
+  write(preference: AppearancePreferenceV1, context?: AppearanceWriteContext): Promise<void>;
+  subscribe(
+    listener: (
+      preference: AppearancePreferenceV1,
+      context: AppearancePublicationContext,
+    ) => void,
+  ): () => void;
 }
 
 export interface AppearanceBootstrapSnapshot {

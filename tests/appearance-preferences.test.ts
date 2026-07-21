@@ -170,16 +170,24 @@ test("acknowledged writes publish locally and valid storage events publish cross
   const harness = createRepositoryHarness();
   const repository = new BrowserAppearancePreferencesRepository(harness.dependencies);
   const seen: unknown[] = [];
-  const unsubscribe = repository.subscribe((preference) => seen.push(preference));
+  const unsubscribe = repository.subscribe((preference, context) =>
+    seen.push({preference, context}),
+  );
   const preference = {version: 1, designSystem: "astryx", colorMode: "system"} as const;
 
-  await repository.write(preference);
+  await repository.write(preference, {operationId: "local-test-operation"});
   assert.deepEqual(await repository.read(), preference);
-  assert.deepEqual(seen, [preference]);
+  assert.deepEqual(seen, [{
+    preference,
+    context: {origin: "local-write", operationId: "local-test-operation"},
+  }]);
 
   const fromOtherTab = {version: 1, designSystem: "shadcn", colorMode: "dark"} as const;
   harness.emitStorage(APPEARANCE_STORAGE_KEY, JSON.stringify(fromOtherTab));
-  assert.deepEqual(seen.at(-1), fromOtherTab);
+  assert.deepEqual(seen.at(-1), {
+    preference: fromOtherTab,
+    context: {origin: "external", operationId: null},
+  });
 
   unsubscribe();
 });

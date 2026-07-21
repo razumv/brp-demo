@@ -1,6 +1,8 @@
 import type {
   AppearancePreferenceV1,
+  AppearancePublicationContext,
   AppearancePreferencesRepository,
+  AppearanceWriteContext,
 } from "./contracts";
 import {
   APPEARANCE_STORAGE_KEY,
@@ -27,7 +29,10 @@ export interface BrowserAppearanceRepositoryDependencies {
   removeStorageListener(listener: (event: AppearanceStorageEvent) => void): void;
 }
 
-type AppearanceListener = (preference: AppearancePreferenceV1) => void;
+type AppearanceListener = (
+  preference: AppearancePreferenceV1,
+  context: AppearancePublicationContext,
+) => void;
 
 function copyAppearancePreference(
   preference: AppearancePreferenceV1,
@@ -72,7 +77,10 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
     return copyAppearancePreference(this.lastKnownGood);
   }
 
-  async write(preference: AppearancePreferenceV1): Promise<void> {
+  async write(
+    preference: AppearancePreferenceV1,
+    context?: AppearanceWriteContext,
+  ): Promise<void> {
     const normalized = normalizeAppearancePreference(preference);
     if (!normalized) {
       throw new TypeError("Appearance preference must use the supported v1 contract.");
@@ -80,11 +88,15 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
 
     this.dependencies.storage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(normalized));
     this.lastKnownGood = copyAppearancePreference(normalized);
-    this.publish(this.lastKnownGood);
+    this.publish(this.lastKnownGood, {
+      origin: "local-write",
+      operationId: context?.operationId ?? null,
+    });
   }
 
   subscribe(listener: AppearanceListener): () => void {
-    const registration: AppearanceListener = (preference) => listener(preference);
+    const registration: AppearanceListener = (preference, context) =>
+      listener(preference, context);
     this.listeners.add(registration);
     if (!this.listening) {
       this.dependencies.addStorageListener(this.handleStorageEvent);
@@ -111,13 +123,16 @@ export class BrowserAppearancePreferencesRepository implements AppearancePrefere
     }
 
     this.lastKnownGood = copyAppearancePreference(preference);
-    this.publish(this.lastKnownGood);
+    this.publish(this.lastKnownGood, {origin: "external", operationId: null});
   };
 
-  private publish(preference: AppearancePreferenceV1): void {
+  private publish(
+    preference: AppearancePreferenceV1,
+    context: AppearancePublicationContext,
+  ): void {
     for (const listener of this.listeners) {
       try {
-        listener(copyAppearancePreference(preference));
+        listener(copyAppearancePreference(preference), context);
       } catch {
         // Observer code is isolated so durable persistence and other observers continue.
       }

@@ -17,6 +17,7 @@ import {
   normalizeAppearancePreference,
   resolveColorMode,
   type AppearancePreferenceV1,
+  type AppearancePublicationContext,
   type AppearancePreferencesRepository,
   type ColorMode,
   type ResolvedTheme,
@@ -36,8 +37,15 @@ declare global {
   }
 }
 
+export type AppearanceRepositoryPreferenceContext =
+  | AppearancePublicationContext
+  | {origin: "initial-read"; operationId: null};
+
 export interface AppearanceRepositoryConnectionCallbacks {
-  onPreference(preference: AppearancePreferenceV1): void;
+  onPreference(
+    preference: AppearancePreferenceV1,
+    context: AppearanceRepositoryPreferenceContext,
+  ): void;
   onError(error: unknown): void;
 }
 
@@ -80,16 +88,16 @@ export function connectAppearanceRepository(
   let revision = 0;
   let disconnected = false;
   const readRevision = revision;
-  const unsubscribe = repository.subscribe((preference) => {
+  const unsubscribe = repository.subscribe((preference, context) => {
     if (!active) return;
     revision++;
-    callbacks.onPreference(preference);
+    callbacks.onPreference(preference, context);
   });
   try {
     void repository.read().then(
       (preference) => {
         if (!active || revision !== readRevision || !preference) return;
-        callbacks.onPreference(preference);
+        callbacks.onPreference(preference, {origin: "initial-read", operationId: null});
       },
       (error: unknown) => {
         if (!active || revision !== readRevision) return;
@@ -121,171 +129,250 @@ export interface AppearanceWriteCoordinatorCallbacks {
 
 export interface AppearanceWriteCoordinator {
   write(preference: AppearancePreferenceV1): Promise<boolean>;
-  shouldSuppressPublication(preference: AppearancePreferenceV1): boolean;
+  acceptPublication(
+    preference: AppearancePreferenceV1,
+    context: AppearanceRepositoryPreferenceContext,
+  ): boolean;
   rememberDurablePreference(preference: AppearancePreferenceV1): void;
   dispose(): void;
 }
+
+let appearanceWriteCoordinatorSequence = 0;
 
 export function createAppearanceWriteCoordinator(
   repository: AppearancePreferencesRepository,
   callbacks: AppearanceWriteCoordinatorCallbacks,
 ): AppearanceWriteCoordinator {
-  type IntentStatus = "pending" | "acknowledged" | "failed";
+  type IntentStatus = "queued" | "running" | "superseded" | "settled";
   type Intent = {
-    generation: number;
     preference: AppearancePreferenceV1;
+    resolve(result: boolean): void;
     status: IntentStatus;
   };
 
+  const coordinatorId = ++appearanceWriteCoordinatorSequence;
+  const issuedOperationIds = new Set<string>();
+  const serialize = (preference: AppearancePreferenceV1) => JSON.stringify(preference);
+  const copyPreference = (preference: AppearancePreferenceV1): AppearancePreferenceV1 => ({
+    version: 1,
+    designSystem: preference.designSystem,
+    colorMode: preference.colorMode,
+  });
+  const isSamePreference = (
+    left: AppearancePreferenceV1 | null,
+    right: AppearancePreferenceV1 | null,
+  ) => left !== null && right !== null && serialize(left) === serialize(right);
+
   let active = true;
   let generation = 0;
+  let authorityEpoch = 0;
+  let operationSequence = 0;
   let latestIntent: Intent | null = null;
-  let lastAcknowledgedDurable: AppearancePreferenceV1 | null = null;
+  let runningIntent: Intent | null = null;
+  let authoritativePreference: AppearancePreferenceV1 | null = null;
   let lastKnownDurableWrite: AppearancePreferenceV1 | null = null;
-  let repairChain = Promise.resolve();
-  const pendingPublications = new Map<string, number>();
-  const serialize = (preference: AppearancePreferenceV1) => JSON.stringify(preference);
-  const trackPending = (preference: AppearancePreferenceV1, delta: 1 | -1) => {
-    const key = serialize(preference);
-    const next = (pendingPublications.get(key) ?? 0) + delta;
-    if (next > 0) pendingPublications.set(key, next);
-    else pendingPublications.delete(key);
+  let flushPromise: Promise<void> | null = null;
+
+  const settleIntent = (intent: Intent, result: boolean) => {
+    if (intent.status === "settled") return;
+    intent.status = "settled";
+    intent.resolve(result);
   };
-  const writeRepository = async (preference: AppearancePreferenceV1) => {
-    trackPending(preference, 1);
-    try {
-      await repository.write(preference);
-      lastKnownDurableWrite = {
-        version: 1,
-        designSystem: preference.designSystem,
-        colorMode: preference.colorMode,
-      };
-      if (active) callbacks.invalidatePendingRead();
-    } finally {
-      trackPending(preference, -1);
+  const supersedeLatestIntent = () => {
+    const intent = latestIntent;
+    if (!intent) return;
+    latestIntent = null;
+    if (intent.status === "queued") {
+      intent.status = "superseded";
+      settleIntent(intent, false);
+      return;
     }
+    if (intent.status === "running") intent.status = "superseded";
   };
-  const rememberDurablePreference = (preference: AppearancePreferenceV1) => {
-    lastAcknowledgedDurable = {
-      version: 1,
-      designSystem: preference.designSystem,
-      colorMode: preference.colorMode,
-    };
-    lastKnownDurableWrite = {...lastAcknowledgedDurable};
-  };
-  const acknowledgeIntent = (intent: Intent) => {
-    if (intent.status === "acknowledged") return;
-    intent.status = "acknowledged";
-    rememberDurablePreference(intent.preference);
-    callbacks.onAcknowledged(intent.preference);
+  const advanceAuthority = (
+    preference: AppearancePreferenceV1,
+    {notify, supersedeLocal}: {notify: boolean; supersedeLocal: boolean},
+  ) => {
+    const accepted = copyPreference(preference);
+    authorityEpoch++;
+    authoritativePreference = accepted;
+    lastKnownDurableWrite = copyPreference(accepted);
+    if (supersedeLocal) supersedeLatestIntent();
+    if (notify) callbacks.onAcknowledged(accepted);
   };
   const adoptLastKnownDurableWrite = () => {
     if (!lastKnownDurableWrite) return;
-    if (
-      lastAcknowledgedDurable &&
-      serialize(lastKnownDurableWrite) === serialize(lastAcknowledgedDurable)
-    ) {
-      return;
-    }
-    rememberDurablePreference(lastKnownDurableWrite);
-    callbacks.onAcknowledged(lastKnownDurableWrite);
+    if (isSamePreference(lastKnownDurableWrite, authoritativePreference)) return;
+    advanceAuthority(lastKnownDurableWrite, {notify: true, supersedeLocal: true});
   };
-  const restoreLastAcknowledgedDurable = async () => {
-    if (!lastAcknowledgedDurable) {
-      callbacks.onError(new Error("Appearance durability rollback has no acknowledged baseline."));
-      adoptLastKnownDurableWrite();
+  const writeRepository = async (preference: AppearancePreferenceV1) => {
+    const operationId = `appearance-${coordinatorId}-${++operationSequence}`;
+    issuedOperationIds.add(operationId);
+    await repository.write(preference, {operationId});
+    if (!active) return;
+    lastKnownDurableWrite = copyPreference(preference);
+    callbacks.invalidatePendingRead();
+  };
+
+  const runLocalIntent = async (intent: Intent) => {
+    if (!active || latestIntent !== intent || intent.status !== "queued") {
+      settleIntent(intent, false);
       return;
     }
-    const rollback = {...lastAcknowledgedDurable};
+    intent.status = "running";
+    runningIntent = intent;
+    const startEpoch = authorityEpoch;
     try {
-      await writeRepository(rollback);
+      await writeRepository(intent.preference);
     } catch (error) {
-      if (active) {
+      if (
+        active &&
+        latestIntent === intent &&
+        intent.status === "running" &&
+        authorityEpoch === startEpoch
+      ) {
         callbacks.onError(error);
-        adoptLastKnownDurableWrite();
       }
+      if (latestIntent === intent) latestIntent = null;
+      settleIntent(intent, false);
+      if (runningIntent === intent) runningIntent = null;
+      return;
+    }
+
+    if (
+      active &&
+      latestIntent === intent &&
+      intent.status === "running" &&
+      authorityEpoch === startEpoch
+    ) {
+      latestIntent = null;
+      authorityEpoch++;
+      authoritativePreference = copyPreference(intent.preference);
+      callbacks.onAcknowledged(copyPreference(intent.preference));
+      settleIntent(intent, true);
+    } else {
+      if (latestIntent === intent) latestIntent = null;
+      settleIntent(intent, false);
+    }
+    if (runningIntent === intent) runningIntent = null;
+  };
+
+  const runConvergenceAttempt = async () => {
+    if (!authoritativePreference || isSamePreference(lastKnownDurableWrite, authoritativePreference)) {
+      return;
+    }
+    const target = copyPreference(authoritativePreference);
+    const targetEpoch = authorityEpoch;
+    const targetGeneration = generation;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await writeRepository(target);
+      } catch (error) {
+        if (!active) return;
+        if (
+          authorityEpoch !== targetEpoch ||
+          generation !== targetGeneration ||
+          latestIntent !== null
+        ) {
+          return;
+        }
+        callbacks.onError(error);
+        if (attempt === 1) adoptLastKnownDurableWrite();
+        continue;
+      }
+      return;
     }
   };
-  const repairLatestDurableIntent = () => {
-    const repair = async () => {
-      while (active && latestIntent) {
-        const target = latestIntent;
-        try {
-          await writeRepository(target.preference);
-        } catch (error) {
-          if (!active || latestIntent?.generation !== target.generation) continue;
-          if (target.status === "pending") {
-            target.status = "failed";
-            callbacks.onError(error);
-          } else if (target.status === "acknowledged") {
-            callbacks.onError(error);
-          }
-          await restoreLastAcknowledgedDurable();
-          return;
-        }
-        if (!active) return;
-        if (latestIntent?.generation !== target.generation) continue;
-        if (target.status === "failed") {
-          await restoreLastAcknowledgedDurable();
-          return;
-        }
-        acknowledgeIntent(target);
-        return;
+
+  const needsFlush = () =>
+    latestIntent?.status === "queued" ||
+    (authoritativePreference !== null &&
+      !isSamePreference(lastKnownDurableWrite, authoritativePreference));
+  const runFlush = async () => {
+    while (active) {
+      const intent = latestIntent;
+      if (intent?.status === "queued") {
+        await runLocalIntent(intent);
+        continue;
       }
-    };
-    repairChain = repairChain.then(repair, repair);
-    return repairChain;
+      if (
+        authoritativePreference &&
+        !isSamePreference(lastKnownDurableWrite, authoritativePreference)
+      ) {
+        await runConvergenceAttempt();
+        continue;
+      }
+      return;
+    }
+  };
+  const scheduleFlush = () => {
+    if (!active || flushPromise) return;
+    flushPromise = Promise.resolve()
+      .then(runFlush)
+      .finally(() => {
+        flushPromise = null;
+        if (active && needsFlush()) scheduleFlush();
+      });
   };
 
   return {
-    async write(preference) {
+    write(preference) {
       const normalized = normalizeAppearancePreference(preference);
       if (!normalized) {
         if (active) {
           callbacks.onError(new TypeError("Appearance preference must use the supported v1 contract."));
         }
-        return false;
+        return Promise.resolve(false);
       }
-      const intent: Intent = {
-        generation: ++generation,
-        preference: normalized,
-        status: "pending",
+      if (!active) return Promise.resolve(false);
+
+      callbacks.invalidatePendingRead();
+      supersedeLatestIntent();
+      let resolveIntent: (result: boolean) => void = () => undefined;
+      const result = new Promise<boolean>((resolve) => {
+        resolveIntent = resolve;
+      });
+      latestIntent = {
+        preference: copyPreference(normalized),
+        resolve: resolveIntent,
+        status: "queued",
       };
-      latestIntent = intent;
-      try {
-        await writeRepository(normalized);
-      } catch (error) {
-        if (intent.status === "acknowledged") return true;
-        const alreadyFailed = intent.status === "failed";
-        intent.status = "failed";
-        if (active && !alreadyFailed && latestIntent?.generation === intent.generation) {
-          callbacks.onError(error);
-        }
-        return false;
-      }
+      generation++;
+      scheduleFlush();
+      return result;
+    },
+    acceptPublication(preference, context) {
       if (!active) return false;
-      if (latestIntent?.generation !== intent.generation) {
-        await repairLatestDurableIntent();
+      const normalized = normalizeAppearancePreference(preference);
+      if (!normalized) return false;
+      if (
+        context.origin === "local-write" &&
+        context.operationId !== null &&
+        issuedOperationIds.has(context.operationId)
+      ) {
         return false;
       }
-      acknowledgeIntent(intent);
+      advanceAuthority(normalized, {notify: false, supersedeLocal: true});
+      scheduleFlush();
       return true;
     },
-    shouldSuppressPublication(preference) {
-      const normalized = normalizeAppearancePreference(preference);
-      return normalized ? (pendingPublications.get(serialize(normalized)) ?? 0) > 0 : false;
-    },
     rememberDurablePreference(preference) {
+      if (!active) return;
       const normalized = normalizeAppearancePreference(preference);
-      if (normalized) rememberDurablePreference(normalized);
+      if (normalized) {
+        advanceAuthority(normalized, {notify: false, supersedeLocal: true});
+      }
     },
     dispose() {
       active = false;
       generation++;
-      latestIntent = null;
-      lastAcknowledgedDurable = null;
+      authorityEpoch++;
+      supersedeLatestIntent();
+      if (runningIntent) settleIntent(runningIntent, false);
+      runningIntent = null;
+      authoritativePreference = null;
       lastKnownDurableWrite = null;
-      pendingPublications.clear();
+      issuedOperationIds.clear();
     },
   };
 }
@@ -544,9 +631,8 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     if (repository && writer) {
       writer.rememberDurablePreference(bootstrap ?? stateRef.current.renderedPreference);
       connection = connectAppearanceRepository(repository, {
-        onPreference(preference) {
-          if (writer.shouldSuppressPublication(preference)) return;
-          writer.rememberDurablePreference(preference);
+        onPreference(preference, context) {
+          if (!writer.acceptPublication(preference, context)) return;
           acceptPreference(preference);
         },
         onError(error) {
