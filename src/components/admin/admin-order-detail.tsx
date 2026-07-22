@@ -207,6 +207,8 @@ function toneText(tone: AdminTone) {
 }
 
 const actionUnavailableReason = "Дія недоступна в поточному стані";
+const preflightUnavailableReason = "Source preflight зафіксовано лише для LOG-01 і KHA-08";
+const legacyCheckUnavailableReason = "POST check-legacy вимкнено: кнопка не виконує запит.";
 
 function DisabledActionButton({
   children,
@@ -396,10 +398,10 @@ function CurrentAdminOrderDetailView({model}: {model: AdminOrderDetailViewModel}
             <Panel>
               <div className={styles.panelHeader}><h2 className={styles.sectionTitle}>Дії</h2><LockKeyhole size={15} className="text-[var(--muted-foreground)]" /></div>
               <div className={`${styles.railBody} ${styles.actionStack}`}>
-                {hasCapturedPreflight ? <button type="button" className="button button-outline button-wide !justify-start" onClick={() => setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</button> : <DisabledActionButton className="button-wide !justify-start" reason="Перевірка перед підтвердженням недоступна для цього замовлення"><LockKeyhole size={15} /> Перевірка недоступна</DisabledActionButton>}
+                {hasCapturedPreflight ? <button type="button" className="button button-outline button-wide !justify-start" onClick={() => setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</button> : <DisabledActionButton className="button-wide !justify-start" reason={preflightUnavailableReason}><LockKeyhole size={15} /> Preflight не зафіксовано</DisabledActionButton>}
                 <DisabledActionButton className="button-wide"><Send size={15} /> Відправити дилеру ({order.shipments.length})</DisabledActionButton>
-                <DisabledActionButton className="button-wide"><Warehouse size={15} /> Перевірити старий склад</DisabledActionButton>
-                <span className="text-[10px] text-[var(--muted-foreground)]">Перевірка старого складу недоступна: запит не виконується.</span>
+                <DisabledActionButton className="button-wide" reason={legacyCheckUnavailableReason}><Warehouse size={15} /> Перевірити старий склад</DisabledActionButton>
+                <span className="text-[10px] text-[var(--muted-foreground)]">{legacyCheckUnavailableReason}</span>
                 <DisabledActionButton className="button-wide button-danger"><Ban size={15} /> Скасувати замовлення</DisabledActionButton>
               </div>
             </Panel>

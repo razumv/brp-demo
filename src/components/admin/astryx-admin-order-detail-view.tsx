@@ -27,8 +27,24 @@ import styles from "./admin-order-detail-astryx.module.css";
 
 type Props = {model: AdminOrderDetailViewModel | null} & AstryxRendererViewProps;
 type Row = Record<string, React.ReactNode> & {id: string};
+type OrderLineRow = Record<string, unknown> & {
+  id: string;
+  part: string;
+  description: string;
+  note: string | undefined;
+  statusLabel: string;
+  statusTone: AdminTone;
+  supplier: string;
+  stock: string;
+  quantity: number;
+  price: string;
+  total: string;
+  cancelled: boolean;
+};
 
 const unavailable = "Дія недоступна в поточному стані";
+const preflightUnavailableReason = "Source preflight зафіксовано лише для LOG-01 і KHA-08";
+const legacyCheckUnavailableReason = "POST check-legacy вимкнено: кнопка не виконує запит.";
 const lineLabels: Record<AdminLineStatus, string> = {pending: "Очікування", waiting: "Очікує замовлення", ready: "Готово до відправки", sent: "Відправлено", delivered: "Доставлено", cancelled: "Скасовано"};
 const lineTones: Record<AdminLineStatus, AdminTone> = {pending: "amber", waiting: "amber", ready: "green", sent: "purple", delivered: "green", cancelled: "red"};
 
@@ -54,19 +70,32 @@ function OrderLines({model}: {model: AdminOrderDetailViewModel}) {
   const effective = lineFilter === "all" || statuses.includes(lineFilter) ? lineFilter : "all";
   const visible = effective === "all" ? order.lines : order.lines.filter((line) => line.status === effective);
   const totalUnits = order.lines.reduce((sum, line) => sum + line.quantity, 0);
-  const data = visible.map<Row>((line) => ({
-    id: line.id,
-    part: <Text weight="semibold" hasStrikethrough={line.status === "cancelled"}>{line.partNumber}</Text>,
-    description: <div><Text weight="semibold" hasStrikethrough={line.status === "cancelled"}>{line.description}</Text>{line.note ? <Text type="supporting" color="secondary" display="block">{line.note}</Text> : null}</div>,
-    status: <Badge label={line.statusLabel} variant={badgeVariant(lineTones[line.status])} />,
-    supplier: line.bossWebOrSupplier,
-    stock: line.stockSource === "—" ? "—" : <span><StatusDot label="У наявності" variant="success" /> {line.stockSource}</span>,
-    quantity: line.quantity,
-    price: formatMoney(line.unitPrice),
-    total: <Text weight="semibold">{formatMoney(line.unitPrice * line.quantity)}</Text>,
-  }));
-  const columns: TableColumn<Row>[] = [
-    {key: "part", header: "Артикул", width: pixel(132)}, {key: "description", header: "Опис", width: proportional(2)}, {key: "status", header: "CRM статус", width: pixel(156)}, {key: "supplier", header: "BossWeb / постачальник", width: pixel(168)}, {key: "stock", header: "Склад / джерело", width: pixel(146)}, {key: "quantity", header: "К-сть", width: pixel(78)}, {key: "price", header: "Ціна", width: pixel(112)}, {key: "total", header: "Сума", width: pixel(118)},
+  const data = visible.map<OrderLineRow>((line) => {
+    const cancelled = line.status === "cancelled";
+    return {
+      id: line.id,
+      part: line.partNumber,
+      description: line.description,
+      note: line.note,
+      statusLabel: line.statusLabel,
+      statusTone: lineTones[line.status],
+      supplier: line.bossWebOrSupplier,
+      stock: line.stockSource,
+      quantity: line.quantity,
+      price: formatMoney(line.unitPrice),
+      total: formatMoney(line.unitPrice * line.quantity),
+      cancelled,
+    };
+  });
+  const columns: TableColumn<OrderLineRow>[] = [
+    {key: "part", header: "Артикул", width: pixel(132), renderCell: (line) => <Text weight="semibold" color={line.cancelled ? "secondary" : undefined} hasStrikethrough={line.cancelled}>{line.part}</Text>},
+    {key: "description", header: "Опис", width: proportional(2), renderCell: (line) => <div><Text weight="semibold" color={line.cancelled ? "secondary" : undefined} hasStrikethrough={line.cancelled}>{line.description}</Text>{line.note ? <Text type="supporting" color="secondary" display="block">{line.note}</Text> : null}</div>},
+    {key: "statusLabel", header: "CRM статус", width: pixel(156), renderCell: (line) => <Badge label={line.statusLabel} variant={badgeVariant(line.statusTone)} />},
+    {key: "supplier", header: "BossWeb / постачальник", width: pixel(168), renderCell: (line) => <Text color={line.cancelled ? "secondary" : undefined}>{line.supplier}</Text>},
+    {key: "stock", header: "Склад / джерело", width: pixel(146), renderCell: (line) => line.stock === "—" ? <Text color={line.cancelled ? "secondary" : undefined}>—</Text> : <span><StatusDot label="У наявності" variant="success" /> <Text color={line.cancelled ? "secondary" : undefined}>{line.stock}</Text></span>},
+    {key: "quantity", header: "К-сть", width: pixel(78), renderCell: (line) => <Text color={line.cancelled ? "secondary" : undefined} hasStrikethrough={line.cancelled}>{line.quantity}</Text>},
+    {key: "price", header: "Ціна", width: pixel(112), renderCell: (line) => <Text color={line.cancelled ? "secondary" : undefined} hasStrikethrough={line.cancelled}>{line.price}</Text>},
+    {key: "total", header: "Сума", width: pixel(118), renderCell: (line) => <Text weight="semibold" color={line.cancelled ? "secondary" : undefined} hasStrikethrough={line.cancelled}>{line.total}</Text>},
   ];
   return <Card padding={4} className={styles.panel}>
     <div className={styles.filters} aria-label="Фільтр статусів позицій">
@@ -109,7 +138,7 @@ function PreflightDialog({model, isRendererActive}: {model: AdminOrderDetailView
       <SegmentedControl label="Вигляд перевірки" value={model.preflightView} onChange={(value) => model.setPreflightView(value as "error" | "representative")}>
         <SegmentedControlItem value="error" label="Зафіксована відповідь" /><SegmentedControlItem value="representative" label="Структура preview" />
       </SegmentedControl>
-      {model.preflightView === "error" ? <div className={styles.dangerBox}><Text weight="semibold">Failed to build confirm preview</Text><Text display="block" type="supporting">Зафіксований результат перевірки для цього замовлення. Статус не змінено.</Text></div> : active.length ? <><Banner title="Параметри preview" status="info" description="Значення використовуються лише для перегляду та не змінюють замовлення." /><div className={styles.previewFields}><Selector label="Канал доставки" value={model.delivery} options={[{value: "air", label: "air"}, {value: "ocean", label: "ocean"}]} onChange={(value) => model.setDelivery((value ?? "air") as DeliveryChannel)} /><NumberInput min={0} isIntegerOnly label="Поповнення, к-сть" value={model.replenishment} onChange={(value) => model.setReplenishment(Math.max(0, value))} /></div><Table aria-label="Розрахунок перед підтвердженням" data={data} columns={columns} idKey="id" density="compact" /></> : <EmptyState title="Немає підтверджених позицій" description="Для цього рядка немає зафіксованого складу позицій." />}
+      {model.preflightView === "error" ? <div className={styles.dangerBox}><Text weight="semibold">Failed to build confirm preview</Text><Text display="block" type="supporting">Це точний результат безпечного source preflight для LOG-01 і KHA-08. Статус замовлення не змінився.</Text></div> : active.length ? <><Banner title="Параметри preview" status="info" description="Значення використовуються лише для перегляду та не змінюють замовлення." /><div className={styles.previewFields}><Selector label="Канал доставки" value={model.delivery} options={[{value: "air", label: "air"}, {value: "ocean", label: "ocean"}]} onChange={(value) => model.setDelivery((value ?? "air") as DeliveryChannel)} /><NumberInput min={0} isIntegerOnly label="Поповнення, к-сть" value={model.replenishment} onChange={(value) => model.setReplenishment(Math.max(0, value))} /></div><Table aria-label="Розрахунок перед підтвердженням" data={data} columns={columns} idKey="id" density="compact" /><DisabledAction label="Оновити розрахунок"><RefreshCcw size={14} /> Оновити розрахунок</DisabledAction></> : <EmptyState title="Немає підтверджених позицій" description="Для цього рядка немає зафіксованого складу позицій." />}
     </div></LayoutContent>} footer={<LayoutFooter hasDivider><Button label="Скасувати" variant="secondary" onClick={() => model.setPreflightOpen(false)}>Скасувати</Button><DisabledAction label="Підтвердити замовлення">Підтвердити замовлення</DisabledAction></LayoutFooter>} />
   </Dialog>;
 }
@@ -127,7 +156,7 @@ export function AstryxAdminOrderDetailView({model, onReady}: Props) {
   if (!model) {
     return <main className={styles.page} data-admin-order-detail-renderer="astryx">
       <Card padding={5} className={styles.panel}>
-        <EmptyState title="Замовлення не знайдено" description="Немає зафіксованого замовлення або рядка пайплайна з таким id." />
+        <EmptyState headingLevel={1} title="Замовлення не знайдено" description="Немає зафіксованого замовлення або рядка пайплайна з таким id." />
         <Button label="До пайплайна" href="/admin/order-pipeline" as={Link} variant="secondary" />
       </Card>
     </main>;
@@ -146,7 +175,7 @@ export function AstryxAdminOrderDetailView({model, onReady}: Props) {
           <Card padding={4} className={styles.panel}><div className={styles.panelHeader}><div><h2>Документи 1C</h2><Text type="supporting">Перегляд зафіксованих документів.</Text></div><FileText size={17} /></div>{order.documents.length ? order.documents.map((document) => <Card key={document.id} padding={3}><Text weight="semibold">{document.kind} · {document.reference}</Text><Text type="supporting" display="block">{document.source} · {document.lines}</Text><div className={styles.actions}><Badge label={document.sync} variant={document.sync === "синхр." ? "success" : "warning"} /><Badge label={document.posting} variant={document.posting === "проведено" ? "success" : "warning"} /><DisabledAction label="Завантажити"><Download size={14} /> Завантажити</DisabledAction><DisabledAction label="Повторити синхронізацію"><RefreshCcw size={14} /> Повторити / sync 1C</DisabledAction></div></Card>) : <EmptyState title="Документів немає" description="Для цього стану документи 1C не зафіксовані." />}</Card>
           <Card padding={4} className={styles.panel}><div className={styles.panelHeader}><div><h2>Відправлення дилеру</h2><Text type="supporting">Лише зафіксовані деталі доставки.</Text></div><Truck size={17} /></div>{order.shipments.length ? order.shipments.map((shipment) => <Card key={shipment.id} padding={3}><div className={styles.panelHeader}><div><Text weight="semibold">{shipment.carrier}</Text><Text type="supporting" display="block">{shipment.method} · {shipment.shippedAt}</Text></div><Badge label={shipment.status} variant="info" /></div><Text display="block">{shipment.destination}</Text>{shipment.tracking ? <Text type="supporting" display="block">ТТН: {shipment.tracking}</Text> : null}<div className={styles.actions}><DisabledAction label="Редагувати">Редагувати</DisabledAction><DisabledAction label="Позначити доставленим">Позначити доставленим</DisabledAction><DisabledAction label="Завантажити"><Download size={14} /> Завантажити</DisabledAction></div></Card>) : <EmptyState title="Відправлень немає" description="Для цього стану відправлення відсутні." />}</Card>
         </div>
-        <aside className={`${styles.stack} ${styles.sideRail}`}><Card padding={4} className={styles.panel}><div className={styles.panelHeader}><h2>Дії</h2><LockKeyhole size={16} /></div><div className={styles.stack}>{model.hasCapturedPreflight ? <Button label="Перевірити перед підтвердженням" variant="secondary" onClick={() => model.setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</Button> : <Button label="Перевірка недоступна" variant="secondary" isDisabled aria-description="Перевірка перед підтвердженням недоступна для цього замовлення"><LockKeyhole size={15} /> Перевірка недоступна</Button>}<DisabledAction label="Відправити дилеру"><Send size={15} /> Відправити дилеру ({order.shipments.length})</DisabledAction><DisabledAction label="Перевірити старий склад" reason="Перевірка старого складу недоступна: запит не виконується."><Warehouse size={15} /> Перевірити старий склад</DisabledAction><Text type="supporting">Перевірка старого складу недоступна: запит не виконується.</Text><DisabledAction label="Скасувати замовлення" variant="destructive"><Ban size={15} /> Скасувати замовлення</DisabledAction></div></Card>
+        <aside className={`${styles.stack} ${styles.sideRail}`}><Card padding={4} className={styles.panel}><div className={styles.panelHeader}><h2>Дії</h2><LockKeyhole size={16} /></div><div className={styles.stack}>{model.hasCapturedPreflight ? <Button label="Перевірити перед підтвердженням" variant="secondary" onClick={() => model.setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</Button> : <Button label="Preflight не зафіксовано" variant="secondary" isDisabled aria-description={preflightUnavailableReason}><LockKeyhole size={15} /> Preflight не зафіксовано</Button>}<DisabledAction label="Відправити дилеру"><Send size={15} /> Відправити дилеру ({order.shipments.length})</DisabledAction><DisabledAction label="Перевірити старий склад" reason={legacyCheckUnavailableReason}><Warehouse size={15} /> Перевірити старий склад</DisabledAction><Text type="supporting">{legacyCheckUnavailableReason}</Text><DisabledAction label="Скасувати замовлення" variant="destructive"><Ban size={15} /> Скасувати замовлення</DisabledAction></div></Card>
           <Card padding={4} className={styles.panel}><h2>Інформація про замовлення</h2><dl className={styles.detailList}><DetailRow label="Замовлення №">{order.code}</DetailRow><DetailRow label="Статус"><Badge label={order.statusLabel} variant="neutral" /></DetailRow><DetailRow label="Етап">{order.stage}</DetailRow><DetailRow label="Компанія">{order.company}</DetailRow>{order.dealer ? <DetailRow label="Дилер">{order.dealer}</DetailRow> : null}<DetailRow label="Відправив">{order.contact}</DetailRow><DetailRow label="Створено">{order.created}</DetailRow><DetailRow label="PO">{order.po || "—"}</DetailRow></dl><p className={styles.note}><Text weight="semibold">Нотатки</Text><br />{order.notes || "Нотаток немає"}</p></Card>
           <Card padding={4} className={styles.panel}><div className={styles.panelHeader}><h2>Чат</h2><IconButton label="Розгорнути чат" icon={<Expand size={16} />} variant="ghost" onClick={() => model.setChatOpen(true)} /></div>{order.messages.slice(-2).map((message) => <article key={message.id} className={styles.chatMessage}><div className={styles.chatHeader}><Text weight="semibold">{message.author}</Text><Badge label={message.role} variant={message.role === "dealer" ? "info" : "warning"} /><Text type="supporting">{message.time}</Text></div><Text display="block">{message.body}</Text></article>)}{!order.messages.length ? <EmptyState title="Повідомлень поки немає" description="Розпочніть спілкування у робочому середовищі." /> : null}<div className={styles.actions}><IconButton label="Додати вкладення" icon={<Paperclip size={15} />} isDisabled aria-description={unavailable} /><TextInput label="Повідомлення" isLabelHidden value="" placeholder="Введіть повідомлення..." isDisabled disabledMessage={unavailable} onChange={() => {}} /><IconButton label="Надіслати" icon={<Send size={15} />} isDisabled aria-description={unavailable} /></div></Card>
           <Card padding={4} className={styles.panel}><Button label={`Хронологія ${order.timeline.length}`} variant="ghost" aria-expanded={model.timelineOpen} onClick={model.toggleTimeline}>{model.timelineOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}<ClipboardCheck size={16} /> Хронологія {order.timeline.length}</Button>{model.timelineOpen ? order.timeline.length ? <ol className={styles.timeline}>{order.timeline.map((event) => <li key={event.id}><Text weight="semibold">{event.time}</Text><Text>{event.text}</Text></li>)}</ol> : <Text type="supporting">Хронологія не зафіксована для цього рядка пайплайна.</Text> : null}</Card>

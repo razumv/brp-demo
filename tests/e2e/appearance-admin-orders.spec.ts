@@ -155,6 +155,22 @@ test.describe("admin pipeline appearance matrix", () => {
     await expect(page.getByRole("button", {name: "July 2026 1", exact: true})).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", {name: "July 2026 2", exact: true})).toHaveAttribute("aria-pressed", "true");
   });
+
+  test("Astryx period popover remains inside a 390px viewport", async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await seedAdminSession(page);
+    await seedAppearance(page, "astryx", "light");
+    await page.goto("/admin/order-pipeline");
+
+    await page.getByRole("button", {name: "Період", exact: true}).click();
+    const dialog = page.getByRole("dialog", {name: "Період замовлень"});
+    await expect(dialog).toBeVisible();
+    const bounds = await dialog.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
 });
 
 test.describe("admin order detail appearance matrix", () => {
@@ -201,6 +217,7 @@ test.describe("admin order detail appearance matrix", () => {
     await page.getByRole("button", {name: "Структура preview"}).click();
     await page.getByRole("combobox", {name: "Канал доставки"}).selectOption("ocean");
     await page.getByRole("spinbutton", {name: "Поповнення, к-сть"}).fill("3");
+    await expect(page.getByRole("button", {name: "Оновити розрахунок"})).toBeDisabled();
     for (const heading of ["Після підтвердження", "Оборот", "Відкрито Logos", "Рішення Logos"]) {
       await expect(page.getByRole("columnheader", {name: heading, exact: true})).toBeVisible();
     }
@@ -212,6 +229,7 @@ test.describe("admin order detail appearance matrix", () => {
     await expect(page.getByRole("radio", {name: "Структура preview"})).toBeChecked();
     await expect(page.getByRole("combobox", {name: "Канал доставки"})).toContainText("ocean");
     await expect(page.getByRole("spinbutton", {name: "Поповнення, к-сть"})).toHaveValue("3");
+    await expect(page.getByRole("button", {name: "Оновити розрахунок"})).toBeDisabled();
     for (const heading of ["Після підтвердження", "Оборот", "Відкрито Logos", "Рішення Logos"]) {
       await expect(page.getByRole("columnheader", {name: heading, exact: true})).toBeVisible();
     }
@@ -241,5 +259,34 @@ test.describe("admin order detail appearance matrix", () => {
     await expect(page.locator('[data-admin-order-detail-renderer="astryx"]')).toHaveCount(1);
     await expect(page.getByRole("heading", {name: "Замовлення не знайдено"})).toBeVisible();
     await expect(page.getByRole("link", {name: "До пайплайна"})).toHaveAttribute("href", "/admin/order-pipeline");
+    await expect(page.getByRole("heading", {name: "Замовлення не знайдено", level: 1})).toBeVisible();
   });
+
+  for (const designSystem of ["shadcn", "astryx"] as const) {
+    test(`${designSystem} preserves cancelled financial evidence and locked provenance`, async ({page}) => {
+      await seedAdminSession(page);
+      await seedAppearance(page, designSystem, "light");
+      await page.goto("/admin/orders/386960e7-2e28-4bb0-8fa9-83e45f84df7a");
+
+      await expect(page.getByRole("heading", {name: "KIE-ST-23"})).toBeVisible();
+      await expect(page.getByText("РН-00001955", {exact: false})).toBeVisible();
+      await expect(page.getByText("Nova Poshta", {exact: true})).toBeVisible();
+
+      const preflight = page.getByRole("button", {name: "Preflight не зафіксовано"});
+      await expect(preflight).toBeDisabled();
+      await expect.poll(() => preflight.evaluate((element) => element.getAttribute("title") ?? element.getAttribute("aria-description"))).toBe("Source preflight зафіксовано лише для LOG-01 і KHA-08");
+
+      const legacy = page.getByRole("button", {name: "Перевірити старий склад"});
+      await expect(legacy).toBeDisabled();
+      await expect.poll(() => legacy.evaluate((element) => element.getAttribute("title") ?? element.getAttribute("aria-description"))).toBe("POST check-legacy вимкнено: кнопка не виконує запит.");
+
+      const cancelledRow = page.getByRole("row").filter({hasText: "710004964"});
+      await expect(cancelledRow).toBeVisible();
+      for (const value of ["5", "$63.92", "$319.60"]) {
+        const evidence = cancelledRow.getByText(value, {exact: true});
+        await expect(evidence).toBeVisible();
+        await expect.poll(() => evidence.evaluate((element) => getComputedStyle(element).textDecorationLine)).toContain("line-through");
+      }
+    });
+  }
 });

@@ -142,7 +142,7 @@ function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineMo
       hasLightDismiss
       hasEscapeDismiss
       placement="below"
-      width={700}
+      width="min(700px, calc(100vw - 32px))"
     >
       {(trigger: PopoverTriggerRenderProps) => (
         <Button
