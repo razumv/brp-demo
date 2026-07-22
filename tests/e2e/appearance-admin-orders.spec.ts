@@ -52,6 +52,11 @@ async function publishAppearance(
   await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", colorMode);
 }
 
+async function expectDistinctSurfaceBackgrounds(page: Page, selectors: readonly string[]) {
+  const backgrounds = await Promise.all(selectors.map((selector) => page.locator(selector).first().evaluate((element) => getComputedStyle(element).backgroundColor)));
+  expect(new Set(backgrounds).size).toBeGreaterThan(1);
+}
+
 function pipelineViewControl(
   page: Page,
   name: "Список" | "Канбан",
@@ -130,6 +135,37 @@ test.describe("admin pipeline appearance matrix", () => {
     await pipelineViewControl(page, "Список", "current").click();
     await expect(page.getByRole("button", {name: /Нові замовлення/i})).toHaveAttribute("aria-expanded", "false");
   });
+
+  for (const colorMode of ["light", "dark"] as const) {
+    test(`Astryx ${colorMode} separates pipeline groups and cards by operational surface`, async ({page}) => {
+      await page.setViewportSize({width: 1280, height: 900});
+      await seedAdminSession(page);
+      await seedAppearance(page, "astryx", colorMode);
+      await page.goto("/admin/order-pipeline");
+
+      const pipeline = page.locator('[data-admin-pipeline-renderer="astryx"]');
+      await expect(pipeline).toHaveCount(1);
+      await expect(pipeline).toHaveAttribute("data-operational-surface", "pipeline-canvas");
+      await expect(pipeline.locator('[data-operational-surface="pipeline-toolbar-card"]')).toHaveCount(1);
+      await expect(pipeline.locator('[data-operational-surface="pipeline-summary"]')).toHaveCount(1);
+      expect(await pipeline.locator('[data-operational-surface="pipeline-list-group"]').count()).toBeGreaterThan(0);
+      expect(await pipeline.locator('[data-operational-surface="pipeline-list-body"]').count()).toBeGreaterThan(0);
+      expect(await pipeline.locator('[data-operational-surface="pipeline-list-hover"]').count()).toBeGreaterThan(0);
+      await expectDistinctSurfaceBackgrounds(page, [
+        '[data-operational-surface="pipeline-toolbar-card"]',
+        '[data-operational-surface="pipeline-list-header"]',
+        '[data-operational-surface="pipeline-list-body"]',
+      ]);
+
+      await pipelineViewControl(page, "Канбан", "astryx").click();
+      const kanban = page.getByRole("region", {name: "Канбан замовлень"});
+      await expect(kanban).toBeVisible();
+      await expect(pipeline.locator('[data-operational-surface="pipeline-kanban-column"]')).toHaveCount(7);
+      expect(await pipeline.locator('[data-operational-surface="pipeline-kanban-card"]').count()).toBeGreaterThan(0);
+      await kanban.focus();
+      await expect(kanban).toBeFocused();
+    });
+  }
 
   test("period and unread filters survive both renderer directions", async ({page}) => {
     await seedAdminSession(page);

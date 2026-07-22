@@ -5,6 +5,7 @@
   max-width: 1184px;
   min-width: 0;
   padding-block: 24px;
+  background: var(--color-background-default, var(--background));
 }
 
 .header,
@@ -151,6 +152,10 @@
 .listGroupHeader {
   align-items: center;
   justify-content: space-between;
+  min-height: 58px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-default, var(--border));
+  background: var(--color-background-muted, var(--surface-subtle));
 }
 
 .groupButton {
@@ -181,8 +186,17 @@
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(72px, 0.6fr) minmax(160px, 1.8fr) minmax(80px, 0.8fr) minmax(80px, 0.7fr) minmax(86px, 0.7fr) minmax(150px, 1fr);
-  padding-block: 12px;
+  padding: 12px 16px;
   text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.orderRow:hover {
+  background: color-mix(in srgb, var(--color-background-muted, var(--surface-subtle)) 72%, var(--color-background-primary, var(--surface)));
+}
+
+.orderList {
+  background: var(--color-background-primary, var(--surface));
 }
 
 .orderIdentity {
@@ -240,6 +254,14 @@
 .kanbanHeader {
   align-items: center;
   justify-content: space-between;
+}
+
+.kanbanColumn {
+  background: var(--color-background-muted, var(--surface-subtle));
+}
+
+.kanbanCard {
+  background: var(--color-background-primary, var(--surface));
 }
 
 .kanbanLink {

@@ -135,17 +135,18 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
   }
 
   return (
-    <div className={styles.tableScroller} role="region" aria-label="Контейнери морських перевезень" tabIndex={0}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Назва</th><th>Контейнер</th><th>Тип</th><th>Проформа</th><th>EUR</th><th>Одиниці</th><th>Прихід</th><th>ETA</th><th>Статус</th>
-          </tr>
-        </thead>
-        <tbody>
+    <Card className={styles.tableCard} padding={0} width="100%" data-operational-surface="ocean-card">
+      <div className={styles.tableScroller} role="region" aria-label="Контейнери морських перевезень" tabIndex={0}>
+        <table className={styles.table}>
+          <thead data-operational-surface="ocean-table-header">
+            <tr>
+              <th>Назва</th><th>Контейнер</th><th>Тип</th><th>Проформа</th><th>EUR</th><th>Одиниці</th><th>Прихід</th><th>ETA</th><th>Статус</th>
+            </tr>
+          </thead>
+          <tbody data-operational-surface="ocean-table-body">
           {model.filteredBills.flatMap((bill) => {
             const group = model.grouped ? (
-              <tr key={`bill-${bill.id}`} className={styles.billRow}>
+              <tr key={`bill-${bill.id}`} className={styles.billRow} data-operational-surface="ocean-bl-group">
                 <td colSpan={9}>
                   <div className={styles.billSummary}>
                     <Button label={`Деталі BL ${bill.id}`} variant="ghost" size="sm" icon={<FileText size={14} />} onClick={() => model.openBillDetail(bill.id)} />
@@ -159,7 +160,7 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
             const rows = bill.containers.map((container) => {
               const expanded = model.expandedContainerId === container.id;
               return [
-                <tr key={container.id}>
+                <tr key={container.id} data-operational-surface="ocean-table-hover">
                   <td>
                     <button className={styles.disclosureButton} type="button" aria-expanded={expanded} onClick={() => model.toggleContainer(container.id)}>
                       <ChevronDown size={13} aria-hidden="true" /> {container.name}
@@ -193,15 +194,16 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
             });
             return [group, ...rows.flat()].filter(Boolean);
           })}
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
 
 function ContainerCards({model}: {model: AdminOceanFreightModel}) {
   return (
-    <div className={styles.cardGrid} role="region" aria-label="Контейнери морських перевезень">
+    <div className={styles.cardGrid} role="region" aria-label="Контейнери морських перевезень" data-operational-surface="ocean-card">
       {model.filteredBills.flatMap((bill) => bill.containers.map((container) => (
         <Card key={container.id} className={styles.containerCard} padding={4} width="100%">
           <div className={styles.cardHeader}>
@@ -383,7 +385,7 @@ export function AstryxAdminOceanFreightView({model, onReady}: {model: AdminOcean
 
   return (
     <AstryxBrpUiProvider>
-      <div className={styles.page} data-admin-ocean-renderer="astryx" data-brp-admin-fulfillment-renderer="astryx">
+      <div className={styles.page} data-admin-ocean-renderer="astryx" data-brp-admin-fulfillment-renderer="astryx" data-operational-surface="ocean-canvas">
         <header className={styles.pageHeader}>
           <span className={styles.pageIcon}><Ship size={22} aria-hidden="true" /></span>
           <div className={styles.pageTitle}><Heading level={1}>Морські перевезення</Heading><Text color="secondary">Відстеження контейнерів та розподіл техніки</Text></div>

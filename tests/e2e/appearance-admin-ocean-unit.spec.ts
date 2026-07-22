@@ -79,6 +79,11 @@ async function expectNoDocumentOverflow(page: Page) {
   ))).toBeLessThanOrEqual(1);
 }
 
+async function expectDistinctSurfaceBackgrounds(page: Page, selectors: readonly string[]) {
+  const backgrounds = await Promise.all(selectors.map((selector) => page.locator(selector).first().evaluate((element) => getComputedStyle(element).backgroundColor)));
+  expect(new Set(backgrounds).size).toBeGreaterThan(1);
+}
+
 test.describe("admin ocean freight appearance matrix", () => {
   for (const appearance of appearances) {
     test(`${appearance.designSystem} ${appearance.colorMode} preserves freight filters and BL workflows`, async ({page}) => {
@@ -142,6 +147,36 @@ test.describe("admin ocean freight appearance matrix", () => {
     await expect(page.getByRole("button", {name: "Групувати за BL"})).toHaveAttribute("aria-pressed", "false");
     await expect(page.getByRole("button", {name: "Картки", exact: true})).toHaveAttribute("aria-pressed", "true");
   });
+
+  for (const colorMode of ["light", "dark"] as const) {
+    test(`Astryx ${colorMode} gives ocean operations distinct table surface roles`, async ({page}) => {
+      await page.setViewportSize({width: 1280, height: 900});
+      await seedAdminSession(page);
+      await seedAppearance(page, "astryx", colorMode);
+      await page.goto("/admin/ocean-freight");
+
+      const ocean = page.locator('[data-admin-ocean-renderer="astryx"]');
+      const tableRegion = page.getByRole("region", {name: "Контейнери морських перевезень"}).first();
+      await expect(ocean).toHaveCount(1);
+      await expect(ocean).toHaveAttribute("data-operational-surface", "ocean-canvas");
+      await expect(ocean.locator('[data-operational-surface="ocean-card"]')).toHaveCount(1);
+      await expect(ocean.locator('[data-operational-surface="ocean-table-header"]')).toHaveCount(1);
+      expect(await ocean.locator('[data-operational-surface="ocean-bl-group"]').count()).toBeGreaterThan(0);
+      await expect(ocean.locator('[data-operational-surface="ocean-table-body"]')).toHaveCount(1);
+      expect(await ocean.locator('[data-operational-surface="ocean-table-hover"]').count()).toBeGreaterThan(0);
+      await tableRegion.focus();
+      await expect(tableRegion).toBeFocused();
+      await expectDistinctSurfaceBackgrounds(page, [
+        '[data-operational-surface="ocean-table-header"]',
+        '[data-operational-surface="ocean-bl-group"]',
+        '[data-operational-surface="ocean-table-body"]',
+      ]);
+
+      await oceanViewControl(page, "Картки", "astryx").click();
+      await expect(ocean.locator('[data-operational-surface="ocean-card"]')).toHaveCount(1);
+      await expectNoDocumentOverflow(page);
+    });
+  }
 });
 
 test.describe("admin unit shipping appearance matrix", () => {
