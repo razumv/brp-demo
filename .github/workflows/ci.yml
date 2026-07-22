@@ -41,8 +41,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers and hosted dependencies
+        if: ${{ vars.CI_RUNNER == '' }}
         run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Install Playwright browsers on self-hosted runner
+        if: ${{ vars.CI_RUNNER != '' }}
+        run: npx playwright install chromium firefox webkit
 
       - name: Test admin responsive contract
         run: npm run test:e2e
