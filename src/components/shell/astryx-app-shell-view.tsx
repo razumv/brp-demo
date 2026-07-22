@@ -31,6 +31,8 @@ import {TopNav, TopNavHeading} from "@astryxdesign/core/TopNav";
 import {useFocusTrap} from "@astryxdesign/core/hooks";
 import {
   Bell,
+  ChevronsLeft,
+  ChevronsRight,
   Check,
   CircleUserRound,
   Globe2,
@@ -51,6 +53,7 @@ import type {
   ShellNavGroup,
 } from "@/components/shell/app-shell-controller";
 import {astryxShellClasses as styles} from "@/components/shell/astryx-shell.css";
+import {usePersistedBooleanPreference} from "@/components/shell/use-shell-preferences";
 import {
   GLOBAL_PARTS_SEARCH_TABS,
   type GlobalPartsSearchTab,
@@ -484,8 +487,30 @@ export function AstryxAppShellHeader({controller, onReady}: AstryxShellViewProps
 
 export function AstryxAppShellNavigation({controller, onReady}: AstryxShellViewProps) {
   useRendererReady(onReady);
+  const [sidebarCollapsed, setSidebarCollapsed, sidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:astryx-sidebar-collapsed", false);
+
   return (
-    <SideNav className={styles.sideNav}>
+    <SideNav
+      className={styles.sideNav}
+      collapsible={{
+        hasButton: false,
+        isCollapsed: sidebarCollapsed,
+        onCollapsedChange: setSidebarCollapsed,
+      }}
+      data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}
+      data-sidebar-preferences-ready={sidebarPreferencesReady ? "true" : "false"}
+      topContent={(
+        <div className={styles.sideNavControls}>
+          <IconButton
+            icon={sidebarCollapsed ? <ChevronsRight size={17} /> : <ChevronsLeft size={17} />}
+            label={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+            tooltip={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+            variant="ghost"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        </div>
+      )}
+    >
       <AstryxNavigationContent groups={controller.navGroups} />
     </SideNav>
   );

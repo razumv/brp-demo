@@ -2100,13 +2100,55 @@ a {
 }
 
 .brp-astryx-shell-side-nav {
-  width: 256px;
-  min-width: 256px;
+  --brp-astryx-sidebar-width: 264px;
+  width: var(--brp-astryx-sidebar-width) !important;
+  min-width: var(--brp-astryx-sidebar-width) !important;
   height: calc(100vh - 64px);
   height: calc(100dvh - 64px);
-  flex: 0 0 256px;
-  border-right: 1px solid var(--color-border-default, var(--border));
-  background: var(--color-background-canvas, var(--background));
+  flex: 0 0 var(--brp-astryx-sidebar-width) !important;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 var(--radius-container) var(--radius-container) 0;
+  background: var(--color-background-surface, var(--surface));
+  box-shadow: var(--shadow-med);
+  transition: width var(--transition-normal), min-width var(--transition-normal), flex-basis var(--transition-normal);
+  z-index: 1;
+}
+
+.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"] {
+  --brp-astryx-sidebar-width: 68px;
+}
+
+.brp-astryx-shell-side-nav[data-sidebar-preferences-ready="false"] {
+  transition: none;
+}
+
+.brp-astryx-shell-side-nav-controls {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-2) var(--spacing-3) 0;
+}
+
+.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"] .brp-astryx-shell-side-nav-controls {
+  justify-content: center;
+  padding-inline: var(--spacing-2);
+}
+
+.brp-astryx-shell-side-nav [aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.app-body:has(.brp-astryx-shell-side-nav) {
+  --brp-astryx-sidebar-width: 264px;
+}
+
+.app-body:has(.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"]) {
+  --brp-astryx-sidebar-width: 68px;
+}
+
+.app-body:has(.brp-astryx-shell-side-nav) .app-main {
+  flex-basis: calc(100% - var(--brp-astryx-sidebar-width));
+  max-width: calc(100% - var(--brp-astryx-sidebar-width));
 }
 
 .brp-astryx-shell-mobile-nav > div {
@@ -2261,6 +2303,16 @@ a {
 }
 
 @media (max-width: 1023px) {
+  .app-body:has(.brp-astryx-shell-side-nav),
+  .app-body:has(.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"]) {
+    --brp-astryx-sidebar-width: 0px;
+  }
+
+  .app-body:has(.brp-astryx-shell-side-nav) .app-main {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
   .brp-astryx-shell-side-nav {
     display: none !important;
   }

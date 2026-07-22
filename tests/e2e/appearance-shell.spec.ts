@@ -64,6 +64,28 @@ test("admin login opens one complete Astryx shell with grouped selected navigati
   await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
 });
 
+test("Astryx desktop rail persists after reload and keeps compact navigation focusable", async ({page}) => {
+  await page.setViewportSize({width: 1280, height: 900});
+  await seedAppearance(page, "astryx");
+  await loginAsAdmin(page);
+
+  const sideNavigation = page.getByRole("navigation", {name: "Side navigation"});
+  const collapseRail = page.getByRole("button", {name: "Згорнути бічну навігацію"});
+  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "false");
+  await collapseRail.focus();
+  await page.keyboard.press("Enter");
+  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeFocused();
+  await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.reload();
+  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeVisible();
+  await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toHaveAttribute("aria-label", "Огляд");
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+});
+
 test("dealer shell preserves search, availability tab, and cart across both renderer directions", async ({page}) => {
   await seedAppearance(page, "shadcn");
   await seedDealerWorkflowSession(page);
