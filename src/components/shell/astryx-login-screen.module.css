@@ -11,7 +11,10 @@
   display: grid;
   width: min(100%, 1040px);
   min-height: min(660px, calc(100dvh - 48px));
-  grid-template-columns: minmax(0, 0.92fr) minmax(390px, 0.78fr);
+  grid-template-areas:
+    "form"
+    "brand";
+  grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid var(--color-border, var(--border));
   border-radius: 16px;
@@ -20,11 +23,12 @@
 }
 
 .brandZone {
+  grid-area: brand;
   display: grid;
   align-content: center;
   gap: 24px;
   padding: clamp(32px, 6vw, 72px);
-  border-right: 1px solid var(--color-border, var(--border));
+  border-top: 1px solid var(--color-border, var(--border));
   background: var(--color-background-muted, var(--surface-subtle));
 }
 
@@ -52,6 +56,7 @@
 }
 
 .formZone {
+  grid-area: form;
   display: grid;
   min-width: 0;
   padding: clamp(24px, 5vw, 64px);
@@ -99,6 +104,18 @@
   gap: 6px;
 }
 
+@media (min-width: 768px) {
+  .loginLayout {
+    grid-template-areas: "brand form";
+    grid-template-columns: minmax(260px, 0.92fr) minmax(390px, 0.78fr);
+  }
+
+  .brandZone {
+    border-top: 0;
+    border-right: 1px solid var(--color-border, var(--border));
+  }
+}
+
 @media (max-width: 480px) {
   .canvas {
     padding: 0;
@@ -107,7 +124,6 @@
   .loginLayout {
     width: 100%;
     min-height: 100dvh;
-    grid-template-columns: minmax(0, 1fr);
     overflow: visible;
     border: 0;
     border-radius: 0;
@@ -117,14 +133,11 @@
   .formZone {
     min-height: 0;
     padding: 24px 16px 16px;
-    order: -1;
   }
 
   .brandZone {
     min-height: 0;
     padding: 20px 24px 32px;
-    border-top: 1px solid var(--color-border, var(--border));
-    border-right: 0;
   }
 
   .brandMark {

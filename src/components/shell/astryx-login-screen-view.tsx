@@ -46,14 +46,6 @@ export default function AstryxLoginScreenView({
     <AstryxBrpUiProvider>
       <main className={styles.canvas} data-brp-login-renderer="astryx" data-brp-login-layout="form-first">
         <div className={styles.loginLayout}>
-          <aside className={styles.brandZone} data-brp-login-brand-zone>
-            <span className={styles.brandMark} aria-hidden="true">BRP</span>
-            <div className={styles.brandCopy}>
-              <Text type="supporting" color="secondary" display="block">PARTS CATALOG</Text>
-              <Heading level={2}>Портал для дилерів BRP</Heading>
-              <Text color="secondary" display="block">Каталог запчастин, замовлення та робочі документи в одному місці.</Text>
-            </div>
-          </aside>
           <section className={styles.formZone} data-brp-login-form-zone>
             <Card className={styles.card} padding={0} width="100%">
               <form className={styles.form} onSubmit={onSubmit}>
@@ -110,6 +102,14 @@ export default function AstryxLoginScreenView({
               </form>
             </Card>
           </section>
+          <aside className={styles.brandZone} data-brp-login-brand-zone>
+            <span className={styles.brandMark} aria-hidden="true">BRP</span>
+            <div className={styles.brandCopy}>
+              <Text type="supporting" color="secondary" display="block">PARTS CATALOG</Text>
+              <Heading level={2}>Портал для дилерів BRP</Heading>
+              <Text color="secondary" display="block">Каталог запчастин, замовлення та робочі документи в одному місці.</Text>
+            </div>
+          </aside>
         </div>
       </main>
     </AstryxBrpUiProvider>
