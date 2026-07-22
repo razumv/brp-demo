@@ -16,6 +16,7 @@ import {
   CurrentAppShellNavigation,
   CurrentAppShellOverlays,
 } from "@/components/shell/current-app-shell-view";
+import {usePersistedBooleanPreference} from "@/components/shell/use-shell-preferences";
 import type {Role} from "@/lib/types";
 
 const loadAstryxShellHeader = () => import("./astryx-app-shell-view").then((module) => ({
@@ -47,13 +48,17 @@ function ShellFrame({
   const headerRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inertTargets = useMemo(() => [headerRef, bodyRef] as const, []);
+  const [sidebarCollapsed, setSidebarCollapsed, sidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:astryx-sidebar-collapsed", false);
+  const isAstryxShell = controller.renderedDesignSystem === "astryx";
 
   if (!controller.authorized) return <ShellAccessGate />;
 
   return (
     <div
       className="app-shell"
-      data-brp-shell-renderer={controller.renderedDesignSystem === "astryx" ? "astryx" : "current"}
+      data-brp-shell-renderer={isAstryxShell ? "astryx" : "current"}
+      data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}
+      data-sidebar-preferences-ready={sidebarPreferencesReady ? "true" : "false"}
     >
       <RendererViewSwitch
         slotId="app-shell-header"
@@ -67,7 +72,11 @@ function ShellFrame({
           slotId="app-shell-navigation"
           currentView={<CurrentAppShellNavigation controller={controller} />}
           loadAstryxView={loadAstryxShellNavigation}
-          astryxViewProps={{controller}}
+          astryxViewProps={{
+            controller,
+            sidebarCollapsed,
+            onSidebarCollapsedChange: setSidebarCollapsed,
+          }}
         />
 
         {/* The route subtree never enters a renderer switch, so local page state survives. */}

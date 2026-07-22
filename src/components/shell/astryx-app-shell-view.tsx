@@ -53,7 +53,6 @@ import type {
   ShellNavGroup,
 } from "@/components/shell/app-shell-controller";
 import {astryxShellClasses as styles} from "@/components/shell/astryx-shell.css";
-import {usePersistedBooleanPreference} from "@/components/shell/use-shell-preferences";
 import {
   GLOBAL_PARTS_SEARCH_TABS,
   type GlobalPartsSearchTab,
@@ -63,6 +62,11 @@ import {formatMoney} from "@/lib/mock-data";
 type AstryxShellViewProps = {
   controller: AppShellController;
 } & AstryxRendererViewProps;
+
+type AstryxShellNavigationViewProps = AstryxShellViewProps & {
+  sidebarCollapsed: boolean;
+  onSidebarCollapsedChange(value: boolean): void;
+};
 
 function useRendererReady(onReady: () => void) {
   useLayoutEffect(() => {
@@ -485,9 +489,13 @@ export function AstryxAppShellHeader({controller, onReady}: AstryxShellViewProps
   );
 }
 
-export function AstryxAppShellNavigation({controller, onReady}: AstryxShellViewProps) {
+export function AstryxAppShellNavigation({
+  controller,
+  onReady,
+  sidebarCollapsed,
+  onSidebarCollapsedChange,
+}: AstryxShellNavigationViewProps) {
   useRendererReady(onReady);
-  const [sidebarCollapsed, setSidebarCollapsed, sidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:astryx-sidebar-collapsed", false);
 
   return (
     <SideNav
@@ -495,10 +503,8 @@ export function AstryxAppShellNavigation({controller, onReady}: AstryxShellViewP
       collapsible={{
         hasButton: false,
         isCollapsed: sidebarCollapsed,
-        onCollapsedChange: setSidebarCollapsed,
+        onCollapsedChange: onSidebarCollapsedChange,
       }}
-      data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}
-      data-sidebar-preferences-ready={sidebarPreferencesReady ? "true" : "false"}
       topContent={(
         <div className={styles.sideNavControls}>
           <IconButton
@@ -506,7 +512,7 @@ export function AstryxAppShellNavigation({controller, onReady}: AstryxShellViewP
             label={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
             tooltip={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
             variant="ghost"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
           />
         </div>
       )}

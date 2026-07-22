@@ -71,18 +71,27 @@ test("Astryx desktop rail persists after reload and keeps compact navigation foc
 
   const sideNavigation = page.getByRole("navigation", {name: "Side navigation"});
   const collapseRail = page.getByRole("button", {name: "Згорнути бічну навігацію"});
-  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "false");
+  const shell = page.locator('[data-brp-shell-renderer="astryx"]');
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "false");
   await collapseRail.focus();
   await page.keyboard.press("Enter");
-  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "true");
   await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeFocused();
   await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toBeVisible();
   await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
 
   await page.reload();
-  await expect(sideNavigation).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "true");
   await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeVisible();
   await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toHaveAttribute("aria-label", "Огляд");
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.setViewportSize({width: 768, height: 900});
+  await expect(page.getByRole("button", {name: "Меню"})).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.setViewportSize({width: 1440, height: 900});
+  await expect(sideNavigation).toBeVisible();
   await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
 });
 

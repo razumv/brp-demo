@@ -2100,12 +2100,11 @@ a {
 }
 
 .brp-astryx-shell-side-nav {
-  --brp-astryx-sidebar-width: 264px;
-  width: var(--brp-astryx-sidebar-width) !important;
-  min-width: var(--brp-astryx-sidebar-width) !important;
+  width: var(--brp-astryx-sidebar-width, 264px) !important;
+  min-width: var(--brp-astryx-sidebar-width, 264px) !important;
   height: calc(100vh - 64px);
   height: calc(100dvh - 64px);
-  flex: 0 0 var(--brp-astryx-sidebar-width) !important;
+  flex: 0 0 var(--brp-astryx-sidebar-width, 264px) !important;
   overflow: hidden;
   border: 0;
   border-radius: 0 var(--radius-container) var(--radius-container) 0;
@@ -2115,11 +2114,15 @@ a {
   z-index: 1;
 }
 
-.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"] {
+.app-shell[data-brp-shell-renderer="astryx"] {
+  --brp-astryx-sidebar-width: 264px;
+}
+
+.app-shell[data-brp-shell-renderer="astryx"][data-sidebar-collapsed="true"] {
   --brp-astryx-sidebar-width: 68px;
 }
 
-.brp-astryx-shell-side-nav[data-sidebar-preferences-ready="false"] {
+.app-shell[data-brp-shell-renderer="astryx"][data-sidebar-preferences-ready="false"] .brp-astryx-shell-side-nav {
   transition: none;
 }
 
@@ -2129,7 +2132,7 @@ a {
   padding: var(--spacing-2) var(--spacing-3) 0;
 }
 
-.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"] .brp-astryx-shell-side-nav-controls {
+.app-shell[data-brp-shell-renderer="astryx"][data-sidebar-collapsed="true"] .brp-astryx-shell-side-nav-controls {
   justify-content: center;
   padding-inline: var(--spacing-2);
 }
@@ -2138,15 +2141,7 @@ a {
   box-shadow: inset 3px 0 0 var(--color-accent);
 }
 
-.app-body:has(.brp-astryx-shell-side-nav) {
-  --brp-astryx-sidebar-width: 264px;
-}
-
-.app-body:has(.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"]) {
-  --brp-astryx-sidebar-width: 68px;
-}
-
-.app-body:has(.brp-astryx-shell-side-nav) .app-main {
+.app-shell[data-brp-shell-renderer="astryx"] .app-main {
   flex-basis: calc(100% - var(--brp-astryx-sidebar-width));
   max-width: calc(100% - var(--brp-astryx-sidebar-width));
 }
@@ -2303,12 +2298,11 @@ a {
 }
 
 @media (max-width: 1023px) {
-  .app-body:has(.brp-astryx-shell-side-nav),
-  .app-body:has(.brp-astryx-shell-side-nav[data-sidebar-collapsed="true"]) {
+  .app-shell[data-brp-shell-renderer="astryx"] {
     --brp-astryx-sidebar-width: 0px;
   }
 
-  .app-body:has(.brp-astryx-shell-side-nav) .app-main {
+  .app-shell[data-brp-shell-renderer="astryx"] .app-main {
     flex-basis: 100%;
     max-width: 100%;
   }
