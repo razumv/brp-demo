@@ -23,6 +23,7 @@ export interface BrpButtonProps {
   fullWidth?: boolean;
   onPress?: () => void | Promise<void>;
   type?: "button" | "submit" | "reset";
+  ariaDescribedBy?: string;
 }
 
 export interface BrpIconButtonProps {
@@ -52,6 +53,7 @@ export interface BrpTextInputProps {
   clearable?: boolean;
   size?: BrpControlSize;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  ariaDescribedBy?: string;
 }
 
 export interface BrpSelectOption {
@@ -82,6 +84,7 @@ export interface BrpSwitchProps {
   disabled?: boolean;
   busy?: boolean;
   hideLabel?: boolean;
+  ariaDescribedBy?: string;
 }
 
 export interface BrpChoiceOption {

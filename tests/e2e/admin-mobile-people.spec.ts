@@ -25,22 +25,22 @@ test("users swap the active-user grid for matching labelled cards at the exact b
   await expect(grid).toHaveCSS("display", "none");
   await expect(page.getByRole("list", { name: "Активні користувачі" })).toHaveCount(1);
   await expect(page.getByRole("grid", { name: "Активні користувачі" })).toHaveCount(0);
-  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("demo-account");
+  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("account");
   const mobileIds = await recordIds(cards, 'li[data-record-id]');
   expect(mobileIds).toContain("demo-user-03");
   const mobileCard = cards.locator('li[data-record-id="demo-user-03"]');
   await expect(mobileCard).toHaveAttribute("aria-labelledby", "admin-user-demo-user-03-title");
-  await expect(page.locator("#admin-user-demo-user-03-title")).toHaveText("Демо-користувач 03");
-  await expect(mobileCard).toContainText("Демо-користувач 03");
+  await expect(page.locator("#admin-user-demo-user-03-title")).toHaveText("Користувач 03");
+  await expect(mobileCard).toContainText("Користувач 03");
   await expect(mobileCard).toContainText("user03@example.invalid");
   await expect(mobileCard).toContainText("Logos");
   await expect(mobileCard).toContainText("Адмін");
   await expect(mobileCard).toContainText("Активний");
   await expect(mobileCard).toContainText("5 months ago");
   const actionNames = [
-    "Деактивувати Демо-користувач 03 — заблоковано",
-    "Редагувати Демо-користувач 03",
-    "Видалити Демо-користувач 03 — заблоковано",
+    "Деактивувати Користувач 03 — заблоковано",
+    "Редагувати Користувач 03",
+    "Видалити Користувач 03 — заблоковано",
   ] as const;
   const mobileActionStates = await Promise.all(actionNames.map((name) => mobileCard.getByRole("button", { name }).isDisabled()));
   await expect(cards.locator("..").getByText(/Показано \d+ користувачів/)).toBeVisible();
@@ -55,10 +55,10 @@ test("users swap the active-user grid for matching labelled cards at the exact b
   await expect(grid).toBeVisible();
   await expect(page.getByRole("list", { name: "Активні користувачі" })).toHaveCount(0);
   await expect(page.getByRole("grid", { name: "Активні користувачі" })).toHaveCount(1);
-  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("demo-account");
+  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("account");
   expect(await recordIds(grid, '[role="row"][data-record-id]')).toEqual(mobileIds);
   const desktopRow = grid.locator('[role="row"][data-record-id="demo-user-03"]');
-  await expect(desktopRow).toContainText("Демо-користувач 03");
+  await expect(desktopRow).toContainText("Користувач 03");
   await expect(desktopRow).toContainText("user03@example.invalid");
   await expect(desktopRow).toContainText("Logos");
   await expect(desktopRow).toContainText("Адмін");

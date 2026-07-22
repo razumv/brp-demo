@@ -164,6 +164,7 @@ const CurrentButton = forwardRef<HTMLButtonElement, BrpButtonProps>(function Cur
   fullWidth,
   onPress,
   type = "button",
+  ariaDescribedBy,
 }, ref) {
   return (
     <Button
@@ -173,6 +174,7 @@ const CurrentButton = forwardRef<HTMLButtonElement, BrpButtonProps>(function Cur
       size={buttonSizes[size]}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
+      aria-describedby={ariaDescribedBy}
       className={fullWidth ? "w-full" : undefined}
       onClick={() => void onPress?.()}
     >
@@ -227,6 +229,7 @@ const CurrentTextInput = forwardRef<HTMLInputElement, BrpTextInputProps>(functio
   clearable,
   size = "md",
   onKeyDown,
+  ariaDescribedBy,
 }, ref) {
   const errorId = useId();
   return (
@@ -237,7 +240,7 @@ const CurrentTextInput = forwardRef<HTMLInputElement, BrpTextInputProps>(functio
         <input
           ref={ref}
           aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={[ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(" ") || undefined}
           disabled={disabled}
           required={required}
           type={type}
@@ -360,6 +363,7 @@ const CurrentSwitch = forwardRef<HTMLInputElement, BrpSwitchProps>(function Curr
   disabled,
   busy,
   hideLabel,
+  ariaDescribedBy,
 }, ref) {
   return (
     <label className="flex items-center justify-between gap-3 text-sm">
@@ -373,6 +377,7 @@ const CurrentSwitch = forwardRef<HTMLInputElement, BrpSwitchProps>(function Curr
         role="switch"
         aria-label={hideLabel ? label : undefined}
         aria-busy={busy || undefined}
+        aria-describedby={ariaDescribedBy}
         checked={checked}
         disabled={disabled || busy}
         onChange={(event) => onCheckedChange(event.target.checked)}

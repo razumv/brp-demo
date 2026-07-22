@@ -1,8 +1,25 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3111";
+const productionServer = [
+  "const path = require('node:path');",
+  "const fs = require('node:fs');",
+  "const required = JSON.parse(fs.readFileSync('.next/required-server-files.json', 'utf8'));",
+  "const relativeAppDirectory = required.relativeAppDir ?? '';",
+  "if (relativeAppDirectory.startsWith('..') || path.isAbsolute(relativeAppDirectory)) throw new Error('Standalone app directory is outside its traced root.');",
+  "const server = path.resolve('.next/standalone', relativeAppDirectory, 'server.js');",
+  "if (!fs.existsSync(server)) throw new Error('Fresh standalone server output is missing at ' + server + '.');",
+  "const serverDirectory = path.dirname(server);",
+  "fs.cpSync('.next/static', path.join(serverDirectory, '.next/static'), { recursive: true });",
+  "if (fs.existsSync('public')) fs.cpSync('public', path.join(serverDirectory, 'public'), { recursive: true });",
+  "process.env.HOSTNAME = '127.0.0.1';",
+  "process.env.PORT = '3111';",
+  "process.chdir(serverDirectory);",
+  "require(server);",
+].join(" ");
 
 export default defineConfig({
+  outputDir: ".next/playwright-appearance-matrix-results",
   testDir: "./tests/e2e",
   testMatch: "**/route-renderer-matrix.spec.ts",
   fullyParallel: false,
@@ -24,9 +41,9 @@ export default defineConfig({
     { name: "chromium-tablet", use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 }, hasTouch: true } },
   ],
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3111",
+    command: `npm run build && ${process.execPath} -e ${JSON.stringify(productionServer)}`,
     url: `${baseURL}/login/`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 });

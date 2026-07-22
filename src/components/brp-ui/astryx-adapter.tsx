@@ -145,7 +145,7 @@ function AstryxFacadePopover({
 }
 
 export const astryxAdapter: BrpUiAdapter = {
-  BrpButton: ({label, content, variant = "secondary", size = "md", disabled, busy, icon, endContent, fullWidth, onPress, type = "button", ref}) => (
+  BrpButton: ({label, content, variant = "secondary", size = "md", disabled, busy, icon, endContent, fullWidth, onPress, type = "button", ariaDescribedBy, ref}) => (
     <AstryxButton
       ref={ref}
       label={label}
@@ -158,6 +158,7 @@ export const astryxAdapter: BrpUiAdapter = {
       endContent={endContent}
       width={fullWidth ? "100%" : undefined}
       onClick={() => void onPress?.()}
+      aria-describedby={ariaDescribedBy}
     >
       {content}
     </AstryxButton>
@@ -165,14 +166,14 @@ export const astryxAdapter: BrpUiAdapter = {
   BrpIconButton: ({label, icon, variant = "ghost", size = "md", disabled, busy, ariaControls, expanded, type = "button", onPress, ref}) => (
     <AstryxIconButton ref={ref} label={label} icon={icon} variant={variant === "danger" ? "destructive" : variant} size={size} type={type} isDisabled={disabled} isLoading={busy} aria-controls={ariaControls} aria-expanded={expanded} onClick={() => void onPress?.()} />
   ),
-  BrpTextInput: ({label, value, onValueChange, placeholder, type = "text", error, disabled, required, hideLabel, leadingIcon, clearable, size = "md", onKeyDown, ref}) => (
-    <AstryxTextInput ref={ref} label={label} value={value} onChange={onValueChange} onKeyDown={onKeyDown} placeholder={placeholder} type={type === "search" ? "text" : type} status={error ? {type: "error", message: error} : undefined} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} startIcon={leadingIcon} hasClear={clearable} size={size} width="100%" />
+  BrpTextInput: ({label, value, onValueChange, placeholder, type = "text", error, disabled, required, hideLabel, leadingIcon, clearable, size = "md", onKeyDown, ariaDescribedBy, ref}) => (
+    <AstryxTextInput ref={ref} label={label} value={value} onChange={onValueChange} onKeyDown={onKeyDown} placeholder={placeholder} type={type === "search" ? "text" : type} status={error ? {type: "error", message: error} : undefined} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} startIcon={leadingIcon} hasClear={clearable} size={size} width="100%" aria-describedby={ariaDescribedBy} />
   ),
   BrpSelect: ({label, value, options, onValueChange, placeholder, disabled, required, hideLabel, searchable, size = "md"}) => (
     <AstryxSelector label={label} value={value} options={options.map((option) => ({value: option.value, label: option.label, disabled: option.disabled, icon: option.icon}))} onChange={onValueChange} placeholder={placeholder} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} hasSearch={searchable} size={size} width="100%" />
   ),
-  BrpSwitch: ({label, checked, onCheckedChange, description, disabled, busy, hideLabel, ref}) => (
-    <AstryxSwitch ref={ref} label={label} value={checked} onChange={onCheckedChange} description={description} isDisabled={disabled} isLoading={busy} isLabelHidden={hideLabel} />
+  BrpSwitch: ({label, checked, onCheckedChange, description, disabled, busy, hideLabel, ariaDescribedBy, ref}) => (
+    <AstryxSwitch ref={ref} label={label} value={checked} onChange={onCheckedChange} description={description} isDisabled={disabled} isLoading={busy} isLabelHidden={hideLabel} aria-describedby={ariaDescribedBy} />
   ),
   BrpTabs: ({label, value, options, onValueChange, size = "md", fill, divider, ref}) => (
     <TabList ref={ref} value={value} onChange={onValueChange} size={size} layout={fill ? "fill" : "hug"} hasDivider={divider} aria-label={label}>

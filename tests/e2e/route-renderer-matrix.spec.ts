@@ -10,6 +10,16 @@ const appearances = [
   { designSystem: "astryx", colorMode: "dark", renderer: "astryx" },
 ] as const;
 
+const matrixHost = new URL(process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3111").host;
+
+function isIgnorableRuntimeError(message: string, browserName: string) {
+  if (/favicon|Failed to load resource.*404/i.test(message)) return true;
+  return browserName === "webkit"
+    && message.startsWith(`/${matrixHost}/`)
+    && /[?&]_rsc=/.test(message)
+    && message.endsWith(" due to access control checks.");
+}
+
 async function seedRoute(page: Page, role: Role | "public", appearance: typeof appearances[number]) {
   const state = JSON.parse(JSON.stringify(initialDemoState)) as DemoState;
   state.session = role === "public" ? null : {
@@ -28,7 +38,7 @@ async function seedRoute(page: Page, role: Role | "public", appearance: typeof a
 }
 
 for (const appearance of appearances) {
-  test(`${appearance.designSystem} ${appearance.colorMode} certifies every checked route`, async ({ page }) => {
+  test(`${appearance.designSystem} ${appearance.colorMode} certifies every checked route`, async ({ browserName, page }) => {
     test.setTimeout(10 * 60_000);
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: appearance.colorMode });
     const runtimeErrors: string[] = [];
@@ -53,9 +63,9 @@ for (const appearance of appearances) {
         }).toBeLessThanOrEqual(1);
       }
 
-      await page.keyboard.press("Tab");
+      await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab");
       await expect.poll(() => page.evaluate(() => document.activeElement !== document.body)).toBe(true);
-      expect(runtimeErrors.filter((message) => !/favicon|Failed to load resource.*404/i.test(message)), `${row.path} runtime errors`).toEqual([]);
+      expect(runtimeErrors.filter((message) => !isIgnorableRuntimeError(message, browserName)), `${row.path} runtime errors`).toEqual([]);
     }
   });
 }
@@ -64,6 +74,8 @@ test("overlay Escape closes and restores keyboard focus", async ({ page }) => {
   await page.goto("/login/");
   await seedRoute(page, "admin", appearances[2]);
   await page.goto("/admin/order-pipeline/");
+  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
+  await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", /.+/);
   const trigger = page.getByRole("button", { name: "Період", exact: true });
   await trigger.focus();
   await trigger.click();

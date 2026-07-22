@@ -158,7 +158,7 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
   return (
     <div className={compact ? "flex flex-wrap items-center gap-1 [&>button]:!size-11 md:[&>button]:!size-8" : "flex items-center justify-end gap-1"}>
       <AdminIconAction
-        label={`Деактивувати ${user.displayName} — заблоковано`}
+        label={`Деактивувати ${publicUserName(user)} — заблоковано`}
         tooltip="Деактивація користувача потребує підключення сервісу облікових записів."
         icon={<CircleX size={15} />}
         tone="danger"
@@ -172,7 +172,7 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
         onClick={onEdit}
       />
       <AdminIconAction
-        label={`Видалити ${user.displayName} — заблоковано`}
+        label={`Видалити ${publicUserName(user)} — заблоковано`}
         tooltip="Видалення користувача потребує підключення сервісу облікових записів."
         icon={<Trash2 size={15} />}
         tone="danger"

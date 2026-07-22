@@ -43,8 +43,8 @@ function UserCard({user, model}: {user: AdminUserRecord; model: AdminUsersModel}
       <div className={styles.userBadges}><Badge label={adminUserRoleLabels[user.role]} icon={user.role === "admin" ? <ShieldCheck size={12} /> : <UserRound size={12} />} variant={roleVariant} /><Badge label="Активний" icon={<CheckCircle2 size={12} />} variant="success" /></div>
       <div className={styles.userActions}>
         <IconButton label={`Редагувати ${publicName(user.displayName)}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати користувача" onClick={() => model.setSelectedUser(user)} />
-        <IconButton label={`Деактивувати ${publicName(user.displayName)} — недоступно`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача потребує підключення сервісу облікових записів." />
-        <IconButton label={`Видалити ${publicName(user.displayName)} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача потребує підключення сервісу облікових записів." />
+        <IconButton label={`Деактивувати ${publicName(user.displayName)} — заблоковано`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача потребує підключення сервісу облікових записів." />
+        <IconButton label={`Видалити ${publicName(user.displayName)} — заблоковано`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача потребує підключення сервісу облікових записів." />
       </div>
     </Card>
   );

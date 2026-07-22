@@ -1812,6 +1812,19 @@
     display: none;
   }
 
+  .diagramHeader {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .diagramIdentity {
+    flex: 1 1 100%;
+  }
+
+  .diagramActions {
+    margin-left: auto;
+  }
+
   .diagramWorkspace {
     grid-template-columns: minmax(0, 48%) minmax(500px, 52%);
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect, useLayoutEffect, useRef} from "react";
+import {useLayoutEffect} from "react";
 import {Badge} from "@astryxdesign/core/Badge";
 import {Banner} from "@astryxdesign/core/Banner";
 import {Button} from "@astryxdesign/core/Button";
@@ -112,7 +112,14 @@ function CalendarMonth({title, days, model}: {title: string; days: readonly Admi
 
 function AstryxPeriodContent({model}: {model: AdminOrderPipelineModel}) {
   return (
-    <div>
+    <div
+      onKeyDownCapture={(event) => {
+        if (event.key !== "Escape" && event.key !== "Esc") return;
+        event.preventDefault();
+        event.stopPropagation();
+        model.setPeriodOpen(false);
+      }}
+    >
       <div className={styles.periodGrid}>
         <CalendarMonth title="July 2026" days={ADMIN_PIPELINE_JULY_DAYS} model={model} />
         <CalendarMonth title="August 2026" days={ADMIN_PIPELINE_AUGUST_DAYS} model={model} />
@@ -130,19 +137,6 @@ function AstryxPeriodContent({model}: {model: AdminOrderPipelineModel}) {
 
 function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineModel; isRendererCommitted: boolean}) {
   const isOpen = isRendererCommitted && model.periodOpen;
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const dismiss = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      model.setPeriodOpen(false);
-      queueMicrotask(() => triggerRef.current?.focus());
-    };
-    document.addEventListener("keydown", dismiss, true);
-    return () => document.removeEventListener("keydown", dismiss, true);
-  }, [isOpen, model]);
 
   return (
     <Popover
@@ -160,10 +154,7 @@ function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineMo
     >
       {(trigger: PopoverTriggerRenderProps) => (
         <Button
-          ref={(element) => {
-            triggerRef.current = element;
-            (trigger.ref as (element: HTMLButtonElement | null) => void)(element);
-          }}
+          ref={trigger.ref}
           label="Період"
           icon={<CalendarDays size={15} />}
           endContent={<ChevronDown size={14} />}
