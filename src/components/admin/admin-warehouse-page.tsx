@@ -34,6 +34,7 @@ import {
   AdminTabs,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import { EmptyState, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   receiptSummaryMetrics,
@@ -60,6 +61,64 @@ import {
 } from "@/lib/admin-warehouse-data";
 
 type KpiTone = "neutral" | "blue" | "green" | "amber" | "orange";
+
+type WarehouseShipmentId = (typeof warehouseShipments)[number]["id"];
+export type InventorySummaryView = "parts" | "shipments";
+
+export interface AdminWarehouseModel {
+  activeProcess: WarehouseProcessId;
+  setActiveProcess(value: WarehouseProcessId): void;
+  receiving: {
+    shipmentId: WarehouseShipmentId;
+    setShipmentId(value: WarehouseShipmentId): void;
+  };
+  receiptSummary: {
+    view: ReceiptSummaryView;
+    setView(value: ReceiptSummaryView): void;
+    shipment: string;
+    setShipment(value: string): void;
+    query: string;
+    setQuery(value: string): void;
+    filter: ReceiptSummaryFilter;
+    setFilter(value: ReceiptSummaryFilter): void;
+  };
+  shortages: {
+    view: WarehouseShortageView;
+    setView(value: WarehouseShortageView): void;
+    query: string;
+    setQuery(value: string): void;
+  };
+  fulfillment: {
+    query: string;
+    setQuery(value: string): void;
+    filter: WarehouseFulfillmentFilter;
+    setFilter(value: WarehouseFulfillmentFilter): void;
+    view: WarehouseFulfillmentView;
+    setView(value: WarehouseFulfillmentView): void;
+  };
+  inventory: {
+    view: InventorySummaryView;
+    setView(value: InventorySummaryView): void;
+    query: string;
+    setQuery(value: string): void;
+    shipmentFilter: WarehousePartsShipmentFilter;
+    setShipmentFilter(value: WarehousePartsShipmentFilter): void;
+    dealerFilter: string;
+    setDealerFilter(value: string): void;
+  };
+  placement: {
+    query: string;
+    setQuery(value: string): void;
+    page: number;
+    setPage(value: number): void;
+    editingId: string | null;
+    setEditingId(value: string | null): void;
+    draftCell: string;
+    setDraftCell(value: string): void;
+  };
+}
+
+const loadAstryxAdminWarehouseView = () => import("./astryx-admin-warehouse-view");
 
 const kpiToneClasses: Record<KpiTone, string> = {
   neutral: "bg-[var(--surface-subtle)] text-[var(--muted-foreground)]",
@@ -174,13 +233,13 @@ function ProcessNavigation({ active, onChange }: {
 function RepresentativeNotice({ shown, total, noun = "рядків" }: { shown: number; total: number; noun?: string }) {
   return (
     <div className="border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2.5 text-[10px] text-[var(--muted-foreground)]">
-      Репрезентативна доказова вибірка: показано {shown} з {total} {noun} у source.
+      Показано {shown} з {total} {noun}.
     </div>
   );
 }
 
-function ReceivingTab() {
-  const [shipmentId, setShipmentId] = useState<(typeof warehouseShipments)[number]["id"]>(warehouseShipments[0].id);
+function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
+  const {shipmentId, setShipmentId} = model;
   const shipment = warehouseShipments.find((item) => item.id === shipmentId) ?? warehouseShipments[0];
 
   return (
@@ -207,23 +266,23 @@ function ReceivingTab() {
         actions={(
           <div className="w-full">
             <div className="grid w-full grid-cols-3 gap-2 md:hidden" data-mobile-receiving-actions>
-              <MobileReceivingLockedAction icon={<PackageCheck size={16} />} label="Прийняти все" title="Приймання всіх позицій є операційною дією і вимкнене" />
-              <MobileReceivingLockedAction icon={<ScanLine size={16} />} label="Почати приймання" title="Запуск приймання є операційною дією і вимкнений" />
-              <MobileReceivingLockedAction icon={<CheckCircle2 size={16} />} label="Прийняти (вже в 1С)" title="Приймання в 1С є операційною дією і вимкнене" />
+              <MobileReceivingLockedAction icon={<PackageCheck size={16} />} label="Прийняти все" title="Приймання всіх позицій недоступне: доступ лише для читання." />
+              <MobileReceivingLockedAction icon={<ScanLine size={16} />} label="Почати приймання" title="Запуск приймання недоступний: доступ лише для читання." />
+              <MobileReceivingLockedAction icon={<CheckCircle2 size={16} />} label="Прийняти (вже в 1С)" title="Приймання в 1С недоступне: доступ лише для читання." />
             </div>
             <div className="hidden flex-wrap gap-2 md:flex" data-desktop-receiving-actions>
-              <LockedButton className="!min-h-9" title="Приймання всіх позицій є операційною дією і вимкнене">
+              <LockedButton className="!min-h-9" title="Приймання всіх позицій недоступне: доступ лише для читання.">
                 <PackageCheck size={14} /> Прийняти все
               </LockedButton>
-              <LockedButton title="Запуск приймання є операційною дією і вимкнений" className="!min-h-9 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
+              <LockedButton title="Запуск приймання недоступний: доступ лише для читання." className="!min-h-9 border-[color-mix(in_srgb,var(--green)_25%,var(--border))] bg-[var(--green-soft)] text-[var(--green)]">
                 <ScanLine size={14} /> Почати приймання
               </LockedButton>
-              <LockedButton className="!min-h-9" title="Приймання в 1С є операційною дією і вимкнене">
+              <LockedButton className="!min-h-9" title="Приймання в 1С недоступне: доступ лише для читання.">
                 <CheckCircle2 size={14} /> Прийняти (вже в 1С)
               </LockedButton>
             </div>
             <p id="warehouse-receiving-safety" className="mt-2 mb-0 text-[11px] text-[var(--muted-foreground)] md:hidden">
-              Операції приймання доступні лише для перегляду: приймання, сканування та 1С не запускаються.
+              Операції приймання доступні лише для читання.
             </p>
           </div>
         )}
@@ -310,11 +369,8 @@ function ReceivingTab() {
   );
 }
 
-function ReceiptSummaryTab() {
-  const [view, setView] = useState<ReceiptSummaryView>("parts");
-  const [shipment, setShipment] = useState("all");
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ReceiptSummaryFilter>("all");
+function ReceiptSummaryTab({model}: {model: AdminWarehouseModel["receiptSummary"]}) {
+  const {view, setView, shipment, setShipment, query, setQuery, filter, setFilter} = model;
 
   const visibleRows = useMemo(() => receiptSummaryRows.filter((row) => {
     if (shipment !== "all" && row.shipmentNumber !== shipment) return false;
@@ -376,7 +432,7 @@ function ReceiptSummaryTab() {
         actions={(
           <>
             <LockedButton title="Оновлення може змінювати зовнішній стан і вимкнене"><RefreshCw size={14} /> Оновити</LockedButton>
-            <LockedButton title="Експорт не запускається у read-only клоні"><Download size={14} /> Експорт</LockedButton>
+            <LockedButton title="Експорт недоступний: доступ лише для читання."><Download size={14} /> Експорт</LockedButton>
           </>
         )}
         mobileDisclosure={{
@@ -387,7 +443,7 @@ function ReceiptSummaryTab() {
 
       <Panel className="overflow-hidden shadow-none">
         {visibleRows.length === 0 ? (
-          <EmptyState compact title="Поки немає прийнятого товару" description="Приймання у source не запускалося; усі показники дорівнюють нулю." icon={<PackageCheck size={28} />} />
+          <EmptyState compact title="Поки немає прийнятого товару" description="Приймання ще не запускалося; усі показники дорівнюють нулю." icon={<PackageCheck size={28} />} />
         ) : null}
       </Panel>
     </section>
@@ -406,9 +462,8 @@ const shortageViews: ReadonlyArray<{
   { id: "surplus", label: "Надлишок", count: 0, heading: "Надлишки при прийманні", empty: "Немає невирішених надлишків" },
 ];
 
-function ShortagesTab() {
-  const [view, setView] = useState<WarehouseShortageView>("active");
-  const [query, setQuery] = useState("");
+function ShortagesTab({model}: {model: AdminWarehouseModel["shortages"]}) {
+  const {view, setView, query, setQuery} = model;
   const activeView = shortageViews.find((item) => item.id === view) ?? shortageViews[0];
 
   const visibleShortages = useMemo(() => {
@@ -446,7 +501,7 @@ function ShortagesTab() {
             label="Стани нестач"
           />
         )}
-        actions={<LockedButton title="Оновлення нестач вимкнене у read-only клоні"><RefreshCw size={14} /> Оновити</LockedButton>}
+        actions={<LockedButton title="Оновлення нестач недоступне: доступ лише для читання."><RefreshCw size={14} /> Оновити</LockedButton>}
         mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(view !== "active") }}
       />
 
@@ -455,7 +510,7 @@ function ShortagesTab() {
           <h2 className="m-0 text-[12px] font-semibold">{activeView.heading}</h2>
         </div>
         {visibleShortages.length === 0 ? (
-          <EmptyState compact title={activeView.empty} description={query ? "Пошук у поточному порожньому source-стані не дав результатів." : "У source зафіксовано нуль позицій."} icon={<AlertTriangle size={28} />} />
+          <EmptyState compact title={activeView.empty} description={query ? "Пошук у поточному стані не дав результатів." : "Позицій у цьому стані немає."} icon={<AlertTriangle size={28} />} />
         ) : null}
       </Panel>
     </section>
@@ -491,10 +546,8 @@ function FulfillmentKanban() {
   );
 }
 
-function FulfillmentTab() {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<WarehouseFulfillmentFilter>("all");
-  const [view, setView] = useState<WarehouseFulfillmentView>("list");
+function FulfillmentTab({model}: {model: AdminWarehouseModel["fulfillment"]}) {
+  const {query, setQuery, filter, setFilter, view, setView} = model;
 
   const visibleOrders = useMemo(() => {
     const needle = normalize(query);
@@ -547,14 +600,12 @@ function FulfillmentTab() {
 
       <Panel className="overflow-hidden shadow-none">
         {view === "list" ? (
-          visibleOrders.length === 0 ? <EmptyState compact title="Немає замовлень постачальнику" description="У source зафіксовано порожній список виконання." icon={<ClipboardList size={28} />} /> : null
+          visibleOrders.length === 0 ? <EmptyState compact title="Немає замовлень постачальнику" description="Список виконання порожній." icon={<ClipboardList size={28} />} /> : null
         ) : <FulfillmentKanban />}
       </Panel>
     </section>
   );
 }
-
-type InventorySummaryView = "parts" | "shipments";
 
 function InventoryPartsTable({ query, shipmentFilter }: { query: string; shipmentFilter: WarehousePartsShipmentFilter }) {
   const rows = useMemo(() => {
@@ -592,7 +643,7 @@ function InventoryPartsTable({ query, shipmentFilter }: { query: string; shipmen
             <tfoot className="border-t-2 border-[var(--border)] bg-[var(--surface-subtle)] font-semibold">
               <tr>
                 <td colSpan={2} className="px-3 py-3">{warehouseInventoryTotals.parts} деталей</td>
-                <td>Всього source</td>
+                <td>Всього</td>
                 <td className="text-right">{warehouseInventoryTotals.shipped}</td>
                 <td className="text-right">{warehouseInventoryTotals.received}</td>
                 <td />
@@ -644,10 +695,8 @@ function InventoryShipmentsTable({ query, shipmentFilter }: { query: string; shi
   );
 }
 
-function InventorySummaryTab() {
-  const [view, setView] = useState<InventorySummaryView>("parts");
-  const [query, setQuery] = useState("");
-  const [shipmentFilter, setShipmentFilter] = useState<WarehousePartsShipmentFilter>("all");
+function InventorySummaryTab({model}: {model: AdminWarehouseModel["inventory"]}) {
+  const {view, setView, query, setQuery, shipmentFilter, setShipmentFilter, dealerFilter, setDealerFilter} = model;
 
   return (
     <section className="grid gap-4">
@@ -673,14 +722,14 @@ function InventorySummaryTab() {
               <span className="sr-only">Постачання</span>
               <select value={shipmentFilter} onChange={(event) => setShipmentFilter(event.target.value as WarehousePartsShipmentFilter)}>
                 {warehousePartsShipmentFilters.map((item) => <option key={item} value={item}>{item === "all" ? "Всі постачання" : item}</option>)}
-                <option disabled>34 ocean identifiers · назви не зафіксовано у spec</option>
+                <option disabled>Інші постачання</option>
               </select>
             </label>
             <label className="field w-full max-w-[170px]">
               <span className="sr-only">Дилер</span>
-              <select defaultValue="all">
+              <select value={dealerFilter} onChange={(event) => setDealerFilter(event.target.value)}>
                 <option value="all">Всі дилери</option>
-                <option disabled>20 дилерів · назви не зафіксовано у spec</option>
+                <option disabled>Інші дилери</option>
               </select>
             </label>
           </>
@@ -696,10 +745,10 @@ function InventorySummaryTab() {
             label="Вигляд складського зведення"
           />
         )}
-        actions={<LockedButton title="Excel-експорт не запускається у read-only клоні"><Download size={14} /> Експорт Excel</LockedButton>}
-        mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(shipmentFilter !== "all") }}
+        actions={<LockedButton title="Excel-експорт недоступний: доступ лише для читання."><Download size={14} /> Експорт Excel</LockedButton>}
+        mobileDisclosure={{ sections: ["filters", "actions"], activeCount: Number(shipmentFilter !== "all") + Number(dealerFilter !== "all") }}
       />
-      <p className="m-0 text-[10px] text-[var(--muted-foreground)]">Фільтри працюють по доказовій вибірці; KPI зберігають повні source totals.</p>
+      <p className="m-0 text-[10px] text-[var(--muted-foreground)]">Фільтри застосовуються до показаних позицій; підсумки відображають повний обсяг.</p>
 
       {view === "parts"
         ? <InventoryPartsTable query={query} shipmentFilter={shipmentFilter} />
@@ -758,11 +807,8 @@ function PlacementCellEditor({ row, editing, draft, onOpen, onDraftChange, onCan
   );
 }
 
-function PlacementTab() {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftCell, setDraftCell] = useState("");
+function PlacementTab({model}: {model: AdminWarehouseModel["placement"]}) {
+  const {query, setQuery, page, setPage, editingId, setEditingId, draftCell, setDraftCell} = model;
   const totalPages = Math.ceil(warehousePlacementSummary.total / warehousePlacementSummary.pageSize);
   const needle = normalize(query);
   const filteredRows = useMemo(() => warehousePlacementRows.filter((row) => (
@@ -802,7 +848,7 @@ function PlacementTab() {
     <section className="grid gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="m-0 text-[20px] font-semibold">Розміщення на складі</h2>
-        <p className="m-0 text-[11px] text-[var(--muted-foreground)]">{warehousePlacementSummary.total} позицій · source Excel</p>
+        <p className="m-0 text-[11px] text-[var(--muted-foreground)]">{warehousePlacementSummary.total} позицій · складський реєстр</p>
       </div>
 
       <AdminToolbar
@@ -854,13 +900,13 @@ function PlacementTab() {
             </table>
           </div>
         ) : needle ? (
-          <EmptyState compact title="Немає розміщених позицій" description="Пошук у локальній доказовій вибірці не дав результатів." icon={<Search size={28} />} />
+          <EmptyState compact title="Немає розміщених позицій" description="Пошук у доступних позиціях не дав результатів." icon={<Search size={28} />} />
         ) : (
           <div className="grid min-h-48 place-items-center px-6 py-10 text-center">
             <div>
               <Package size={30} className="mx-auto text-[var(--faint)]" />
-              <h3 className="mt-3 text-[14px] font-semibold">Source page {page}: рядки не входять до доказової вибірки</h3>
-              <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">Лічильник і навігація відтворені без вигадування невідомих складських даних.</p>
+              <h3 className="mt-3 text-[14px] font-semibold">Сторінка {page}</h3>
+              <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">Для цієї сторінки немає доступних позицій.</p>
             </div>
           </div>
         )}
@@ -880,32 +926,113 @@ function PlacementTab() {
   );
 }
 
+function CurrentAdminWarehouseView({model}: {model: AdminWarehouseModel}) {
+  const activePanelId = `warehouse-${model.activeProcess}-panel`;
+  return (
+    <div data-brp-admin-fulfillment-renderer="shadcn">
+      <AdminPage>
+        <AdminPageHeader
+          icon={<Warehouse size={20} />}
+          title="Склад"
+          description="Приймайте постачання, розбирайте нестачі, керуйте виконанням і контролюйте готовність складу в одному процесі."
+        />
+
+        <ProcessNavigation active={model.activeProcess} onChange={model.setActiveProcess} />
+
+        <div
+          id={activePanelId}
+          role="tabpanel"
+          aria-labelledby={`${activePanelId}-tab`}
+        >
+          {model.activeProcess === "receiving" ? <ReceivingTab model={model.receiving} /> : null}
+          {model.activeProcess === "receipt-summary" ? <ReceiptSummaryTab model={model.receiptSummary} /> : null}
+          {model.activeProcess === "shortages" ? <ShortagesTab model={model.shortages} /> : null}
+          {model.activeProcess === "fulfillment" ? <FulfillmentTab model={model.fulfillment} /> : null}
+          {model.activeProcess === "inventory-summary" ? <InventorySummaryTab model={model.inventory} /> : null}
+          {model.activeProcess === "placement" ? <PlacementTab model={model.placement} /> : null}
+        </div>
+      </AdminPage>
+    </div>
+  );
+}
+
 export function AdminWarehousePage() {
   const [activeProcess, setActiveProcess] = useState<WarehouseProcessId>("receiving");
-  const activePanelId = `warehouse-${activeProcess}-panel`;
+  const [shipmentId, setShipmentId] = useState<WarehouseShipmentId>(warehouseShipments[0].id);
+  const [receiptView, setReceiptView] = useState<ReceiptSummaryView>("parts");
+  const [receiptShipment, setReceiptShipment] = useState("all");
+  const [receiptQuery, setReceiptQuery] = useState("");
+  const [receiptFilter, setReceiptFilter] = useState<ReceiptSummaryFilter>("all");
+  const [shortageView, setShortageView] = useState<WarehouseShortageView>("active");
+  const [shortageQuery, setShortageQuery] = useState("");
+  const [fulfillmentQuery, setFulfillmentQuery] = useState("");
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<WarehouseFulfillmentFilter>("all");
+  const [fulfillmentView, setFulfillmentView] = useState<WarehouseFulfillmentView>("list");
+  const [inventoryView, setInventoryView] = useState<InventorySummaryView>("parts");
+  const [inventoryQuery, setInventoryQuery] = useState("");
+  const [inventoryShipmentFilter, setInventoryShipmentFilter] = useState<WarehousePartsShipmentFilter>("all");
+  const [inventoryDealerFilter, setInventoryDealerFilter] = useState("all");
+  const [placementQuery, setPlacementQuery] = useState("");
+  const [placementPage, setPlacementPage] = useState(1);
+  const [placementEditingId, setPlacementEditingId] = useState<string | null>(null);
+  const [placementDraftCell, setPlacementDraftCell] = useState("");
+
+  const model: AdminWarehouseModel = {
+    activeProcess,
+    setActiveProcess,
+    receiving: {shipmentId, setShipmentId},
+    receiptSummary: {
+      view: receiptView,
+      setView: setReceiptView,
+      shipment: receiptShipment,
+      setShipment: setReceiptShipment,
+      query: receiptQuery,
+      setQuery: setReceiptQuery,
+      filter: receiptFilter,
+      setFilter: setReceiptFilter,
+    },
+    shortages: {
+      view: shortageView,
+      setView: setShortageView,
+      query: shortageQuery,
+      setQuery: setShortageQuery,
+    },
+    fulfillment: {
+      query: fulfillmentQuery,
+      setQuery: setFulfillmentQuery,
+      filter: fulfillmentFilter,
+      setFilter: setFulfillmentFilter,
+      view: fulfillmentView,
+      setView: setFulfillmentView,
+    },
+    inventory: {
+      view: inventoryView,
+      setView: setInventoryView,
+      query: inventoryQuery,
+      setQuery: setInventoryQuery,
+      shipmentFilter: inventoryShipmentFilter,
+      setShipmentFilter: setInventoryShipmentFilter,
+      dealerFilter: inventoryDealerFilter,
+      setDealerFilter: setInventoryDealerFilter,
+    },
+    placement: {
+      query: placementQuery,
+      setQuery: setPlacementQuery,
+      page: placementPage,
+      setPage: setPlacementPage,
+      editingId: placementEditingId,
+      setEditingId: setPlacementEditingId,
+      draftCell: placementDraftCell,
+      setDraftCell: setPlacementDraftCell,
+    },
+  };
 
   return (
-    <AdminPage>
-      <AdminPageHeader
-        icon={<Warehouse size={20} />}
-        title="Склад"
-        description="Приймайте постачання, розбирайте нестачі, керуйте виконанням і контролюйте готовність складу в одному процесі."
-      />
-
-      <ProcessNavigation active={activeProcess} onChange={setActiveProcess} />
-
-      <div
-        id={activePanelId}
-        role="tabpanel"
-        aria-labelledby={`${activePanelId}-tab`}
-      >
-        {activeProcess === "receiving" ? <ReceivingTab /> : null}
-        {activeProcess === "receipt-summary" ? <ReceiptSummaryTab /> : null}
-        {activeProcess === "shortages" ? <ShortagesTab /> : null}
-        {activeProcess === "fulfillment" ? <FulfillmentTab /> : null}
-        {activeProcess === "inventory-summary" ? <InventorySummaryTab /> : null}
-        {activeProcess === "placement" ? <PlacementTab /> : null}
-      </div>
-    </AdminPage>
+    <RendererViewSwitch
+      slotId="admin-warehouse"
+      currentView={<CurrentAdminWarehouseView model={model} />}
+      loadAstryxView={loadAstryxAdminWarehouseView}
+      astryxViewProps={{model}}
+    />
   );
 }
