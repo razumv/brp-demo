@@ -47,13 +47,6 @@ export function useDismissibleDataToolbarFilter({
       dismiss();
       focusVisibleTrigger();
     };
-    const onPanelKeyDownCapture = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      event.stopPropagation();
-      dismiss();
-      focusVisibleTrigger();
-    };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
@@ -62,12 +55,13 @@ export function useDismissibleDataToolbarFilter({
       dismiss();
     };
 
-    document.addEventListener("keydown", onKeyDown);
-    panelRefs.forEach((ref) => ref.current?.addEventListener("keydown", onPanelKeyDownCapture, true));
+    // Native controls such as <select> may consume Escape before it reaches a
+    // bubbling document listener. Capture it at the document boundary so an
+    // open external filter panel always follows the same dismissal contract.
+    document.addEventListener("keydown", onKeyDown, true);
     if (dismissOnPointerOutside) document.addEventListener("pointerdown", onPointerDown);
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      panelRefs.forEach((ref) => ref.current?.removeEventListener("keydown", onPanelKeyDownCapture, true));
+      document.removeEventListener("keydown", onKeyDown, true);
       if (dismissOnPointerOutside) document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [additionalPanelRef, additionalTriggerRef, dismissOnPointerOutside, onOpenChange, open, panelRef, triggerRef]);
