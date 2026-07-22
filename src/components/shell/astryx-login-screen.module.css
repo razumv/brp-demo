@@ -4,12 +4,65 @@
   min-height: 100dvh;
   padding: 24px;
   place-items: center;
-  background: var(--color-background-canvas, var(--background));
+  background: var(--color-background-body, var(--background));
+}
+
+.loginLayout {
+  display: grid;
+  width: min(100%, 1040px);
+  min-height: min(660px, calc(100dvh - 48px));
+  grid-template-columns: minmax(0, 0.92fr) minmax(390px, 0.78fr);
+  overflow: hidden;
+  border: 1px solid var(--color-border, var(--border));
+  border-radius: 16px;
+  background: var(--color-background-surface, var(--surface));
+  box-shadow: var(--shadow-med, var(--shadow-card));
+}
+
+.brandZone {
+  display: grid;
+  align-content: center;
+  gap: 24px;
+  padding: clamp(32px, 6vw, 72px);
+  border-right: 1px solid var(--color-border, var(--border));
+  background: var(--color-background-muted, var(--surface-subtle));
+}
+
+.brandMark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--color-background-orange, var(--orange-soft));
+  color: var(--color-text-orange, var(--orange));
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.brandCopy {
+  display: grid;
+  max-width: 360px;
+  gap: 10px;
+}
+
+.brandCopy h2 {
+  margin: 0;
+}
+
+.formZone {
+  display: grid;
+  min-width: 0;
+  padding: clamp(24px, 5vw, 64px);
+  place-items: center;
+  background: var(--color-background-surface, var(--surface));
 }
 
 .card {
   width: min(100%, 432px);
-  box-shadow: var(--shadow-card);
+  background: var(--color-background-card, var(--surface));
+  box-shadow: none;
 }
 
 .form {
@@ -48,7 +101,37 @@
 
 @media (max-width: 480px) {
   .canvas {
-    padding: 16px;
+    padding: 0;
+  }
+
+  .loginLayout {
+    width: 100%;
+    min-height: 100dvh;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .formZone {
+    min-height: 0;
+    padding: 24px 16px 16px;
+    order: -1;
+  }
+
+  .brandZone {
+    min-height: 0;
+    padding: 20px 24px 32px;
+    border-top: 1px solid var(--color-border, var(--border));
+    border-right: 0;
+  }
+
+  .brandMark {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 12px;
   }
 
   .header {

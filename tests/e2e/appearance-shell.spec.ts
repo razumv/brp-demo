@@ -184,6 +184,10 @@ test("login and offline screens render once in Astryx without changing their wor
   await page.goto("/login");
   await expect(page.locator('[data-brp-login-renderer="astryx"]')).toHaveCount(1);
   await expect(page.locator("[data-brp-login-renderer]")).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-layout="form-first"]')).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-form-zone]')).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-brand-zone]')).toHaveCount(1);
+  await expect.poll(() => page.locator('[data-brp-login-form-zone]').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
   await page.getByLabel("Електронна пошта").fill("dealer@example.invalid");
   await page.locator('input[type="password"]:visible').fill("not-persisted");
   await page.getByRole("button", {name: "Увійти"}).click();

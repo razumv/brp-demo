@@ -44,61 +44,73 @@ export default function AstryxLoginScreenView({
 
   return (
     <AstryxBrpUiProvider>
-      <main className={styles.canvas} data-brp-login-renderer="astryx">
-        <Card className={styles.card} padding={0} width="100%">
-          <form className={styles.form} onSubmit={onSubmit}>
-            <header className={styles.header}>
-              <span className={styles.headerIcon} aria-hidden="true"><LogIn size={21} /></span>
-              <Heading level={1}>З поверненням</Heading>
-              <Text color="secondary" display="block">Увійдіть для доступу до каталогу запчастин BRP</Text>
-            </header>
-            <div className={styles.body}>
-              <TextInput
-                label="Електронна пошта"
-                htmlName="email"
-                onChange={onEmailChange}
-                placeholder="name@company.com"
-                startIcon={<Mail size={16} aria-hidden="true" />}
-                type="email"
-                ref={emailInputRef}
-                value={email}
-                width="100%"
-              />
-              <div className={styles.passwordField}>
-                <TextInput
-                  label="Пароль"
-                  htmlName="password"
-                  onChange={onPasswordChange}
-                  placeholder="••••••••"
-                  startIcon={<LockKeyhole size={16} aria-hidden="true" />}
-                  type={showPassword ? "text" : "password"}
-                  ref={passwordInputRef}
-                  value={password}
-                  width="100%"
-                />
-                <IconButton
-                  icon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  label={showPassword ? "Приховати пароль" : "Показати пароль"}
-                  onClick={() => onShowPasswordChange(!showPassword)}
-                  variant="ghost"
-                />
-              </div>
-              <Switch
-                label="Запам’ятати на 30 днів"
-                onChange={onRememberChange}
-                value={remember}
-              />
-              <Button
-                isDisabled={!email.trim() || !password || submitting}
-                isLoading={submitting}
-                label="Увійти"
-                type="submit"
-                variant="primary"
-                width="100%"
-              />
+      <main className={styles.canvas} data-brp-login-renderer="astryx" data-brp-login-layout="form-first">
+        <div className={styles.loginLayout}>
+          <aside className={styles.brandZone} data-brp-login-brand-zone>
+            <span className={styles.brandMark} aria-hidden="true">BRP</span>
+            <div className={styles.brandCopy}>
+              <Text type="supporting" color="secondary" display="block">PARTS CATALOG</Text>
+              <Heading level={2}>Портал для дилерів BRP</Heading>
+              <Text color="secondary" display="block">Каталог запчастин, замовлення та робочі документи в одному місці.</Text>
             </div>
-          </form>
-        </Card>
+          </aside>
+          <section className={styles.formZone} data-brp-login-form-zone>
+            <Card className={styles.card} padding={0} width="100%">
+              <form className={styles.form} onSubmit={onSubmit}>
+                <header className={styles.header}>
+                  <span className={styles.headerIcon} aria-hidden="true"><LogIn size={21} /></span>
+                  <Heading level={1}>З поверненням</Heading>
+                  <Text color="secondary" display="block">Увійдіть для доступу до каталогу запчастин BRP</Text>
+                </header>
+                <div className={styles.body}>
+                  <TextInput
+                    label="Електронна пошта"
+                    htmlName="email"
+                    onChange={onEmailChange}
+                    placeholder="name@company.com"
+                    startIcon={<Mail size={16} aria-hidden="true" />}
+                    type="email"
+                    ref={emailInputRef}
+                    value={email}
+                    width="100%"
+                  />
+                  <div className={styles.passwordField}>
+                    <TextInput
+                      label="Пароль"
+                      htmlName="password"
+                      onChange={onPasswordChange}
+                      placeholder="••••••••"
+                      startIcon={<LockKeyhole size={16} aria-hidden="true" />}
+                      type={showPassword ? "text" : "password"}
+                      ref={passwordInputRef}
+                      value={password}
+                      width="100%"
+                    />
+                    <IconButton
+                      icon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      label={showPassword ? "Приховати пароль" : "Показати пароль"}
+                      onClick={() => onShowPasswordChange(!showPassword)}
+                      variant="ghost"
+                    />
+                  </div>
+                  <Switch
+                    label="Запам’ятати на 30 днів"
+                    onChange={onRememberChange}
+                    value={remember}
+                  />
+                  <Button
+                    isDisabled={!email.trim() || !password || submitting}
+                    isLoading={submitting}
+                    label="Увійти"
+                    type="submit"
+                    variant="primary"
+                    width="100%"
+                  />
+                </div>
+              </form>
+            </Card>
+          </section>
+        </div>
       </main>
     </AstryxBrpUiProvider>
   );

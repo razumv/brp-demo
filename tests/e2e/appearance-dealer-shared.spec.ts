@@ -20,9 +20,14 @@ test("dealer routes provide Astryx controls through the stable workflow subtree"
   await page.goto("/dealer/parts-inventory");
 
   await expect(page.locator('[data-dealer-ui-renderer="astryx"]')).toHaveCount(1);
+  await expect(page.locator('[data-dealer-workspace-surface="astryx"]')).toHaveCount(1);
   await expect(page.locator('[data-dealer-data-toolbar][data-renderer="astryx"]')).toHaveCount(1);
   await expect(page.getByRole("textbox", {name: "Пошук складу"})).toBeVisible();
   await expect(page.getByRole("button", {name: "Фільтри", exact: true})).toHaveAttribute("aria-expanded", "false");
+
+  const workspace = page.locator('[data-dealer-workspace-surface="astryx"]');
+  await expect.poll(() => workspace.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+  await expect.poll(() => workspace.evaluate((element) => getComputedStyle(element).borderTopColor)).not.toBe("rgba(0, 0, 0, 0)");
 });
 
 test("dealer dashboard and parts catalog inherit Astryx without replacing workflow state", async ({page}) => {
