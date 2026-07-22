@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { formatDateTime } from "@/components/dealer/common";
 import { EmptyState, Modal, Panel } from "@/components/shared/ui";
 import type { DealerSnapshot } from "@/lib/dealer/contracts";
@@ -102,7 +103,7 @@ export function OrderDraftsPage() {
   return (
     <FeatureFrame
       feature="order-drafts"
-      action={<button type="button" className="button button-primary" onClick={() => void startDraft()}><Plus size={15} /> Нова чернетка</button>}
+      action={<BrpButton label="Нова чернетка" icon={<Plus size={15} />} onPress={startDraft} />}
     >
       <Panel>
         <DealerDataToolbar
@@ -114,7 +115,7 @@ export function OrderDraftsPage() {
             onOpenChange: setFiltersOpen,
             panelId: "draft-filters",
             onClear: resetFilters,
-            content: <><label className={styles.filterField}><span>Вміст чернетки</span><select aria-label="Вміст чернетки" value={content} onChange={(event) => setContent(event.target.value as DraftContentFilter)}><option value="all">Усі</option><option value="with-items">З позиціями</option><option value="empty">Порожні</option></select></label><label className={styles.filterField}><span>Покупець чернетки</span><select aria-label="Покупець чернетки" value={buyer} onChange={(event) => setBuyer(event.target.value as DraftBuyerFilter)}><option value="all">Усі</option><option value="assigned">Призначений</option><option value="unassigned">Не призначений</option></select></label></>,
+            content: <><BrpSelect label="Вміст чернетки" value={content} onValueChange={(value) => setContent(value as DraftContentFilter)} options={[{ value: "all", label: "Усі" }, { value: "with-items", label: "З позиціями" }, { value: "empty", label: "Порожні" }]} /><BrpSelect label="Покупець чернетки" value={buyer} onValueChange={(value) => setBuyer(value as DraftBuyerFilter)} options={[{ value: "all", label: "Усі" }, { value: "assigned", label: "Призначений" }, { value: "unassigned", label: "Не призначений" }]} /></>,
           }}
           resultMeta={`Показано ${filtered.length} з ${snapshot.drafts.length}`}
         />

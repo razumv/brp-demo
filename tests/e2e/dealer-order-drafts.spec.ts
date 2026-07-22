@@ -50,12 +50,12 @@ test("draft filters change visible records, compose with search, and reset", asy
   await expect(activeTrigger).toHaveText("2");
   await activeTrigger.click();
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
-  await page.getByLabel("Пошук чернеток").fill("без покупця");
+  await page.getByRole("searchbox", { name: /Пошук чернеток/ }).fill("без покупця");
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeHidden();
-  await page.getByLabel("Пошук чернеток").fill("з покупцем");
+  await page.getByRole("searchbox", { name: /Пошук чернеток/ }).fill("з покупцем");
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
 
-  await page.getByLabel("Пошук чернеток").fill("");
+  await page.getByRole("searchbox", { name: /Пошук чернеток/ }).fill("");
   await page.getByRole("button", { name: "Скинути фільтри" }).click();
   await expect(page.getByLabel("Вміст чернетки")).toHaveValue("all");
   await expect(page.getByLabel("Покупець чернетки")).toHaveValue("all");
@@ -69,7 +69,7 @@ test("draft toolbar remains a visible one-row control set without Excel at 390 p
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dealer/order-drafts");
 
-  const search = page.getByLabel("Пошук чернеток");
+  const search = page.getByRole("searchbox", { name: /Пошук чернеток/ });
   const searchControl = search.locator("xpath=..");
   const filter = page.getByRole("button", { name: "Фільтри", exact: true });
   await expect(search).toBeVisible();
@@ -102,7 +102,7 @@ test("dealer can search, reopen, and delete a saved order draft", async ({ page 
   await page.getByRole("button", { name: "Зберегти чернетку" }).click();
 
   await page.goto("/dealer/order-drafts");
-  await page.getByLabel("Пошук чернеток").fill("PO-DRAFT-17");
+  await page.getByRole("searchbox", { name: /Пошук чернеток/ }).fill("PO-DRAFT-17");
   await expect(page.getByText("Охолоджувальна рідина", { exact: true })).toBeVisible();
   await expect(page.getByText("Показано 1 з 1", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Відкрити", exact: true }).click();

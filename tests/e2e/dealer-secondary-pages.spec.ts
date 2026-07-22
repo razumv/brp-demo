@@ -44,7 +44,7 @@ test("documents filter typed rows with the shared toolbar and omit export", asyn
   await openDealerPage(page, "/dealer/documents");
   const trigger = page.getByRole("button", { name: "Фільтри", exact: true });
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
-  await page.getByLabel("Пошук документів").fill("INV-2026-001");
+  await page.getByRole("searchbox", { name: /Пошук документів/ }).fill("INV-2026-001");
   await expect(page.getByText("INV-2026-001", { exact: true })).toBeVisible();
   await expect(page.getByText("1 документ", { exact: true })).toBeVisible();
   await trigger.click();
@@ -58,7 +58,7 @@ test("consignment, inventory, and network retain local filters without unsupport
   await openDealerPage(page, "/dealer/consignment");
   await expect(page.getByText("Локальний перегляд форми без відправлення")).toHaveCount(0);
   await page.getByRole("tab", { name: "Мережа" }).click();
-  await page.getByLabel("Пошук консигнації").fill("Belt");
+  await page.getByRole("searchbox", { name: /Пошук консигнації/ }).fill("Belt");
   await expect(page.getByText("BELT-V", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Фільтр консигнації").selectOption("available");
@@ -74,7 +74,7 @@ test("consignment, inventory, and network retain local filters without unsupport
 
   await openDealerPage(page, "/dealer/network");
   await page.getByRole("tab", { name: "Техніка" }).click();
-  await page.getByLabel("Пошук мережі").fill("Outlander");
+  await page.getByRole("searchbox", { name: /Пошук мережі/ }).fill("Outlander");
   await expect(page.getByText("Outlander MAX XT", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Дилер мережі").selectOption("Logos");
@@ -85,13 +85,13 @@ test("settlements and Parts Report derive visible rows from deterministic ledger
   await openDealerPage(page, "/dealer/settlements");
   await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Період взаєморозрахунків").selectOption("90");
-  await page.getByLabel("Пошук взаєморозрахунків").fill("INV-2026-001");
+  await page.getByRole("searchbox", { name: /Пошук взаєморозрахунків/ }).fill("INV-2026-001");
   await expect(page.getByText("INV-2026-001", { exact: true })).toBeVisible();
   await expect(page.getByText("1 рух", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Оновити баланс", exact: true })).toHaveCount(0);
 
   await openDealerPage(page, "/dealer/parts-report");
-  await page.getByLabel("Пошук звіту запчастин").fill("LOG-01");
+  await page.getByRole("searchbox", { name: /Пошук звіту запчастин/ }).fill("LOG-01");
   await expect(page.getByText("LOG-01", { exact: true })).toBeVisible();
   await expect(page.getByText("1 замовлення", { exact: true })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Статус" })).toHaveCount(0);
