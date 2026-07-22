@@ -10,6 +10,7 @@ import {Popover} from "@astryxdesign/core/Popover";
 import {Selector} from "@astryxdesign/core/Selector";
 import {Tab, TabList} from "@astryxdesign/core/TabList";
 import {TextInput} from "@astryxdesign/core/TextInput";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {
@@ -120,6 +121,8 @@ export default function AstryxAdminSupplierOrdersView({
   onShowClosedChange,
   onReady,
 }: SupplierOrdersViewProps & AstryxRendererViewProps) {
+  const {renderedDesignSystem} = useAppearance();
+  const isRendererActive = renderedDesignSystem === "astryx";
   useLayoutEffect(() => {
     const frame = window.requestAnimationFrame(onReady);
     return () => window.cancelAnimationFrame(frame);
@@ -165,9 +168,9 @@ export default function AstryxAdminSupplierOrdersView({
           <TextInput label="Пошук за номером SO або артикулом" isLabelHidden value={query} onChange={onQueryChange} placeholder="Пошук за номером SO, артикулом..." hasClear width="100%" />
           <Popover
             label="Період замовлень постачальнику"
-            isOpen={periodOpen}
+            isOpen={isRendererActive && periodOpen}
             onOpenChange={onPeriodOpenChange}
-            width={620}
+            width="min(620px, calc(100vw - 32px))"
             placement="below"
             content={<Calendar start={periodStart} end={periodEnd} onSelect={onPeriodSelect} />}
           >
@@ -177,7 +180,7 @@ export default function AstryxAdminSupplierOrdersView({
             label="Сортування замовлень постачальнику"
             isLabelHidden
             value={sort}
-            onChange={(value) => onSortChange(value as SupplierOrdersViewProps["sort"])}
+            onChange={(value) => onSortChange((value ?? "status") as SupplierOrdersViewProps["sort"])}
             options={supplierOrderSortOptions.map((option) => ({value: option.id, label: option.label}))}
           />
         </section>

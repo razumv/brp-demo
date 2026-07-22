@@ -118,7 +118,7 @@ export default function AstryxAdminConsignmentView({
               {consignmentRequestFilters.map((filter) => <SegmentedControlItem key={filter.id} value={filter.id} label={filter.label} />)}
             </SegmentedControl>
           ) : (
-            <Selector label="Тримач консигнації" isLabelHidden value={holder} onChange={(value) => onHolderChange(value as ConsignmentPageViewProps["holder"])} options={[{value: "all", label: "Усі тримачі"}, ...consignmentHolders.map((item) => ({value: item.id, label: item.name}))]} />
+            <Selector label="Тримач консигнації" isLabelHidden value={holder} onChange={(value) => onHolderChange((value ?? "all") as ConsignmentPageViewProps["holder"])} options={[{value: "all", label: "Усі тримачі"}, ...consignmentHolders.map((item) => ({value: item.id, label: item.name}))]} />
           )}
         </section>
 
