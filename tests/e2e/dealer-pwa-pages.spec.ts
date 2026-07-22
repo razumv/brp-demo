@@ -69,9 +69,12 @@ test("Pages export serves catalog artwork through the deployment base path", asy
     "/dealer/accessories/",
   ]) {
     await page.goto(new URL(`/brp-demo${route}`, options.origin).toString());
-    const image = page.locator('img[src^="/brp-demo/images/catalog/"]').first();
+    const image = page.locator('img[src*="/brp-demo/images/catalog/"]').first();
     await image.scrollIntoViewIfNeeded();
     await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate((element) => (
+      new URL((element as HTMLImageElement).currentSrc).pathname
+    ))).toMatch(/^\/brp-demo\/images\/catalog\//);
     await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
 });
