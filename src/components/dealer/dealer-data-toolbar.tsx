@@ -1,8 +1,12 @@
 "use client";
 
 import { Filter, Search, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import {BrpButton, BrpIconButton, BrpTextInput} from "@/components/brp-ui";
+import {
+  type DataToolbarFilterContract,
+  useDismissibleDataToolbarFilter,
+} from "@/components/brp-ui/data-toolbar-contract";
 import {useAppearance} from "@/components/appearance/use-appearance";
 import styles from "./dealer-data-toolbar.module.css";
 
@@ -13,20 +17,21 @@ export type DealerDataToolbarProps = Readonly<{
     label: string;
     placeholder: string;
   }>;
-  filters?: Readonly<{
-    label: string;
-    activeCount: number;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    panelId: string;
-    content: ReactNode;
-    onClear?: () => void;
-  }>;
+  filters?: DataToolbarFilterContract;
   resultMeta?: ReactNode;
 }>;
 
 export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToolbarProps) {
   const {renderedDesignSystem} = useAppearance();
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+
+  useDismissibleDataToolbarFilter({
+    open: filters?.open ?? false,
+    onOpenChange: filters?.onOpenChange ?? (() => undefined),
+    triggerRef: filterTriggerRef,
+    panelRef: filterPanelRef,
+  });
 
   return (
     <section className={styles.root} data-dealer-data-toolbar data-renderer={renderedDesignSystem}>
@@ -46,6 +51,7 @@ export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToo
         {filters ? (
           <div className={styles.filterTrigger}>
             <BrpIconButton
+              ref={filterTriggerRef}
               label={filters.label}
               icon={<><Filter size={17} aria-hidden="true" />{filters.activeCount > 0 ? <span className={styles.activeCount}>{filters.activeCount}</span> : null}</>}
               variant="secondary"
@@ -57,7 +63,7 @@ export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToo
         ) : null}
       </div>
       {filters ? (
-        <div id={filters.panelId} className={styles.filterPanel} hidden={!filters.open}>
+        <div ref={filterPanelRef} id={filters.panelId} className={styles.filterPanel} role="region" aria-label={filters.label} hidden={!filters.open}>
           <div className={styles.filterContent}>{filters.content}</div>
           {filters.onClear ? (
             <div className={styles.resetButton}>

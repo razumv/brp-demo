@@ -164,6 +164,16 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await typeControl.selectOption({ label: "Гідроцикли" });
   await expect(filters).toContainText("1");
+  await page.keyboard.press("Escape");
+  await expect(filters).toHaveAttribute("aria-expanded", "false");
+  await expect(typeControl).toHaveCount(1);
+  await expect(typeControl).toHaveValue("Гідроцикли");
+
+  await filters.click();
+  await page.getByRole("heading").first().click();
+  await expect(filters).toHaveAttribute("aria-expanded", "false");
+
+  await filters.click();
   await filters.click();
   await expect(typeControl).toHaveCount(1);
   await expect(disclosurePanel).toHaveCount(1);
