@@ -226,6 +226,7 @@ const CurrentTextInput = forwardRef<HTMLInputElement, BrpTextInputProps>(functio
   leadingIcon,
   clearable,
   size = "md",
+  onKeyDown,
 }, ref) {
   const errorId = useId();
   return (
@@ -244,6 +245,7 @@ const CurrentTextInput = forwardRef<HTMLInputElement, BrpTextInputProps>(functio
           placeholder={placeholder}
           className={`w-full rounded-lg border border-input bg-background px-3 ${leadingIcon ? "pl-8" : ""} ${clearable && value ? "pr-8" : ""} ${controlSizeClasses[size]}`}
           onChange={(event) => onValueChange(event.target.value)}
+          onKeyDown={onKeyDown}
         />
         {clearable && value ? (
           <button

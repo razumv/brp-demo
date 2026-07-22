@@ -30,6 +30,8 @@ import type { OrderLine, OrderStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime, OrderStatusBadge, SectionHeading } from "./common";
 import { DealerDataToolbar } from "./dealer-data-toolbar";
+import {BrpSegmentedControl, BrpSelect} from "@/components/brp-ui";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import styles from "./dealer.module.css";
 
 type Layout = "list" | "kanban";
@@ -65,6 +67,7 @@ function validationMessage(
 }
 
 export function DealerOrdersPage() {
+  const {renderedDesignSystem} = useAppearance();
   const { snapshot } = useDealerWorkflow();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | OrderStatus>("all");
@@ -121,7 +124,7 @@ export function DealerOrdersPage() {
   }, [filtered]);
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-orders-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<ShoppingBag size={21} />}
         title="Мої замовлення"
@@ -160,22 +163,17 @@ export function DealerOrdersPage() {
               panelId: "dealer-order-filters",
               onClear: () => setStatus("all"),
               content: (
-                <label className="field">
-                  <span>Статус</span>
-                  <select value={status} onChange={(event) => setStatus(event.target.value as "all" | OrderStatus)} aria-label="Статус замовлень">
-                    {filterStatuses.map((item) => <option value={item.value} key={item.value}>{item.label} ({counts[item.value]})</option>)}
-                  </select>
-                </label>
+                <BrpSelect label="Статус замовлень" value={status} onValueChange={(value) => setStatus(value as "all" | OrderStatus)} options={filterStatuses.map((item) => ({value: item.value, label: `${item.label} (${counts[item.value]})`}))} />
               ),
             }}
             resultMeta={ukrainianCount(filtered.length, ["замовлення", "замовлення", "замовлень"])}
           />
         </div>
         <div className={styles.orderViewModes}>
-          <div className="segmented" aria-label="Вигляд замовлень">
-            <button type="button" aria-pressed={layout === "list"} onClick={() => setLayout("list")}><List size={14} /> Список</button>
-            <button type="button" aria-pressed={layout === "kanban"} onClick={() => setLayout("kanban")}><LayoutGrid size={14} /> Канбан</button>
-          </div>
+          <BrpSegmentedControl label="Вигляд замовлень" value={layout} onValueChange={(value) => setLayout(value as Layout)} options={[
+            {value: "list", label: "Список", icon: <List size={14} />},
+            {value: "kanban", label: "Канбан", icon: <LayoutGrid size={14} />},
+          ]} />
         </div>
 
         {filtered.length === 0 ? (
@@ -256,6 +254,7 @@ function PrivateLineNote({ orderId, line }: { orderId: string; line: OrderLine }
 }
 
 export function DealerOrderDetail({ id }: { id: string }) {
+  const {renderedDesignSystem} = useAppearance();
   const { snapshot, commands } = useDealerWorkflow();
   const order = findDealerOrder(snapshot, id);
   const [message, setMessage] = useState("");
@@ -299,7 +298,7 @@ export function DealerOrderDetail({ id }: { id: string }) {
   };
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-order-detail-renderer={renderedDesignSystem}>
       <nav className={styles.breadcrumbs} aria-label="Навігація">
         <Link href="/dealer/orders"><ArrowLeft size={14} /> Мої замовлення</Link>
         <ChevronRight size={14} />

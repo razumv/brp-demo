@@ -165,8 +165,8 @@ export const astryxAdapter: BrpUiAdapter = {
   BrpIconButton: ({label, icon, variant = "ghost", size = "md", disabled, busy, ariaControls, expanded, type = "button", onPress, ref}) => (
     <AstryxIconButton ref={ref} label={label} icon={icon} variant={variant === "danger" ? "destructive" : variant} size={size} type={type} isDisabled={disabled} isLoading={busy} aria-controls={ariaControls} aria-expanded={expanded} onClick={() => void onPress?.()} />
   ),
-  BrpTextInput: ({label, value, onValueChange, placeholder, type = "text", error, disabled, required, hideLabel, leadingIcon, clearable, size = "md", ref}) => (
-    <AstryxTextInput ref={ref} label={label} value={value} onChange={onValueChange} placeholder={placeholder} type={type === "search" ? "text" : type} status={error ? {type: "error", message: error} : undefined} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} startIcon={leadingIcon} hasClear={clearable} size={size} width="100%" />
+  BrpTextInput: ({label, value, onValueChange, placeholder, type = "text", error, disabled, required, hideLabel, leadingIcon, clearable, size = "md", onKeyDown, ref}) => (
+    <AstryxTextInput ref={ref} label={label} value={value} onChange={onValueChange} onKeyDown={onKeyDown} placeholder={placeholder} type={type === "search" ? "text" : type} status={error ? {type: "error", message: error} : undefined} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} startIcon={leadingIcon} hasClear={clearable} size={size} width="100%" />
   ),
   BrpSelect: ({label, value, options, onValueChange, placeholder, disabled, required, hideLabel, searchable, size = "md"}) => (
     <AstryxSelector label={label} value={value} options={options.map((option) => ({value: option.value, label: option.label, disabled: option.disabled, icon: option.icon}))} onChange={onValueChange} placeholder={placeholder} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} hasSearch={searchable} size={size} width="100%" />

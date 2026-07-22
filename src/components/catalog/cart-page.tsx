@@ -16,6 +16,8 @@ import {
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { LockedOperation } from "@/components/dealer/locked-operation";
 import { EmptyState, InlineNotice, Modal, PageHeader, Panel } from "@/components/shared/ui";
+import {BrpButton, BrpSelect, BrpTextInput} from "@/components/brp-ui";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import { getAccessoryProduct } from "@/lib/dealer/accessories-data";
 import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { formatMoney, getPart, orderTotal } from "@/lib/mock-data";
@@ -51,6 +53,7 @@ function commandFailureMessage(result: DealerCommandResult<unknown>, fallback: s
 }
 
 export function CartPage() {
+  const {renderedDesignSystem} = useAppearance();
   const router = useRouter();
   const { snapshot, commands } = useDealerWorkflow();
   const { builder } = snapshot;
@@ -175,7 +178,7 @@ export function CartPage() {
   };
 
   return (
-    <div className={`page page-narrow ${styles.cartPage}`}>
+    <div className={`page page-narrow ${styles.cartPage}`} data-dealer-cart-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<ShoppingCart size={20} />}
         title="Оформлення замовлення"
@@ -190,28 +193,19 @@ export function CartPage() {
           <Panel className={styles.formPanel}>
             <div className={styles.panelHeading}>
               <div><h2>Чернетка замовлення</h2><p>Збережіть її, щоб продовжити оформлення пізніше</p></div>
-              <button type="button" className="button button-outline" onClick={() => void saveDraft()}>Зберегти чернетку</button>
+              <BrpButton label="Зберегти чернетку" variant="secondary" onPress={saveDraft} />
             </div>
             <div className={styles.formGrid}>
-              <label className="field">
-                <span>Назва чернетки</span>
-                <input value={builder.title} onChange={(event) => updateBuilder({ title: event.target.value })} placeholder="Нове замовлення" />
-              </label>
-              <label className="field">
-                <span>PO / номер замовлення</span>
-                <input value={builder.po} onChange={(event) => updateBuilder({ po: event.target.value })} placeholder="напр. PO-2026-041" />
-              </label>
+              <BrpTextInput label="Назва чернетки" value={builder.title} onValueChange={(value) => void updateBuilder({title: value})} placeholder="Нове замовлення" />
+              <BrpTextInput label="PO / номер замовлення" value={builder.po} onValueChange={(value) => void updateBuilder({po: value})} placeholder="напр. PO-2026-041" />
               <div className={`field ${styles.customerField}`}>
                 <span>Покупець</span>
                 <div className={styles.customerPicker}>
-                  <select value={builder.customerId} onChange={(event) => {
-                    updateBuilder({ customerId: event.target.value });
+                  <BrpSelect label="Оберіть покупця" hideLabel value={builder.customerId} options={snapshot.customers.map((customer) => ({value: customer.id, label: customer.name}))} placeholder="Оберіть клієнта…" onValueChange={(value) => {
+                    void updateBuilder({ customerId: value });
                     setValidation([]);
-                  }} aria-label="Оберіть покупця">
-                    <option value="">Оберіть клієнта…</option>
-                    {snapshot.customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}
-                  </select>
-                  <button type="button" className="button button-outline" onClick={() => setCustomerOpen(true)}><UserPlus size={15} /> Швидко створити</button>
+                  }} />
+                  <BrpButton label="Швидко створити" icon={<UserPlus size={15} />} variant="secondary" onPress={() => setCustomerOpen(true)} />
                 </div>
               </div>
               <label className={`field ${styles.fullField}`}>
@@ -231,16 +225,16 @@ export function CartPage() {
             <div className={styles.orderTools}>
               <div className={styles.manualPartForm}>
                 <PackagePlus size={16} />
-                <input aria-label="Номер запчастини" value={manualPart} onKeyDown={(event) => {
+                <BrpTextInput label="Номер запчастини" hideLabel value={manualPart} onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
                     void addManualPart();
                   }
-                }} onChange={(event) => {
-                  setManualPart(event.target.value);
+                }} onValueChange={(value) => {
+                  setManualPart(value);
                   setManualFeedback(null);
                 }} placeholder="Додати за номером, напр. 9779150" />
-                <button type="button" className="button button-primary" onClick={() => void addManualPart()}><Plus size={15} /> Додати</button>
+                <BrpButton label="Додати" icon={<Plus size={15} />} variant="primary" onPress={addManualPart} />
               </div>
               <div className={styles.spreadsheetButtons}>
                 <LockedOperation
@@ -339,7 +333,7 @@ export function CartPage() {
             {validation.length ? (
               <InlineNotice tone="danger"><span>{validation.map((error) => <span className={styles.validationLine} key={error}>{error}</span>)}</span></InlineNotice>
             ) : null}
-            <button type="submit" className="button button-primary button-wide" disabled={submitting}><Check size={16} /> {submitting ? "Створення…" : "Створити замовлення"}</button>
+            <BrpButton type="submit" label="Створити замовлення" content={submitting ? "Створення…" : "Створити замовлення"} icon={<Check size={16} />} variant="primary" fullWidth disabled={submitting} busy={submitting} />
             <p>Після створення замовлення одразу з’явиться в «Мої замовлення».</p>
           </Panel>
         </aside>

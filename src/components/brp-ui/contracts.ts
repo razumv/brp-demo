@@ -1,6 +1,7 @@
 import type {
   ComponentType,
   HTMLAttributes,
+  KeyboardEventHandler,
   ReactElement,
   ReactNode,
   RefAttributes,
@@ -50,6 +51,7 @@ export interface BrpTextInputProps {
   leadingIcon?: ReactNode;
   clearable?: boolean;
   size?: BrpControlSize;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
 }
 
 export interface BrpSelectOption {
