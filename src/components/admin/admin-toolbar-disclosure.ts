@@ -1,3 +1,5 @@
+import type { RefObject } from "react";
+
 export const ADMIN_TOOLBAR_SECTIONS = ["filters", "view", "actions"] as const;
 
 export type AdminToolbarSection = (typeof ADMIN_TOOLBAR_SECTIONS)[number];
@@ -10,6 +12,8 @@ export type AdminToolbarMobileDisclosure = {
   readonly expanded?: boolean;
   readonly controlsId?: string;
   readonly onExpandedChange?: (expanded: boolean) => void;
+  readonly panelRef?: RefObject<HTMLElement | null>;
+  readonly triggerRef?: RefObject<HTMLElement | null>;
 };
 
 export function getDisclosedToolbarSections(

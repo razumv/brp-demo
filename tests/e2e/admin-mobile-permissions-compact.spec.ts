@@ -32,9 +32,17 @@ async function expectCompactPermissionRow(
   await expect(switches.first()).toBeDisabled();
   await expect(switches.first()).toHaveAttribute("aria-checked", "true");
 
-  const firstBox = await switches.nth(0).boundingBox();
-  const secondBox = await switches.nth(1).boundingBox();
-  expect(secondBox?.x ?? 0).toBeGreaterThan(firstBox?.x ?? 0);
+  const firstPermission = region.locator('[class*="mobilePermissionRow"]').first();
+  const actionLabel = firstPermission.locator('[class*="actionLabel"]');
+  const actionBox = await actionLabel.boundingBox();
+  const switchBox = await switches.first().boundingBox();
+  expect(switchBox?.x ?? 0).toBeGreaterThan(actionBox?.x ?? 0);
+  expect(Math.abs((switchBox?.y ?? 0) - (actionBox?.y ?? 0))).toBeLessThan(16);
+  expect(switchBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+  expect(switchBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await expect(actionLabel).toHaveAttribute("id", /.+/);
+  const actionLabelId = await actionLabel.getAttribute("id");
+  await expect(switches.first()).toHaveAttribute("aria-labelledby", actionLabelId ?? "");
 }
 
 async function expectDesktopPermissionTable(page: Page, label: string) {
@@ -86,7 +94,7 @@ test("dealer filters narrow team and company policy without changing read-only s
 
   const catalog = page.getByRole("button", { name: "Каталог — 1/4 увімкнено" });
   await catalog.click();
-  const readSwitch = page.getByRole("switch", { name: /^Каталог: Читання/ });
+  const readSwitch = page.getByRole("region", { name: "Каталог — 1/4 увімкнено" }).getByRole("switch", { name: "Читання" });
   await expect(readSwitch).toBeDisabled();
   await expect(readSwitch).toHaveAttribute("aria-checked", "true");
   await expectNoDocumentOverflow(page);

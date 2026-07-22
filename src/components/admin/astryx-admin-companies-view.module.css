@@ -10,16 +10,27 @@
 .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
 .filters { display: none; grid-column: 1 / -1; gap: .5rem; }
 .filtersOpen { display: grid; }
-.companyGrid { display: grid; gap: .75rem; }
-.companyCard { display: grid; gap: .75rem; min-width: 0; }
+.viewControl { grid-column: 1 / -1; min-width: 0; }
+.viewControl > * { width: 100%; }
+.companyGrid { display: grid; gap: .6rem; }
+.companyCard { display: grid; gap: .55rem; min-width: 0; }
 .companyTitle { display: flex; min-width: 0; gap: .65rem; align-items: center; }
 .companyTitle > div { min-width: 0; }
 .companyMeta { flex-wrap: wrap; gap: .5rem; justify-content: space-between; }
 .cardActions { flex-wrap: wrap; gap: .3rem; }
 .employeeList { display: grid; gap: .3rem; padding: .65rem; border-radius: var(--radius-element); background: var(--color-background-muted); }
+.desktopList { display: none; min-width: 0; }
+.tableScroller { overflow-x: auto; }
+.tableScroller:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.tableIdentity { display: flex; min-width: 0; align-items: center; gap: .55rem; }
+.tableIdentity > span:last-child { min-width: 0; }
+.tableIdentity strong, .tableIdentity p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tableActions { display: flex; flex-wrap: nowrap; gap: .15rem; }
+.mobileList { display: grid; gap: .5rem; }
+.mobileListRow { display: grid; gap: .5rem; min-width: 0; padding: .7rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-container); background: var(--color-background-card); }
 .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
 .kpis h2 { margin: .35rem 0 0; font-size: 1.4rem; }
 .dialogFields { display: grid; gap: .75rem; grid-template-columns: 1fr; }
 .dialogActions { justify-content: flex-end; gap: .5rem; }
-@media (min-width: 768px) { .toolbar { grid-template-columns: minmax(14rem, 1fr) minmax(10rem, .45fr) minmax(10rem, .45fr); } .mobileFilterButton { display: none; } .filters { display: contents; } .companyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dialogFields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 768px) { .toolbar { grid-template-columns: minmax(14rem, 1fr) minmax(9rem, .42fr) minmax(9rem, .42fr) auto; align-items: end; } .mobileFilterButton { display: none; } .filters { display: contents; } .viewControl { grid-column: auto; } .viewControl > * { width: auto; } .companyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .desktopList { display: block; } .mobileList { display: none; } .dialogFields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1080px) { .companyGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

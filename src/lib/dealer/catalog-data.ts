@@ -31,6 +31,21 @@ export type ResolvedCatalogSelection = Readonly<{
   path: readonly DealerCatalogNode[];
 }>;
 
+export const catalogDiagramThumbnails: Readonly<Record<string, string>> = {
+  "00- Service - Maintenance Parts & Fluids": "/images/catalog/maintenance-diagram-source.png",
+};
+
+export function filterDiagramNames(
+  diagrams: readonly string[],
+  query: string,
+): readonly string[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase("en-US");
+  if (!normalizedQuery) return diagrams;
+  return diagrams.filter((diagram) => (
+    diagram.toLocaleLowerCase("en-US").includes(normalizedQuery)
+  ));
+}
+
 const sourceDiagramLabels = [
   "00- Model Numbers",
   "01- Rotax - Air Intake Manifold And Throttle Body",

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { startDealerPagesServer, type DealerPagesServer } from "./support/dealer-pages-server";
 import { loginAsDealer, openDealerRoute } from "./support/dealer-session";
+import { CATALOG_IDS } from "@/lib/mock-data";
 
 let pagesServer: DealerPagesServer | undefined;
 
@@ -56,6 +57,25 @@ test("Pages export certifies every required route after visible dealer sign-in",
   ]) {
     await openDealerRoute(page, route.path, route.heading, options);
     await expect(page.getByText(route.content, { exact: true })).toBeVisible();
+  }
+});
+
+test("Pages export serves catalog artwork through the deployment base path", async ({ page }) => {
+  const options = { basePath: "/brp-demo", origin: server().url("/") };
+  await loginAsDealer(page, options);
+
+  for (const route of [
+    `/catalog/${CATALOG_IDS.brand}/${CATALOG_IDS.configuration}/`,
+    "/dealer/accessories/",
+  ]) {
+    await page.goto(new URL(`/brp-demo${route}`, options.origin).toString());
+    const image = page.locator('img[src*="/brp-demo/images/catalog/"]').first();
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate((element) => (
+      new URL((element as HTMLImageElement).currentSrc).pathname
+    ))).toMatch(/^\/brp-demo\/images\/catalog\//);
+    await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   }
 });
 

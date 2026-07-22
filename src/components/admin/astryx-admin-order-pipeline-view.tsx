@@ -201,8 +201,8 @@ function OrderRow({order}: {order: AdminPipelineDisplayOrder}) {
       <span className={styles.orderProgress}><span className={styles.progressTrack}><span className={`${styles.progressFill} ${progressClass(order)}`} /></span><OrderBadges order={order} /></span>
     </>
   );
-  if (order.detailHref) return <Link href={order.detailHref} className={styles.orderRow}>{body}</Link>;
-  return <div className={styles.orderRow} aria-disabled="true" title="Представницький рядок: детальна картка не була зафіксована">{body}</div>;
+  if (order.detailHref) return <Link href={order.detailHref} className={styles.orderRow} data-operational-surface="pipeline-list-hover">{body}</Link>;
+  return <div className={styles.orderRow} data-operational-surface="pipeline-list-hover" aria-disabled="true" title="Представницький рядок: детальна картка не була зафіксована">{body}</div>;
 }
 
 function ListView({model}: {model: AdminOrderPipelineModel}) {
@@ -216,8 +216,8 @@ function ListView({model}: {model: AdminOrderPipelineModel}) {
         const expanded = model.expanded.has(status);
         const orders = model.pageOrders.filter((order) => order.status === status);
         return (
-          <Card key={status} className={styles.listGroup} padding={4}>
-            <header className={styles.listGroupHeader}>
+          <Card key={status} className={styles.listGroup} padding={0} data-operational-surface="pipeline-list-group">
+            <header className={styles.listGroupHeader} data-operational-surface="pipeline-list-header">
               <button type="button" className={styles.groupButton} aria-expanded={expanded} onClick={() => model.toggleExpanded(status)}>
                 {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 {meta.groupLabel}
@@ -225,7 +225,7 @@ function ListView({model}: {model: AdminOrderPipelineModel}) {
               </button>
               <Text type="supporting">{expanded ? "Згорнути" : `+${count} (натисніть, щоб розгорнути)`}</Text>
             </header>
-            {expanded ? (orders.length > 0 ? <div className={styles.orderList}>{orders.map((order) => <OrderRow key={`${order.id}-${order.code}`} order={order} />)}</div> : <EmptyState isCompact title="Представницьких рядків на цій сторінці немає" description="Агрегований підсумок збережено; детальні картки для цих записів недоступні." />) : null}
+            {expanded ? (orders.length > 0 ? <div className={styles.orderList} data-operational-surface="pipeline-list-body">{orders.map((order) => <OrderRow key={`${order.id}-${order.code}`} order={order} />)}</div> : <EmptyState isCompact title="Представницьких рядків на цій сторінці немає" description="Агрегований підсумок збережено; детальні картки для цих записів недоступні." />) : null}
           </Card>
         );
       })}
@@ -245,7 +245,7 @@ function KanbanCard({order}: {order: AdminPipelineDisplayOrder}) {
     </>
   );
   return (
-    <Card className={styles.kanbanCard} padding={3}>
+    <Card className={styles.kanbanCard} padding={3} data-operational-surface="pipeline-kanban-card">
       {order.detailHref ? <Link href={order.detailHref} className={styles.kanbanLink}>{body}</Link> : <div aria-disabled="true" title="Представницький рядок без зафіксованої detail-картки">{body}</div>}
       {order.status === "new" ? <><Button label="Підтвердити" icon={<LockKeyhole size={14} />} variant="secondary" width="100%" isDisabled /><Text type="supporting" color="secondary" className={styles.disabledReason}>Підтвердження стане доступним після підключення операційної інтеграції.</Text></> : null}
     </Card>
@@ -259,7 +259,7 @@ function KanbanView({model}: {model: AdminOrderPipelineModel}) {
         const meta = ADMIN_ORDER_STATUS_META[status];
         const orders = model.pageOrders.filter((order) => order.status === status);
         return (
-          <Card key={status} className={styles.kanbanColumn} padding={3} variant="muted">
+          <Card key={status} className={styles.kanbanColumn} padding={3} variant="muted" data-operational-surface="pipeline-kanban-column">
             <header className={styles.kanbanHeader}><Text weight="semibold">{meta.kanbanLabel}</Text><Badge label={String(model.summaryCounts[status])} variant={astryxTone[meta.tone]} /></header>
             {orders.map((order) => <KanbanCard key={`${order.id}-${order.code}`} order={order} />)}
             {orders.length === 0 ? <EmptyState isCompact title="Замовлень поки немає" /> : null}
@@ -289,14 +289,14 @@ export function AstryxAdminOrderPipelineView({model, onReady}: AstryxAdminOrderP
   useRendererReady(onReady);
 
   return (
-    <main className={styles.page} data-admin-pipeline-renderer="astryx">
+    <main className={styles.page} data-admin-pipeline-renderer="astryx" data-operational-surface="pipeline-canvas">
       <header className={styles.header}>
         <div className={styles.headerTitle}><Heading level={1}>Пайплайн замовлень</Heading><Badge label={String(model.visibleTotal)} variant="neutral" icon={<Box size={13} />} /></div>
       </header>
       <Banner status="warning" container="card" title="Замовлення дилерів відкриті" description="Дилери бачать складські індикатори та можуть надсилати замовлення." endContent={<Button label="Призупинити" icon={<LockKeyhole size={14} />} variant="secondary" isDisabled />}>
         <Text type="supporting">Призупинення замовлень стане доступним після підключення операційної інтеграції.</Text>
       </Banner>
-      <Card className={styles.toolbar} padding={3}>
+      <Card className={styles.toolbar} padding={3} data-operational-surface="pipeline-toolbar-card">
         <Toolbar
           label="Керування пайплайном"
           className={styles.astryxToolbar}
@@ -310,7 +310,7 @@ export function AstryxAdminOrderPipelineView({model, onReady}: AstryxAdminOrderP
           </SegmentedControl>
         </div>
       </Card>
-      <SummaryCards counts={model.summaryCounts} />
+      <div data-operational-surface="pipeline-summary"><SummaryCards counts={model.summaryCounts} /></div>
       {model.view === "list" ? <ListView model={model} /> : <KanbanView model={model} />}
       <SupplierOrderQueue />
       <div className={styles.pagination}>

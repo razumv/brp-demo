@@ -291,6 +291,8 @@ function VehicleActions({
 
 function VehicleCatalog() {
   const { vehicleQuery: query, setVehicleQuery: setQuery, vehicleCategory: category, setVehicleCategory: setCategory, columnCategory, setColumnCategory, skuFilter, setSkuFilter, nameFilter, setNameFilter, colorFilter, setColorFilter, engineFilter, setEngineFilter, modelYearFilter, setModelYearFilter, productionYearFilter, setProductionYearFilter, advancedFiltersOpen, setAdvancedFiltersOpen } = useCatalogViewState();
+  const advancedFiltersPanelRef = useRef<HTMLDivElement>(null);
+  const advancedFiltersTriggerRef = useRef<HTMLButtonElement>(null);
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -390,6 +392,7 @@ function VehicleCatalog() {
         )}
         actions={(
           <button
+            ref={advancedFiltersTriggerRef}
             type="button"
             className="button button-outline"
             aria-expanded={advancedFiltersOpen}
@@ -410,11 +413,13 @@ function VehicleCatalog() {
           expanded: advancedFiltersOpen,
           controlsId: "catalog-vehicle-advanced-filters",
           onExpandedChange: setAdvancedFiltersOpen,
+          panelRef: advancedFiltersPanelRef,
+          triggerRef: advancedFiltersTriggerRef,
         }}
       />
 
       {advancedFiltersOpen ? (
-        <div id="catalog-vehicle-advanced-filters">
+        <div ref={advancedFiltersPanelRef} id="catalog-vehicle-advanced-filters">
           <Panel className="grid gap-3 p-4 shadow-none">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>

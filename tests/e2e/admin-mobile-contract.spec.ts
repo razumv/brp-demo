@@ -164,6 +164,18 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await typeControl.selectOption({ label: "Гідроцикли" });
   await expect(filters).toContainText("1");
+  await typeControl.focus();
+  await page.keyboard.press("Escape");
+  await expect(filters).toHaveAttribute("aria-expanded", "false");
+  await expect(filters).toBeFocused();
+  await expect(typeControl).toHaveCount(1);
+  await expect(typeControl).toHaveValue("Гідроцикли");
+
+  await filters.click();
+  await page.getByRole("heading").first().click();
+  await expect(filters).toHaveAttribute("aria-expanded", "false");
+
+  await filters.click();
   await filters.click();
   await expect(typeControl).toHaveCount(1);
   await expect(disclosurePanel).toHaveCount(1);
@@ -183,6 +195,47 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(filters).toHaveCount(0);
   await expect(typeControl).toHaveCount(1);
   await expect(typeControl).toHaveValue("Гідроцикли");
+});
+
+test("catalog controlled filters keep ownership while their external panel is interactive", async ({ page }) => {
+  await openAdminRoute(page, "/admin/catalog", 390);
+  const trigger = page.getByRole("button", { name: "Детальні фільтри", exact: true });
+  const panel = page.locator("#catalog-vehicle-advanced-filters");
+  const category = page.getByRole("combobox", { name: "Категорія таблиці" });
+
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+
+  await category.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await category.selectOption("ATV");
+  await expect(category).toHaveValue("ATV");
+  await expect(trigger).toContainText("1");
+
+  // A native select owns the first Escape while its OS-level popup is open.
+  // Verify the disclosure contract from a regular field inside the panel.
+  await page.getByRole("textbox", { name: "SKU" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(trigger).toBeFocused();
+});
+
+test("catalog desktop detailed filters toggle closed and restore focus on Escape", async ({ page }) => {
+  await openAdminRoute(page, "/admin/catalog", 1440);
+  const trigger = page.getByRole("button", { name: /^Детальні фільтри/ });
+  const panel = page.locator("#catalog-vehicle-advanced-filters");
+
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await trigger.click();
+  await expect(panel).toHaveCount(0);
+
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(trigger).toBeFocused();
 });
 
 test("mobile tab select takes over at the 767px breakpoint", async ({ page }) => {

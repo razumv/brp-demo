@@ -13,9 +13,12 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  useCallback,
   useId,
+  useRef,
   useState,
 } from "react";
+import { useDismissibleDataToolbarFilter } from "@/components/brp-ui/data-toolbar-contract";
 import { cn } from "@/lib/utils";
 import {
   getDisclosedToolbarSections,
@@ -234,6 +237,8 @@ export function AdminToolbar({
   className?: string;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileDisclosureTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileDisclosurePanelRef = useRef<HTMLDivElement>(null);
   const disclosureId = `admin-toolbar-${useId().replaceAll(":", "")}`;
   const disclosedSections = getDisclosedToolbarSections(
     { filters: Boolean(filters), view: Boolean(view), actions: Boolean(actions) },
@@ -243,8 +248,9 @@ export function AdminToolbar({
   const firstDisclosedSection = disclosedSections[0];
   const mobileDisclosureLabel = mobileDisclosure?.label ?? "Фільтри";
   const isIconOnlyMobileDisclosure = mobileDisclosure?.iconOnly !== false;
+  const controlledExpandedChange = mobileDisclosure?.onExpandedChange;
   const isControlledMobileDisclosure = Boolean(
-    mobileDisclosure?.controlsId && mobileDisclosure.onExpandedChange,
+    mobileDisclosure?.controlsId && controlledExpandedChange,
   );
   const mobileExpanded = isControlledMobileDisclosure
     ? Boolean(mobileDisclosure?.expanded)
@@ -253,6 +259,24 @@ export function AdminToolbar({
     ? mobileDisclosure?.controlsId
     : disclosureId;
 
+  const onMobileExpandedChange = useCallback((expanded: boolean) => {
+    if (isControlledMobileDisclosure) {
+      controlledExpandedChange?.(expanded);
+      return;
+    }
+    setMobileOpen(expanded);
+  }, [isControlledMobileDisclosure, controlledExpandedChange]);
+
+  useDismissibleDataToolbarFilter({
+    open: mobileExpanded,
+    onOpenChange: onMobileExpandedChange,
+    triggerRef: mobileDisclosureTriggerRef,
+    panelRef: mobileDisclosurePanelRef,
+    additionalTriggerRef: mobileDisclosure?.triggerRef,
+    additionalPanelRef: mobileDisclosure?.panelRef,
+    dismissOnPointerOutside: !isControlledMobileDisclosure || Boolean(mobileDisclosure?.panelRef),
+  });
+
   const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
     if (!control || disclosedSections.includes(section)) return null;
     return <div className={className}>{control}</div>;
@@ -260,6 +284,7 @@ export function AdminToolbar({
 
   const disclosurePanel = mobileDisclosure && hasDisclosedControls ? (
     <div
+      ref={mobileDisclosurePanelRef}
       id={isControlledMobileDisclosure ? undefined : disclosureId}
       className={cn(
         styles.mobileDisclosurePanel,
@@ -279,18 +304,13 @@ export function AdminToolbar({
       {search ? <div className={styles.toolbarSearch}>{search}</div> : null}
       {mobileDisclosure && hasDisclosedControls ? (
         <button
+          ref={mobileDisclosureTriggerRef}
           type="button"
           className={cn(styles.mobileDisclosureTrigger, isIconOnlyMobileDisclosure && styles.mobileDisclosureTriggerIconOnly)}
           aria-expanded={mobileExpanded}
           aria-controls={mobileControlsId}
           aria-label={isIconOnlyMobileDisclosure ? mobileDisclosureLabel : undefined}
-          onClick={() => {
-            if (isControlledMobileDisclosure) {
-              mobileDisclosure?.onExpandedChange?.(!mobileExpanded);
-              return;
-            }
-            setMobileOpen((current) => !current);
-          }}
+          onClick={() => onMobileExpandedChange(!mobileExpanded)}
         >
           <Filter size={16} aria-hidden="true" />
           {isIconOnlyMobileDisclosure ? null : <span className={styles.mobileDisclosureText}>{mobileDisclosureLabel}</span>}

@@ -1,4 +1,4 @@
-import {expect, test, type Page} from "@playwright/test";
+import {expect, test, type Locator, type Page} from "@playwright/test";
 import {openAdminRoute, seedAdminSession} from "./support/admin-session";
 
 type DesignSystem = "shadcn" | "astryx";
@@ -79,6 +79,22 @@ async function expectNoDocumentOverflow(page: Page) {
   ))).toBeLessThanOrEqual(1);
 }
 
+async function expectPairwiseDistinctBackgrounds(elements: readonly Locator[]) {
+  const backgrounds = await Promise.all(elements.map((element) => element.evaluate((node) => getComputedStyle(node).backgroundColor)));
+  expect(backgrounds).not.toContain("rgba(0, 0, 0, 0)");
+  expect(new Set(backgrounds).size).toBe(backgrounds.length);
+}
+
+async function expectVisibleFocusOutline(element: Locator) {
+  const outline = await element.evaluate((node) => {
+    const styles = getComputedStyle(node);
+    return {color: styles.outlineColor, style: styles.outlineStyle, width: Number.parseFloat(styles.outlineWidth)};
+  });
+  expect(outline.style).not.toBe("none");
+  expect(outline.width).toBeGreaterThanOrEqual(1);
+  expect(outline.color).not.toBe("rgba(0, 0, 0, 0)");
+}
+
 test.describe("admin ocean freight appearance matrix", () => {
   for (const appearance of appearances) {
     test(`${appearance.designSystem} ${appearance.colorMode} preserves freight filters and BL workflows`, async ({page}) => {
@@ -142,6 +158,47 @@ test.describe("admin ocean freight appearance matrix", () => {
     await expect(page.getByRole("button", {name: "Групувати за BL"})).toHaveAttribute("aria-pressed", "false");
     await expect(page.getByRole("button", {name: "Картки", exact: true})).toHaveAttribute("aria-pressed", "true");
   });
+
+  for (const colorMode of ["light", "dark"] as const) {
+    test(`Astryx ${colorMode} gives ocean operations distinct table surface roles`, async ({page}) => {
+      await page.setViewportSize({width: 1280, height: 900});
+      await seedAdminSession(page);
+      await seedAppearance(page, "astryx", colorMode);
+      await page.goto("/admin/ocean-freight");
+
+      const ocean = page.locator('[data-admin-ocean-renderer="astryx"]');
+      const tableRegion = page.getByRole("region", {name: "Контейнери морських перевезень"}).first();
+      await expect(ocean).toHaveCount(1);
+      await expect(ocean).toHaveAttribute("data-operational-surface", "ocean-canvas");
+      await expect(ocean.locator('[data-operational-surface="ocean-card"]')).toHaveCount(1);
+      await expect(ocean.locator('[data-operational-surface="ocean-table-header"]')).toHaveCount(1);
+      expect(await ocean.locator('[data-operational-surface="ocean-bl-group"]').count()).toBeGreaterThan(0);
+      await expect(ocean.locator('[data-operational-surface="ocean-table-body"]')).toHaveCount(1);
+      expect(await ocean.locator('[data-operational-surface="ocean-table-hover"]').count()).toBeGreaterThan(0);
+      await expectPairwiseDistinctBackgrounds([
+        ocean,
+        ocean.locator('[data-operational-surface="ocean-card"]'),
+        ocean.locator('[data-operational-surface="ocean-table-header"]'),
+        ocean.locator('[data-operational-surface="ocean-bl-group"]').first(),
+        ocean.locator('[data-operational-surface="ocean-table-body"]'),
+      ]);
+
+      const firstContainerRow = ocean.locator('[data-operational-surface="ocean-table-hover"]').first();
+      const rowBackground = await firstContainerRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+      await firstContainerRow.hover();
+      await expect.poll(() => firstContainerRow.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(rowBackground);
+
+      await tableRegion.focus();
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+      await expect(tableRegion).toBeFocused();
+      await expectVisibleFocusOutline(tableRegion);
+
+      await oceanViewControl(page, "Картки", "astryx").click();
+      await expect(ocean.locator('[data-operational-surface="ocean-card"]')).toHaveCount(1);
+      await expectNoDocumentOverflow(page);
+    });
+  }
 });
 
 test.describe("admin unit shipping appearance matrix", () => {

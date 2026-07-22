@@ -31,6 +31,8 @@ import {TopNav, TopNavHeading} from "@astryxdesign/core/TopNav";
 import {useFocusTrap} from "@astryxdesign/core/hooks";
 import {
   Bell,
+  ChevronsLeft,
+  ChevronsRight,
   Check,
   CircleUserRound,
   Globe2,
@@ -60,6 +62,11 @@ import {formatMoney} from "@/lib/mock-data";
 type AstryxShellViewProps = {
   controller: AppShellController;
 } & AstryxRendererViewProps;
+
+type AstryxShellNavigationViewProps = AstryxShellViewProps & {
+  sidebarCollapsed: boolean;
+  onSidebarCollapsedChange(value: boolean): void;
+};
 
 function useRendererReady(onReady: () => void) {
   useLayoutEffect(() => {
@@ -482,10 +489,34 @@ export function AstryxAppShellHeader({controller, onReady}: AstryxShellViewProps
   );
 }
 
-export function AstryxAppShellNavigation({controller, onReady}: AstryxShellViewProps) {
+export function AstryxAppShellNavigation({
+  controller,
+  onReady,
+  sidebarCollapsed,
+  onSidebarCollapsedChange,
+}: AstryxShellNavigationViewProps) {
   useRendererReady(onReady);
+
   return (
-    <SideNav className={styles.sideNav}>
+    <SideNav
+      className={styles.sideNav}
+      collapsible={{
+        hasButton: false,
+        isCollapsed: sidebarCollapsed,
+        onCollapsedChange: onSidebarCollapsedChange,
+      }}
+      topContent={(
+        <div className={styles.sideNavControls}>
+          <IconButton
+            icon={sidebarCollapsed ? <ChevronsRight size={17} /> : <ChevronsLeft size={17} />}
+            label={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+            tooltip={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+            variant="ghost"
+            onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
+          />
+        </div>
+      )}
+    >
       <AstryxNavigationContent groups={controller.navGroups} />
     </SideNav>
   );

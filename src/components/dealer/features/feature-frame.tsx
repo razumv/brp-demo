@@ -16,6 +16,7 @@ import {
 import type { ReactNode } from "react";
 import { useAppearance } from "@/components/appearance/use-appearance";
 import { PageHeader } from "@/components/shared/ui";
+import dealerStyles from "../dealer.module.css";
 
 type FeatureDefinition = {
   title: string;
@@ -49,7 +50,12 @@ export function FeatureFrame({ feature, action, children }: { feature: string; a
       data-dealer-feature-renderer={renderedDesignSystem}
     >
       <PageHeader icon={<Icon size={21} />} title={definition.title} description={definition.description} action={action} />
-      {children}
+      <section
+        className={dealerStyles.workspaceSurface}
+        data-dealer-workspace-surface={renderedDesignSystem}
+      >
+        {children}
+      </section>
     </main>
   );
 }

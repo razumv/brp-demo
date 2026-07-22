@@ -17,6 +17,7 @@ export const astryxShellClasses = {
   actions: "brp-astryx-shell-actions",
   identity: "brp-astryx-shell-identity",
   sideNav: "brp-astryx-shell-side-nav",
+  sideNavControls: "brp-astryx-shell-side-nav-controls",
   mobileNav: "brp-astryx-shell-mobile-nav",
   popover: "brp-astryx-shell-popover",
   searchDialog: "brp-astryx-shell-search-dialog",

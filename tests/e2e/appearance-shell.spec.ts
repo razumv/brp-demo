@@ -64,6 +64,37 @@ test("admin login opens one complete Astryx shell with grouped selected navigati
   await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
 });
 
+test("Astryx desktop rail persists after reload and keeps compact navigation focusable", async ({page}) => {
+  await page.setViewportSize({width: 1280, height: 900});
+  await seedAppearance(page, "astryx");
+  await loginAsAdmin(page);
+
+  const sideNavigation = page.getByRole("navigation", {name: "Side navigation"});
+  const collapseRail = page.getByRole("button", {name: "Згорнути бічну навігацію"});
+  const shell = page.locator('[data-brp-shell-renderer="astryx"]');
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "false");
+  await collapseRail.focus();
+  await page.keyboard.press("Enter");
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeFocused();
+  await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.reload();
+  await expect(shell).toHaveAttribute("data-sidebar-collapsed", "true");
+  await expect(page.getByRole("button", {name: "Розгорнути бічну навігацію"})).toBeVisible();
+  await expect(sideNavigation.getByRole("link", {name: "Огляд", exact: true})).toHaveAttribute("aria-label", "Огляд");
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.setViewportSize({width: 768, height: 900});
+  await expect(page.getByRole("button", {name: "Меню"})).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+
+  await page.setViewportSize({width: 1440, height: 900});
+  await expect(sideNavigation).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+});
+
 test("dealer shell preserves search, availability tab, and cart across both renderer directions", async ({page}) => {
   await seedAppearance(page, "shadcn");
   await seedDealerWorkflowSession(page);
@@ -153,6 +184,26 @@ test("login and offline screens render once in Astryx without changing their wor
   await page.goto("/login");
   await expect(page.locator('[data-brp-login-renderer="astryx"]')).toHaveCount(1);
   await expect(page.locator("[data-brp-login-renderer]")).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-layout="form-first"]')).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-form-zone]')).toHaveCount(1);
+  await expect(page.locator('[data-brp-login-brand-zone]')).toHaveCount(1);
+  await expect.poll(() => page.locator('[data-brp-login-form-zone]').evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+  await page.setViewportSize({width: 600, height: 900});
+  await page.reload();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
+  const zonesStacked = await page.locator('[data-brp-login-layout="form-first"]').evaluate((layout) => {
+    const form = layout.querySelector('[data-brp-login-form-zone]')?.getBoundingClientRect();
+    const brand = layout.querySelector('[data-brp-login-brand-zone]')?.getBoundingClientRect();
+
+    return Boolean(form && brand && form.bottom <= brand.top);
+  });
+  expect(zonesStacked).toBeTruthy();
+  const h1PrecedesBranding = await page.locator("h1").evaluate((heading) => {
+    const brandHeading = document.querySelector("h2");
+    return Boolean(brandHeading && heading.compareDocumentPosition(brandHeading) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  expect(h1PrecedesBranding).toBeTruthy();
+
   await page.getByLabel("Електронна пошта").fill("dealer@example.invalid");
   await page.locator('input[type="password"]:visible').fill("not-persisted");
   await page.getByRole("button", {name: "Увійти"}).click();

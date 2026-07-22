@@ -16,6 +16,21 @@
   gap: 12px;
 }
 
+.workspaceSurface {
+  min-width: 0;
+}
+
+:global([data-design-system="astryx"]) .workspaceSurface {
+  display: grid;
+  gap: 20px;
+  margin-top: 4px;
+  padding: 16px;
+  border: 1px solid var(--color-border, var(--border));
+  border-radius: 12px;
+  background: var(--color-background-surface, var(--surface-raised));
+  box-shadow: var(--shadow-low, var(--shadow-card));
+}
+
 .sectionHeading h2 {
   margin: 0;
   font-size: 13px;
@@ -2304,6 +2319,15 @@
   .dashboardColumns {
     gap: 12px;
     margin-bottom: 16px;
+  }
+
+  .workshopBoard {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
+  }
+
+  .workshopColumn {
+    min-height: 0;
   }
 
   .panelHeader {

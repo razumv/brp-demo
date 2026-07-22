@@ -93,37 +93,38 @@ export function DealerDashboard() {
         )}
       />
 
-      <section className={styles.statsGrid} aria-label="Показники замовлень">
-        <DealerStatCard
-          icon={<ClipboardList size={18} />}
-          label="Усього замовлень"
-          value={snapshot.orders.length}
-          helper={snapshot.orders.length ? "За весь час" : "Немає відкритих замовлень"}
-        />
-        <DealerStatCard
-          icon={<PackageCheck size={18} />}
-          label="У роботі"
-          value={processing.length}
-          helper={processing.length ? "Очікують виконання" : "Немає активних відвантажень"}
-          tone="info"
-        />
-        <DealerStatCard
-          icon={<WalletCards size={18} />}
-          label="Витрати за місяць"
-          value={formatMoney(monthSpend)}
-          helper="Поточний календарний місяць"
-          tone="warning"
-        />
-        <DealerStatCard
-          icon={<Package size={18} />}
-          label="Загальні витрати"
-          value={formatMoney(totalSpend)}
-          helper="Без скасованих замовлень"
-        />
-      </section>
+      <section className={styles.workspaceSurface} data-dealer-workspace-surface={renderedDesignSystem}>
+        <section className={styles.statsGrid} aria-label="Показники замовлень">
+          <DealerStatCard
+            icon={<ClipboardList size={18} />}
+            label="Усього замовлень"
+            value={snapshot.orders.length}
+            helper={snapshot.orders.length ? "За весь час" : "Немає відкритих замовлень"}
+          />
+          <DealerStatCard
+            icon={<PackageCheck size={18} />}
+            label="У роботі"
+            value={processing.length}
+            helper={processing.length ? "Очікують виконання" : "Немає активних відвантажень"}
+            tone="info"
+          />
+          <DealerStatCard
+            icon={<WalletCards size={18} />}
+            label="Витрати за місяць"
+            value={formatMoney(monthSpend)}
+            helper="Поточний календарний місяць"
+            tone="warning"
+          />
+          <DealerStatCard
+            icon={<Package size={18} />}
+            label="Загальні витрати"
+            value={formatMoney(totalSpend)}
+            helper="Без скасованих замовлень"
+          />
+        </section>
 
-      <section className={styles.dashboardColumns}>
-        <div className={styles.dashboardPanel}><BrpCard padding="none">
+        <section className={styles.dashboardColumns}>
+          <div className={styles.dashboardPanel}><BrpCard padding="none">
           <header className={styles.panelHeader}>
             <h2>Останні замовлення</h2>
             <Link href="/dealer/orders" className="button button-outline">
@@ -153,9 +154,9 @@ export function DealerDashboard() {
               <Link href="/catalog" className="button button-outline"><ShoppingCart size={15} /> Перейти до каталогу</Link>
             </div>
           )}
-        </BrpCard></div>
+          </BrpCard></div>
 
-        <div className={styles.dashboardPanel}><BrpCard padding="none">
+          <div className={styles.dashboardPanel}><BrpCard padding="none">
           <header className={styles.panelHeader}><h2>Потребує уваги</h2></header>
           <div className={styles.attentionList}>
             {processing.length ? (
@@ -173,10 +174,10 @@ export function DealerDashboard() {
               </div>
             )}
           </div>
-        </BrpCard></div>
-      </section>
+          </BrpCard></div>
+        </section>
 
-      <div className={styles.shortcutsPanel}><BrpCard padding="none">
+        <div className={styles.shortcutsPanel}><BrpCard padding="none">
         <header className={styles.panelHeader}><h2>Доступні розділи</h2></header>
         <div className={styles.shortcutGrid}>
           {shortcuts.map(({ href, label, helper, icon: Icon }) => (
@@ -187,13 +188,14 @@ export function DealerDashboard() {
             </Link>
           ))}
         </div>
-      </BrpCard></div>
+        </BrpCard></div>
 
-      <section className={styles.summaryGrid} aria-label="Додаткові показники">
-        <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard></div>
-        <div className={styles.summaryCard}><BrpCard padding="none"><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></BrpCard></div>
-        <div className={styles.summaryCard}><BrpCard padding="none"><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></BrpCard></div>
-        <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></BrpCard></div>
+        <section className={styles.summaryGrid} aria-label="Додаткові показники">
+          <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard></div>
+          <div className={styles.summaryCard}><BrpCard padding="none"><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></BrpCard></div>
+          <div className={styles.summaryCard}><BrpCard padding="none"><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></BrpCard></div>
+          <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></BrpCard></div>
+        </section>
       </section>
     </main>
   );

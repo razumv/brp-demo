@@ -65,6 +65,8 @@
 }
 
 .tableRegion {
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
   max-width: 100%;
   overscroll-behavior-inline: contain;
@@ -121,6 +123,8 @@
   }
 
   .tableRegion {
+    width: calc(100vw - 32px);
+    max-width: 100%;
     margin-inline: -2px;
   }
 

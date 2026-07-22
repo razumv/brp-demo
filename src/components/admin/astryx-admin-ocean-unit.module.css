@@ -1,4 +1,10 @@
 .page {
+  --operational-canvas: var(--color-background-body);
+  --operational-card: var(--color-background-surface);
+  --operational-body: color-mix(in srgb, var(--color-background-muted) 25%, var(--color-background-surface));
+  --operational-group: color-mix(in srgb, var(--color-background-muted) 45%, var(--color-background-surface));
+  --operational-header: color-mix(in srgb, var(--color-background-muted) 75%, var(--color-background-surface));
+  --operational-hover: color-mix(in srgb, var(--operational-body) 70%, var(--color-background-surface));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
@@ -6,6 +12,7 @@
   max-width: 100%;
   min-width: 0;
   padding: 28px;
+  background: var(--operational-canvas);
 }
 
 .page > *,
@@ -119,9 +126,12 @@
   width: 100%;
   min-width: 0;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  background: var(--operational-card);
+}
+
+.tableCard {
+  overflow: hidden;
+  background: var(--operational-card);
 }
 
 .table {
@@ -134,26 +144,51 @@
 .table th,
 .table td {
   padding: 11px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   vertical-align: middle;
 }
 
 .table th {
-  color: var(--muted-foreground);
-  background: var(--surface-subtle);
+  color: var(--color-text-secondary);
+  background: var(--operational-header);
   font-size: 11px;
   font-weight: 650;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
 
+.table thead {
+  background: var(--operational-header);
+}
+
 .table tbody tr:last-child td {
   border-bottom: 0;
 }
 
+.table tbody {
+  background: var(--operational-body);
+}
+
+.table tbody tr[data-operational-surface="ocean-table-hover"] {
+  background: var(--operational-body);
+  transition: background-color 120ms ease;
+}
+
+.table tbody tr[data-operational-surface="ocean-table-hover"]:hover td {
+  background: var(--operational-hover);
+}
+
+.table tbody tr[data-operational-surface="ocean-table-hover"]:hover {
+  background: var(--operational-hover);
+}
+
 .billRow td {
-  background: color-mix(in srgb, var(--surface-subtle) 82%, transparent);
+  background: var(--operational-group);
+}
+
+.billRow {
+  background: var(--operational-group);
 }
 
 .billSummary {
@@ -182,7 +217,12 @@
 }
 
 .detailRow td {
-  background: var(--surface-subtle);
+  background: var(--color-background-muted);
+}
+
+.tableScroller:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
 }
 
 .containerFacts {
@@ -190,7 +230,7 @@
   flex-wrap: wrap;
   gap: 8px 20px;
   padding: 10px 4px;
-  color: var(--muted-foreground);
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
