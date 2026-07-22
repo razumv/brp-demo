@@ -47,7 +47,7 @@ jobs:
 
       - name: Install Playwright browsers on self-hosted runner
         if: ${{ vars.CI_RUNNER != '' }}
-        run: npx playwright install chromium firefox webkit
+        run: npx playwright install chromium firefox
 
       - name: Test admin responsive contract
         run: npm run test:e2e
@@ -56,7 +56,20 @@ jobs:
         run: npx tsx --test tests/appearance-route-inventory.test.ts
 
       - name: Test renderer, mode, browser and viewport matrix
+        if: ${{ vars.CI_RUNNER == '' }}
         run: npm run test:e2e:appearance:matrix
+
+      - name: Test renderer, mode, browser and viewport matrix on self-hosted runner
+        if: ${{ vars.CI_RUNNER != '' }}
+        run: >-
+          docker run --rm --ipc=host
+          --user "$(id -u):$(id -g)"
+          -e HOME=/tmp
+          -e CI=true
+          -v "$PWD":/work
+          -w /work
+          mcr.microsoft.com/playwright:v1.61.1-noble
+          npm run test:e2e:appearance:matrix -- --output=/tmp/playwright-appearance-results
 
       - name: Test dealer Pages PWA contract
         run: npm run test:e2e:dealer-pages
