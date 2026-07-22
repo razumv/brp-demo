@@ -980,6 +980,7 @@ a {
   min-height: 96px;
   padding: 16px;
   gap: 13px;
+  overflow: hidden;
 }
 
 .stat-icon {
