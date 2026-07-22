@@ -14,6 +14,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { useAppearance } from "@/components/appearance/use-appearance";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { EmptyState, Modal, PageHeader, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import type {
   DealerCommandResult,
@@ -166,6 +168,7 @@ function EquipmentForm({
 }
 
 export function CustomersPage() {
+  const { renderedDesignSystem } = useAppearance();
   const { snapshot: state, commands } = useDealerWorkflow();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof categories)[number]>("all");
@@ -199,12 +202,12 @@ export function CustomersPage() {
   const categoryCount = (category: DealerCustomerCategory) => state.customers.filter((customer) => customer.category === category).length;
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-customers-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<UsersRound size={21} />}
         title="Клієнти"
         description={`${state.customers.length} загалом`}
-        action={<button type="button" className="button button-primary" onClick={() => setCreateOpen(true)}><Plus size={15} /> Додати клієнта</button>}
+        action={<BrpButton label="Додати клієнта" icon={<Plus size={15} />} onPress={() => setCreateOpen(true)} />}
       />
 
       <section className={styles.statsGrid} aria-label="Показники клієнтів">
@@ -223,7 +226,7 @@ export function CustomersPage() {
           onOpenChange: setFiltersOpen,
           panelId: "customer-filters",
           onClear: () => setFilter("all"),
-          content: <label className="field"><span>Категорія</span><select aria-label="Категорія клієнтів" value={filter} onChange={(event) => setFilter(event.target.value as (typeof categories)[number])}>{categories.map((value) => <option value={value} key={value}>{value === "all" ? "Всі" : categoryLabels[value]}</option>)}</select></label>,
+          content: <BrpSelect label="Категорія клієнтів" value={filter} onValueChange={(value) => setFilter(value as (typeof categories)[number])} options={categories.map((value) => ({ value, label: value === "all" ? "Всі" : categoryLabels[value] }))} />,
         }}
         resultMeta={ukrainianCount(filtered.length, ["клієнт", "клієнти", "клієнтів"])}
       />

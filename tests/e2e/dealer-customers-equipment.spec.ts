@@ -28,10 +28,10 @@ test("dealer creates, filters, and deletes an unrelated customer", async ({ page
   await expect(page.getByRole("heading", { name: "ПП Озерний", exact: true })).toBeVisible();
   await expect(page.getByText("Продана техніка (0)", { exact: true })).toBeVisible();
   await expect(page.getByText("Немає продажів техніки", { exact: true })).toBeVisible();
-  await page.getByLabel("Пошук клієнтів").fill("Неіснуючий клієнт");
+  await page.getByRole("searchbox", { name: /Пошук клієнтів/ }).fill("Неіснуючий клієнт");
   await expect(page.getByText("Клієнтів не знайдено", { exact: true })).toBeVisible();
 
-  await page.getByLabel("Пошук клієнтів").fill("");
+  await page.getByRole("searchbox", { name: /Пошук клієнтів/ }).fill("");
   await page.getByRole("button", { name: "Скинути фільтри" }).click();
   await page.getByRole("button", { name: "ПП Озерний" }).click();
   await page.getByRole("button", { name: "Видалити клієнта" }).click();
