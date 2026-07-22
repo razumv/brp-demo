@@ -14,6 +14,7 @@ import {
   AdminTabs,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import { Panel } from "@/components/shared/ui";
 import {
   CONSIGNMENT_SOURCE_TOTALS,
@@ -26,7 +27,26 @@ import {
   type ConsignmentStockPosition,
 } from "@/lib/admin-consignment-data";
 
+const loadAstryxAdminConsignmentView = () => import("./astryx-admin-consignment-view");
+
 type ConsignmentView = "warehouse" | "network" | "requests";
+
+export type ConsignmentPageViewProps = {
+  activeView: ConsignmentView;
+  query: string;
+  requestStatus: ConsignmentRequestFilter;
+  holder: ConsignmentHolderId | "all";
+  filteredPositions: readonly ConsignmentStockPosition[];
+  hasQuery: boolean;
+  warehouseCount: number;
+  networkCount: number;
+  networkUnits: number;
+  searchPlaceholder: string;
+  onActiveViewChange: (view: ConsignmentView) => void;
+  onQueryChange: (query: string) => void;
+  onRequestStatusChange: (status: ConsignmentRequestFilter) => void;
+  onHolderChange: (holder: ConsignmentHolderId | "all") => void;
+};
 
 const views: ReadonlyArray<{ id: ConsignmentView; label: string }> = [
   { id: "warehouse", label: "Весь склад" },
@@ -197,7 +217,7 @@ function RequestsView({ status, query }: { status: ConsignmentRequestFilter; que
           type="button"
           className="button button-outline shrink-0"
           disabled
-          title="Оновлення вимкнено у read-only демонстрації"
+          title="Оновлення потребує підключення до облікової системи"
         >
           <LockKeyhole size={13} />
           <RefreshCw size={14} />
@@ -215,27 +235,22 @@ function RequestsView({ status, query }: { status: ConsignmentRequestFilter; que
   );
 }
 
-export function AdminConsignmentPage() {
-  const [activeView, setActiveView] = useState<ConsignmentView>("warehouse");
-  const [query, setQuery] = useState("");
-  const [requestStatus, setRequestStatus] = useState<ConsignmentRequestFilter>("waiting");
-  const [holder, setHolder] = useState<ConsignmentHolderId | "all">("all");
-
-  const filteredPositions = useMemo(
-    () => consignmentStockPositions.filter((position) => (
-      matchesPosition(position, query) && (holder === "all" || holderQuantity(position, holder) > 0)
-    )),
-    [holder, query],
-  );
-  const hasQuery = normalize(query).length > 0;
-  const filteredUnits = filteredPositions.reduce((sum, position) => sum + position.total, 0);
-  const warehouseCount = hasQuery ? filteredPositions.length : CONSIGNMENT_SOURCE_TOTALS.parts;
-  const networkCount = hasQuery ? filteredPositions.length : CONSIGNMENT_SOURCE_TOTALS.networkPositions;
-  const networkUnits = hasQuery ? filteredUnits : CONSIGNMENT_SOURCE_TOTALS.networkUnits;
-  const searchPlaceholder = activeView === "requests"
-    ? "Пошук за заявками, дилером, посиланням 1С…"
-    : "Фільтр за артикулом або описом…";
-
+function CurrentAdminConsignmentView({
+  activeView,
+  query,
+  requestStatus,
+  holder,
+  filteredPositions,
+  hasQuery,
+  warehouseCount,
+  networkCount,
+  networkUnits,
+  searchPlaceholder,
+  onActiveViewChange,
+  onQueryChange,
+  onRequestStatusChange,
+  onHolderChange,
+}: ConsignmentPageViewProps) {
   return (
     <AdminPage>
       <AdminPageHeader
@@ -247,7 +262,7 @@ export function AdminConsignmentPage() {
         search={(
           <AdminSearchField
             value={query}
-            onValueChange={setQuery}
+            onValueChange={onQueryChange}
             label={searchPlaceholder}
             placeholder={searchPlaceholder}
           />
@@ -259,7 +274,7 @@ export function AdminConsignmentPage() {
               panelId: `consignment-${view.id}-panel`,
             }))}
             value={activeView}
-            onValueChange={setActiveView}
+            onValueChange={onActiveViewChange}
             label="Розділи консигнації"
             size="compact"
             mobileFullWidth
@@ -269,13 +284,13 @@ export function AdminConsignmentPage() {
           <AdminSegmentedControl
             items={consignmentRequestFilters}
             value={requestStatus}
-            onValueChange={setRequestStatus}
+            onValueChange={onRequestStatusChange}
             label="Статус заявки"
           />
         ) : (
           <label className="field min-w-0">
             <span className="sr-only">Тримач консигнації</span>
-            <select value={holder} onChange={(event) => setHolder(event.target.value as ConsignmentHolderId | "all")} aria-label="Тримач консигнації">
+            <select value={holder} onChange={(event) => onHolderChange(event.target.value as ConsignmentHolderId | "all")} aria-label="Тримач консигнації">
               <option value="all">Усі тримачі</option>
               {consignmentHolders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
@@ -306,7 +321,7 @@ export function AdminConsignmentPage() {
               type="button"
               className="button button-outline shrink-0 self-start"
               disabled
-              title="Експорт вимкнено у read-only демонстрації"
+              title="Експорт потребує підключення до облікової системи"
             >
               <LockKeyhole size={13} />
               <Download size={14} />
@@ -345,4 +360,40 @@ export function AdminConsignmentPage() {
       ) : null}
     </AdminPage>
   );
+}
+
+export function AdminConsignmentPage() {
+  const [activeView, setActiveView] = useState<ConsignmentView>("warehouse");
+  const [query, setQuery] = useState("");
+  const [requestStatus, setRequestStatus] = useState<ConsignmentRequestFilter>("waiting");
+  const [holder, setHolder] = useState<ConsignmentHolderId | "all">("all");
+
+  const filteredPositions = useMemo(
+    () => consignmentStockPositions.filter((position) => (
+      matchesPosition(position, query) && (holder === "all" || holderQuantity(position, holder) > 0)
+    )),
+    [holder, query],
+  );
+  const hasQuery = normalize(query).length > 0;
+  const filteredUnits = filteredPositions.reduce((sum, position) => sum + position.total, 0);
+  const viewProps: ConsignmentPageViewProps = {
+    activeView,
+    query,
+    requestStatus,
+    holder,
+    filteredPositions,
+    hasQuery,
+    warehouseCount: hasQuery ? filteredPositions.length : CONSIGNMENT_SOURCE_TOTALS.parts,
+    networkCount: hasQuery ? filteredPositions.length : CONSIGNMENT_SOURCE_TOTALS.networkPositions,
+    networkUnits: hasQuery ? filteredUnits : CONSIGNMENT_SOURCE_TOTALS.networkUnits,
+    searchPlaceholder: activeView === "requests"
+      ? "Пошук за заявками, дилером, посиланням 1С…"
+      : "Фільтр за артикулом або описом…",
+    onActiveViewChange: setActiveView,
+    onQueryChange: setQuery,
+    onRequestStatusChange: setRequestStatus,
+    onHolderChange: setHolder,
+  };
+
+  return <RendererViewSwitch slotId="admin-consignment" currentView={<CurrentAdminConsignmentView {...viewProps} />} loadAstryxView={loadAstryxAdminConsignmentView} astryxViewProps={viewProps} />;
 }

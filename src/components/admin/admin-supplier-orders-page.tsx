@@ -17,6 +17,7 @@ import {
   AdminTabs,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {
   sourceSupplierBackorders,
   sourceSupplierOrders,
@@ -29,7 +30,31 @@ import {
 } from "@/lib/admin-supplier-orders-data";
 import styles from "./admin.module.css";
 
+const loadAstryxAdminSupplierOrdersView = () => import("./astryx-admin-supplier-orders-view");
+
 type ExceptionFilter = "all" | "missing-pdf";
+
+export type SupplierOrdersViewProps = {
+  activeTab: SupplierOrdersTab;
+  selectedKpi: string;
+  query: string;
+  sort: SupplierOrdersSort;
+  periodOpen: boolean;
+  periodStart: string | null;
+  periodEnd: string | null;
+  exceptionFilter: ExceptionFilter;
+  showClosed: boolean;
+  hasSourceOrders: boolean;
+  hasSourceBackorders: boolean;
+  onActiveTabChange: (tab: SupplierOrdersTab) => void;
+  onSelectedKpiChange: (id: string) => void;
+  onQueryChange: (value: string) => void;
+  onSortChange: (value: SupplierOrdersSort) => void;
+  onPeriodOpenChange: (open: boolean) => void;
+  onPeriodSelect: (value: string) => void;
+  onExceptionFilterChange: (filter: ExceptionFilter) => void;
+  onShowClosedChange: (showClosed: boolean) => void;
+};
 
 type CalendarMonth = {
   id: string;
@@ -298,10 +323,21 @@ function BackordersEmptyState() {
   );
 }
 
-function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSort }) {
-  const [filter, setFilter] = useState<ExceptionFilter>("all");
-  const [showClosed, setShowClosed] = useState(false);
-
+function ExceptionsTab({
+  query,
+  sort,
+  filter,
+  showClosed,
+  onFilterChange,
+  onShowClosedChange,
+}: {
+  query: string;
+  sort: SupplierOrdersSort;
+  filter: ExceptionFilter;
+  showClosed: boolean;
+  onFilterChange: (filter: ExceptionFilter) => void;
+  onShowClosedChange: (showClosed: boolean) => void;
+}) {
   const visibleExceptions = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("uk-UA");
     const filtered = supplierOrderExceptions.filter((exception) => {
@@ -331,7 +367,7 @@ function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSor
           type="button"
           aria-pressed={filter === "all"}
           className={`button ${filter === "all" ? "border-[var(--orange)] bg-[var(--orange-soft)] text-[var(--orange)]" : "button-outline"}`}
-          onClick={() => setFilter("all")}
+          onClick={() => onFilterChange("all")}
         >
           Всі · 2
         </button>
@@ -339,7 +375,7 @@ function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSor
           type="button"
           aria-pressed={filter === "missing-pdf"}
           className={`button ${filter === "missing-pdf" ? "border-[var(--orange)] bg-[var(--orange-soft)] text-[var(--orange)]" : "button-outline"}`}
-          onClick={() => setFilter("missing-pdf")}
+          onClick={() => onFilterChange("missing-pdf")}
         >
           PDF не прив&apos;язано · 2
         </button>
@@ -347,7 +383,7 @@ function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSor
           type="button"
           aria-pressed={showClosed}
           className={`button ${showClosed ? "border-[var(--orange)] bg-[var(--orange-soft)] text-[var(--orange)]" : "button-outline"}`}
-          onClick={() => setShowClosed((current) => !current)}
+          onClick={() => onShowClosedChange(!showClosed)}
         >
           Показати закриті
         </button>
@@ -382,6 +418,65 @@ function ExceptionsTab({ query, sort }: { query: string; sort: SupplierOrdersSor
   );
 }
 
+function CurrentAdminSupplierOrdersView({
+  activeTab,
+  selectedKpi,
+  query,
+  sort,
+  periodOpen,
+  periodStart,
+  periodEnd,
+  exceptionFilter,
+  showClosed,
+  hasSourceOrders,
+  hasSourceBackorders,
+  onActiveTabChange,
+  onSelectedKpiChange,
+  onQueryChange,
+  onSortChange,
+  onPeriodOpenChange,
+  onPeriodSelect,
+  onExceptionFilterChange,
+  onShowClosedChange,
+}: SupplierOrdersViewProps) {
+  const activePanelId = `supplier-orders-${activeTab}-panel`;
+
+  return (
+    <AdminPage>
+      <AdminPageHeader icon={<FileText size={20} />} title="Замовлення постачальнику" />
+      <KpiGrid selected={selectedKpi} onSelect={onSelectedKpiChange} />
+      <SupplierOrderTabs active={activeTab} onChange={onActiveTabChange} />
+      <SearchToolbar
+        query={query}
+        sort={sort}
+        periodOpen={periodOpen}
+        periodStart={periodStart}
+        periodEnd={periodEnd}
+        onQueryChange={onQueryChange}
+        onSortChange={onSortChange}
+        onPeriodToggle={() => onPeriodOpenChange(!periodOpen)}
+        onPeriodSelect={onPeriodSelect}
+      />
+      <section id={activePanelId} role="tabpanel" aria-labelledby={`${activePanelId}-tab`}>
+        {activeTab === "all" ? (
+          hasSourceOrders ? null : <EmptyOrders />
+        ) : activeTab === "backorders" ? (
+          hasSourceBackorders ? null : <BackordersEmptyState />
+        ) : (
+          <ExceptionsTab
+            query={query}
+            sort={sort}
+            filter={exceptionFilter}
+            showClosed={showClosed}
+            onFilterChange={onExceptionFilterChange}
+            onShowClosedChange={onShowClosedChange}
+          />
+        )}
+      </section>
+    </AdminPage>
+  );
+}
+
 export function AdminSupplierOrdersPage() {
   const [activeTab, setActiveTab] = useState<SupplierOrdersTab>("all");
   const [selectedKpi, setSelectedKpi] = useState("total");
@@ -390,6 +485,8 @@ export function AdminSupplierOrdersPage() {
   const [periodOpen, setPeriodOpen] = useState(false);
   const [periodStart, setPeriodStart] = useState<string | null>(null);
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
+  const [exceptionFilter, setExceptionFilter] = useState<ExceptionFilter>("all");
+  const [showClosed, setShowClosed] = useState(false);
 
   useEffect(() => {
     if (!periodOpen) return;
@@ -414,39 +511,27 @@ export function AdminSupplierOrdersPage() {
     setPeriodEnd(value);
   };
 
-  const hasSourceOrders = sourceSupplierOrders.length > 0;
-  const hasSourceBackorders = sourceSupplierBackorders.length > 0;
-  const activePanelId = `supplier-orders-${activeTab}-panel`;
+  const viewProps: SupplierOrdersViewProps = {
+    activeTab,
+    selectedKpi,
+    query,
+    sort,
+    periodOpen,
+    periodStart,
+    periodEnd,
+    exceptionFilter,
+    showClosed,
+    hasSourceOrders: sourceSupplierOrders.length > 0,
+    hasSourceBackorders: sourceSupplierBackorders.length > 0,
+    onActiveTabChange: setActiveTab,
+    onSelectedKpiChange: setSelectedKpi,
+    onQueryChange: setQuery,
+    onSortChange: setSort,
+    onPeriodOpenChange: setPeriodOpen,
+    onPeriodSelect: selectPeriodDate,
+    onExceptionFilterChange: setExceptionFilter,
+    onShowClosedChange: setShowClosed,
+  };
 
-  return (
-    <AdminPage>
-      <AdminPageHeader icon={<FileText size={20} />} title="Замовлення постачальнику" />
-      <KpiGrid selected={selectedKpi} onSelect={setSelectedKpi} />
-      <SupplierOrderTabs active={activeTab} onChange={setActiveTab} />
-      <SearchToolbar
-        query={query}
-        sort={sort}
-        periodOpen={periodOpen}
-        periodStart={periodStart}
-        periodEnd={periodEnd}
-        onQueryChange={setQuery}
-        onSortChange={setSort}
-        onPeriodToggle={() => setPeriodOpen((current) => !current)}
-        onPeriodSelect={selectPeriodDate}
-      />
-      <section
-        id={activePanelId}
-        role="tabpanel"
-        aria-labelledby={`${activePanelId}-tab`}
-      >
-        {activeTab === "all" ? (
-          hasSourceOrders ? null : <EmptyOrders />
-        ) : activeTab === "backorders" ? (
-          hasSourceBackorders ? null : <BackordersEmptyState />
-        ) : (
-          <ExceptionsTab query={query} sort={sort} />
-        )}
-      </section>
-    </AdminPage>
-  );
+  return <RendererViewSwitch slotId="admin-supplier-orders" currentView={<CurrentAdminSupplierOrdersView {...viewProps} />} loadAstryxView={loadAstryxAdminSupplierOrdersView} astryxViewProps={viewProps} />;
 }
