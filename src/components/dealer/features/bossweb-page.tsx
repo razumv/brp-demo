@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { BrpButton, BrpCard, BrpTextInput } from "@/components/brp-ui";
 import { EmptyState, InlineNotice, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   findBossWebReferencePart,
@@ -52,21 +53,22 @@ export function BossWebPage() {
       </InlineNotice>
 
       <form className={`${dealerStyles.bossSearch} ${operationalStyles.bossSearch}`} onSubmit={submit} aria-label="Пошук у локальному довіднику">
-        <input
+        <BrpTextInput
           type="search"
           value={input}
-          onChange={(event) => setInput(event.target.value)}
-          aria-label="Номер запчастини"
+          onValueChange={setInput}
+          label="Номер запчастини"
+          hideLabel
+          leadingIcon={<Search size={16} />}
           placeholder="Введіть номер запчастини"
-          autoComplete="off"
-          spellCheck={false}
+          clearable
         />
-        <button className="button button-primary" type="submit"><Search size={16} /> Пошук</button>
+        <BrpButton label="Пошук" icon={<Search size={16} />} type="submit" />
       </form>
 
       {lookup.status === "found" ? (
         <section className={dealerStyles.bossGrid} aria-live="polite">
-          <Panel>
+          <BrpCard padding="md">
             <SectionHeading title="Результат локального пошуку" action={<StatusBadge tone="neutral">{lookup.part.category}</StatusBadge>} />
             <div className={dealerStyles.bossContent}>
               <strong className={dealerStyles.mono}>{lookup.part.number}</strong>
@@ -77,8 +79,8 @@ export function BossWebPage() {
               </dl>
               <InlineNotice>Дані про віддалену наявність і терміни постачання відсутні.</InlineNotice>
             </div>
-          </Panel>
-          <Panel>
+          </BrpCard>
+          <BrpCard padding="md">
             <SectionHeading title="Локальний каталог" />
             <dl className={dealerStyles.catalogStock}>
               <div><dt>На складі:</dt><dd>{lookup.part.localStock}</dd></div>
@@ -86,7 +88,7 @@ export function BossWebPage() {
               <div><dt>Дилерська ціна:</dt><dd>{formatMoney(lookup.part.dealerPrice)}</dd></div>
               <div><dt>Роздрібна ціна:</dt><dd>{formatMoney(lookup.part.retailPrice)}</dd></div>
             </dl>
-          </Panel>
+          </BrpCard>
         </section>
       ) : null}
 

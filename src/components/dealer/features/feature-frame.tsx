@@ -14,6 +14,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useAppearance } from "@/components/appearance/use-appearance";
 import { PageHeader } from "@/components/shared/ui";
 
 type FeatureDefinition = {
@@ -38,10 +39,15 @@ const featureDefinitions: Record<string, FeatureDefinition> = {
 };
 
 export function FeatureFrame({ feature, action, children }: { feature: string; action?: ReactNode; children: ReactNode }) {
+  const { renderedDesignSystem } = useAppearance();
   const definition = featureDefinitions[feature] || { title: "Розділ", description: "Дилерський робочий розділ.", icon: Box };
   const Icon = definition.icon;
   return (
-    <main className="page page-narrow">
+    <main
+      className="page page-narrow"
+      data-dealer-feature={feature}
+      data-dealer-feature-renderer={renderedDesignSystem}
+    >
       <PageHeader icon={<Icon size={21} />} title={definition.title} description={definition.description} action={action} />
       {children}
     </main>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import { ukrainianCount } from "@/lib/dealer/format";
@@ -103,19 +104,17 @@ export function WorkshopPage() {
     <FeatureFrame
       feature="workshop"
       action={(
-        <button
-          type="button"
-          className="button button-primary"
+        <BrpButton
+          label="Нове замовлення-наряд"
+          icon={<Plus size={15} />}
           disabled={!snapshot.customers.length}
-          onClick={() => {
+          onPress={() => {
             setForm((current) => ({ ...current, customerId: current.customerId || firstCustomerId }));
             setError("");
             setConfirmation("");
             setOpen(true);
           }}
-        >
-          <Plus size={15} /> Нове замовлення-наряд
-        </button>
+        />
       )}
     >
       {confirmation ? <p className={operationalStyles.successMessage} role="status">{confirmation}</p> : null}
@@ -151,26 +150,18 @@ export function WorkshopPage() {
             panelId: "workshop-filters",
             content: (
               <>
-                <label className="field">
-                  <span>Етап</span>
-                  <select
-                    value={stageFilter}
-                    onChange={(event) => setStageFilter(event.target.value as "all" | WorkshopOrder["status"])}
-                  >
-                    <option value="all">Усі етапи</option>
-                    {workshopStages.map((stage) => <option value={stage.id} key={stage.id}>{stage.label}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Тип роботи</span>
-                  <select
-                    value={typeFilter}
-                    onChange={(event) => setTypeFilter(event.target.value as "all" | WorkshopOrder["type"])}
-                  >
-                    <option value="all">Усі типи</option>
-                    {Object.entries(workshopTypeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                  </select>
-                </label>
+                <BrpSelect
+                  label="Етап"
+                  value={stageFilter}
+                  onValueChange={(value) => setStageFilter(value as "all" | WorkshopOrder["status"])}
+                  options={[{ value: "all", label: "Усі етапи" }, ...workshopStages.map((stage) => ({ value: stage.id, label: stage.label }))]}
+                />
+                <BrpSelect
+                  label="Тип роботи"
+                  value={typeFilter}
+                  onValueChange={(value) => setTypeFilter(value as "all" | WorkshopOrder["type"])}
+                  options={[{ value: "all", label: "Усі типи" }, ...Object.entries(workshopTypeLabels).map(([value, label]) => ({ value, label }))]}
+                />
               </>
             ),
             onClear: () => {

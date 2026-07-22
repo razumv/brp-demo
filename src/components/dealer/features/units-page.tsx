@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpSelect, BrpTabs } from "@/components/brp-ui";
 import { EmptyState, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import {
   dealerUnitShipments,
@@ -109,20 +110,14 @@ export function UnitsPage() {
 
   return (
     <FeatureFrame feature="units">
-      <div className={dealerStyles.featureTabs} role="tablist" aria-label="Розділи техніки">
-        {unitTabs.map(({ id, label, icon: Icon }) => (
-          <button
-            type="button"
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            aria-controls="dealer-units-panel"
-            tabIndex={tab === id ? 0 : -1}
-            onClick={() => setTab(id)}
-          >
-            <Icon size={15} /> {label}
-          </button>
-        ))}
+      <div className={dealerStyles.featureTabs}>
+        <BrpTabs
+          label="Розділи техніки"
+          value={tab}
+          onValueChange={(value) => setTab(value as DealerUnitTab)}
+          options={unitTabs.map(({ id, label, icon: Icon }) => ({ value: id, label, icon: <Icon size={15} /> }))}
+          fill
+        />
       </div>
 
       <section className={dealerStyles.statsGrid} aria-label="Зведення техніки">
@@ -154,14 +149,16 @@ export function UnitsPage() {
               onOpenChange: setFiltersOpen,
               panelId: "dealer-unit-filters",
               content: (
-                <label className="field">
-                  <span>Дія</span>
-                  <select value={actionFilter} onChange={(event) => setActionFilter(event.target.value as DealerUnitActionFilter)}>
-                    <option value="all">Усі</option>
-                    <option value="free_stock">Вільний склад</option>
-                    <option value="awaiting_registration">Очікує РН</option>
-                  </select>
-                </label>
+                <BrpSelect
+                  label="Дія"
+                  value={actionFilter}
+                  onValueChange={(value) => setActionFilter(value as DealerUnitActionFilter)}
+                  options={[
+                    { value: "all", label: "Усі" },
+                    { value: "free_stock", label: "Вільний склад" },
+                    { value: "awaiting_registration", label: "Очікує РН" },
+                  ]}
+                />
               ),
               onClear: () => setActionFilter("all"),
             }}

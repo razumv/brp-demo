@@ -64,10 +64,10 @@ test.describe("dealer operational features on desktop", () => {
     await page.keyboard.press("Space");
     await expect(page.getByRole("button", { name: "Розгорнути контейнер HAMU4124410" })).toBeFocused();
 
-    await page.getByLabel("Пошук техніки").fill("CANYON REDR");
+    await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("CANYON REDR");
     await expect(page.getByTestId("unit-result-count")).toHaveText("1 відправка · 1 одиниця");
     await expect(unitTable.getByText("RD CANYON REDR 1330 SE6 GN EU", { exact: true })).toBeVisible();
-    await page.getByLabel("Пошук техніки").fill("");
+    await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("");
 
     await page.getByRole("button", { name: "Фільтри техніки" }).click();
     await page.getByLabel("Дія").selectOption("awaiting_registration");
@@ -103,7 +103,7 @@ test.describe("dealer operational features on desktop", () => {
     expect(await workshopCard.evaluate((element) => (element as HTMLElement).draggable)).toBe(false);
     expect(await workshopCard.evaluate((element) => getComputedStyle(element).cursor)).not.toMatch(/grab|move/);
 
-    const workshopSearch = page.getByLabel("Пошук у майстерні");
+    const workshopSearch = page.getByRole("searchbox", { name: /Пошук у майстерні/ });
     for (const query of ["Сезонне", "Клієнт Logos", "Олексій", "Терміново"]) {
       await workshopSearch.fill(query);
       await expect(page.getByTestId("workshop-result-count")).toHaveText("1 замовлення");

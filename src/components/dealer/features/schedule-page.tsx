@@ -28,6 +28,7 @@ import { ukrainianCount } from "@/lib/dealer/format";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "../common";
 import { DealerDataToolbar } from "../dealer-data-toolbar";
+import { BrpSelect } from "@/components/brp-ui";
 import dealerStyles from "../dealer.module.css";
 import operationalStyles from "./operational-features.module.css";
 import { FeatureFrame } from "./feature-frame";
@@ -135,12 +136,12 @@ export function SchedulePage() {
           panelId: "schedule-filters",
           onClear: () => setCategory("all"),
           content: (
-            <label className="field">
-              <span>Категорія техніки</span>
-              <select aria-label="Категорія техніки" value={category} onChange={(event) => setCategory(event.target.value as DealerScheduleCategoryFilter)}>
-                {scheduleCategoryOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-              </select>
-            </label>
+            <BrpSelect
+              label="Категорія техніки"
+              value={category}
+              onValueChange={(value) => setCategory(value as DealerScheduleCategoryFilter)}
+              options={scheduleCategoryOptions.map((item) => ({ value: item.id, label: item.label }))}
+            />
           ),
         }}
         resultMeta={<span data-testid="schedule-result-count">{scheduleResultLabel(metrics)}</span>}
