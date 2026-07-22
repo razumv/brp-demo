@@ -10,7 +10,8 @@ test("admin view preferences persist cards and list independently after hydratio
   const preferenceHook = readFileSync(preferenceHookPath, "utf8");
 
   assert.match(preferenceHook, /usePersistedBooleanPreference/);
-  assert.match(preferenceHook, /routeKey: "companies" \| "users"/);
+  assert.match(preferenceHook, /type AdminViewRouteKey = "companies" \| "users"/);
+  assert.match(preferenceHook, /routeKey: AdminViewRouteKey/);
   assert.match(preferenceHook, /brp-clone-ui-v1:astryx-admin-\$\{routeKey\}-view-list/);
   assert.match(preferenceHook, /readonly \[AdminViewMode, \(mode: AdminViewMode\) => void\]/);
   assert.match(preferenceHook, /mode === "list"/);
