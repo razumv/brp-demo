@@ -26,8 +26,10 @@ test("dealer data toolbar keeps search and the compact filter trigger on one row
 
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await page.getByRole("combobox", { name: "Фільтр запасу" }).focus();
     await page.keyboard.press("Escape");
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(trigger).toBeFocused();
 
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");

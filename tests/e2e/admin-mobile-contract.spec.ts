@@ -164,8 +164,10 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(disclosurePanel.locator('select[aria-label="Тип техніки"]')).toHaveCount(1);
   await typeControl.selectOption({ label: "Гідроцикли" });
   await expect(filters).toContainText("1");
+  await typeControl.focus();
   await page.keyboard.press("Escape");
   await expect(filters).toHaveAttribute("aria-expanded", "false");
+  await expect(filters).toBeFocused();
   await expect(typeControl).toHaveCount(1);
   await expect(typeControl).toHaveValue("Гідроцикли");
 
@@ -193,6 +195,27 @@ test("mobile toolbar discloses filters without resetting them", async ({ page })
   await expect(filters).toHaveCount(0);
   await expect(typeControl).toHaveCount(1);
   await expect(typeControl).toHaveValue("Гідроцикли");
+});
+
+test("catalog controlled filters keep ownership while their external panel is interactive", async ({ page }) => {
+  await openAdminRoute(page, "/admin/catalog", 390);
+  const trigger = page.getByRole("button", { name: "Детальні фільтри", exact: true });
+  const panel = page.locator("#catalog-vehicle-advanced-filters");
+  const category = page.getByRole("combobox", { name: "Категорія таблиці" });
+
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(panel).toBeVisible();
+
+  await category.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await category.selectOption("ATV");
+  await expect(category).toHaveValue("ATV");
+  await expect(trigger).toContainText("1");
+
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(trigger).toBeFocused();
 });
 
 test("mobile tab select takes over at the 767px breakpoint", async ({ page }) => {

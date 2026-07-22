@@ -17,11 +17,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { BrpButton } from "@/components/brp-ui";
-import {
-  type DataToolbarFilterContract,
-  useDismissibleDataToolbarFilter,
-} from "@/components/brp-ui/data-toolbar-contract";
+import { useDismissibleDataToolbarFilter } from "@/components/brp-ui/data-toolbar-contract";
 import { cn } from "@/lib/utils";
 import {
   getDisclosedToolbarSections,
@@ -223,7 +219,6 @@ export function AdminSegmentedControl<T extends string>({
 export function AdminToolbar({
   search,
   filters,
-  filterContract,
   view,
   actions,
   meta,
@@ -233,7 +228,6 @@ export function AdminToolbar({
 }: {
   search?: ReactNode;
   filters?: ReactNode;
-  filterContract?: DataToolbarFilterContract;
   view?: ReactNode;
   actions?: ReactNode;
   meta?: ReactNode;
@@ -245,53 +239,27 @@ export function AdminToolbar({
   const mobileDisclosureTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileDisclosurePanelRef = useRef<HTMLDivElement>(null);
   const disclosureId = `admin-toolbar-${useId().replaceAll(":", "")}`;
-  const resolvedFilters = filterContract ? (
-    <>
-      <div className={styles.toolbarFilterContent}>{filterContract.content}</div>
-      {filterContract.onClear ? (
-        <div className={styles.toolbarFilterReset}>
-          <BrpButton
-            label="Скинути фільтри"
-            icon={<X size={14} aria-hidden="true" />}
-            disabled={filterContract.activeCount === 0}
-            onPress={filterContract.onClear}
-          />
-        </div>
-      ) : null}
-    </>
-  ) : filters;
-  const resolvedMobileDisclosure = filterContract
-    ? {
-      ...mobileDisclosure,
-      sections: mobileDisclosure?.sections ?? ["filters"],
-      label: filterContract.label,
-      activeCount: filterContract.activeCount,
-      expanded: filterContract.open,
-      controlsId: filterContract.panelId,
-      onExpandedChange: filterContract.onOpenChange,
-    }
-    : mobileDisclosure;
   const disclosedSections = getDisclosedToolbarSections(
-    { filters: Boolean(resolvedFilters), view: Boolean(view), actions: Boolean(actions) },
-    resolvedMobileDisclosure,
+    { filters: Boolean(filters), view: Boolean(view), actions: Boolean(actions) },
+    mobileDisclosure,
   );
-  const hasDisclosedControls = Boolean(resolvedMobileDisclosure && disclosedSections.length);
+  const hasDisclosedControls = Boolean(mobileDisclosure && disclosedSections.length);
   const firstDisclosedSection = disclosedSections[0];
-  const mobileDisclosureLabel = resolvedMobileDisclosure?.label ?? "Фільтри";
-  const isIconOnlyMobileDisclosure = resolvedMobileDisclosure?.iconOnly !== false;
+  const mobileDisclosureLabel = mobileDisclosure?.label ?? "Фільтри";
+  const isIconOnlyMobileDisclosure = mobileDisclosure?.iconOnly !== false;
   const isControlledMobileDisclosure = Boolean(
-    resolvedMobileDisclosure?.controlsId && resolvedMobileDisclosure.onExpandedChange,
+    mobileDisclosure?.controlsId && mobileDisclosure.onExpandedChange,
   );
   const mobileExpanded = isControlledMobileDisclosure
-    ? Boolean(resolvedMobileDisclosure?.expanded)
+    ? Boolean(mobileDisclosure?.expanded)
     : mobileOpen;
   const mobileControlsId = isControlledMobileDisclosure
-    ? resolvedMobileDisclosure?.controlsId
+    ? mobileDisclosure?.controlsId
     : disclosureId;
 
   const onMobileExpandedChange = (expanded: boolean) => {
     if (isControlledMobileDisclosure) {
-      resolvedMobileDisclosure?.onExpandedChange?.(expanded);
+      mobileDisclosure?.onExpandedChange?.(expanded);
       return;
     }
     setMobileOpen(expanded);
@@ -301,7 +269,8 @@ export function AdminToolbar({
     open: mobileExpanded,
     onOpenChange: onMobileExpandedChange,
     triggerRef: mobileDisclosureTriggerRef,
-    panelRef: mobileDisclosurePanelRef,
+    panelRef: mobileDisclosure?.panelRef ?? mobileDisclosurePanelRef,
+    dismissOnPointerOutside: !isControlledMobileDisclosure || Boolean(mobileDisclosure?.panelRef),
   });
 
   const renderToolbarControl = (section: AdminToolbarSection, control: ReactNode, className: string) => {
@@ -309,27 +278,27 @@ export function AdminToolbar({
     return <div className={className}>{control}</div>;
   };
 
-  const disclosurePanel = resolvedMobileDisclosure && hasDisclosedControls ? (
+  const disclosurePanel = mobileDisclosure && hasDisclosedControls ? (
     <div
       ref={mobileDisclosurePanelRef}
-      id={filterContract ? filterContract.panelId : isControlledMobileDisclosure ? undefined : disclosureId}
+      id={isControlledMobileDisclosure ? undefined : disclosureId}
       className={cn(
         styles.mobileDisclosurePanel,
-        isControlledMobileDisclosure && !filterContract && styles.mobileDisclosurePanelControlled,
+        isControlledMobileDisclosure && styles.mobileDisclosurePanelControlled,
       )}
       data-mobile-disclosure-panel
       data-mobile-open={mobileExpanded}
     >
-      {disclosedSections.includes("filters") ? <div className={styles.toolbarFilters}>{resolvedFilters}</div> : null}
+      {disclosedSections.includes("filters") ? <div className={styles.toolbarFilters}>{filters}</div> : null}
       {disclosedSections.includes("view") ? <div className={styles.toolbarView}>{view}</div> : null}
       {disclosedSections.includes("actions") ? <div className={styles.toolbarActions}>{actions}</div> : null}
     </div>
   ) : null;
 
   return (
-    <section className={cn(styles.toolbar, resolvedMobileDisclosure && styles.toolbarWithMobileDisclosure, contained && styles.toolbarContained, className)}>
+    <section className={cn(styles.toolbar, mobileDisclosure && styles.toolbarWithMobileDisclosure, contained && styles.toolbarContained, className)}>
       {search ? <div className={styles.toolbarSearch}>{search}</div> : null}
-      {resolvedMobileDisclosure && hasDisclosedControls ? (
+      {mobileDisclosure && hasDisclosedControls ? (
         <button
           ref={mobileDisclosureTriggerRef}
           type="button"
@@ -341,12 +310,12 @@ export function AdminToolbar({
         >
           <Filter size={16} aria-hidden="true" />
           {isIconOnlyMobileDisclosure ? null : <span className={styles.mobileDisclosureText}>{mobileDisclosureLabel}</span>}
-          {resolvedMobileDisclosure.activeCount ? <span className={styles.mobileDisclosureCount}>{resolvedMobileDisclosure.activeCount}</span> : null}
+          {mobileDisclosure.activeCount ? <span className={styles.mobileDisclosureCount}>{mobileDisclosure.activeCount}</span> : null}
           {isIconOnlyMobileDisclosure ? null : <ChevronDown className={styles.mobileDisclosureChevron} size={14} aria-hidden="true" />}
         </button>
       ) : null}
       {firstDisclosedSection === "filters" ? disclosurePanel : null}
-      {renderToolbarControl("filters", resolvedFilters, styles.toolbarFilters)}
+      {renderToolbarControl("filters", filters, styles.toolbarFilters)}
       {!search ? <div className={styles.toolbarSpacer} aria-hidden="true" /> : null}
       {firstDisclosedSection === "view" ? disclosurePanel : null}
       {renderToolbarControl("view", view, styles.toolbarView)}

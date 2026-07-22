@@ -25,6 +25,7 @@ export type DataToolbarFilterContract = Readonly<{
 type DismissibleDataToolbarFilter = Pick<DataToolbarFilterContract, "open" | "onOpenChange"> & Readonly<{
   triggerRef: RefObject<HTMLElement | null>;
   panelRef: RefObject<HTMLElement | null>;
+  dismissOnPointerOutside?: boolean;
 }>;
 
 export function useDismissibleDataToolbarFilter({
@@ -32,13 +33,17 @@ export function useDismissibleDataToolbarFilter({
   onOpenChange,
   triggerRef,
   panelRef,
+  dismissOnPointerOutside = true,
 }: DismissibleDataToolbarFilter) {
   useEffect(() => {
     if (!open) return;
 
     const dismiss = () => onOpenChange(false);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dismiss();
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      dismiss();
+      triggerRef.current?.focus();
     };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
@@ -48,10 +53,10 @@ export function useDismissibleDataToolbarFilter({
     };
 
     document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
+    if (dismissOnPointerOutside) document.addEventListener("pointerdown", onPointerDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
+      if (dismissOnPointerOutside) document.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [onOpenChange, open, panelRef, triggerRef]);
+  }, [dismissOnPointerOutside, onOpenChange, open, panelRef, triggerRef]);
 }
