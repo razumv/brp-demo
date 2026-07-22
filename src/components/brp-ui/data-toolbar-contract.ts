@@ -2,16 +2,6 @@
 
 import { useEffect, type ReactNode, type RefObject } from "react";
 
-export const DATA_TOOLBAR_FILTER_FIELDS = [
-  "label",
-  "activeCount",
-  "open",
-  "onOpenChange",
-  "panelId",
-  "content",
-  "onClear",
-] as const;
-
 export type DataToolbarFilterContract = Readonly<{
   label: string;
   activeCount: number;
