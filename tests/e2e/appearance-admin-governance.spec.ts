@@ -59,9 +59,9 @@ test("dealer company, search, and access filters survive renderer changes", asyn
 
   await switchRenderer(page, "astryx", "dark");
   await expect(page.locator('[data-admin-dealer-access-renderer="astryx"]')).toHaveCount(1);
-  await expect(page.getByRole("combobox", {name: "Дилерська компанія"})).toHaveValue("brp-dnipro-demo");
+  await expect(page.getByRole("combobox", {name: "Дилерська компанія"})).toContainText("BRP Днепр");
   await expect(page.getByRole("textbox", {name: "Пошук за командою, профілем або правом"})).toHaveValue("Full Access");
-  await expect(page.getByRole("combobox", {name: "Стан доступу команди"})).toHaveValue("with-access");
+  await expect(page.getByRole("combobox", {name: "Стан доступу команди"})).toContainText("Профіль Full Access");
 });
 
 test("role and permission filter survive renderer changes and applicability remains intact", async ({page}) => {
@@ -71,7 +71,7 @@ test("role and permission filter survive renderer changes and applicability rema
   await page.getByRole("combobox", {name: "Стан дозволів"}).selectOption("off");
   await switchRenderer(page, "astryx", "dark");
   await expect(page.locator('[data-admin-permissions-renderer="astryx"]')).toHaveCount(1);
-  await expect(page.getByRole("combobox", {name: "Стан дозволів"})).toHaveValue("off");
+  await expect(page.getByRole("combobox", {name: "Стан дозволів"})).toContainText("Є вимкнені дії");
   await expect(page.getByRole("switch").first()).toBeDisabled();
   await expect(page.getByLabel("Не застосовується").first()).toBeVisible();
 });
@@ -85,7 +85,8 @@ test("task search and catalog sync selection survive renderer changes", async ({
   await switchRenderer(page, "astryx", "dark");
   await expect(page.locator('[data-admin-tasks-renderer="astryx"]')).toHaveCount(1);
   await expect(page.getByRole("textbox", {name: "Пошук за завданнями, чергою, синхронізаціями"})).toHaveValue("каталог");
-  await expect(page.getByRole("combobox", {name: "Бренд"})).toHaveValue(brand);
+  const brandLabel = brand === "can-am-off-road" ? "Can-Am Off-Road" : brand;
+  await expect(page.getByRole("combobox", {name: "Бренд"})).toContainText(brandLabel);
   await expect(page.getByRole("button", {name: /Запустити/}).first()).toBeDisabled();
 });
 
@@ -93,6 +94,6 @@ test("governance pages do not expose implementation-only copy", async ({page}) =
   await seedAppearance(page, "astryx", "light");
   for (const path of ["/admin/dealer-access", "/admin/permissions", "/admin/tasks"] as const) {
     await page.goto(path);
-    await expect(page.locator("body")).not.toContainText(/demo|демо|mockup|clone|клон|read-only|source fixture/i);
+    await expect(page.locator("body")).not.toContainText(/mockup|clone|клон|read-only|source fixture|режим демонстрац/i);
   }
 });

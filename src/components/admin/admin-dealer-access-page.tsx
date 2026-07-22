@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { Panel, StatusBadge } from "@/components/shared/ui";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import {
   AdminPage,
   AdminPageHeader,
@@ -41,8 +42,8 @@ function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
-type TeamAccessFilter = "all" | "with-access" | "without-access";
-type PolicyStateFilter = "all" | "on" | "off";
+export type TeamAccessFilter = "all" | "with-access" | "without-access";
+export type PolicyStateFilter = "all" | "on" | "off";
 
 function DealerAccessFilterControls({
   teamAccess,
@@ -195,7 +196,7 @@ const dealerPermissionActionIds: Readonly<Record<string, DealerPermissionActionI
   Відвантаження: "ship",
 };
 
-const dealerPermissionActions = [
+export const dealerPermissionActions = [
   { id: "read", label: "Читання", icon: <Eye size={14} />, tone: "blue" },
   { id: "create", label: "Створення", icon: <Plus size={14} />, tone: "green" },
   { id: "update", label: "Оновлення", icon: <Pencil size={14} />, tone: "amber" },
@@ -206,7 +207,7 @@ const dealerPermissionActions = [
   { id: "ship", label: "Відвантаження", icon: <Ship size={14} />, tone: "blue" },
 ] as const satisfies readonly PermissionMatrixAction<DealerPermissionActionId>[];
 
-function policyRows(groups: ReadonlyArray<{
+export function policyRows(groups: ReadonlyArray<{
   readonly id: string;
   readonly command: string;
   readonly sectionLabel?: "ДОКУМЕНТИ";
@@ -242,6 +243,66 @@ function PolicyPanel({ groups }: {
       description={`Показано ${visibleCount} з ${dealerPermissionSummary.total} прав · ${dealerPermissionSummary.checked} увімкнено · ${dealerPermissionSummary.unchecked} вимкнено`}
       emptyCopy="Немає доступних дилерських прав"
     />
+  );
+}
+
+export interface AdminDealerAccessViewProps {
+  selectedCompany: DealerCompanyOption;
+  onCompanySelect(company: DealerCompanyOption): void;
+  query: string;
+  setQuery(value: string): void;
+  teamAccess: TeamAccessFilter;
+  setTeamAccess(value: TeamAccessFilter): void;
+  policyState: PolicyStateFilter;
+  setPolicyState(value: PolicyStateFilter): void;
+  visibleMembers: readonly DealerTeamSummary[];
+  visiblePermissionGroups: ReadonlyArray<{
+    readonly id: string;
+    readonly command: string;
+    readonly sectionLabel?: "ДОКУМЕНТИ";
+    readonly permissions: readonly DealerPermissionEntry[];
+  }>;
+  activeFilterCount: number;
+}
+
+const loadAstryxAdminDealerAccessView = () => import("./astryx-admin-dealer-access-view");
+
+function CurrentAdminDealerAccessView(props: AdminDealerAccessViewProps) {
+  return (
+    <div data-admin-dealer-access-renderer="shadcn">
+      <AdminPage>
+        <AdminPageHeader
+          icon={<ShieldCheck size={20} />}
+          title="Доступи дилерської компанії"
+          description="Задайте максимальний набір функцій для дилерської компанії."
+          actions={<CompanySelector selectedCompany={props.selectedCompany} onSelect={props.onCompanySelect} />}
+        />
+
+        <AdminToolbar
+          search={(
+            <AdminSearchField
+              value={props.query}
+              onValueChange={props.setQuery}
+              label="Пошук за командою, профілем або правом"
+              placeholder="Пошук за командою, профілем, правом..."
+              clearLabel="Очистити пошук доступів"
+            />
+          )}
+          filters={(
+            <DealerAccessFilterControls
+              teamAccess={props.teamAccess}
+              policyState={props.policyState}
+              onTeamAccessChange={props.setTeamAccess}
+              onPolicyStateChange={props.setPolicyState}
+            />
+          )}
+          mobileDisclosure={{ sections: ["filters"], label: "Фільтри доступу", activeCount: props.activeFilterCount }}
+        />
+
+        <DealerTeamPanel members={props.visibleMembers} />
+        <PolicyPanel groups={props.visiblePermissionGroups} />
+      </AdminPage>
+    </div>
   );
 }
 
@@ -289,39 +350,27 @@ function DealerAccessContent({
 
   const activeFilterCount = Number(teamAccess !== "all") + Number(policyState !== "all");
 
+  const viewProps: AdminDealerAccessViewProps = {
+    selectedCompany,
+    onCompanySelect,
+    query,
+    setQuery,
+    teamAccess,
+    setTeamAccess,
+    policyState,
+    setPolicyState,
+    visibleMembers,
+    visiblePermissionGroups,
+    activeFilterCount,
+  };
+
   return (
-    <AdminPage>
-      <AdminPageHeader
-        icon={<ShieldCheck size={20} />}
-        title="Доступи дилерської компанії"
-        description="Задайте максимальний набір функцій для дилерської компанії."
-        actions={<CompanySelector selectedCompany={selectedCompany} onSelect={onCompanySelect} />}
-      />
-
-      <AdminToolbar
-        search={(
-          <AdminSearchField
-            value={query}
-            onValueChange={setQuery}
-            label="Пошук за командою, профілем або правом"
-            placeholder="Пошук за командою, профілем, правом..."
-            clearLabel="Очистити пошук доступів"
-          />
-        )}
-        filters={(
-          <DealerAccessFilterControls
-            teamAccess={teamAccess}
-            policyState={policyState}
-            onTeamAccessChange={setTeamAccess}
-            onPolicyStateChange={setPolicyState}
-          />
-        )}
-        mobileDisclosure={{ sections: ["filters"], label: "Фільтри доступу", activeCount: activeFilterCount }}
-      />
-
-      <DealerTeamPanel members={visibleMembers} />
-      <PolicyPanel groups={visiblePermissionGroups} />
-    </AdminPage>
+    <RendererViewSwitch
+      slotId="admin-dealer-access"
+      currentView={<CurrentAdminDealerAccessView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminDealerAccessView}
+      astryxViewProps={viewProps}
+    />
   );
 }
 

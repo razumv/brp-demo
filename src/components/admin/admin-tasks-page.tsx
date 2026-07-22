@@ -29,6 +29,7 @@ import {
   type CatalogSyncSelection,
   type CatalogSyncTargetId,
 } from "@/lib/admin-tasks-data";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 
 function sameSelection(left: CatalogSyncSelection, right: CatalogSyncSelection) {
   return left.tree === right.tree
@@ -43,7 +44,7 @@ function DisabledRunButton({ label }: { label: string }) {
     <button
       type="button"
       disabled
-      title="Запуск вимкнено у read-only демонстрації"
+      title="Запуск потребує підключення сервісу фонових завдань"
       className="button button-primary min-h-10 shrink-0 rounded-lg px-4 disabled:opacity-70 dark:border-[#f97316] dark:bg-[#f97316]"
     >
       <LockKeyhole size={12} className="sr-only" />
@@ -73,7 +74,7 @@ function QueueStatusCard() {
         <button
           type="button"
           disabled
-          title="Керування чергою вимкнено у read-only демонстрації"
+          title="Керування чергою потребує підключення сервісу фонових завдань"
           className="button min-h-9 border border-[#f0c9b5] bg-[var(--orange-soft)] px-3 text-[var(--orange)] disabled:opacity-65"
         >
           <LockKeyhole size={12} className="sr-only" />
@@ -83,7 +84,7 @@ function QueueStatusCard() {
         <button
           type="button"
           disabled
-          title="Очищення черги вимкнено у read-only демонстрації"
+          title="Очищення черги потребує підключення сервісу фонових завдань"
           className="button min-h-9 border border-[#efc5c7] bg-[var(--red-soft)] px-3 text-[#d1242f] disabled:opacity-65 dark:text-[#f85149]"
         >
           <LockKeyhole size={12} className="sr-only" />
@@ -203,9 +204,7 @@ function IntegrationNote() {
   );
 }
 
-function CatalogSyncCard() {
-  const [selection, setSelection] = useState<CatalogSyncSelection>({ ...initialCatalogSyncSelection });
-
+function CatalogSyncCard({selection, setSelection}: {selection: CatalogSyncSelection; setSelection(value: CatalogSyncSelection | ((current: CatalogSyncSelection) => CatalogSyncSelection)): void}) {
   const activePresetId = useMemo(
     () => catalogSyncPresets.find((preset) => sameSelection(preset.selection, selection))?.id ?? null,
     [selection],
@@ -311,7 +310,7 @@ function DangerZone() {
         <button
           type="button"
           disabled
-          title="Скидання вимкнено у read-only демонстрації"
+          title="Скидання потребує підключення сервісу фонових завдань"
           className="button min-h-9 shrink-0 border border-transparent bg-[var(--red-soft)] px-4 text-[#d1242f] disabled:opacity-65 dark:text-[#f85149]"
         >
           <LockKeyhole size={12} className="sr-only" />
@@ -323,11 +322,22 @@ function DangerZone() {
   );
 }
 
-export function AdminTasksPage() {
-  const [query, setQuery] = useState("");
+export interface AdminTasksViewProps {
+  query: string;
+  setQuery(value: string): void;
+  selection: CatalogSyncSelection;
+  setSelection(value: CatalogSyncSelection | ((current: CatalogSyncSelection) => CatalogSyncSelection)): void;
+  showQueue: boolean;
+  showCatalog: boolean;
+  showSku: boolean;
+  showDanger: boolean;
+}
 
+const loadAstryxAdminTasksView = () => import("./astryx-admin-tasks-view");
+
+function CurrentAdminTasksView(props: AdminTasksViewProps) {
   return (
-    <main className="page">
+    <main className="page" data-admin-tasks-renderer="shadcn">
       <div className="max-w-[896px] space-y-6">
         <header>
           <div className="flex items-center gap-3">
@@ -337,23 +347,43 @@ export function AdminTasksPage() {
           <p className="page-description">Запуск адміністративних завдань та операцій обслуговування</p>
         </header>
 
-        <label className="relative block w-full xl:w-[200px]">
+        <label className="relative block w-full">
           <span className="sr-only">Пошук за завданнями, чергою, синхронізаціями</span>
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
           <input
             className="h-10 w-full rounded-md border border-[var(--border)] bg-[#eaedf2] py-2 pl-9 pr-3 text-[13px] outline-none focus:border-[var(--orange)] dark:bg-[#010409]"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={props.query}
+            onChange={(event) => props.setQuery(event.target.value)}
             placeholder="Пошук за завданнями, чергою, синхронізаціями..."
             autoComplete="off"
           />
         </label>
 
-        <QueueStatusCard />
-        <CatalogSyncCard />
-        <SkuTaskCard />
-        <DangerZone />
+        {props.showQueue ? <QueueStatusCard /> : null}
+        {props.showCatalog ? <CatalogSyncCard selection={props.selection} setSelection={props.setSelection} /> : null}
+        {props.showSku ? <SkuTaskCard /> : null}
+        {props.showDanger ? <DangerZone /> : null}
+        {!props.showQueue && !props.showCatalog && !props.showSku && !props.showDanger ? <p className="text-[13px] text-[var(--muted-foreground)]">Завдань не знайдено.</p> : null}
       </div>
     </main>
   );
+}
+
+export function AdminTasksPage() {
+  const [query, setQuery] = useState("");
+  const [selection, setSelection] = useState<CatalogSyncSelection>({ ...initialCatalogSyncSelection });
+  const needle = query.trim().toLocaleLowerCase("uk-UA");
+  const matches = (...copy: string[]) => !needle || copy.join(" ").toLocaleLowerCase("uk-UA").includes(needle);
+  const viewProps: AdminTasksViewProps = {
+    query,
+    setQuery,
+    selection,
+    setSelection,
+    showQueue: matches("черга", "статус", "worker"),
+    showCatalog: matches("каталог", "синхронізація", adminTaskCards.catalogSync.title),
+    showSku: matches("sku", "артикул", adminTaskCards.skuSync.title),
+    showDanger: matches("скидання", "небезпечна зона", adminTaskCards.resetAll.title),
+  };
+
+  return <RendererViewSwitch slotId="admin-tasks" currentView={<CurrentAdminTasksView {...viewProps} />} loadAstryxView={loadAstryxAdminTasksView} astryxViewProps={viewProps} />;
 }
