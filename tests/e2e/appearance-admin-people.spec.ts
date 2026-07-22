@@ -44,7 +44,7 @@ for (const appearance of appearances) {
     await seedAdminSession(page);
     await seedAppearance(page, appearance.designSystem, appearance.colorMode);
 
-    for (const width of [390, 768, 1280] as const) {
+    for (const width of [390, 768, 1280, 1440] as const) {
       await openAdminRoute(page, "/admin/companies", width);
       await expect(page.locator(`[data-admin-companies-renderer="${appearance.designSystem}"]`)).toHaveCount(1);
       await expect(page.getByRole("textbox", {name: "Пошук компаній"})).toBeVisible();
@@ -56,6 +56,56 @@ for (const appearance of appearances) {
       await expect(page.getByRole("textbox", {name: "Пошук користувачів"})).toBeVisible();
       await expectNoDocumentOverflow(page);
     }
+  });
+}
+
+for (const route of [
+  {
+    path: "/admin/companies",
+    renderer: "data-admin-companies-renderer",
+    view: "data-admin-companies-view",
+    searchLabel: "Пошук компаній",
+    searchValue: "Запорожье",
+    expectedRecord: "BRP Запорожье (Парк-С)",
+    action: /Редагувати BRP Запорожье/,
+  },
+  {
+    path: "/admin/users",
+    renderer: "data-admin-users-renderer",
+    view: "data-admin-users-view",
+    searchLabel: "Пошук користувачів",
+    searchValue: "user02@example.invalid",
+    expectedRecord: "user02@example.invalid",
+    action: /Редагувати Користувач 02/,
+  },
+] as const) {
+  test(`Astryx ${route.path} persists its view without changing filtered records or actions`, async ({page}) => {
+    await seedAdminSession(page);
+    await seedAppearance(page, "astryx", "light");
+    await openAdminRoute(page, route.path, 1280);
+
+    const root = page.locator(`[${route.renderer}="astryx"]`);
+    const search = page.getByRole("textbox", {name: route.searchLabel});
+    await search.fill(route.searchValue);
+    await expect(page.getByText(route.expectedRecord).first()).toBeVisible();
+
+    const cardIds = await root.locator('[data-record-id]').evaluateAll((records) => records.map((record) => record.getAttribute("data-record-id")));
+    await page.getByText("Список", {exact: true}).click();
+    await expect(root).toHaveAttribute(route.view, "list");
+    await expect(search).toHaveValue(route.searchValue);
+    await expect(page.getByText(route.expectedRecord).first()).toBeVisible();
+    await expect(page.getByRole("button", {name: route.action}).first()).toBeVisible();
+    await expect(root.locator('[data-record-id]').evaluateAll((records) => records.map((record) => record.getAttribute("data-record-id")))).resolves.toEqual(cardIds);
+
+    await page.reload();
+    await expect(root).toHaveAttribute(route.view, "list");
+    await expectNoDocumentOverflow(page);
+
+    await page.setViewportSize({width: 390, height: 844});
+    await expectNoDocumentOverflow(page);
+    await page.getByText("Картки", {exact: true}).click();
+    await expect(root).toHaveAttribute(route.view, "cards");
+    await expect(page.getByRole("button", {name: route.action}).first()).toBeVisible();
   });
 }
 
