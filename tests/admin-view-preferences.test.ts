@@ -30,9 +30,14 @@ test("Astryx people views share their filtered records and action sets across ca
   }
 
   assert.match(companiesView, /CompanyActionSet/);
+  assert.match(companiesView, /function companyProfileLabel/);
+  assert.match(companiesView, /companyProfileLabel\(company\.profileStatus\)/);
+  assert.doesNotMatch(companiesView, /className=\{styles\.tableScroller\} role="region"[\s\S]*tabIndex=\{0\}/);
   assert.match(companiesView, /<CompanyCards/);
   assert.match(companiesView, /<CompanyList/);
   assert.match(usersView, /UserActionSet/);
+  assert.match(usersView, /user\.registrationAge/);
+  assert.doesNotMatch(usersView, /className=\{styles\.tableScroller\} role="region"[\s\S]*tabIndex=\{0\}/);
   assert.match(usersView, /<UserCards/);
   assert.match(usersView, /<UserList/);
 });

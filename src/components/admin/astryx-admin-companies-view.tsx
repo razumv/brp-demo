@@ -27,6 +27,10 @@ type Props = {model: AdminCompaniesModel} & AstryxRendererViewProps;
 const lockedCreateReason = "Створення компанії потребує підключення сервісу компаній.";
 type CompanyTableRow = AdminCompany & Record<string, unknown>;
 
+function companyProfileLabel(status: AdminCompany["profileStatus"]) {
+  return status === "complete" ? "Профіль заповнений" : "Профіль неповний";
+}
+
 function CompanyDialog({model}: {model: AdminCompaniesModel}) {
   const dialog = model.dialog;
   const company = dialog && dialog.mode !== "create"
@@ -124,7 +128,7 @@ function CompanyCard({company, model}: {company: AdminCompany; model: AdminCompa
         </div>
       </div>
       <div className={styles.companyMeta}>
-        <Badge label={company.profileStatus === "complete" ? "Профіль заповнений" : "Профіль неповний"} variant={company.profileStatus === "complete" ? "success" : "warning"} />
+        <Badge label={companyProfileLabel(company.profileStatus)} variant={company.profileStatus === "complete" ? "success" : "warning"} />
         <Text type="supporting" color="secondary">Створена {company.createdAt}</Text>
       </div>
       <div className={styles.cardActions}>
@@ -142,8 +146,8 @@ function CompanyCards({companies, model}: {companies: readonly AdminCompany[]; m
 function CompanyList({companies, model}: {companies: readonly AdminCompany[]; model: AdminCompaniesModel}) {
   const columns = useMemo<TableColumn<CompanyTableRow>[]>(() => [
     {key: "name", header: "Компанія", width: proportional(1.4), renderCell: (company) => <div className={styles.tableIdentity}><span className={styles.companyIcon}><Building2 size={15} /></span><span><strong>{company.name}</strong><Text type="supporting" color="secondary" display="block">{company.managerSummary ?? "Менеджера не призначено"}</Text></span></div>},
-    {key: "profileStatus", header: "Профіль", width: pixel(150), renderCell: (company) => <Badge label={company.profileStatus === "complete" ? "Заповнений" : "Неповний"} variant={company.profileStatus === "complete" ? "success" : "warning"} />},
-    {key: "createdAt", header: "Створено", width: pixel(126), renderCell: (company) => <Text type="supporting" color="secondary">{company.createdAt}</Text>},
+    {key: "profileStatus", header: "Профіль", width: pixel(150), renderCell: (company) => <Badge label={companyProfileLabel(company.profileStatus)} variant={company.profileStatus === "complete" ? "success" : "warning"} />},
+    {key: "createdAt", header: "Створено", width: pixel(126), renderCell: (company) => <Text type="supporting" color="secondary">Створена {company.createdAt}</Text>},
     {key: "employeeCount", header: "Працівники", width: pixel(144), renderCell: (company) => <CompanyEmployees company={company} model={model} />},
     {key: "id", header: "Дії", width: pixel(150), renderCell: (company) => <div className={styles.tableActions}><CompanyActionSet company={company} model={model} /></div>},
   ], [model]);
@@ -152,14 +156,14 @@ function CompanyList({companies, model}: {companies: readonly AdminCompany[]; mo
   return (
     <>
       <Card padding={0} className={styles.desktopList}>
-        <div className={styles.tableScroller} role="region" aria-label="Список компаній" tabIndex={0}>
+        <div className={styles.tableScroller}>
           <Table aria-label="Список компаній" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
         </div>
       </Card>
       <section className={styles.mobileList} aria-label="Список компаній">
         {companies.map((company) => <article key={company.id} className={styles.mobileListRow} data-record-id={company.id}>
           <div className={styles.companyTitle}><span className={styles.companyIcon}><Building2 size={16} /></span><div><Text weight="semibold" display="block">{company.name}</Text><Text type="supporting" color="secondary">{company.managerSummary ?? "Менеджера не призначено"}</Text></div></div>
-          <div className={styles.companyMeta}><Badge label={company.profileStatus === "complete" ? "Профіль заповнений" : "Профіль неповний"} variant={company.profileStatus === "complete" ? "success" : "warning"} /><Text type="supporting" color="secondary">Створена {company.createdAt}</Text></div>
+          <div className={styles.companyMeta}><Badge label={companyProfileLabel(company.profileStatus)} variant={company.profileStatus === "complete" ? "success" : "warning"} /><Text type="supporting" color="secondary">Створена {company.createdAt}</Text></div>
           <div className={styles.cardActions}><CompanyEmployees company={company} model={model} /><CompanyActionSet company={company} model={model} /></div>
         </article>)}
       </section>

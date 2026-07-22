@@ -62,7 +62,7 @@ function UserCard({user, model}: {user: AdminUserRecord; model: AdminUsersModel}
         <span className={styles.avatar}>{publicName(user.displayName).slice(-2)}</span>
         <div><Text weight="semibold" display="block">{publicName(user.displayName)}</Text><Text type="supporting" color="secondary">{user.email}</Text></div>
       </div>
-      <div className={styles.userMeta}><Building2 size={14} /><Text>{user.company}</Text></div>
+      <div className={styles.userMeta}><Building2 size={14} /><Text>{user.company}</Text><Text type="supporting" color="secondary">{user.registrationAge}</Text></div>
       <UserBadges user={user} />
       <div className={styles.userActions}>
         <UserActionSet user={user} model={model} />
@@ -88,7 +88,7 @@ function UserList({users, model}: {users: readonly AdminUserRecord[]; model: Adm
   return (
     <>
       <Card padding={0} className={styles.desktopList}>
-        <div className={styles.tableScroller} role="region" aria-label="Список користувачів" tabIndex={0}>
+        <div className={styles.tableScroller}>
           <Table aria-label="Список користувачів" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
         </div>
       </Card>

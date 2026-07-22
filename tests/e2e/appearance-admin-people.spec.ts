@@ -67,6 +67,9 @@ for (const route of [
     searchLabel: "Пошук компаній",
     searchValue: "Запорожье",
     expectedRecord: "BRP Запорожье (Парк-С)",
+    expectedDetails: ["Профіль неповний", "Створена Apr 30, 2026"],
+    listLabel: "Список компаній",
+    expectedCount: 2,
     action: /Редагувати BRP Запорожье/,
   },
   {
@@ -76,6 +79,9 @@ for (const route of [
     searchLabel: "Пошук користувачів",
     searchValue: "user02@example.invalid",
     expectedRecord: "user02@example.invalid",
+    expectedDetails: ["Logos", "5 months ago"],
+    listLabel: "Список користувачів",
+    expectedCount: 1,
     action: /Редагувати Користувач 02/,
   },
 ] as const) {
@@ -89,13 +95,22 @@ for (const route of [
     await search.fill(route.searchValue);
     await expect(page.getByText(route.expectedRecord).first()).toBeVisible();
 
-    const cardIds = await root.locator('[data-record-id]').evaluateAll((records) => records.map((record) => record.getAttribute("data-record-id")));
+    const visibleCards = root.locator('[data-record-id]:visible');
+    await expect(visibleCards).toHaveCount(route.expectedCount);
+    await expect(visibleCards.first()).toContainText(route.expectedRecord);
+    for (const detail of route.expectedDetails) await expect(visibleCards.first()).toContainText(detail);
+    await expect(page.getByRole("button", {name: route.action}).first()).toBeVisible();
+
     await page.getByText("Список", {exact: true}).click();
     await expect(root).toHaveAttribute(route.view, "list");
     await expect(search).toHaveValue(route.searchValue);
-    await expect(page.getByText(route.expectedRecord).first()).toBeVisible();
-    await expect(page.getByRole("button", {name: route.action}).first()).toBeVisible();
-    await expect(root.locator('[data-record-id]').evaluateAll((records) => records.map((record) => record.getAttribute("data-record-id")))).resolves.toEqual(cardIds);
+    const table = root.getByRole("table", {name: route.listLabel});
+    await expect(table).toBeVisible();
+    const row = table.getByRole("row").filter({hasText: route.expectedRecord}).first();
+    await expect(row).toBeVisible();
+    for (const detail of route.expectedDetails) await expect(row).toContainText(detail);
+    await expect(row.getByRole("button", {name: route.action})).toBeVisible();
+    await expect(root.getByRole("region", {name: route.listLabel})).toHaveCount(0);
 
     await page.reload();
     await expect(root).toHaveAttribute(route.view, "list");
