@@ -1478,12 +1478,18 @@ test("the provider changes an already-mounted Astryx mode without restarting rea
 });
 
 test("AppShell delegates color mode and owns no legacy storage or root dark class", async () => {
-  const source = await readFile("src/components/shell/app-shell.tsx", "utf8");
+  const shellSource = await readFile("src/components/shell/app-shell.tsx", "utf8");
+  const controllerSource = await readFile(
+    "src/components/shell/app-shell-controller.ts",
+    "utf8",
+  );
+  const source = `${shellSource}\n${controllerSource}`;
 
   assert.doesNotMatch(source, /brp-clone-theme/);
   assert.doesNotMatch(source, /localStorage/);
   assert.doesNotMatch(source, /document\.documentElement\.classList/);
-  assert.match(source, /useAppearance/);
+  assert.match(controllerSource, /useAppearance/);
+  assert.doesNotMatch(shellSource, /useAppearance/);
 });
 
 test("renderer fallback persistence is routed through the race-safe writer", async () => {
