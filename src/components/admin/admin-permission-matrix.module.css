@@ -125,18 +125,28 @@
 
 .permissionSwitch {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
+  place-items: center;
   width: 32px;
   height: 20px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-subtle);
+  border: 0;
+  background: transparent;
   cursor: not-allowed;
   opacity: 1;
 }
 
-.permissionSwitch > span {
+.permissionSwitchTrack {
+  position: absolute;
+  display: block;
+  width: 32px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+}
+
+.permissionSwitchTrack > span {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -147,12 +157,12 @@
   box-shadow: 0 1px 2px rgba(31, 35, 40, .2);
 }
 
-.permissionSwitch[data-state="checked"] {
+.permissionSwitch[data-state="checked"] .permissionSwitchTrack {
   border-color: var(--green);
   background: var(--green);
 }
 
-.permissionSwitch[data-state="checked"] > span {
+.permissionSwitch[data-state="checked"] .permissionSwitchTrack > span {
   left: 14px;
   background: #fff;
 }
@@ -271,11 +281,16 @@
     justify-content: flex-start;
     white-space: normal;
   }
+
+  .mobilePermissionRow .permissionSwitch {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .permissionSwitch,
-  .permissionSwitch > span {
-    transition: none;
-  }
+.permissionSwitchTrack > span {
+  transition: none;
+}
 }

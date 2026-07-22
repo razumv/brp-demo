@@ -26,10 +26,12 @@ function PermissionSwitch({
   state,
   rowLabel,
   actionLabel,
+  labelledBy,
 }: {
   state: PermissionMatrixState;
   rowLabel: string;
   actionLabel: string;
+  labelledBy?: string;
 }) {
   const checked = state === "on";
 
@@ -38,25 +40,28 @@ function PermissionSwitch({
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={`${rowLabel}: ${actionLabel} — ${checked ? "увімкнено" : "вимкнено"}, лише перегляд`}
+      aria-label={labelledBy ? undefined : `${rowLabel}: ${actionLabel} — ${checked ? "увімкнено" : "вимкнено"}, лише перегляд`}
+      aria-labelledby={labelledBy}
       aria-disabled="true"
       disabled
       title="Зміна дозволу потребує підключення сервісу керування доступом"
       className={styles.permissionSwitch}
       data-state={checked ? "checked" : "unchecked"}
     >
-      <span aria-hidden="true" />
+      <span aria-hidden="true" className={styles.permissionSwitchTrack}><span /></span>
     </button>
   );
 }
 
 function ActionLabel<TAction extends string>({
   action,
+  id,
 }: {
   action: PermissionMatrixAction<TAction>;
+  id?: string;
 }) {
   return (
-    <span className={styles.actionLabel} data-tone={action.tone ?? "neutral"}>
+    <span id={id} className={styles.actionLabel} data-tone={action.tone ?? "neutral"}>
       {action.icon ? <span aria-hidden="true">{action.icon}</span> : null}
       <span>{action.label}</span>
     </span>
@@ -175,10 +180,11 @@ function MobileMatrixRow<TAction extends string>({
             {applicableActions.map((action) => {
               const state = row.permissions[action.id];
               if (!state) return null;
+              const actionLabelId = `${summaryButtonId}-action-${action.id}`;
               return (
                 <div key={action.id} className={styles.mobilePermissionRow}>
-                  <ActionLabel action={action} />
-                  <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} />
+                  <ActionLabel action={action} id={actionLabelId} />
+                  <PermissionSwitch state={state} rowLabel={row.label} actionLabel={action.label} labelledBy={actionLabelId} />
                 </div>
               );
             })}
