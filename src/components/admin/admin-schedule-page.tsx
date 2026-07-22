@@ -20,6 +20,7 @@ import {
   SlidersHorizontal,
   Warehouse,
 } from "lucide-react";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {
   AdminKpiGrid,
   AdminPage,
@@ -32,91 +33,56 @@ import {
 } from "@/components/admin/admin-ui";
 import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
 import { EmptyState, Panel, StatusBadge } from "@/components/shared/ui";
+import {usePersistedBoolean} from "@/hooks/use-persisted-boolean";
 import {
   scheduleKpis,
-  scheduleSearchResults,
   scheduleSlots,
   scheduleSourceTotals,
   scheduleStockRows,
-  scheduleTimelineEvents,
-  type ScheduleCategory,
   type ScheduleSlot,
   type ScheduleSlotStatus,
   type ScheduleTab,
-  type ScheduleTimelineEvent,
 } from "@/lib/admin-schedule-data";
+import {
+  buildScheduleTimelineModel,
+  filterScheduleSearchResults,
+  filterScheduleSlots,
+  findScheduleSlot,
+  formatScheduleTimelineDate,
+  normalizeScheduleSearch,
+  scheduleCategoryFilters,
+  scheduleTimelineDateValue,
+  scheduleTimelineDefaults,
+  scheduleTimelineGroupLabel,
+  scheduleTimelineReferenceDate,
+  scheduleTimelineSlotLabel,
+  scheduleTimelineStatusLabel,
+  type ScheduleCategoryFilter,
+} from "@/lib/admin-schedule-view-model";
 import styles from "./admin-schedule.module.css";
 
-type ScheduleCategoryFilter = ScheduleCategory | "all";
+const loadAstryxAdminScheduleView = () => import("./astryx-admin-schedule-view");
 
-const categoryFilters = [
-  { id: "all", label: "Усі" },
-  { id: "PWC", label: "PWC" },
-  { id: "ATV", label: "ATV" },
-  { id: "SSV", label: "SSV" },
-  { id: "3WV", label: "3WV" },
-] as const;
-
-const timelineMonthNames = [
-  { short: "СІЧ", long: "січень" },
-  { short: "ЛЮТ", long: "лютий" },
-  { short: "БЕР", long: "березень" },
-  { short: "КВІ", long: "квітень" },
-  { short: "ТРА", long: "травень" },
-  { short: "ЧЕР", long: "червень" },
-  { short: "ЛИП", long: "липень" },
-  { short: "СЕР", long: "серпень" },
-  { short: "ВЕР", long: "вересень" },
-  { short: "ЖОВ", long: "жовтень" },
-  { short: "ЛИС", long: "листопад" },
-  { short: "ГРУ", long: "грудень" },
-] as const;
-
-const timelineReferenceDate = { year: 2026, month: 6, day: 18 } as const;
-const defaultPastMonths = 6;
-const defaultFutureMonths = 2;
-
-type TimelineEvent = ScheduleTimelineEvent;
-
-interface TimelineDateGroup {
-  readonly arrivalDate: TimelineEvent["arrivalDate"];
-  readonly events: readonly TimelineEvent[];
-  readonly quantity: number;
-  readonly status: ScheduleSlotStatus;
-}
-
-function buildTimelineMonths(pastMonths: number, futureMonths: number) {
-  const start = new Date(Date.UTC(timelineReferenceDate.year, timelineReferenceDate.month - pastMonths, 1));
-  return Array.from({ length: pastMonths + futureMonths + 1 }, (_, index) => {
-    const date = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + index, 1));
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth();
-    const monthName = timelineMonthNames[month];
-    const includeYear = index === 0 || month === 0;
-    return {
-      id: `${year}-${String(month + 1).padStart(2, "0")}`,
-      label: `${monthName.short}${includeYear ? ` ’${String(year).slice(-2)}` : ""}`,
-      longLabel: monthName.long,
-      year,
-      month,
-      current: year === timelineReferenceDate.year && month === timelineReferenceDate.month,
-    };
-  });
-}
-
-function timelineDateValue(value: `${number}-${number}-${number}`) {
-  const [year, month, day] = value.split("-").map(Number);
-  return Date.UTC(year, month - 1, day);
-}
-
-function formatTimelineDate(value: `${number}-${number}-${number}`) {
-  const [year, month, day] = value.split("-");
-  return `${day}.${month}.${year}`;
-}
-
-function normalize(value: string) {
-  return value.trim().toLocaleLowerCase("uk-UA");
-}
+export type ScheduleViewProps = {
+  activeTab: ScheduleTab;
+  category: ScheduleCategoryFilter;
+  query: string;
+  page: number;
+  selectedId: string | null;
+  detailPage: number;
+  pastMonths: number;
+  futureMonths: number;
+  chronologyOpen: boolean;
+  onActiveTabChange: (tab: ScheduleTab) => void;
+  onCategoryChange: (category: ScheduleCategoryFilter) => void;
+  onQueryChange: (query: string) => void;
+  onPageChange: (page: number) => void;
+  onSelectedIdChange: (id: string | null) => void;
+  onDetailPageChange: (page: number) => void;
+  onPastMonthsChange: (months: number) => void;
+  onFutureMonthsChange: (months: number) => void;
+  onChronologyOpenChange: (open: boolean) => void;
+};
 
 function LockedButton({ children, title, className = "", describedBy }: {
   children: ReactNode;
@@ -164,84 +130,29 @@ function eventToneClass(status: ScheduleSlotStatus) {
   return styles.eventArrived;
 }
 
-function timelineStatusLabel(status: ScheduleSlotStatus) {
-  if (status === "in-transit") return "В дорозі";
-  if (status === "future") return "Майбутня";
-  return "Прибуло";
-}
-
-function timelineSlotLabel(slotCount: number) {
-  return slotCount === 1 ? "1 слот" : `${slotCount} слоти`;
-}
-
-function timelineGroupLabel(count: number) {
-  const finalTwoDigits = count % 100;
-  const finalDigit = count % 10;
-  if (finalTwoDigits >= 11 && finalTwoDigits <= 14) return `${count} груп`;
-  if (finalDigit === 1) return `${count} група`;
-  if (finalDigit >= 2 && finalDigit <= 4) return `${count} групи`;
-  return `${count} груп`;
-}
-
-function timelineGroupStatus(events: readonly TimelineEvent[]): ScheduleSlotStatus {
-  if (events.some((event) => event.status === "in-transit")) return "in-transit";
-  if (events.some((event) => event.status === "future")) return "future";
-  return "arrived";
-}
-
-function Chronology() {
-  const [pastMonths, setPastMonths] = useState(defaultPastMonths);
-  const [futureMonths, setFutureMonths] = useState(defaultFutureMonths);
-  const timelineMonths = useMemo(() => buildTimelineMonths(pastMonths, futureMonths), [futureMonths, pastMonths]);
-  const firstMonth = timelineMonths[0];
-  const lastMonth = timelineMonths[timelineMonths.length - 1];
-  const rangeLabel = `${firstMonth.longLabel} ${firstMonth.year} — ${lastMonth.longLabel} ${lastMonth.year}`;
-  const timelineWindow = useMemo(() => ({
-    start: Date.UTC(firstMonth.year, firstMonth.month, 1),
-    end: Date.UTC(lastMonth.year, lastMonth.month + 1, 1),
-  }), [firstMonth.month, firstMonth.year, lastMonth.month, lastMonth.year]);
-  const visibleTimelineEvents = useMemo(
-    () => scheduleTimelineEvents.filter((event) => {
-      const date = timelineDateValue(event.arrivalDate);
-      return date >= timelineWindow.start && date < timelineWindow.end;
-    }),
-    [timelineWindow.end, timelineWindow.start],
+function Chronology({
+  pastMonths,
+  futureMonths,
+  chronologyOpen,
+  onPastMonthsChange,
+  onFutureMonthsChange,
+  onChronologyOpenChange,
+}: Pick<ScheduleViewProps, "pastMonths" | "futureMonths" | "chronologyOpen" | "onPastMonthsChange" | "onFutureMonthsChange" | "onChronologyOpenChange">) {
+  const timeline = useMemo(
+    () => buildScheduleTimelineModel(pastMonths, futureMonths),
+    [futureMonths, pastMonths],
   );
-  const timelineDateGroups = useMemo<TimelineDateGroup[]>(() => {
-    const groups = new Map<TimelineEvent["arrivalDate"], TimelineEvent[]>();
-    visibleTimelineEvents.forEach((event) => {
-      const existing = groups.get(event.arrivalDate) ?? [];
-      existing.push(event);
-      groups.set(event.arrivalDate, existing);
-    });
-    return Array.from(groups, ([arrivalDate, events]) => ({
-      arrivalDate,
-      events,
-      quantity: events.reduce((total, event) => total + event.quantity, 0),
-      status: timelineGroupStatus(events),
-    })).sort((left, right) => timelineDateValue(left.arrivalDate) - timelineDateValue(right.arrivalDate));
-  }, [visibleTimelineEvents]);
-  const timelineMonthSummaries = useMemo(() => timelineMonths.map((month) => {
-    const groups = timelineDateGroups.filter((group) => {
-      const date = new Date(timelineDateValue(group.arrivalDate));
-      return date.getUTCFullYear() === month.year && date.getUTCMonth() === month.month;
-    });
-    return {
-      ...month,
-      groups,
-      eventCount: groups.reduce((total, group) => total + group.events.length, 0),
-      quantity: groups.reduce((total, group) => total + group.quantity, 0),
-    };
-  }), [timelineDateGroups, timelineMonths]);
 
   return (
     <Panel className={`${styles.chronologyPanel} overflow-visible p-0 shadow-none`}>
       <PersistedCollapsibleSection
         persistenceId="admin.schedule.chronology"
+        open={chronologyOpen}
+        onOpenChange={onChronologyOpenChange}
         title="Хронологія доставок"
         headingId="schedule-timeline-title"
         icon={<CalendarDays size={14} />}
-        summary={<>{visibleTimelineEvents.length} з {scheduleTimelineEvents.length} груп у періоді · {rangeLabel}</>}
+        summary={<>{timeline.visibleEvents.length} з {scheduleSlots.length - 1} груп у періоді · {timeline.rangeLabel}</>}
         titleAccessory={(
           <details className={styles.timelineRangeDetails}>
             <summary aria-label="Налаштувати видимий період">
@@ -253,16 +164,16 @@ function Chronology() {
               <div className={styles.timelineRangeControls} aria-label="Налаштування видимого періоду">
                 <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в минулому">
                   <span>Назад</span>
-                  <button type="button" aria-label="Зменшити кількість минулих місяців" disabled={pastMonths === 0} onClick={() => setPastMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
+                  <button type="button" aria-label="Зменшити кількість минулих місяців" disabled={pastMonths === 0} onClick={() => onPastMonthsChange(Math.max(0, pastMonths - 1))}><Minus size={12} /></button>
                   <output aria-live="polite">{pastMonths} міс.</output>
-                  <button type="button" aria-label="Збільшити кількість минулих місяців" disabled={pastMonths === 12} onClick={() => setPastMonths((value) => Math.min(12, value + 1))}><Plus size={12} /></button>
+                  <button type="button" aria-label="Збільшити кількість минулих місяців" disabled={pastMonths === scheduleTimelineDefaults.maxPastMonths} onClick={() => onPastMonthsChange(Math.min(scheduleTimelineDefaults.maxPastMonths, pastMonths + 1))}><Plus size={12} /></button>
                 </div>
                 <span className={styles.timelineRangeDivider} aria-hidden="true" />
                 <div className={styles.timelineRangeGroup} role="group" aria-label="Місяці в майбутньому">
                   <span>Вперед</span>
-                  <button type="button" aria-label="Зменшити кількість майбутніх місяців" disabled={futureMonths === 0} onClick={() => setFutureMonths((value) => Math.max(0, value - 1))}><Minus size={12} /></button>
+                  <button type="button" aria-label="Зменшити кількість майбутніх місяців" disabled={futureMonths === 0} onClick={() => onFutureMonthsChange(Math.max(0, futureMonths - 1))}><Minus size={12} /></button>
                   <output aria-live="polite">{futureMonths} міс.</output>
-                  <button type="button" aria-label="Збільшити кількість майбутніх місяців" disabled={futureMonths === 6} onClick={() => setFutureMonths((value) => Math.min(6, value + 1))}><Plus size={12} /></button>
+                  <button type="button" aria-label="Збільшити кількість майбутніх місяців" disabled={futureMonths === scheduleTimelineDefaults.maxFutureMonths} onClick={() => onFutureMonthsChange(Math.min(scheduleTimelineDefaults.maxFutureMonths, futureMonths + 1))}><Plus size={12} /></button>
                 </div>
               </div>
             </div>
@@ -279,12 +190,12 @@ function Chronology() {
         contentClassName="px-4 pb-4"
       >
         <figure className="m-0" aria-labelledby="schedule-timeline-title" aria-describedby="schedule-timeline-caption">
-          <div className={styles.chronologyRailViewport} role="region" aria-label={`Хронологія доставок: ${rangeLabel}`} tabIndex={0}>
+          <div className={styles.chronologyRailViewport} role="region" aria-label={`Хронологія доставок: ${timeline.rangeLabel}`} tabIndex={0}>
             <ol className={styles.chronologyMonthRail} aria-label="Місяці видимого періоду">
-              {timelineMonthSummaries.map((month) => {
+              {timeline.months.map((month) => {
                 const daysInMonth = new Date(Date.UTC(month.year, month.month + 1, 0)).getUTCDate();
-                const todayPosition = ((timelineReferenceDate.day - 0.5) / daysInMonth) * 100;
-                const summary = month.eventCount > 0 ? `${timelineGroupLabel(month.eventCount)} · ${month.quantity} од.` : "Доставок немає";
+                const todayPosition = ((scheduleTimelineReferenceDate.day - 0.5) / daysInMonth) * 100;
+                const summary = month.eventCount > 0 ? `${scheduleTimelineGroupLabel(month.eventCount)} · ${month.quantity} од.` : "Доставок немає";
                 return (
                   <li
                     key={month.id}
@@ -299,40 +210,40 @@ function Chronology() {
                     <svg className={styles.chronologyMonthAxis} viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">
                       <line className={styles.chronologyMonthAxisLine} x1="0" y1="8" x2="100" y2="8" vectorEffect="non-scaling-stroke" />
                       {month.groups.map((group) => {
-                        const day = new Date(timelineDateValue(group.arrivalDate)).getUTCDate();
+                        const day = new Date(scheduleTimelineDateValue(group.arrivalDate)).getUTCDate();
                         const position = ((day - 0.5) / daysInMonth) * 100;
                         return <line key={group.arrivalDate} className={`${styles.chronologyDateTick} ${eventToneClass(group.status)}`} x1={position} y1="3" x2={position} y2="13" vectorEffect="non-scaling-stroke" />;
                       })}
                       {month.current ? <line className={styles.chronologyNowTick} x1={todayPosition} y1="0" x2={todayPosition} y2="16" vectorEffect="non-scaling-stroke" /> : null}
                     </svg>
-                    <span className={styles.chronologyMonthMetric}>{month.eventCount > 0 ? <><strong>{timelineGroupLabel(month.eventCount)}</strong><small>{month.quantity} од.</small></> : <small>—</small>}</span>
+                    <span className={styles.chronologyMonthMetric}>{month.eventCount > 0 ? <><strong>{scheduleTimelineGroupLabel(month.eventCount)}</strong><small>{month.quantity} од.</small></> : <small>—</small>}</span>
                   </li>
                 );
               })}
             </ol>
           </div>
-          {timelineDateGroups.length > 0 ? (
+          {timeline.dateGroups.length > 0 ? (
             <div className={styles.chronologyAgenda}>
               <div className={styles.chronologyAgendaHeading}>
                 <span>Доставки за датами</span>
-                <small>{timelineDateGroups.length} дат · {timelineGroupLabel(visibleTimelineEvents.length)}</small>
+                <small>{timeline.dateGroups.length} дат · {scheduleTimelineGroupLabel(timeline.visibleEvents.length)}</small>
               </div>
               <ol className={styles.chronologyDateGroups} aria-label="Доставки, згруповані за датами">
-                {timelineDateGroups.map((group) => (
+                {timeline.dateGroups.map((group) => (
                   <li key={group.arrivalDate} className={styles.chronologyDateGroup}>
                     <div className={styles.chronologyDateGroupHeading}>
-                      <time dateTime={group.arrivalDate}>{formatTimelineDate(group.arrivalDate).slice(0, 5)}</time>
-                      <span>{timelineGroupLabel(group.events.length)}</span>
+                      <time dateTime={group.arrivalDate}>{formatScheduleTimelineDate(group.arrivalDate).slice(0, 5)}</time>
+                      <span>{scheduleTimelineGroupLabel(group.events.length)}</span>
                     </div>
                     <ul>
                       {group.events.map((event) => {
                         const label = `${event.category}${event.slotCount > 1 ? ` ×${event.slotCount}` : ""}`;
                         return (
-                          <li key={event.id} aria-label={`${label}: ${event.quantity} одиниць, ${event.free} вільно, ${timelineStatusLabel(event.status).toLocaleLowerCase("uk-UA")}`}>
+                          <li key={event.id} aria-label={`${label}: ${event.quantity} одиниць, ${event.free} вільно, ${scheduleTimelineStatusLabel(event.status).toLocaleLowerCase("uk-UA")}`}>
                             <span className={`${styles.chronologyAgendaDot} ${eventToneClass(event.status)}`} aria-hidden="true" />
                             <strong>{label}</strong>
                             <span className={styles.chronologyAgendaQuantity}>{event.quantity} <small>од.</small></span>
-                            <small className={styles.chronologyAgendaMeta}>{timelineSlotLabel(event.slotCount)} · {event.free} вільно</small>
+                            <small className={styles.chronologyAgendaMeta}>{scheduleTimelineSlotLabel(event.slotCount)} · {event.free} вільно</small>
                           </li>
                         );
                       })}
@@ -371,7 +282,7 @@ function SlotRow({ slot, selected, onSelect }: { slot: ScheduleSlot; selected: b
 function SourceBoundaryEmpty({ page }: { page: number }) {
   return (
     <div className="grid min-h-44 place-items-center p-6 text-center text-[11px] text-[var(--muted-foreground)]">
-      <div><Package size={22} className="mx-auto mb-2" /><p className="m-0">Сторінка {page} доступна у локальній пагінації.</p><p className="mb-0 mt-1">Її рядки не входять до репрезентативного source fixture; загальний лічильник 23 збережено.</p></div>
+      <div><Package size={22} className="mx-auto mb-2" /><p className="m-0">Для сторінки {page} поки немає рядків.</p><p className="mb-0 mt-1">Загальний лічильник 23 збережено за даними графіка.</p></div>
     </div>
   );
 }
@@ -398,7 +309,7 @@ function SlotList({
         <h2 className="m-0 text-[15px] font-semibold">Слоти доставки <span className="font-normal text-[var(--muted-foreground)]">(23)</span></h2>
       </div>
       <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
-        Репрезентативна source-вибірка: {category === "all" ? `сторінка ${page} з 4` : `категорія ${category}`} · показано {slots.length} рядків.
+        {category === "all" ? `Сторінка ${page} з 4` : `Категорія ${category}`} · показано {slots.length} рядків.
       </p>
       <div className={styles.slotListScroller}>
         <div className={`${styles.slotListHeader} border-b border-[var(--border)] text-[10px] text-[var(--muted-foreground)]`}><span>Назва</span><span>Статус</span><span>Прибуття</span><span className="text-right">Вільно</span></div>
@@ -446,7 +357,7 @@ function SlotDetail({ slot, detailPage, onDetailPageChange }: { slot: ScheduleSl
           </table>
         </div>
       ) : (
-        <div className="grid min-h-52 place-items-center p-6 text-center text-[11px] text-[var(--muted-foreground)]">Детальні позиції цього слоту не входять до репрезентативного source fixture.</div>
+        <div className="grid min-h-52 place-items-center p-6 text-center text-[11px] text-[var(--muted-foreground)]">Для цього слоту поки немає детальних позицій.</div>
       )}
       {lines.length > 0 ? (
         <div className="flex items-center justify-center gap-4 border-t border-[var(--border)] px-4 py-3"><button type="button" className="icon-button icon-button-small" aria-label="Попередня сторінка складу слоту" disabled={detailPage === 1} onClick={() => onDetailPageChange(Math.max(1, detailPage - 1))}><ChevronLeft size={15} /></button><span className="text-[11px] text-[var(--muted-foreground)]">{detailPage} / {detailPages}</span><button type="button" className="icon-button icon-button-small" aria-label="Наступна сторінка складу слоту" disabled={detailPage === detailPages} onClick={() => onDetailPageChange(Math.min(detailPages, detailPage + 1))}><ChevronRight size={15} /></button></div>
@@ -456,11 +367,10 @@ function SlotDetail({ slot, detailPage, onDetailPageChange }: { slot: ScheduleSl
 }
 
 function SearchResults({ query, category }: { query: string; category: ScheduleCategoryFilter }) {
-  const results = useMemo(() => scheduleSearchResults.filter((result) => {
-    const slot = scheduleSlots.find((item) => item.id === result.slotId);
-    if (category !== "all" && slot?.category !== category) return false;
-    return normalize(`${result.sku} ${result.model} ${result.slotName}`).includes(normalize(query));
-  }), [category, query]);
+  const results = useMemo(
+    () => filterScheduleSearchResults(query, category),
+    [category, query],
+  );
   const matchingSlotIds = new Set(results.map((result) => result.slotId));
   const matchingSlots = scheduleSlots.filter((slot) => matchingSlotIds.has(slot.id));
 
@@ -493,43 +403,31 @@ function SearchResults({ query, category }: { query: string; category: ScheduleC
 function Deliveries({
   category,
   query,
+  page,
+  selectedId,
+  detailPage,
   onCategoryChange,
   onQueryChange,
-}: {
-  category: ScheduleCategoryFilter;
-  query: string;
-  onCategoryChange: (category: ScheduleCategoryFilter) => void;
-  onQueryChange: (query: string) => void;
-}) {
-  const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailPage, setDetailPage] = useState(1);
-
-  const visibleSlots = useMemo(() => scheduleSlots.filter((slot) => {
-    if (slot.sourcePage !== page) return false;
-    return category === "all" || slot.category === category;
-  }), [category, page]);
-  const selectedSlot = scheduleSlots.find((slot) => slot.id === selectedId) ?? null;
-
-  const updateCategory = (next: ScheduleCategoryFilter) => {
-    onCategoryChange(next);
-    setPage(1);
-    setSelectedId(null);
-    setDetailPage(1);
-  };
-  const updateQuery = (next: string) => {
-    onQueryChange(next);
-    setPage(1);
-    setSelectedId(null);
-    setDetailPage(1);
-  };
-  const updatePage = (next: number) => {
-    setPage(next);
-  };
-  const selectSlot = (slot: ScheduleSlot) => {
-    setSelectedId(slot.id);
-    setDetailPage(1);
-  };
+  onPageChange,
+  onSelectedIdChange,
+  onDetailPageChange,
+}: Pick<ScheduleViewProps,
+  | "category"
+  | "query"
+  | "page"
+  | "selectedId"
+  | "detailPage"
+  | "onCategoryChange"
+  | "onQueryChange"
+  | "onPageChange"
+  | "onSelectedIdChange"
+  | "onDetailPageChange"
+>) {
+  const visibleSlots = useMemo(
+    () => filterScheduleSlots(page, category),
+    [category, page],
+  );
+  const selectedSlot = findScheduleSlot(selectedId);
 
   return (
     <section
@@ -543,27 +441,27 @@ function Deliveries({
         search={(
           <AdminSearchField
             value={query}
-            onValueChange={updateQuery}
+            onValueChange={onQueryChange}
             label="Пошук SKU або моделі"
             placeholder="Пошук SKU або моделі..."
           />
         )}
         filters={(
           <AdminSegmentedControl<ScheduleCategoryFilter>
-            items={categoryFilters}
+            items={scheduleCategoryFilters}
             value={category}
-            onValueChange={updateCategory}
+            onValueChange={onCategoryChange}
             label="Категорії слотів доставки"
           />
         )}
         mobileDisclosure={{ sections: ["filters"], activeCount: Number(category !== "all") }}
       />
-      {normalize(query) ? (
+      {normalizeScheduleSearch(query) ? (
         <SearchResults query={query} category={category} />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
-          <SlotList slots={visibleSlots} page={page} selectedId={selectedId} category={category} onPageChange={updatePage} onSelect={selectSlot} />
-          <SlotDetail slot={selectedSlot} detailPage={detailPage} onDetailPageChange={setDetailPage} />
+          <SlotList slots={visibleSlots} page={page} selectedId={selectedId} category={category} onPageChange={onPageChange} onSelect={(slot) => onSelectedIdChange(slot.id)} />
+          <SlotDetail slot={selectedSlot} detailPage={detailPage} onDetailPageChange={onDetailPageChange} />
         </div>
       )}
     </section>
@@ -575,7 +473,7 @@ function WarehouseStock() {
     <section id="schedule-stock-panel" role="tabpanel" aria-labelledby="schedule-stock-panel-tab" className={styles.stockPanel}>
       <AdminTableShell
         className={styles.stockTable}
-        notice="Репрезентативна source-вибірка: 5 категорій; точний загальний складський лічильник — 33 од."
+        notice="Показано 5 категорій · загальний складський лічильник — 33 од."
         scrollLabel="Складські запаси"
       >
         <table className="data-table min-w-[760px]">
@@ -597,41 +495,103 @@ function ScheduleFooter() {
   );
 }
 
+function CurrentAdminScheduleView(props: ScheduleViewProps) {
+  return (
+    <div data-admin-schedule-renderer="current">
+      <AdminPage>
+        <AdminPageHeader
+          icon={<CalendarDays size={20} />}
+          title="Графік доставки"
+          actions={(
+            <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto" data-schedule-actions>
+              <LockedButton describedBy="schedule-actions-safety" title="Відкриття Excel потребує підключення робочої книги"><ExternalLink size={14} /> Відкрити Excel</LockedButton>
+              <LockedButton describedBy="schedule-actions-safety" title="Синхронізація доступна після підключення інтеграції 1С" className="!border-[var(--orange)] !bg-[var(--orange)] !text-white"><RefreshCw size={14} /> Синхронізувати</LockedButton>
+              <p id="schedule-actions-safety" className="col-span-2 m-0 text-[11px] text-[var(--muted-foreground)] md:hidden">
+                Дії стануть доступні після підключення Excel та інтеграції 1С.
+              </p>
+            </div>
+          )}
+        />
+        <ScheduleKpis />
+        <Chronology
+          pastMonths={props.pastMonths}
+          futureMonths={props.futureMonths}
+          chronologyOpen={props.chronologyOpen}
+          onPastMonthsChange={props.onPastMonthsChange}
+          onFutureMonthsChange={props.onFutureMonthsChange}
+          onChronologyOpenChange={props.onChronologyOpenChange}
+        />
+        <AdminTabs<ScheduleTab>
+          items={[
+            { id: "deliveries", label: "Доставки", panelId: "schedule-deliveries-panel" },
+            { id: "stock", label: "Складські запаси", panelId: "schedule-stock-panel" },
+          ]}
+          value={props.activeTab}
+          onValueChange={props.onActiveTabChange}
+          label="Графік доставки"
+        />
+        {props.activeTab === "deliveries" ? <Deliveries {...props} /> : <WarehouseStock />}
+        <ScheduleFooter />
+      </AdminPage>
+    </div>
+  );
+}
+
 export function AdminSchedulePage() {
   const [activeTab, setActiveTab] = useState<ScheduleTab>("deliveries");
   const [category, setCategory] = useState<ScheduleCategoryFilter>("all");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailPage, setDetailPage] = useState(1);
+  const [pastMonths, setPastMonths] = useState<number>(scheduleTimelineDefaults.pastMonths);
+  const [futureMonths, setFutureMonths] = useState<number>(scheduleTimelineDefaults.futureMonths);
+  const {value: chronologyOpen, setValue: setChronologyOpen} = usePersistedBoolean("admin.schedule.chronology", true);
+
+  const changeCategory = (nextCategory: ScheduleCategoryFilter) => {
+    setCategory(nextCategory);
+    setPage(1);
+    setSelectedId(null);
+    setDetailPage(1);
+  };
+  const changeQuery = (nextQuery: string) => {
+    setQuery(nextQuery);
+    setPage(1);
+    setSelectedId(null);
+    setDetailPage(1);
+  };
+  const selectSlot = (id: string | null) => {
+    setSelectedId(id);
+    setDetailPage(1);
+  };
+
+  const viewProps: ScheduleViewProps = {
+    activeTab,
+    category,
+    query,
+    page,
+    selectedId,
+    detailPage,
+    pastMonths,
+    futureMonths,
+    chronologyOpen,
+    onActiveTabChange: setActiveTab,
+    onCategoryChange: changeCategory,
+    onQueryChange: changeQuery,
+    onPageChange: setPage,
+    onSelectedIdChange: selectSlot,
+    onDetailPageChange: setDetailPage,
+    onPastMonthsChange: setPastMonths,
+    onFutureMonthsChange: setFutureMonths,
+    onChronologyOpenChange: setChronologyOpen,
+  };
 
   return (
-    <AdminPage>
-      <AdminPageHeader
-        icon={<CalendarDays size={20} />}
-        title="Графік доставки"
-        actions={(
-          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto" data-schedule-actions>
-            <LockedButton describedBy="schedule-actions-safety" title="Відкриття або експорт Excel вимкнені у read-only клоні"><ExternalLink size={14} /> Відкрити Excel</LockedButton>
-            <LockedButton describedBy="schedule-actions-safety" title="Синхронізація вимкнена у read-only клоні" className="!border-[var(--orange)] !bg-[var(--orange)] !text-white"><RefreshCw size={14} /> Синхронізувати</LockedButton>
-            <p id="schedule-actions-safety" className="col-span-2 m-0 text-[11px] text-[var(--muted-foreground)] md:hidden">
-              Відкриття Excel і синхронізація вимкнені у read-only клоні.
-            </p>
-          </div>
-        )}
-      />
-      <ScheduleKpis />
-      <Chronology />
-      <AdminTabs<ScheduleTab>
-        items={[
-          { id: "deliveries", label: "Доставки", panelId: "schedule-deliveries-panel" },
-          { id: "stock", label: "Складські запаси", panelId: "schedule-stock-panel" },
-        ]}
-        value={activeTab}
-        onValueChange={setActiveTab}
-        label="Графік доставки"
-      />
-      {activeTab === "deliveries" ? (
-        <Deliveries category={category} query={query} onCategoryChange={setCategory} onQueryChange={setQuery} />
-      ) : <WarehouseStock />}
-      <ScheduleFooter />
-    </AdminPage>
+    <RendererViewSwitch
+      slotId="admin-schedule"
+      currentView={<CurrentAdminScheduleView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminScheduleView}
+      astryxViewProps={viewProps}
+    />
   );
 }

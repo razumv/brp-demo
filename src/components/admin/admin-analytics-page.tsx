@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import { Panel } from "@/components/shared/ui";
 import {
   analyticsPeriodOptions,
@@ -28,11 +29,41 @@ import {
   type AnalyticsProduct,
   type AnalyticsTab,
   type AnalyticsUnitAssignmentFilter,
+  type AnalyticsUnit,
   type AnalyticsUnitSort,
   type AnalyticsUnitStatus,
   type AnalyticsUnitStatusFilter,
   type AnalyticsUnitSummary,
 } from "@/lib/admin-analytics-data";
+
+const loadAstryxAdminAnalyticsView = () => import("./astryx-admin-analytics-view");
+
+export type AnalyticsViewProps = {
+  activeTab: AnalyticsTab;
+  period: AnalyticsPeriod;
+  product: AnalyticsProduct;
+  queryInput: string;
+  settledQuery: string;
+  status: AnalyticsUnitStatusFilter;
+  assignment: AnalyticsUnitAssignmentFilter;
+  sort: AnalyticsUnitSort;
+  unitSummary: AnalyticsUnitSummary;
+  unitRows: readonly AnalyticsUnit[];
+  unitPage: number;
+  unitPageCount: number;
+  unitStart: number;
+  unitEnd: number;
+  unitTotal: number;
+  unitBusy: boolean;
+  onActiveTabChange: (tab: AnalyticsTab) => void;
+  onPeriodChange: (period: AnalyticsPeriod) => void;
+  onProductChange: (product: AnalyticsProduct) => void;
+  onQueryInputChange: (query: string) => void;
+  onStatusChange: (status: AnalyticsUnitStatusFilter) => void;
+  onAssignmentChange: (assignment: AnalyticsUnitAssignmentFilter) => void;
+  onSortChange: (sort: AnalyticsUnitSort) => void;
+  onUnitPageChange: (page: number) => void;
+};
 
 const compactSelectClass = "h-8 min-w-0 rounded-md border border-[var(--border)] bg-[#eaedf2] px-3 text-[13px] text-[var(--foreground)] outline-none focus:border-[var(--blue)] focus:ring-1 focus:ring-[var(--blue)] dark:bg-[#010409]";
 
@@ -330,7 +361,60 @@ function UnitTable({ rows }: { rows: ReturnType<typeof paginateAnalyticsUnits>["
   );
 }
 
-function UnitAnalytics() {
+function UnitAnalytics(props: AnalyticsViewProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      <UnitKpis summary={props.unitSummary} />
+      <UnitToolbar
+        query={props.queryInput}
+        status={props.status}
+        assignment={props.assignment}
+        sort={props.sort}
+        page={props.unitPage}
+        pageCount={props.unitPageCount}
+        start={props.unitStart}
+        end={props.unitEnd}
+        total={props.unitTotal}
+        busy={props.unitBusy}
+        onQueryChange={props.onQueryInputChange}
+        onStatusChange={props.onStatusChange}
+        onAssignmentChange={props.onAssignmentChange}
+        onSortChange={props.onSortChange}
+        onPageChange={props.onUnitPageChange}
+      />
+      <p className="m-0 text-[11px] text-[var(--muted-foreground)]">
+        Стоимость — по закупке (€); продажи и маржа техники — отдельным шагом позже.
+      </p>
+      <UnitTable rows={[...props.unitRows]} />
+    </div>
+  );
+}
+
+function CurrentAdminAnalyticsView(props: AnalyticsViewProps) {
+  const hasSharedFilters = props.activeTab === "overview" || props.activeTab === "finance" || props.activeTab === "dealers";
+  return (
+    <main className="page page-narrow" data-admin-analytics-renderer="current">
+      <div className="flex flex-col gap-4">
+        <AnalyticsHeader />
+        <AnalyticsTabs active={props.activeTab} onChange={props.onActiveTabChange} />
+        {hasSharedFilters ? (
+          <SharedAnalyticsFilters
+            period={props.period}
+            product={props.product}
+            onPeriodChange={props.onPeriodChange}
+            onProductChange={props.onProductChange}
+          />
+        ) : null}
+        {props.activeTab === "units" ? <UnitAnalytics {...props} /> : <UnsynchronizedState />}
+      </div>
+    </main>
+  );
+}
+
+export function AdminAnalyticsPage() {
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
+  const [period, setPeriod] = useState<AnalyticsPeriod>("year");
+  const [product, setProduct] = useState<AnalyticsProduct>("all");
   const [queryInput, setQueryInput] = useState("");
   const [settledQuery, setSettledQuery] = useState("");
   const [status, setStatus] = useState<AnalyticsUnitStatusFilter>("all");
@@ -351,72 +435,56 @@ function UnitAnalytics() {
     status,
     assignment,
   }), [assignment, settledQuery, status]);
-  const summary = useMemo(() => summarizeAnalyticsUnits(filteredRows), [filteredRows]);
+  const unitSummary = useMemo(() => summarizeAnalyticsUnits(filteredRows), [filteredRows]);
   const sortedRows = useMemo(() => sortAnalyticsUnits(filteredRows, sort), [filteredRows, sort]);
   const pagination = useMemo(() => paginateAnalyticsUnits(sortedRows, page), [page, sortedRows]);
 
-  const updateStatus = (nextStatus: AnalyticsUnitStatusFilter) => {
+  const changeStatus = (nextStatus: AnalyticsUnitStatusFilter) => {
     setStatus(nextStatus);
     setPage(1);
   };
-  const updateAssignment = (nextAssignment: AnalyticsUnitAssignmentFilter) => {
+  const changeAssignment = (nextAssignment: AnalyticsUnitAssignmentFilter) => {
     setAssignment(nextAssignment);
     setPage(1);
   };
-  const updateSort = (nextSort: AnalyticsUnitSort) => {
+  const changeSort = (nextSort: AnalyticsUnitSort) => {
     setSort(nextSort);
     setPage(1);
   };
 
-  return (
-    <div className="flex flex-col gap-4">
-      <UnitKpis summary={summary} />
-      <UnitToolbar
-        query={queryInput}
-        status={status}
-        assignment={assignment}
-        sort={sort}
-        page={pagination.page}
-        pageCount={pagination.pageCount}
-        start={pagination.start}
-        end={pagination.end}
-        total={pagination.total}
-        busy={queryInput.trim() !== settledQuery}
-        onQueryChange={setQueryInput}
-        onStatusChange={updateStatus}
-        onAssignmentChange={updateAssignment}
-        onSortChange={updateSort}
-        onPageChange={setPage}
-      />
-      <p className="m-0 text-[11px] text-[var(--muted-foreground)]">
-        Стоимость — по закупке (€); продажи и маржа техники — отдельным шагом позже.
-      </p>
-      <UnitTable rows={pagination.rows} />
-    </div>
-  );
-}
-
-export function AdminAnalyticsPage() {
-  const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
-  const [period, setPeriod] = useState<AnalyticsPeriod>("year");
-  const [product, setProduct] = useState<AnalyticsProduct>("all");
-  const hasSharedFilters = activeTab === "overview" || activeTab === "finance" || activeTab === "dealers";
+  const viewProps: AnalyticsViewProps = {
+    activeTab,
+    period,
+    product,
+    queryInput,
+    settledQuery,
+    status,
+    assignment,
+    sort,
+    unitSummary,
+    unitRows: pagination.rows,
+    unitPage: pagination.page,
+    unitPageCount: pagination.pageCount,
+    unitStart: pagination.start,
+    unitEnd: pagination.end,
+    unitTotal: pagination.total,
+    unitBusy: queryInput.trim() !== settledQuery,
+    onActiveTabChange: setActiveTab,
+    onPeriodChange: setPeriod,
+    onProductChange: setProduct,
+    onQueryInputChange: setQueryInput,
+    onStatusChange: changeStatus,
+    onAssignmentChange: changeAssignment,
+    onSortChange: changeSort,
+    onUnitPageChange: setPage,
+  };
 
   return (
-    <main className="page page-narrow">
-      <div className="flex flex-col gap-4">
-        <AnalyticsHeader />
-        <AnalyticsTabs active={activeTab} onChange={setActiveTab} />
-        {hasSharedFilters ? (
-          <SharedAnalyticsFilters
-            period={period}
-            product={product}
-            onPeriodChange={setPeriod}
-            onProductChange={setProduct}
-          />
-        ) : null}
-        {activeTab === "units" ? <UnitAnalytics /> : <UnsynchronizedState />}
-      </div>
-    </main>
+    <RendererViewSwitch
+      slotId="admin-analytics"
+      currentView={<CurrentAdminAnalyticsView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminAnalyticsView}
+      astryxViewProps={viewProps}
+    />
   );
 }

@@ -16,6 +16,7 @@ export interface PersistedCollapsibleSectionProps {
   readonly title: string;
   readonly children: ReactNode;
   readonly defaultOpen?: boolean;
+  readonly open?: boolean;
   readonly headingId?: string;
   readonly headingLevel?: CollapsibleHeadingLevel;
   readonly icon?: ReactNode;
@@ -40,6 +41,7 @@ export function PersistedCollapsibleSection({
   title,
   children,
   defaultOpen = true,
+  open: controlledOpen,
   headingId,
   headingLevel = "h2",
   icon,
@@ -62,7 +64,8 @@ export function PersistedCollapsibleSection({
   const resolvedHeadingId = headingId ?? `collapsible-heading-${generatedId}`;
   const panelId = `collapsible-panel-${generatedId}`;
   const Heading = headingLevel;
-  const { value: open, setValue: setOpen } = usePersistedBoolean(persistenceId, defaultOpen);
+  const { value: storedOpen, setValue: setStoredOpen } = usePersistedBoolean(persistenceId, defaultOpen);
+  const open = controlledOpen ?? storedOpen;
   const isMobile = useMediaQuery("(max-width: 767px)");
   const canCollapse = collapseMode === "always" || isMobile;
   const effectiveOpen = canCollapse ? open : true;
@@ -73,7 +76,7 @@ export function PersistedCollapsibleSection({
       disabled={disabled || !canCollapse}
       onOpenChange={(nextOpen) => {
         if (!canCollapse) return;
-        setOpen(nextOpen);
+        if (controlledOpen === undefined) setStoredOpen(nextOpen);
         onOpenChange?.(nextOpen);
       }}
       className={cn(styles.root, className)}
