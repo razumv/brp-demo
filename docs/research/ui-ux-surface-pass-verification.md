@@ -2,7 +2,8 @@
 
 ## Scope
 
-- Candidate: `9543606` (`codex/ui-ux-surface-pass`)
+- Source candidate: `9543606` (`codex/ui-ux-surface-pass`)
+- Evidence report revision: `eeda2fb` (this report was added after the source candidate and does not change product code)
 - Comparison base: `d6e06a198740933e0af02160fecf56feadc6710c` (`origin/main` merge base)
 - Scope: the shared shell, the shadcn and Astryx renderers, responsive admin and dealer routes, search/filter toolbars, catalog discovery, and user/company/permission density changes introduced by this surface pass.
 
@@ -25,9 +26,16 @@ This is a UI certification pass. It does not claim that unavailable external int
 | `npm run build` | Passed | Production Next.js build completed successfully. |
 | `npm run build:pages` | Passed | Static GitHub Pages export, PWA generation, and validation completed successfully. |
 | `node scripts/validate-pwa.mjs` | Passed | Manifest, restricted precache, safe navigation fallback, and a 32 KiB service worker validated. |
-| Focused browser reproductions | Passed | `astryx dark catalog is usable at 768px` (1/1) and `compact operational Schedule actions remain explained and hard-disabled` (1/1) passed serially. |
+| Focused browser reproductions | Passed | The two exact serial commands below each passed 1/1. |
 
 The Pages export contains `out/index.html` and `out/manifest.webmanifest` after the successful build.
+
+Exact focused browser commands:
+
+```sh
+npx playwright test tests/e2e/appearance-admin-catalog.spec.ts --grep 'astryx dark catalog is usable at 768px' --workers=1
+npx playwright test tests/e2e/admin-mobile-schedule.spec.ts --grep 'compact operational Schedule actions remain explained and hard-disabled' --workers=1
+```
 
 ## Browser certification evidence and bounded runs
 
@@ -38,16 +46,24 @@ Two broad browser commands were intentionally bounded and **are not recorded as 
 1. `npm run test:e2e` first ran with the local non-CI worker default. Its concurrent browser workers caused chunk-readiness timeouts and rapidly accumulated failure videos/traces. The two representative failures above were rerun serially and passed.
 2. `CI=1 npm run test:e2e:appearance:matrix` was stopped after 4m35s before a project completed. Although it was serial and no completed test had reported a product failure, its all-browser artifact output reached 258 MB and reduced the shared host below the safe disk threshold. Only its generated Playwright output was removed.
 
-An attempted expanded focused suite after `build:pages` was also stopped and excluded from the result: its `next start` server was using the just-created Pages output with the `/brp-demo` base path, while the test navigated root-relative local routes. That left the client in the access-check shell and is a test-environment ordering issue, not evidence of a route defect. Normal `npm run build` had already passed before the Pages build.
+An attempted expanded focused suite after `build:pages` was also stopped and excluded from the result: its `next start` server was using the just-created Pages output with the `/brp-demo` base path, while the test navigated root-relative local routes. That left the client in the access-check shell. A Pages/base-path ordering issue is the plausible explanation, but it remains unclosed until a clean rerun against a normal production build completes.
 
-For a completely fresh all-browser matrix, run it on a runner with several free gigabytes and keep the normal production build active for root-relative Playwright tests; run the Pages export check in a separate final job.
+No Playwright screenshots, videos, traces, or artifact bundles are retained with this evidence: all temporary output was removed to protect the shared host. Consequently, no visual reference-lock comparison is certified by this local pass.
+
+For a complete release-runner certification, run on a runner with several free gigabytes and retain the output long enough to review:
+
+1. `npm run test:e2e`
+2. `CI=1 npm run test:e2e:appearance:matrix`
+3. Screenshot/reference-lock coverage at 390, 768, 1280, and 1440 px for both renderers and both color modes.
+
+Keep the normal production build active for root-relative Playwright tests; run the Pages export check in a separate final job.
 
 ## UI acceptance coverage
 
 - Appearance tests cover persistence and renderer switching for both design systems and both color modes.
 - Dealer state tests cover local workflow persistence and isolation contracts.
 - The passed focused browser cases cover Astryx catalog usability at the tablet breakpoint and compact, explained disabled Schedule actions.
-- Source-backed route inventory drives the full matrix for responsive routes, theme attributes, keyboard reachability, runtime errors, and page-width overflow. The matrix is ready to run on the deploy runner; it was not completed locally for the host-capacity reason above.
+- Source-backed route inventory drives the full matrix for responsive routes, theme attributes, keyboard reachability, runtime errors, and page-width overflow. It is ready to run on the release runner, but it was not completed locally for the host-capacity reason above.
 
 ## Genuine backend-only limitations
 
@@ -60,4 +76,4 @@ The current front end intentionally preserves state in the browser while the BRP
 
 ## Certification verdict
 
-The static release path, type/lint contracts, dealer state tests, and appearance contract suite are green. The branch is ready for human visual review and Pages deployment. Full multi-browser route-matrix certification remains a release-runner follow-up because the shared local host did not have enough artifact capacity to complete it safely.
+The completed local checks are green, but **local UI certification is incomplete**. Do not treat this report as release-ready or as approval for Pages deployment. Mandatory `npm run test:e2e`, the complete appearance matrix, and retained screenshot/reference-lock review remain pending on a release runner with sufficient artifact capacity.
