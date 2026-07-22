@@ -21,12 +21,12 @@ import {
   Warehouse,
 } from "lucide-react";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {
   EmptyState,
   InlineNotice,
   Modal,
   Panel,
-  ReadOnlyButton,
   StatusBadge,
 } from "@/components/shared/ui";
 import {
@@ -43,11 +43,18 @@ import {
 } from "@/lib/admin-order-data";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
 import type { Order, OrderLine, OrderStatus } from "@/lib/types";
+import type {
+  AdminOrderDetailViewModel,
+  DeliveryChannel,
+  LineFilter,
+  PreflightView,
+} from "./admin-order-detail-types";
 import styles from "./admin.module.css";
 
-type LineFilter = "all" | AdminLineStatus;
-type PreflightView = "error" | "representative";
-type DeliveryChannel = "air" | "ocean";
+const loadAstryxAdminOrderDetailView = () =>
+  import("./astryx-admin-order-detail-view").then((module) => ({
+    default: module.AstryxAdminOrderDetailView,
+  }));
 
 const lineStatusMeta: Record<AdminLineStatus, { label: string; tone: AdminTone }> = {
   pending: { label: "Очікування", tone: "amber" },
@@ -199,6 +206,20 @@ function toneText(tone: AdminTone) {
   return "text-[var(--muted-foreground)]";
 }
 
+const actionUnavailableReason = "Дія недоступна в поточному стані";
+
+function DisabledActionButton({
+  children,
+  className,
+  reason = actionUnavailableReason,
+}: {
+  children: ReactNode;
+  className?: string;
+  reason?: string;
+}) {
+  return <button type="button" className={`button button-outline ${className ?? ""}`} disabled title={reason}>{children}</button>;
+}
+
 function OrderLines({ order, filter, onFilter }: { order: AdminOrderFixture; filter: LineFilter; onFilter: (filter: LineFilter) => void }) {
   const availableStatuses = (Object.keys(lineStatusMeta) as AdminLineStatus[]).filter((status) => order.lines.some((line) => line.status === status));
   const effectiveFilter = filter === "all" || availableStatuses.includes(filter) ? filter : "all";
@@ -222,7 +243,7 @@ function OrderLines({ order, filter, onFilter }: { order: AdminOrderFixture; fil
             compact
             icon={<FileText size={25} />}
             title="Склад позицій не зафіксовано"
-            description={`Для ${order.code} доступні лише факти пайплайна: ${order.activeParts} позицій, ${formatMoney(order.total)}. Спільна демонстраційна запчастина не підставляється.`}
+            description={`Для ${order.code} доступні лише факти пайплайна: ${order.activeParts} позицій, ${formatMoney(order.total)}. Додаткові позиції не підставляються.`}
           />
         </Panel>
       ) : (
@@ -271,7 +292,7 @@ function DocumentsPanel({ order }: { order: AdminOrderFixture }) {
   return (
     <Panel>
       <div className={styles.panelHeader}><div><h2 className={styles.sectionTitle}>Документи 1C</h2><p className={styles.sectionCopy}>Перегляд без завантаження, retry або синхронізації.</p></div><FileText size={16} /></div>
-      {order.documents.length ? <div className={`${styles.panelBody} ${styles.stack}`}>{order.documents.map((document) => <article key={document.id} className="rounded-md border border-[var(--border)] p-3"><div className="flex flex-wrap items-start justify-between gap-3"><div><strong>{document.kind} · {document.reference}</strong><span className={styles.subline}>{document.source} · {document.lines}</span></div><div className="flex flex-wrap gap-2"><StatusBadge tone={document.sync === "синхр." ? "green" : "amber"}>{document.sync}</StatusBadge><StatusBadge tone={document.posting === "проведено" ? "green" : "amber"}>{document.posting}</StatusBadge></div></div><div className="mt-3 flex flex-wrap gap-2"><ReadOnlyButton><Download size={13} /> Завантажити</ReadOnlyButton><ReadOnlyButton><RefreshCcw size={13} /> Повторити / sync 1C</ReadOnlyButton></div></article>)}</div> : <EmptyState compact icon={<FileText size={24} />} title="Документів немає" description="Для цього джерельного стану документи 1C не зафіксовані." />}
+      {order.documents.length ? <div className={`${styles.panelBody} ${styles.stack}`}>{order.documents.map((document) => <article key={document.id} className="rounded-md border border-[var(--border)] p-3"><div className="flex flex-wrap items-start justify-between gap-3"><div><strong>{document.kind} · {document.reference}</strong><span className={styles.subline}>{document.source} · {document.lines}</span></div><div className="flex flex-wrap gap-2"><StatusBadge tone={document.sync === "синхр." ? "green" : "amber"}>{document.sync}</StatusBadge><StatusBadge tone={document.posting === "проведено" ? "green" : "amber"}>{document.posting}</StatusBadge></div></div><div className="mt-3 flex flex-wrap gap-2"><DisabledActionButton><Download size={13} /> Завантажити</DisabledActionButton><DisabledActionButton><RefreshCcw size={13} /> Повторити / sync 1C</DisabledActionButton></div></article>)}</div> : <EmptyState compact icon={<FileText size={24} />} title="Документів немає" description="Для цього джерельного стану документи 1C не зафіксовані." />}
     </Panel>
   );
 }
@@ -280,7 +301,7 @@ function ShipmentsPanel({ order }: { order: AdminOrderFixture }) {
   return (
     <Panel>
       <div className={styles.panelHeader}><div><h2 className={styles.sectionTitle}>Відправлення дилеру</h2><p className={styles.sectionCopy}>Лише зафіксовані деталі доставки.</p></div><Truck size={16} /></div>
-      {order.shipments.length ? <div className={`${styles.panelBody} ${styles.stack}`}>{order.shipments.map((shipment) => <article key={shipment.id} className="rounded-md border border-[var(--border)] p-3"><div className="flex flex-wrap items-start justify-between gap-3"><div><strong>{shipment.carrier}</strong><span className={styles.subline}>{shipment.method} · {shipment.shippedAt}</span></div><StatusBadge tone="purple">{shipment.status}</StatusBadge></div><p className="mb-0 mt-3 text-[11px]">{shipment.destination}</p>{shipment.tracking ? <p className={styles.sectionCopy}>ТТН: {shipment.tracking}</p> : null}<div className="mt-3 flex flex-wrap gap-2"><ReadOnlyButton>Редагувати</ReadOnlyButton><ReadOnlyButton>Позначити доставленим</ReadOnlyButton><ReadOnlyButton><Download size={13} /> Завантажити</ReadOnlyButton></div></article>)}</div> : <EmptyState compact icon={<Truck size={24} />} title="Відправлень немає" description="Для цього стану замовлення дилерські відправлення відсутні." />}
+      {order.shipments.length ? <div className={`${styles.panelBody} ${styles.stack}`}>{order.shipments.map((shipment) => <article key={shipment.id} className="rounded-md border border-[var(--border)] p-3"><div className="flex flex-wrap items-start justify-between gap-3"><div><strong>{shipment.carrier}</strong><span className={styles.subline}>{shipment.method} · {shipment.shippedAt}</span></div><StatusBadge tone="purple">{shipment.status}</StatusBadge></div><p className="mb-0 mt-3 text-[11px]">{shipment.destination}</p>{shipment.tracking ? <p className={styles.sectionCopy}>ТТН: {shipment.tracking}</p> : null}<div className="mt-3 flex flex-wrap gap-2"><DisabledActionButton>Редагувати</DisabledActionButton><DisabledActionButton>Позначити доставленим</DisabledActionButton><DisabledActionButton><Download size={13} /> Завантажити</DisabledActionButton></div></article>)}</div> : <EmptyState compact icon={<Truck size={24} />} title="Відправлень немає" description="Для цього стану замовлення дилерські відправлення відсутні." />}
     </Panel>
   );
 }
@@ -292,7 +313,7 @@ function InlineChat({ order, onExpand }: { order: AdminOrderFixture; onExpand: (
       <div className={styles.panelHeader}><h2 className={styles.sectionTitle}>Чат</h2><button type="button" className="icon-button icon-button-small" aria-label="Розгорнути чат" onClick={onExpand}><Expand size={15} /></button></div>
       <div className={`${styles.railBody} ${styles.stack}`}>
         {recent.length ? recent.map((message) => <article key={message.id} className={styles.chatMessage}><header><strong>{message.author}</strong><StatusBadge tone={message.role === "dealer" ? "blue" : "orange"}>{message.role}</StatusBadge><span className="ml-auto">{message.time}</span></header><p>{message.body}</p></article>) : <EmptyState compact icon={<MessageSquareText size={23} />} title="Повідомлень поки немає" description="Розпочніть спілкування у робочому середовищі." />}
-        <div className="flex gap-2"><button type="button" className="icon-button" disabled title="Демо: завантаження вимкнено" aria-label="Додати вкладення"><Paperclip size={15} /></button><input disabled className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-3" placeholder="Введіть повідомлення..." /><button type="button" className="icon-button" disabled title="Демо: надсилання вимкнено" aria-label="Надіслати"><Send size={15} /></button></div>
+        <div className="flex gap-2"><button type="button" className="icon-button" disabled title={actionUnavailableReason} aria-label="Додати вкладення"><Paperclip size={15} /></button><input disabled className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-3" placeholder="Введіть повідомлення..." /><button type="button" className="icon-button" disabled title={actionUnavailableReason} aria-label="Надіслати"><Send size={15} /></button></div>
         <button type="button" className="button button-outline button-wide" onClick={onExpand}><Expand size={14} /> Розгорнути чат</button>
       </div>
     </Panel>
@@ -310,8 +331,8 @@ function TimelinePanel({ order, open, onToggle }: { order: AdminOrderFixture; op
 
 function ChatModal({ order, open, onClose }: { order: AdminOrderFixture; open: boolean; onClose: () => void }) {
   return (
-    <Modal open={open} onClose={onClose} title="Чат" description={`${order.code} · повна історія`} className="!w-[min(640px,100%)]" footer={<div className="flex w-full gap-2"><button type="button" className="icon-button" disabled title="Демо: завантаження вимкнено" aria-label="Додати вкладення"><Paperclip size={15} /></button><input disabled className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-3" placeholder="Введіть повідомлення..." /><button type="button" className="button button-primary" disabled><Send size={14} /> Надіслати</button></div>}>
-      <div className="grid min-h-[360px] content-start gap-3">{order.messages.length ? order.messages.map((message) => <article key={message.id} className={styles.chatMessage}><header><strong>{message.author}</strong><StatusBadge tone={message.role === "dealer" ? "blue" : "orange"}>{message.role}</StatusBadge><span className="ml-auto">{message.time}</span></header><p>{message.body}</p></article>) : <EmptyState icon={<MessageSquareText size={26} />} title="Повідомлень поки немає" description="Chat composer і вкладення заблоковані у read-only клоні." />}</div>
+    <Modal open={open} onClose={onClose} title="Чат" description={`${order.code} · повна історія`} className="!w-[min(640px,100%)]" footer={<div className="flex w-full gap-2"><button type="button" className="icon-button" disabled title={actionUnavailableReason} aria-label="Додати вкладення"><Paperclip size={15} /></button><input disabled className="min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-3" placeholder="Введіть повідомлення..." /><button type="button" className="button button-primary" disabled title={actionUnavailableReason}><Send size={14} /> Надіслати</button></div>}>
+      <div className="grid min-h-[360px] content-start gap-3">{order.messages.length ? order.messages.map((message) => <article key={message.id} className={styles.chatMessage}><header><strong>{message.author}</strong><StatusBadge tone={message.role === "dealer" ? "blue" : "orange"}>{message.role}</StatusBadge><span className="ml-auto">{message.time}</span></header><p>{message.body}</p></article>) : <EmptyState icon={<MessageSquareText size={26} />} title="Повідомлень поки немає" description="Надсилання повідомлень і вкладень недоступне у поточному стані." />}</div>
     </Modal>
   );
 }
@@ -329,17 +350,14 @@ function PreviewTable({ order, delivery, replenishment, onDelivery, onReplenishm
         const toOrder = Math.max(0, line.quantity - fromStock) + replenishment;
         return <tr key={line.id}><td className={styles.code}>{line.partNumber}</td><td>{line.quantity}</td><td>{stock}</td><td>{fromStock}</td><td>{Math.max(0, stock - fromStock)}</td><td>—</td><td>{line.status === "waiting" ? line.quantity : 0}</td><td>{toOrder}</td><td><StatusBadge tone={delivery === "air" ? "blue" : "purple"}>{delivery}</StatusBadge></td><td>{toOrder ? "Замовити" : "Зі складу"}</td></tr>;
       })}</tbody></table></div>
-      <ReadOnlyButton><RefreshCcw size={14} /> Оновити розрахунок</ReadOnlyButton>
+      <DisabledActionButton><RefreshCcw size={14} /> Оновити розрахунок</DisabledActionButton>
     </div>
   );
 }
 
-function PreflightModal({ order, open, onClose }: { order: AdminOrderFixture; open: boolean; onClose: () => void }) {
-  const [view, setView] = useState<PreflightView>("error");
-  const [delivery, setDelivery] = useState<DeliveryChannel>("air");
-  const [replenishment, setReplenishment] = useState(0);
+function PreflightModal({ order, open, onClose, view, setView, delivery, setDelivery, replenishment, setReplenishment }: { order: AdminOrderFixture; open: boolean; onClose: () => void; view: PreflightView; setView: (view: PreflightView) => void; delivery: DeliveryChannel; setDelivery: (delivery: DeliveryChannel) => void; replenishment: number; setReplenishment: (value: number) => void }) {
   return (
-    <Modal open={open} onClose={onClose} title="Перевірка перед підтвердженням" description={`${order.code} · замовлення ще не підтверджено`} className="!w-[min(1180px,100%)]" footer={<><button type="button" className="button button-outline" onClick={onClose}>Скасувати</button><ReadOnlyButton>Підтвердити замовлення</ReadOnlyButton></>}>
+    <Modal open={open} onClose={onClose} title="Перевірка перед підтвердженням" description={`${order.code} · замовлення ще не підтверджено`} className="!w-[min(1180px,100%)]" footer={<><button type="button" className="button button-outline" onClick={onClose}>Скасувати</button><DisabledActionButton>Підтвердити замовлення</DisabledActionButton></>}>
       <div className="grid gap-4">
         <div className="segmented w-fit"><button type="button" aria-pressed={view === "error"} onClick={() => setView("error")}>Зафіксована відповідь</button><button type="button" aria-pressed={view === "representative"} onClick={() => setView("representative")}>Структура preview</button></div>
         {view === "error" ? <div className="rounded-md border border-[var(--red)] bg-[var(--red-soft)] p-5 text-[var(--red)]"><div className="flex items-start gap-3"><AlertTriangle size={20} /><div><strong className="block">Failed to build confirm preview</strong><p className="mb-0 mt-2 text-[11px]">Це точний результат безпечного source preflight для LOG-01 і KHA-08. Статус замовлення не змінився.</p></div></div></div> : <PreviewTable order={order} delivery={delivery} replenishment={replenishment} onDelivery={setDelivery} onReplenishment={setReplenishment} />}
@@ -352,22 +370,11 @@ function DetailRow({ label, children }: { label: string; children: ReactNode }) 
   return <div className={styles.detailRow}><dt>{label}</dt><dd>{children}</dd></div>;
 }
 
-export function AdminOrderDetail({ id }: { id: string }) {
-  const { state } = useDemoStore();
-  const [lineFilter, setLineFilter] = useState<LineFilter>("all");
-  const [timelineOpen, setTimelineOpen] = useState(true);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [preflightOpen, setPreflightOpen] = useState(false);
-  const order = useMemo(() => resolveOrder(id, state.orders), [id, state.orders]);
-
-  if (!order) {
-    return <main className="page page-narrow"><Panel className={styles.panelBody}><h1 className={styles.sectionTitle}>Замовлення не знайдено</h1><p className={styles.sectionCopy}>Немає fixture, локального замовлення або evidence-backed рядка пайплайна з таким id.</p><Link href="/admin/order-pipeline" className="button button-outline mt-4">До пайплайна</Link></Panel></main>;
-  }
-
-  const hasCapturedPreflight = order.status === "new" && (order.code === "LOG-01" || order.code === "KHA-08");
+function CurrentAdminOrderDetailView({model}: {model: AdminOrderDetailViewModel}) {
+  const {order, lineFilter, setLineFilter, timelineOpen, toggleTimeline, chatOpen, setChatOpen, preflightOpen, setPreflightOpen, preflightView, setPreflightView, delivery, setDelivery, replenishment, setReplenishment, hasCapturedPreflight} = model;
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-admin-order-detail-renderer="current">
       <div className={styles.pageStack}>
         <nav className={styles.breadcrumb} aria-label="Навігаційний ланцюжок"><Link href="/admin/order-pipeline">Пайплайн замовлень</Link><ChevronRight size={14} /><strong>{order.code}</strong></nav>
         <InlineNotice tone="warning"><LockKeyhole size={15} /> Адміністративні дії вимкнені. Доступні лише локальні фільтри, розкриття панелей і preflight без підтвердження.</InlineNotice>
@@ -389,11 +396,11 @@ export function AdminOrderDetail({ id }: { id: string }) {
             <Panel>
               <div className={styles.panelHeader}><h2 className={styles.sectionTitle}>Дії</h2><LockKeyhole size={15} className="text-[var(--muted-foreground)]" /></div>
               <div className={`${styles.railBody} ${styles.actionStack}`}>
-                {hasCapturedPreflight ? <button type="button" className="button button-outline button-wide !justify-start" onClick={() => setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</button> : <button type="button" className="button button-outline button-wide !justify-start" disabled title="Source preflight зафіксовано лише для LOG-01 і KHA-08"><LockKeyhole size={15} /> Preflight не зафіксовано</button>}
-                <ReadOnlyButton className="button-wide"><Send size={15} /> Відправити дилеру ({order.shipments.length})</ReadOnlyButton>
-                <ReadOnlyButton className="button-wide"><Warehouse size={15} /> Перевірити старий склад</ReadOnlyButton>
-                <span className="text-[10px] text-[var(--muted-foreground)]">POST check-legacy вимкнено: кнопка не виконує запит.</span>
-                <ReadOnlyButton className="button-wide button-danger"><Ban size={15} /> Скасувати замовлення</ReadOnlyButton>
+                {hasCapturedPreflight ? <button type="button" className="button button-outline button-wide !justify-start" onClick={() => setPreflightOpen(true)}><PackageCheck size={15} /> Перевірити перед підтвердженням</button> : <DisabledActionButton className="button-wide !justify-start" reason="Перевірка перед підтвердженням недоступна для цього замовлення"><LockKeyhole size={15} /> Перевірка недоступна</DisabledActionButton>}
+                <DisabledActionButton className="button-wide"><Send size={15} /> Відправити дилеру ({order.shipments.length})</DisabledActionButton>
+                <DisabledActionButton className="button-wide"><Warehouse size={15} /> Перевірити старий склад</DisabledActionButton>
+                <span className="text-[10px] text-[var(--muted-foreground)]">Перевірка старого складу недоступна: запит не виконується.</span>
+                <DisabledActionButton className="button-wide button-danger"><Ban size={15} /> Скасувати замовлення</DisabledActionButton>
               </div>
             </Panel>
 
@@ -403,13 +410,55 @@ export function AdminOrderDetail({ id }: { id: string }) {
             </Panel>
 
             <InlineChat order={order} onExpand={() => setChatOpen(true)} />
-            <TimelinePanel order={order} open={timelineOpen} onToggle={() => setTimelineOpen((value) => !value)} />
+            <TimelinePanel order={order} open={timelineOpen} onToggle={toggleTimeline} />
           </aside>
         </div>
       </div>
 
       <ChatModal order={order} open={chatOpen} onClose={() => setChatOpen(false)} />
-      {hasCapturedPreflight ? <PreflightModal order={order} open={preflightOpen} onClose={() => setPreflightOpen(false)} /> : null}
+      {hasCapturedPreflight ? <PreflightModal order={order} open={preflightOpen} onClose={() => setPreflightOpen(false)} view={preflightView} setView={setPreflightView} delivery={delivery} setDelivery={setDelivery} replenishment={replenishment} setReplenishment={setReplenishment} /> : null}
     </main>
   );
+}
+
+export function AdminOrderDetail({id}: {id: string}) {
+  const {state} = useDemoStore();
+  const [lineFilter, setLineFilter] = useState<LineFilter>("all");
+  const [timelineOpen, setTimelineOpen] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [preflightOpen, setPreflightOpen] = useState(false);
+  const [preflightView, setPreflightView] = useState<PreflightView>("error");
+  const [delivery, setDelivery] = useState<DeliveryChannel>("air");
+  const [replenishment, setReplenishment] = useState(0);
+  const order = useMemo(() => resolveOrder(id, state.orders), [id, state.orders]);
+
+  if (!order) {
+    return <main className="page page-narrow" data-admin-order-detail-renderer="current"><Panel className={styles.panelBody}><h1 className={styles.sectionTitle}>Замовлення не знайдено</h1><p className={styles.sectionCopy}>Немає зафіксованого замовлення або рядка пайплайна з таким id.</p><Link href="/admin/order-pipeline" className="button button-outline mt-4">До пайплайна</Link></Panel></main>;
+  }
+
+  const model: AdminOrderDetailViewModel = {
+    order,
+    lineFilter,
+    setLineFilter,
+    timelineOpen,
+    toggleTimeline: () => setTimelineOpen((value) => !value),
+    chatOpen,
+    setChatOpen,
+    preflightOpen: preflightOpen && order.status === "new" && (order.code === "LOG-01" || order.code === "KHA-08"),
+    setPreflightOpen,
+    preflightView,
+    setPreflightView,
+    delivery,
+    setDelivery,
+    replenishment,
+    setReplenishment: (value) => setReplenishment(Math.max(0, value)),
+    hasCapturedPreflight: order.status === "new" && (order.code === "LOG-01" || order.code === "KHA-08"),
+  };
+
+  return <RendererViewSwitch
+    slotId="admin-order-detail"
+    currentView={<CurrentAdminOrderDetailView model={model} />}
+    loadAstryxView={loadAstryxAdminOrderDetailView}
+    astryxViewProps={{model}}
+  />;
 }
