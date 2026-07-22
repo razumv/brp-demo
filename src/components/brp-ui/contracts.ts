@@ -31,6 +31,9 @@ export interface BrpIconButtonProps {
   size?: BrpControlSize;
   disabled?: boolean;
   busy?: boolean;
+  ariaControls?: string;
+  expanded?: boolean;
+  type?: "button" | "submit" | "reset";
   onPress?: () => void | Promise<void>;
 }
 
@@ -119,6 +122,7 @@ export interface BrpToolbarProps {
 
 export interface BrpCardProps {
   children: ReactNode;
+  className?: string;
   tone?: "default" | "muted" | "transparent" | "info" | "success" | "warning";
   padding?: "none" | "sm" | "md" | "lg";
 }

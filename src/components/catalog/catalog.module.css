@@ -89,7 +89,7 @@
   min-width: 0;
 }
 
-.searchField > label {
+.searchLabel {
   display: block;
   margin-bottom: 5px;
   color: var(--muted-foreground);
@@ -100,44 +100,20 @@
 .searchInput {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 36px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface-subtle);
+  overflow: visible;
 }
 
-.searchInput:focus-within {
-  border-color: var(--orange);
-  box-shadow: 0 0 0 1px var(--orange);
-}
-
-.searchInput input {
+.searchInput > :first-child {
   width: 100%;
   min-width: 0;
-  height: 34px;
-  padding: 0 10px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--foreground);
 }
 
 .searchInput button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: 0 0 40px;
   width: 40px;
-  height: 34px;
-  border: 0;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-
-.searchInput button:hover {
-  color: var(--orange);
+  height: 40px;
 }
 
 .searchResult {
@@ -819,6 +795,34 @@
   outline-offset: 2px;
 }
 
+.diagramSelector {
+  display: flex;
+  align-items: center;
+  min-width: 210px;
+  gap: 8px;
+}
+
+.diagramSelector > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.diagramSelector b {
+  flex: 0 0 auto;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.secondaryAction {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.secondaryAction > button {
+  height: 38px;
+}
+
 .secondaryAction:hover,
 .selectorGroup button:hover:not(:disabled) {
   border-color: var(--faint);
@@ -1112,16 +1116,13 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--orange);
-  cursor: pointer;
+  border: 0;
+  background: transparent;
 }
 
-.tableCartButton:hover {
-  border-color: var(--orange);
-  background: var(--orange-soft);
+.tableCartButton > button {
+  width: 32px;
+  height: 32px;
 }
 
 .visuallyHidden {
@@ -1990,6 +1991,10 @@
     margin-left: auto;
   }
 
+  .diagramSelector {
+    min-width: 140px;
+  }
+
   .diagramActions > .secondaryAction:first-of-type {
     display: none;
   }
@@ -2018,6 +2023,10 @@
     height: 42px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+  }
+
+  .mobileDiagramTabs > * {
+    width: 100%;
   }
 
   .mobileDiagramTabs button {

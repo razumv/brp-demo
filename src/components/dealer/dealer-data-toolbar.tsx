@@ -2,6 +2,8 @@
 
 import { Filter, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
+import {BrpButton, BrpIconButton, BrpTextInput} from "@/components/brp-ui";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import styles from "./dealer-data-toolbar.module.css";
 
 export type DealerDataToolbarProps = Readonly<{
@@ -24,44 +26,43 @@ export type DealerDataToolbarProps = Readonly<{
 }>;
 
 export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToolbarProps) {
+  const {renderedDesignSystem} = useAppearance();
+
   return (
-    <section className={styles.root} data-dealer-data-toolbar>
+    <section className={styles.root} data-dealer-data-toolbar data-renderer={renderedDesignSystem}>
       <div className={styles.searchRow}>
-        <label className={styles.searchField}>
-          <Search size={16} aria-hidden="true" />
-          <span className="sr-only">{search.label}</span>
-          <input
+        <div className={styles.searchField}>
+          <BrpTextInput
             type="search"
-            aria-label={search.label}
-            autoComplete="off"
-            spellCheck={false}
+            label={search.label}
+            hideLabel
+            leadingIcon={<Search size={16} aria-hidden="true" />}
+            clearable
             placeholder={search.placeholder}
             value={search.value}
-            onChange={(event) => search.onValueChange(event.target.value)}
+            onValueChange={search.onValueChange}
           />
-        </label>
+        </div>
         {filters ? (
-          <button
-            type="button"
-            className={styles.filterTrigger}
-            aria-label={filters.label}
-            aria-controls={filters.panelId}
-            aria-expanded={filters.open}
-            onClick={() => filters.onOpenChange(!filters.open)}
-          >
-            <Filter size={17} aria-hidden="true" />
-            {filters.activeCount > 0 ? <span className={styles.activeCount}>{filters.activeCount}</span> : null}
-          </button>
+          <div className={styles.filterTrigger}>
+            <BrpIconButton
+              label={filters.label}
+              icon={<><Filter size={17} aria-hidden="true" />{filters.activeCount > 0 ? <span className={styles.activeCount}>{filters.activeCount}</span> : null}</>}
+              variant="secondary"
+              ariaControls={filters.panelId}
+              expanded={filters.open}
+              onPress={() => filters.onOpenChange(!filters.open)}
+            />
+          </div>
         ) : null}
       </div>
       {filters ? (
         <div id={filters.panelId} className={styles.filterPanel} hidden={!filters.open}>
           <div className={styles.filterContent}>{filters.content}</div>
           {filters.onClear ? (
-            <button type="button" className={styles.resetButton} disabled={filters.activeCount === 0} onClick={filters.onClear}>
-              <X size={14} aria-hidden="true" />
-              Скинути фільтри
-            </button>
+            <div className={styles.resetButton}>
+              <BrpButton label="Скинути фільтри" icon={<X size={14} aria-hidden="true" />} disabled={filters.activeCount === 0} onPress={filters.onClear} />
+            </div>
           ) : null}
         </div>
       ) : null}

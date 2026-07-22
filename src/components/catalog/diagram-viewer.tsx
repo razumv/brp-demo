@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  List,
   Maximize2,
   Minus,
   Package,
@@ -20,6 +19,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
+import {BrpButton, BrpIconButton, BrpSelect, BrpTabs} from "@/components/brp-ui";
 import { CATALOG_IDS, diagramNames, formatMoney, parts } from "@/lib/mock-data";
 import { publicAssetPath } from "@/lib/public-base-path";
 import styles from "@/components/catalog/catalog.module.css";
@@ -76,14 +76,15 @@ function PartsTable({
                 <td>{formatMoney(part.dealerPrice)}</td>
                 <td><strong>{formatMoney(part.retailPrice)}</strong></td>
                 <td>
-                  <button
-                    type="button"
-                    className={styles.tableCartButton}
-                    aria-label={`Додати ${part.number} до кошика`}
-                    onClick={() => onAdd(part.number)}
-                  >
-                    {addedPart === part.number ? <Check size={15} /> : <ShoppingCart size={15} />}
-                  </button>
+                  <span className={styles.tableCartButton}>
+                    <BrpIconButton
+                      label={`Додати ${part.number} до кошика`}
+                      icon={addedPart === part.number ? <Check size={15} /> : <ShoppingCart size={15} />}
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => onAdd(part.number)}
+                    />
+                  </span>
                 </td>
               </tr>
             ))}
@@ -129,19 +130,9 @@ function DiagramCanvas({
         >
           {calloutsVisible ? <Eye size={17} /> : <EyeOff size={17} />}
         </button>
-        <button
-          type="button"
-          aria-label="Збільшити схему"
-          disabled={zoomIndex === zoomLevels.length - 1}
-          onClick={() => setZoom(zoomLevels[Math.min(zoomIndex + 1, zoomLevels.length - 1)])}
-        ><Plus size={18} /></button>
-        <button
-          type="button"
-          aria-label="Зменшити схему"
-          disabled={zoomIndex === 0}
-          onClick={() => setZoom(zoomLevels[Math.max(zoomIndex - 1, 0)])}
-        ><Minus size={18} /></button>
-        <button type="button" aria-label="Скинути масштаб" onClick={() => setZoom(1)}><Maximize2 size={16} /></button>
+        <BrpIconButton label="Збільшити схему" icon={<Plus size={18} />} disabled={zoomIndex === zoomLevels.length - 1} onPress={() => setZoom(zoomLevels[Math.min(zoomIndex + 1, zoomLevels.length - 1)])} />
+        <BrpIconButton label="Зменшити схему" icon={<Minus size={18} />} disabled={zoomIndex === 0} onPress={() => setZoom(zoomLevels[Math.max(zoomIndex - 1, 0)])} />
+        <BrpIconButton label="Скинути масштаб" icon={<Maximize2 size={16} />} onPress={() => setZoom(1)} />
       </div>
       <span className={styles.zoomIndicator}>{Math.round(zoom * 100)}%</span>
     </section>
@@ -238,37 +229,22 @@ export function DiagramViewer() {
         </div>
         <div className={styles.diagramActions}>
           <div className={styles.selectorGroup}>
-            <button
-              type="button"
-              aria-label="Попередня схема"
-              disabled={diagramIndex === 0}
-              onClick={() => setDiagramIndex(Math.max(0, diagramIndex - 1))}
-            ><ChevronLeft size={17} /></button>
-            <label>
-              <List size={16} />
-              <span className={styles.visuallyHidden}>Оберіть схему</span>
-              <select value={diagramIndex} onChange={(event) => setDiagramIndex(Number(event.target.value))}>
-                {diagramNames.map((diagram, index) => <option value={index} key={diagram}>{index + 1}. {diagram}</option>)}
-              </select>
+            <BrpIconButton label="Попередня схема" icon={<ChevronLeft size={17} />} variant="secondary" disabled={diagramIndex === 0} onPress={() => setDiagramIndex(Math.max(0, diagramIndex - 1))} />
+            <div className={styles.diagramSelector}>
+              <BrpSelect label="Оберіть схему" hideLabel value={String(diagramIndex)} onValueChange={(value) => setDiagramIndex(Number(value))} options={diagramNames.map((diagram, index) => ({value: String(index), label: `${index + 1}. ${diagram}`}))} />
               <b>{diagramIndex + 1} / {diagramNames.length}</b>
-            </label>
-            <button
-              type="button"
-              aria-label="Наступна схема"
-              disabled={diagramIndex === diagramNames.length - 1}
-              onClick={() => setDiagramIndex(Math.min(diagramNames.length - 1, diagramIndex + 1))}
-            ><ChevronRight size={17} /></button>
+            </div>
+            <BrpIconButton label="Наступна схема" icon={<ChevronRight size={17} />} variant="secondary" disabled={diagramIndex === diagramNames.length - 1} onPress={() => setDiagramIndex(Math.min(diagramNames.length - 1, diagramIndex + 1))} />
           </div>
-          <button type="button" className={styles.secondaryAction} onClick={() => window.print()}><Printer size={16} /><span>Друк</span></button>
-          <button type="button" className={styles.secondaryAction} onClick={share}><Share2 size={16} /><span>{shared ? "Скопійовано" : "Поділитися"}</span></button>
+          <span className={styles.secondaryAction}><BrpButton label="Друк" icon={<Printer size={16} />} variant="secondary" onPress={() => window.print()} /></span>
+          <span className={styles.secondaryAction}><BrpButton label={shared ? "Скопійовано" : "Поділитися"} icon={<Share2 size={16} />} variant="secondary" onPress={share} /></span>
           <Link className={styles.diagramCart} href="/cart"><ShoppingCart size={16} /><span>Кошик ({cartCount})</span></Link>
           {commandError ? <span className={styles.errorMessage} role="alert">{commandError}</span> : null}
         </div>
       </header>
 
-      <div className={styles.mobileDiagramTabs} role="tablist" aria-label="Вигляд схеми">
-        <button type="button" role="tab" aria-selected={mobileTab === "schema"} onClick={() => setMobileTab("schema")}>Схема</button>
-        <button type="button" role="tab" aria-selected={mobileTab === "parts"} onClick={() => setMobileTab("parts")}><Package size={16} /> Запчастини <span>{parts.length}</span></button>
+      <div className={styles.mobileDiagramTabs}>
+        <BrpTabs label="Вигляд схеми" value={mobileTab} onValueChange={(value) => setMobileTab(value as MobileTab)} fill options={[{value: "schema", label: "Схема"}, {value: "parts", label: "Запчастини", icon: <Package size={16} />, endContent: <span>{parts.length}</span>}]} />
       </div>
 
       <main className={styles.diagramWorkspace}>

@@ -162,8 +162,8 @@ export const astryxAdapter: BrpUiAdapter = {
       {content}
     </AstryxButton>
   ),
-  BrpIconButton: ({label, icon, variant = "ghost", size = "md", disabled, busy, onPress, ref}) => (
-    <AstryxIconButton ref={ref} label={label} icon={icon} variant={variant === "danger" ? "destructive" : variant} size={size} isDisabled={disabled} isLoading={busy} onClick={() => void onPress?.()} />
+  BrpIconButton: ({label, icon, variant = "ghost", size = "md", disabled, busy, ariaControls, expanded, type = "button", onPress, ref}) => (
+    <AstryxIconButton ref={ref} label={label} icon={icon} variant={variant === "danger" ? "destructive" : variant} size={size} type={type} isDisabled={disabled} isLoading={busy} aria-controls={ariaControls} aria-expanded={expanded} onClick={() => void onPress?.()} />
   ),
   BrpTextInput: ({label, value, onValueChange, placeholder, type = "text", error, disabled, required, hideLabel, leadingIcon, clearable, size = "md", ref}) => (
     <AstryxTextInput ref={ref} label={label} value={value} onChange={onValueChange} placeholder={placeholder} type={type === "search" ? "text" : type} status={error ? {type: "error", message: error} : undefined} isDisabled={disabled} isRequired={required} isLabelHidden={hideLabel} startIcon={leadingIcon} hasClear={clearable} size={size} width="100%" />
@@ -200,7 +200,7 @@ export const astryxAdapter: BrpUiAdapter = {
   BrpToolbar: ({label, start, center, end, size = "md", orientation = "horizontal", divided, ref}) => (
     <AstryxToolbar ref={ref} label={label} startContent={start} centerContent={center} endContent={end} size={size} orientation={orientation} dividers={divided ? ["top", "bottom"] : undefined} />
   ),
-  BrpCard: ({children, tone = "default", padding = "md"}) => <AstryxCard variant={cardVariants[tone]} padding={cardPadding[padding]}>{children}</AstryxCard>,
+  BrpCard: ({children, className, tone = "default", padding = "md"}) => <AstryxCard className={className} variant={cardVariants[tone]} padding={cardPadding[padding]}>{children}</AstryxCard>,
   BrpBadge: ({label, tone = "neutral", icon}) => <AstryxBadge label={label} variant={badgeVariants[tone]} icon={icon} />,
   BrpStatusDot: ({label, tone, pulsing, tooltip}) => <AstryxStatusDot label={label} variant={tone === "danger" ? "error" : tone} isPulsing={pulsing} tooltip={tooltip} />,
   BrpTable: ({label, columns, rows, density = "balanced", dividers = "rows", striped, hover, emptyState}) => {

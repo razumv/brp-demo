@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type {ReactNode} from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -20,7 +21,9 @@ import {
   Wrench,
 } from "lucide-react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
-import { PageHeader, Panel, StatCard } from "@/components/shared/ui";
+import { PageHeader } from "@/components/shared/ui";
+import {BrpCard} from "@/components/brp-ui";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { formatDate, OrderStatusBadge } from "./common";
@@ -38,7 +41,27 @@ const shortcuts = [
   { href: "/dealer/schedule", label: "Графік поставки", helper: "Майбутні слоти і залишки", icon: CalendarDays },
 ];
 
+function DealerStatCard({icon, label, value, helper, tone = "default"}: {
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  helper: string;
+  tone?: "default" | "info" | "warning";
+}) {
+  return (
+    <BrpCard className="stat-card" tone={tone} padding="md">
+      <div className="stat-icon">{icon}</div>
+      <div className="min-w-0">
+        <p className="stat-label">{label}</p>
+        <div className="stat-value">{value}</div>
+        <div className="stat-helper">{helper}</div>
+      </div>
+    </BrpCard>
+  );
+}
+
 export function DealerDashboard() {
+  const {renderedDesignSystem} = useAppearance();
   const { snapshot } = useDealerWorkflow();
   const processing = snapshot.orders.filter((order) => !["done", "cancelled"].includes(order.status));
   const completed = snapshot.orders.filter((order) => order.status === "done");
@@ -56,7 +79,7 @@ export function DealerDashboard() {
     .reduce((sum, order) => sum + orderTotal(order.lines), 0);
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-dashboard-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<Box size={21} />}
         title="Головна"
@@ -69,27 +92,27 @@ export function DealerDashboard() {
       />
 
       <section className={styles.statsGrid} aria-label="Показники замовлень">
-        <StatCard
+        <DealerStatCard
           icon={<ClipboardList size={18} />}
           label="Усього замовлень"
           value={snapshot.orders.length}
           helper={snapshot.orders.length ? "За весь час" : "Немає відкритих замовлень"}
         />
-        <StatCard
+        <DealerStatCard
           icon={<PackageCheck size={18} />}
           label="У роботі"
           value={processing.length}
           helper={processing.length ? "Очікують виконання" : "Немає активних відвантажень"}
-          tone="blue"
+          tone="info"
         />
-        <StatCard
+        <DealerStatCard
           icon={<WalletCards size={18} />}
           label="Витрати за місяць"
           value={formatMoney(monthSpend)}
           helper="Поточний календарний місяць"
-          tone="orange"
+          tone="warning"
         />
-        <StatCard
+        <DealerStatCard
           icon={<Package size={18} />}
           label="Загальні витрати"
           value={formatMoney(totalSpend)}
@@ -98,7 +121,7 @@ export function DealerDashboard() {
       </section>
 
       <section className={styles.dashboardColumns}>
-        <Panel className={styles.dashboardPanel}>
+        <BrpCard className={styles.dashboardPanel} padding="none">
           <header className={styles.panelHeader}>
             <h2>Останні замовлення</h2>
             <Link href="/dealer/orders" className="button button-outline">
@@ -128,9 +151,9 @@ export function DealerDashboard() {
               <Link href="/catalog" className="button button-outline"><ShoppingCart size={15} /> Перейти до каталогу</Link>
             </div>
           )}
-        </Panel>
+        </BrpCard>
 
-        <Panel className={styles.dashboardPanel}>
+        <BrpCard className={styles.dashboardPanel} padding="none">
           <header className={styles.panelHeader}><h2>Потребує уваги</h2></header>
           <div className={styles.attentionList}>
             {processing.length ? (
@@ -148,10 +171,10 @@ export function DealerDashboard() {
               </div>
             )}
           </div>
-        </Panel>
+        </BrpCard>
       </section>
 
-      <Panel className={styles.shortcutsPanel}>
+      <BrpCard className={styles.shortcutsPanel} padding="none">
         <header className={styles.panelHeader}><h2>Доступні розділи</h2></header>
         <div className={styles.shortcutGrid}>
           {shortcuts.map(({ href, label, helper, icon: Icon }) => (
@@ -162,13 +185,13 @@ export function DealerDashboard() {
             </Link>
           ))}
         </div>
-      </Panel>
+      </BrpCard>
 
       <section className={styles.summaryGrid} aria-label="Додаткові показники">
-        <Panel className={styles.summaryCard}><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></Panel>
-        <Panel className={styles.summaryCard}><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></Panel>
+        <BrpCard className={styles.summaryCard} padding="sm"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard>
+        <BrpCard className={styles.summaryCard} padding="sm"><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></BrpCard>
+        <BrpCard className={styles.summaryCard} padding="sm"><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></BrpCard>
+        <BrpCard className={styles.summaryCard} padding="sm"><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></BrpCard>
       </section>
     </main>
   );

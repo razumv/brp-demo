@@ -12,58 +12,30 @@
 }
 
 .searchField {
-  display: flex;
   flex: 1 1 auto;
-  align-items: center;
   min-width: 0;
-  min-height: 44px;
-  padding: 0 12px;
-  gap: 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--muted-foreground);
 }
 
-.searchField:focus-within {
-  border-color: var(--orange);
-  box-shadow: 0 0 0 1px var(--orange);
+.searchField > * {
+  width: 100%;
 }
 
 .searchField input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
+  min-height: 44px;
 }
 
 .filterTrigger {
   position: relative;
-  display: inline-grid;
+  display: inline-flex;
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--foreground);
-  cursor: pointer;
 }
 
-.filterTrigger:hover,
-.filterTrigger:focus-visible {
-  border-color: var(--orange);
-  color: var(--orange);
-  outline: 0;
-}
-
-.filterTrigger:focus-visible {
-  box-shadow: 0 0 0 1px var(--orange);
+.filterTrigger > button {
+  position: relative;
+  width: 44px;
+  height: 44px;
 }
 
 .activeCount {
@@ -104,23 +76,7 @@
 }
 
 .resetButton {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 10px;
-  gap: 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--foreground);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
-
-.resetButton:disabled {
-  cursor: not-allowed;
-  opacity: .55;
+  display: flex;
 }
 
 .resultMeta {
@@ -140,8 +96,7 @@
     width: 100%;
   }
 
-  .resetButton {
-    justify-content: center;
-    min-height: 44px;
+  .resetButton > button {
+    width: 100%;
   }
 }

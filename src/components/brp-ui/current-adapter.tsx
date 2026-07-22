@@ -190,15 +190,20 @@ const CurrentIconButton = forwardRef<HTMLButtonElement, BrpIconButtonProps>(func
   size = "md",
   disabled,
   busy,
+  ariaControls,
+  expanded,
+  type = "button",
   onPress,
 }, ref) {
   return (
     <Button
       ref={ref}
-      type="button"
+      type={type}
       variant={actionVariants[variant]}
       size={size === "sm" ? "icon-sm" : size === "lg" ? "icon-lg" : "icon"}
       aria-label={label}
+      aria-controls={ariaControls}
+      aria-expanded={expanded}
       aria-busy={busy || undefined}
       disabled={disabled || busy}
       onClick={() => void onPress?.()}
@@ -678,8 +683,8 @@ export const currentAdapter: BrpUiAdapter = {
   BrpTabs: CurrentTabs,
   BrpSegmentedControl: CurrentSegmentedControl,
   BrpToolbar: CurrentToolbar,
-  BrpCard: ({children, tone = "default", padding = "md"}) => (
-    <div className={`rounded-xl border shadow-sm ${cardClasses[tone]} ${cardPaddingClasses[padding]}`}>{children}</div>
+  BrpCard: ({children, className = "", tone = "default", padding = "md"}) => (
+    <div className={`rounded-xl border shadow-sm ${cardClasses[tone]} ${cardPaddingClasses[padding]} ${className}`}>{children}</div>
   ),
   BrpBadge: ({label, tone = "neutral", icon}) => (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${badgeClasses[tone]}`}>{icon}{label}</span>
