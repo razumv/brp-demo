@@ -52,6 +52,12 @@ const uploadLabels = {
   cost: "Завантажити документи",
 } as const;
 
+const uploadLockedReasons = {
+  appendices: "Потрібне підключення сервісу документів",
+  invoices: "Потрібна інтеграція імпорту VIN з 1С",
+  cost: "Потрібне підключення сервісу документів",
+} as const;
+
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
@@ -77,12 +83,12 @@ function Contracts(props: AdminInvoicesViewProps) {
     {key: "shortNumber", header: "Контракт", width: pixel(126), renderCell: (row) => <Button label={row.shortNumber} variant="ghost" size="sm" onClick={() => props.onSelectedContractChange(row)} />},
     {key: "supplier", header: "Постачальник", width: proportional(2)},
     {key: "buyer", header: "Покупець", width: proportional(2)},
-    {key: "id", header: "Дії", width: pixel(172), renderCell: (row) => <div className={styles.actions}><Button label={`Переглянути контракт ${row.shortNumber}`} icon={<Eye size={14} />} isIconOnly variant="ghost" onClick={() => props.onSelectedContractChange(row)} /><Button label={`Редагувати контракт ${row.shortNumber}`} icon={<Pencil size={14} />} isIconOnly variant="ghost" isDisabled tooltip="Редагування вимкнене у read-only клоні" /></div>},
+    {key: "id", header: "Дії", width: pixel(172), renderCell: (row) => <div className={styles.actions}><Button label={`Переглянути контракт ${row.shortNumber}`} icon={<Eye size={14} />} isIconOnly variant="ghost" onClick={() => props.onSelectedContractChange(row)} /><Button label={`Редагувати контракт ${row.shortNumber}`} icon={<Pencil size={14} />} isIconOnly variant="ghost" isDisabled tooltip="Потрібне підключення реєстру договорів для змін" /></div>},
   ], [props]);
   return <section className={styles.panel} role="tabpanel" aria-label="Контракти">
     <div className={styles.toolbar}><TextInput label="Пошук контрактів" isLabelHidden value={props.contractsQuery} onChange={props.onContractsQueryChange} placeholder="Пошук номера, постачальника або покупця..." hasClear width="100%" /><Button label="Новий контракт" icon={<Plus size={15} />} onClick={() => props.onContractsCreatingChange(true)} /></div>
     {rows.length ? <div className={styles.tableScroller} role="region" aria-label="Контракти" tabIndex={0}><Table aria-label="Контракти" data={rows.map((row) => ({...row}))} columns={columns} idKey="id" density="compact" dividers="rows" /></div> : <EmptyState isCompact title="Контрактів не знайдено" description="Змініть номер, постачальника або покупця у пошуку." />}
-    <InvoiceDialog title="Новий контракт" open={props.contractsCreating} onOpenChange={props.onContractsCreatingChange}><p>Перевірте реквізити контракту перед створенням.</p><div className={styles.dialogActions}><Button label="Скасувати" variant="secondary" onClick={() => props.onContractsCreatingChange(false)} /><Button label="Створити контракт" icon={<LockKeyhole size={14} />} isDisabled tooltip="Створення контракту вимкнене у read-only клоні" /></div></InvoiceDialog>
+    <InvoiceDialog title="Новий контракт" open={props.contractsCreating} onOpenChange={props.onContractsCreatingChange}><p>Перевірте реквізити контракту перед створенням.</p><div className={styles.dialogActions}><Button label="Скасувати" variant="secondary" onClick={() => props.onContractsCreatingChange(false)} /><Button label="Створити контракт" icon={<LockKeyhole size={14} />} isDisabled tooltip="Потрібне підключення реєстру договорів для запису" /></div></InvoiceDialog>
     <InvoiceDialog title={props.selectedContract ? `Контракт ${props.selectedContract.shortNumber}` : "Контракт"} open={Boolean(props.selectedContract)} onOpenChange={(open) => !open && props.onSelectedContractChange(null)}><dl className={styles.details}>{props.selectedContract ? <><dt>Постачальник</dt><dd>{props.selectedContract.supplier}</dd><dt>Покупець</dt><dd>{props.selectedContract.buyer}</dd><dt>Повний номер</dt><dd>{props.selectedContract.detail.fullNumber}</dd></> : null}</dl></InvoiceDialog>
   </section>;
 }
@@ -123,5 +129,5 @@ export default function AstryxAdminInvoicesView(props: AdminInvoicesViewProps & 
   }, [props.onReady]);
 
   const upload = props.tab === "contracts" ? null : uploadLabels[props.tab];
-  return <AstryxBrpUiProvider><main className={styles.page} data-admin-invoices-renderer="astryx"><header className={styles.header}><span><FileText size={20} /></span><div><h1>Інвойси та документи</h1><p>Керування інвойсами, контрактами та митними документами</p></div>{upload ? <Button label={upload} icon={<Upload size={14} />} isDisabled tooltip={`${upload} вимкнене у read-only клоні`} /> : null}</header><Kpis /><TabList aria-label="Інвойси та документи" value={props.tab} onChange={(value) => props.onTabChange(value as AdminInvoicesViewProps["tab"])} hasDivider>{Object.entries(tabLabels).map(([value, label]) => <Tab key={value} value={value} label={label} />)}</TabList>{props.tab === "contracts" ? <Contracts {...props} /> : null}{props.tab === "appendices" ? <Appendices {...props} /> : null}{props.tab === "invoices" ? <Invoices {...props} /> : null}{props.tab === "cost" ? <Cost {...props} /> : null}</main></AstryxBrpUiProvider>;
+  return <AstryxBrpUiProvider><main className={styles.page} data-admin-invoices-renderer="astryx"><header className={styles.header}><span><FileText size={20} /></span><div><h1>Інвойси та документи</h1><p>Керування інвойсами, контрактами та митними документами</p></div>{upload ? <Button label={upload} icon={<Upload size={14} />} isDisabled tooltip={uploadLockedReasons[props.tab as keyof typeof uploadLockedReasons]} /> : null}</header><Kpis /><TabList aria-label="Інвойси та документи" value={props.tab} onChange={(value) => props.onTabChange(value as AdminInvoicesViewProps["tab"])} hasDivider>{Object.entries(tabLabels).map(([value, label]) => <Tab key={value} value={value} label={label} />)}</TabList>{props.tab === "contracts" ? <Contracts {...props} /> : null}{props.tab === "appendices" ? <Appendices {...props} /> : null}{props.tab === "invoices" ? <Invoices {...props} /> : null}{props.tab === "cost" ? <Cost {...props} /> : null}</main></AstryxBrpUiProvider>;
 }

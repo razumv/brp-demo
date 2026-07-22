@@ -78,6 +78,12 @@ const uploadLabels: Partial<Record<InvoiceTabId, string>> = {
   cost: "Завантажити документи",
 };
 
+const uploadLockedReasons: Partial<Record<InvoiceTabId, string>> = {
+  appendices: "Потрібне підключення сервісу документів",
+  invoices: "Потрібна інтеграція імпорту VIN з 1С",
+  cost: "Потрібне підключення сервісу документів",
+};
+
 const pageKpiIcons = {
   shipments: FileText,
   ready: Clock3,
@@ -231,7 +237,7 @@ function NewContractPreview({ onClose }: { onClose: () => void }) {
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
           <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
-          <LockedButton className="button-primary" title="Створення контракту вимкнене у read-only клоні">Створити контракт</LockedButton>
+          <LockedButton className="button-primary" title="Потрібне підключення реєстру договорів для запису">Створити контракт</LockedButton>
         </div>
       </div>
     </Panel>
@@ -324,9 +330,9 @@ function ContractsTab(props: Pick<AdminInvoicesViewProps, "contractsCreating" | 
             </button>
             <div className="flex flex-wrap gap-1 sm:justify-end" aria-label={`Дії контракту ${contract.shortNumber}`}>
               <AdminIconAction label={`Переглянути контракт ${contract.shortNumber}`} tooltip="Безпечний перегляд реквізитів" icon={<Eye size={14} />} tone="primary" onClick={() => props.onSelectedContractChange(contract)} />
-              <AdminIconAction label={`Редагувати контракт ${contract.shortNumber}`} tooltip="Редагування вимкнене у read-only клоні" icon={<Pencil size={14} />} disabled />
-              <AdminIconAction label={`Дублювати контракт ${contract.shortNumber}`} tooltip="Дублювання вимкнене у read-only клоні" icon={<Copy size={14} />} disabled />
-              <AdminIconAction label={`Видалити контракт ${contract.shortNumber}`} tooltip="Видалення вимкнене у read-only клоні" icon={<Trash2 size={14} />} tone="danger" disabled />
+              <AdminIconAction label={`Редагувати контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для змін" icon={<Pencil size={14} />} disabled />
+              <AdminIconAction label={`Дублювати контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для створення копії" icon={<Copy size={14} />} disabled />
+              <AdminIconAction label={`Видалити контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для видалення" icon={<Trash2 size={14} />} tone="danger" disabled />
             </div>
           </Panel>
         ))}
@@ -660,7 +666,7 @@ function CostDetailModal({ card, onClose }: { card: InvoiceCostCard | null; onCl
   ] as const;
 
   return (
-    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Read-only розшифровка source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Деталізація source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
       <div className="grid gap-4">
         <InlineNotice tone={card.incomplete ? "warning" : "info"}>
           {card.incomplete ? "У source-картці є незаповнені витрати; вони залишені як «—». " : ""}Перегляд не архівує BL і не змінює курс або суми.
@@ -738,7 +744,7 @@ function CurrentAdminInvoicesView(props: AdminInvoicesViewProps) {
         icon={<FileText size={20} />}
         title="Інвойси та документи"
         description="Керування інвойсами, контрактами та митними документами"
-        actions={uploadLabel ? <LockedButton title={`${uploadLabel} вимкнене у read-only клоні`}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
+        actions={uploadLabel ? <LockedButton title={uploadLockedReasons[props.tab] ?? "Потрібна інтеграція сервісу документів"}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
       />
       <div className="grid gap-5">
         <PageKpis />

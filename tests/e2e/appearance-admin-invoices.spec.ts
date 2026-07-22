@@ -101,11 +101,13 @@ test("invoice tab and search state survives current to Astryx to current rendere
   await expect(page.getByRole("textbox", {name: "Пошук додатків"})).toHaveValue("07");
 });
 
-test("Astryx invoices retain locked actions and omit implementation-only copy", async ({page}) => {
-  await seedAppearance(page, "astryx", "light");
-  await page.goto("/admin/invoices");
-  await expect(page.getByRole("button", {name: "Новий контракт"})).toBeVisible();
-  await selectInvoiceTab(page, "appendices", "Додатки");
-  await expect(page.getByRole("button", {name: "Завантажити проформи"})).toBeDisabled();
-  await expect(page.locator("body")).not.toContainText(/демо|mockup|clone|local|source fixture/i);
+test("invoice renderers retain locked actions and omit implementation-only copy", async ({page}) => {
+  for (const designSystem of ["shadcn", "astryx"] as const) {
+    await seedAppearance(page, designSystem, "light");
+    await page.goto("/admin/invoices");
+    await expect(page.getByRole("button", {name: "Новий контракт"})).toBeVisible();
+    await selectInvoiceTab(page, "appendices", "Додатки");
+    await expect(page.getByRole("button", {name: "Завантажити проформи"})).toBeDisabled();
+    await expect(page.locator("body")).not.toContainText(/демо|mockup|clone|local|source fixture|read-only|клон/i);
+  }
 });
