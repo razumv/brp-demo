@@ -159,7 +159,7 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
     <div className={compact ? "flex flex-wrap items-center gap-1 [&>button]:!size-11 md:[&>button]:!size-8" : "flex items-center justify-end gap-1"}>
       <AdminIconAction
         label={`Деактивувати ${user.displayName} — заблоковано`}
-        tooltip="Деактивація користувача недоступна: доступ лише для читання."
+        tooltip="Деактивація користувача потребує підключення сервісу облікових записів."
         icon={<CircleX size={15} />}
         tone="danger"
         disabled
@@ -173,7 +173,7 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
       />
       <AdminIconAction
         label={`Видалити ${user.displayName} — заблоковано`}
-        tooltip="Видалення користувача недоступне: доступ лише для читання."
+        tooltip="Видалення користувача потребує підключення сервісу облікових записів."
         icon={<Trash2 size={15} />}
         tone="danger"
         disabled
@@ -339,7 +339,7 @@ function PermissionSwitch({ state, label }: { state: Exclude<PermissionState, "n
       aria-disabled="true"
       aria-pressed={enabled}
       aria-label={`${label}: ${enabled ? "увімкнено" : "вимкнено"}; зміна заблокована`}
-      title="Зміна дозволу недоступна: доступ лише для читання."
+      title="Зміна дозволу потребує підключення сервісу контролю доступу."
       className={`relative mx-auto block h-5 w-9 cursor-not-allowed rounded-full border opacity-100 ${enabled ? "border-[#1a7f37] bg-[#1a7f37] dark:border-[#3fb950] dark:bg-[#238636]" : "border-[var(--border)] bg-[var(--surface-subtle)]"}`}
     >
       <span className={`absolute top-[2px] size-3 rounded-full bg-white shadow-sm dark:bg-[#f0f6fc] ${enabled ? "right-[2px]" : "left-[2px]"}`} aria-hidden="true" />
@@ -378,7 +378,7 @@ function ManagerPermissionMatrix() {
           disabled
           aria-disabled="true"
           className="cursor-not-allowed text-left text-[10px] text-[var(--muted-foreground)] opacity-70 sm:text-right"
-          title="Скидання дозволів недоступне: доступ лише для читання."
+          title="Скидання дозволів потребує підключення сервісу контролю доступу."
         >
           Скинути до ролі за замовчуванням
         </button>
@@ -440,7 +440,7 @@ function EditUserPreview({ user, onClose }: { user: AdminUserRecord | null; onCl
             disabled
             aria-disabled="true"
             className="button button-primary"
-            title="Збереження змін недоступне: доступ лише для читання."
+            title="Збереження змін потребує підключення сервісу облікових записів."
           >
             Зберегти зміни
           </button>

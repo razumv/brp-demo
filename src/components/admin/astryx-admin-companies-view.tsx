@@ -12,7 +12,7 @@ import {Layout, LayoutContent, LayoutFooter} from "@astryxdesign/core/Layout";
 import {Selector} from "@astryxdesign/core/Selector";
 import {Text} from "@astryxdesign/core/Text";
 import {TextInput} from "@astryxdesign/core/TextInput";
-import {Building2, Filter, LockKeyhole, Pencil, Plus, ShieldCheck, Trash2, UserPlus, Users} from "lucide-react";
+import {Building2, Filter, LockKeyhole, Pencil, Plus, Trash2, UserPlus, Users} from "lucide-react";
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
 import {adminCompanies, emptyCompanyForm, type AdminCompany, type CompanyFormFixture} from "@/lib/admin-companies-data";
@@ -21,7 +21,7 @@ import styles from "./astryx-admin-companies-view.module.css";
 
 type Props = {model: AdminCompaniesModel} & AstryxRendererViewProps;
 
-const lockedCreateReason = "Створення компанії недоступне: доступ лише для читання.";
+const lockedCreateReason = "Створення компанії потребує підключення сервісу компаній.";
 
 function CompanyDialog({model}: {model: AdminCompaniesModel}) {
   const dialog = model.dialog;
@@ -37,9 +37,9 @@ function CompanyDialog({model}: {model: AdminCompaniesModel}) {
   const title = isAssign ? "Призначити працівника" : isEdit ? "Редагувати компанію" : "Створити нову компанію";
   const saveLabel = isAssign ? "Призначити працівника" : isEdit ? "Оновити компанію" : "Створити компанію";
   const reason = isAssign
-    ? "Призначення працівника недоступне: доступ лише для читання."
+    ? "Призначення працівника потребує підключення сервісу облікових записів."
     : isEdit
-      ? "Оновлення компанії недоступне: доступ лише для читання."
+      ? "Оновлення компанії потребує підключення сервісу компаній."
       : lockedCreateReason;
 
   const update = (key: keyof CompanyFormFixture, value: string) => setForm((current) => ({...current, [key]: value}));
@@ -104,7 +104,7 @@ function CompanyCard({company, model}: {company: AdminCompany; model: AdminCompa
         <Button label={`Працівники ${company.name}`} icon={<Users size={14} />} endContent={company.employeeCount} variant="secondary" size="sm" onClick={() => model.toggleEmployees(company.id)} aria-expanded={employeeOpen} />
         <IconButton label={`Редагувати ${company.name}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати компанію" onClick={() => model.openDialog({mode: "edit", companyId: company.id})} />
         <IconButton label={`Призначити працівника в ${company.name}`} icon={<UserPlus size={15} />} variant="ghost" tooltip="Призначити працівника" onClick={() => model.openDialog({mode: "assign", companyId: company.id})} />
-        <IconButton label={`Видалити ${company.name} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення компанії недоступне: доступ лише для читання." />
+        <IconButton label={`Видалити ${company.name} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення компанії потребує підключення сервісу компаній." />
       </div>
       {employeeOpen ? (
         <div className={styles.employeeList} role="region" aria-label={`Працівники ${company.name}`}>

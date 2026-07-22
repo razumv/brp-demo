@@ -44,6 +44,7 @@ test.describe("admin catalog appearance matrix", () => {
         await expect(page.locator(`[data-admin-catalog-renderer="${appearance.renderer}"]`)).toHaveCount(1);
         await expect(page.getByRole("heading", {name: "Керування каталогом"})).toBeVisible();
         await expect(page.getByRole("textbox", {name: "Пошук транспортних засобів"})).toBeVisible();
+        await expect(page.locator("body")).not.toContainText(/демо|mockup|clone|клон|read-only|source fixture|source-observed/i);
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       });
     }

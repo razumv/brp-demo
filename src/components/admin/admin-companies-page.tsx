@@ -353,7 +353,7 @@ function RowActions({ company, onEdit, onAssign }: {
       />
       <AdminIconAction
         label={`Видалити ${company.name} — заблоковано`}
-        tooltip="Видалення компанії недоступне: доступ лише для читання."
+        tooltip="Видалення компанії потребує підключення сервісу компаній."
         icon={<Trash2 size={15} />}
         tone="danger"
         disabled
@@ -541,7 +541,7 @@ function PreviewDialogs({ dialog, onClose }: { dialog: CompanyDialog; onClose: (
         footer={(
           <>
             <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
-            <LockedButton title="Призначення працівника недоступне: доступ лише для читання." className="button-primary">
+            <LockedButton title="Призначення працівника потребує підключення сервісу облікових записів." className="button-primary">
               Призначити працівника
             </LockedButton>
           </>
@@ -576,7 +576,7 @@ function PreviewDialogs({ dialog, onClose }: { dialog: CompanyDialog; onClose: (
         <>
           <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
           <LockedButton
-            title={`${editing ? "Оновлення" : "Створення"} компанії недоступне: доступ лише для читання.`}
+            title={`${editing ? "Оновлення" : "Створення"} компанії потребує підключення сервісу компаній.`}
             className="button-primary"
           >
             {editing ? "Оновити компанію" : "Створити компанію"}

@@ -43,8 +43,8 @@ function UserCard({user, model}: {user: AdminUserRecord; model: AdminUsersModel}
       <div className={styles.userBadges}><Badge label={adminUserRoleLabels[user.role]} icon={user.role === "admin" ? <ShieldCheck size={12} /> : <UserRound size={12} />} variant={roleVariant} /><Badge label="Активний" icon={<CheckCircle2 size={12} />} variant="success" /></div>
       <div className={styles.userActions}>
         <IconButton label={`Редагувати ${publicName(user.displayName)}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати користувача" onClick={() => model.setSelectedUser(user)} />
-        <IconButton label={`Деактивувати ${publicName(user.displayName)} — недоступно`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача недоступна: доступ лише для читання." />
-        <IconButton label={`Видалити ${publicName(user.displayName)} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача недоступне: доступ лише для читання." />
+        <IconButton label={`Деактивувати ${publicName(user.displayName)} — недоступно`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача потребує підключення сервісу облікових записів." />
+        <IconButton label={`Видалити ${publicName(user.displayName)} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача потребує підключення сервісу облікових записів." />
       </div>
     </Card>
   );
@@ -65,11 +65,11 @@ function EditUserDialog({model}: {model: AdminUsersModel}) {
             <div className={styles.dialogFields}>
               <Selector label="Роль" value={adminUserRoleLabels[user.role]} options={adminUserRoleOptions.map((option) => ({value: option.label, label: option.label}))} onChange={() => undefined} isDisabled disabledMessage="Зміна ролі потребує адміністративного доступу." width="100%" />
               <Selector label="Компанія" value={user.company} options={adminUserCompanyOptions.map((option) => ({value: option.label, label: option.label}))} onChange={() => undefined} isDisabled disabledMessage="Зміна компанії потребує адміністративного доступу." width="100%" />
-              {user.role === "dealer" ? <Selector label="Роль у дилерській компанії" value={dealerRole} options={dealerCompanyRoleOptions.map((option) => ({value: option.label, label: option.label}))} onChange={() => undefined} isDisabled disabledMessage="Зміна ролі недоступна: доступ лише для читання." width="100%" /> : null}
+              {user.role === "dealer" ? <Selector label="Роль у дилерській компанії" value={dealerRole} options={dealerCompanyRoleOptions.map((option) => ({value: option.label, label: option.label}))} onChange={() => undefined} isDisabled disabledMessage="Зміна ролі потребує підключення сервісу облікових записів." width="100%" /> : null}
             </div>
             {user.role === "manager" ? (
               <section className={styles.permissions} aria-label="Налаштування доступу">
-                <div><Heading level={3}>Налаштування доступу</Heading><Button label="Скинути до ролі за замовчуванням" variant="ghost" size="sm" isDisabled tooltip="Скидання дозволів недоступне: доступ лише для читання." /></div>
+                <div><Heading level={3}>Налаштування доступу</Heading><Button label="Скинути до ролі за замовчуванням" variant="ghost" size="sm" isDisabled tooltip="Скидання дозволів потребує підключення сервісу контролю доступу." /></div>
                 <div className={styles.permissionsScroll} role="region" aria-label="Матриця дозволів" tabIndex={0}>
                   <table><thead><tr><th>Сутність</th><th>Чит.</th><th>Створ.</th><th>Оновл.</th><th>Видал.</th></tr></thead><tbody>{managerPermissionRows.map((row) => <tr key={row.id}><th scope="row">{row.entity}</th><td>{permissionLabel(row.read)}</td><td>{permissionLabel(row.create)}</td><td>{permissionLabel(row.update)}</td><td>{permissionLabel(row.delete)}</td></tr>)}</tbody></table>
                 </div>
@@ -78,7 +78,7 @@ function EditUserDialog({model}: {model: AdminUsersModel}) {
             <Button label="Параметри перегляду" variant="ghost" size="sm" aria-expanded={roleOpen} onClick={() => setRoleOpen((open) => !open)} />
           </LayoutContent>
         )}
-        footer={<LayoutFooter hasDivider padding={3}><div className={styles.dialogActions}><Button label="Скасувати" variant="secondary" onClick={() => model.setSelectedUser(null)} /><Button label="Зберегти зміни" icon={<LockKeyhole size={14} />} variant="primary" isDisabled tooltip="Збереження змін недоступне: доступ лише для читання." /></div></LayoutFooter>}
+        footer={<LayoutFooter hasDivider padding={3}><div className={styles.dialogActions}><Button label="Скасувати" variant="secondary" onClick={() => model.setSelectedUser(null)} /><Button label="Зберегти зміни" icon={<LockKeyhole size={14} />} variant="primary" isDisabled tooltip="Збереження змін потребує підключення сервісу облікових записів." /></div></LayoutFooter>}
       />
     </Dialog>
   );

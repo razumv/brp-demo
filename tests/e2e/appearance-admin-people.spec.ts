@@ -39,10 +39,6 @@ async function openAdminRoute(page: Page, path: string, width: number) {
   await expect(page.locator("h1").first()).toBeVisible();
 }
 
-function alternate(designSystem: DesignSystem): DesignSystem {
-  return designSystem === "shadcn" ? "astryx" : "shadcn";
-}
-
 for (const appearance of appearances) {
   test(`${appearance.designSystem} ${appearance.colorMode} keeps companies and users compact at all target widths`, async ({page}) => {
     await seedAdminSession(page);
