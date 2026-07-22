@@ -47,6 +47,13 @@ export function useDismissibleDataToolbarFilter({
       dismiss();
       focusVisibleTrigger();
     };
+    const onPanelKeyDownCapture = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      dismiss();
+      focusVisibleTrigger();
+    };
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
@@ -56,9 +63,11 @@ export function useDismissibleDataToolbarFilter({
     };
 
     document.addEventListener("keydown", onKeyDown);
+    panelRefs.forEach((ref) => ref.current?.addEventListener("keydown", onPanelKeyDownCapture, true));
     if (dismissOnPointerOutside) document.addEventListener("pointerdown", onPointerDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
+      panelRefs.forEach((ref) => ref.current?.removeEventListener("keydown", onPanelKeyDownCapture, true));
       if (dismissOnPointerOutside) document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [additionalPanelRef, additionalTriggerRef, dismissOnPointerOutside, onOpenChange, open, panelRef, triggerRef]);
