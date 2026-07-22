@@ -248,71 +248,28 @@
 
   .mobilePermissions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     border-top: 1px solid var(--border);
   }
 
   .mobilePermissionRow {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     min-width: 0;
-    min-height: 76px;
-    padding: 8px;
-    gap: 4px;
+    min-height: 40px;
+    padding: 6px 12px;
+    gap: 8px;
     border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
   }
 
-  .mobilePermissionRow:nth-child(2n) {
-    border-right: 0;
-  }
-
-  .mobilePermissionRow:nth-last-child(-n + 2) {
+  .mobilePermissionRow:last-child {
     border-bottom: 0;
   }
 
   .mobilePermissionRow .actionLabel {
     justify-content: flex-start;
     white-space: normal;
-  }
-
-  .mobilePermissionRow .permissionSwitch {
-    width: 44px;
-    height: 44px;
-    border: 0;
-    background: transparent;
-  }
-
-  .mobilePermissionRow .permissionSwitch::before {
-    position: absolute;
-    top: 12px;
-    left: 6px;
-    width: 30px;
-    height: 18px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface-subtle);
-    content: "";
-  }
-
-  .mobilePermissionRow .permissionSwitch > span {
-    top: 14px;
-    left: 8px;
-    width: 14px;
-    height: 14px;
-  }
-
-  .mobilePermissionRow .permissionSwitch[data-state="checked"] {
-    background: transparent;
-  }
-
-  .mobilePermissionRow .permissionSwitch[data-state="checked"]::before {
-    border-color: var(--green);
-    background: var(--green);
-  }
-
-  .mobilePermissionRow .permissionSwitch[data-state="checked"] > span {
-    left: 20px;
   }
 }
 

@@ -32,9 +32,11 @@ async function expectCompactPermissionRow(
   await expect(switches.first()).toBeDisabled();
   await expect(switches.first()).toHaveAttribute("aria-checked", "true");
 
-  const firstBox = await switches.nth(0).boundingBox();
-  const secondBox = await switches.nth(1).boundingBox();
-  expect(secondBox?.x ?? 0).toBeGreaterThan(firstBox?.x ?? 0);
+  const firstPermission = region.locator('[class*="mobilePermissionRow"]').first();
+  const actionBox = await firstPermission.locator('[class*="actionLabel"]').boundingBox();
+  const switchBox = await switches.first().boundingBox();
+  expect(switchBox?.x ?? 0).toBeGreaterThan(actionBox?.x ?? 0);
+  expect(Math.abs((switchBox?.y ?? 0) - (actionBox?.y ?? 0))).toBeLessThan(16);
 }
 
 async function expectDesktopPermissionTable(page: Page, label: string) {
