@@ -36,6 +36,7 @@ import {
   OceanBillDetailModal,
   OceanContainerDisclosure,
 } from "@/components/admin/admin-ocean-detail";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {
   OCEAN_KPIS,
   OCEAN_RESEARCH_COVERAGE,
@@ -55,27 +56,72 @@ import {
 } from "@/lib/admin-ocean-freight-data";
 import styles from "./admin-ocean-freight-page.module.css";
 
-type PageTab = "ocean" | "ground" | "equipment";
-type ViewMode = "table" | "cards";
-type StatusFilter = "all" | "transit" | "soon" | "arrived" | "delivered";
-type PreviewState =
+export type OceanPageTab = "ocean" | "ground" | "equipment";
+export type OceanViewMode = "table" | "cards";
+export type OceanStatusFilter = "all" | "transit" | "soon" | "arrived" | "delivered";
+export type OceanPreviewState =
   | { type: "upload" }
   | { type: "ground" }
   | { type: "eta" }
   | { type: "bill-detail"; billId: string }
   | { type: "receipt"; billId: string; receiptKind: OceanReceiptPreviewKind }
   | null;
-type PartsTab = "composition" | "blocked" | "link" | "create" | "transfer" | "check" | "price";
+export type OceanPartsTab = "composition" | "blocked" | "link" | "create" | "transfer" | "check" | "price";
 type OpenReceiptPreview = (billId: string, kind: OceanReceiptPreviewKind) => void;
 type OpenBillDetail = (billId: string) => void;
 
-const oceanTabs: Array<{ id: PageTab; label: string }> = [
+export type AdminOceanFreightModel = {
+  tab: OceanPageTab;
+  setTab(tab: OceanPageTab): void;
+  search: string;
+  setSearch(value: string): void;
+  status: OceanStatusFilter;
+  setStatus(status: OceanStatusFilter): void;
+  grouped: boolean;
+  setGrouped(grouped: boolean): void;
+  view: OceanViewMode;
+  setView(view: OceanViewMode): void;
+  expandedContainerId: string | null;
+  toggleContainer(id: string): void;
+  filteredBills: OceanBillOfLading[];
+  visibleCount: number;
+  visibleBillCount: number;
+  groundQuery: string;
+  setGroundQuery(value: string): void;
+  dealer: (typeof dealerNames)[number];
+  setDealer(value: (typeof dealerNames)[number]): void;
+  dealerQuery: string;
+  setDealerQuery(value: string): void;
+  dealerYear: "all" | "2026";
+  setDealerYear(value: "all" | "2026"): void;
+  dealerType: "all" | DealerEquipmentType;
+  setDealerType(value: "all" | DealerEquipmentType): void;
+  dealerStatus: DealerEquipmentStatus;
+  setDealerStatus(value: DealerEquipmentStatus): void;
+  dealerRows: typeof dealerEquipment;
+  preview: OceanPreviewState;
+  closePreview(): void;
+  openUpload(): void;
+  openGround(): void;
+  openEta(): void;
+  openReceipt(billId: string, receiptKind: OceanReceiptPreviewKind): void;
+  openBillDetail(billId: string): void;
+  partsTab: OceanPartsTab;
+  setPartsTab(tab: OceanPartsTab): void;
+  detailExpandedContainerId: string | null;
+  toggleDetailContainer(id: string): void;
+};
+
+const loadAstryxAdminOceanFreightView = () => import("./astryx-admin-ocean-freight-view")
+  .then((module) => ({default: module.AstryxAdminOceanFreightView}));
+
+export const oceanTabs: Array<{ id: OceanPageTab; label: string }> = [
   { id: "ocean", label: "Морські перевезення" },
   { id: "ground", label: "Наземна доставка" },
   { id: "equipment", label: "Техніка дилерів" },
 ];
 
-const statusOptions: Array<{ id: StatusFilter; label: string }> = [
+export const statusOptions: Array<{ id: OceanStatusFilter; label: string }> = [
   { id: "all", label: "Всі статуси" },
   { id: "transit", label: "В дорозі" },
   { id: "soon", label: "Скоро прибуття" },
@@ -83,14 +129,14 @@ const statusOptions: Array<{ id: StatusFilter; label: string }> = [
   { id: "delivered", label: "Доставлено" },
 ];
 
-const dealerStatuses: DealerEquipmentStatus[] = ["Assigned", "Warehouse", "Reserved", "Demo", "Service", "Sold"];
-const dealerTypes: Array<"all" | DealerEquipmentType> = ["all", "ATV", "SSV", "PWC", "3WV"];
+export const dealerStatuses: DealerEquipmentStatus[] = ["Assigned", "Warehouse", "Reserved", "Demo", "Service", "Sold"];
+export const dealerTypes: Array<"all" | DealerEquipmentType> = ["all", "ATV", "SSV", "PWC", "3WV"];
 
 const surfaceCard = "rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]";
 const mutedText = "text-[var(--muted-foreground)]";
 const compactSelect = "input h-10 bg-[var(--surface)]";
 
-const statusMeta: Record<OceanStatus, { label: string; tone: "green" | "blue" | "amber" | "neutral" }> = {
+export const statusMeta: Record<OceanStatus, { label: string; tone: "green" | "blue" | "amber" | "neutral" }> = {
   arrived: { label: "Прибув", tone: "green" },
   transit: { label: "В дорозі", tone: "blue" },
   soon: { label: "Скоро прибуття", tone: "amber" },
@@ -98,7 +144,7 @@ const statusMeta: Record<OceanStatus, { label: string; tone: "green" | "blue" | 
   mixed: { label: "Змішаний", tone: "neutral" },
 };
 
-function formatEur(value: number) {
+export function formatOceanEur(value: number) {
   return new Intl.NumberFormat("uk-UA", {
     style: "currency",
     currency: "EUR",
@@ -117,7 +163,7 @@ function OceanKpis() {
   return <AdminKpiGrid hideOnMobile items={items} label="Показники морських перевезень" />;
 }
 
-function PageTabs({ active, onChange }: { active: PageTab; onChange: (tab: PageTab) => void }) {
+function PageTabs({ active, onChange }: { active: OceanPageTab; onChange: (tab: OceanPageTab) => void }) {
   return (
     <AdminTabs
       items={oceanTabs.map((tab) => ({ ...tab, panelId: `ocean-${tab.id}-panel` }))}
@@ -129,7 +175,7 @@ function PageTabs({ active, onChange }: { active: PageTab; onChange: (tab: PageT
   );
 }
 
-function receiptStateLabel(bill: OceanBillOfLading) {
+export function receiptStateLabel(bill: OceanBillOfLading) {
   if (bill.receipt.state === "created-unposted") {
     return `${bill.receipt.documentNumber} · не проведена`;
   }
@@ -238,7 +284,7 @@ function ContainerTable({
           <td className="font-mono font-semibold">{container.number}</td>
           <td><StatusBadge tone="blue">{container.cargoType === "units" ? "Одиниці" : "Запчастини"}</StatusBadge></td>
           <td className="font-mono text-[11px]">{container.proforma}</td>
-          <td>{formatEur(container.eur)}</td>
+          <td>{formatOceanEur(container.eur)}</td>
           <td><strong>{container.assigned}/{container.total}</strong></td>
           <td>
             <span className={`block text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : bill.receipt.state === "posted" ? "text-[var(--green)]" : mutedText}`}>
@@ -349,7 +395,7 @@ function BillCards({
         return (
           <article key={bill.id} className={`${surfaceCard} overflow-hidden`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <button type="button" className={`${styles.cardBillTrigger} px-5 py-4`} aria-haspopup="dialog" onClick={() => onBillOpen(bill.id)}>
+              <button type="button" className={`${styles.cardBillTrigger} px-5 py-4`} aria-haspopup="dialog" aria-label={`Деталі BL ${bill.id}`} onClick={() => onBillOpen(bill.id)}>
                 <Ship size={18} className="shrink-0 text-[var(--blue)]" />
                 <span className="min-w-0 flex-1">
                   <strong className="font-mono">{bill.id}</strong>
@@ -370,7 +416,7 @@ function BillCards({
                       <span className={styles.cardContainerMain}>
                         <strong>{container.name}</strong>
                         <span className={`ml-2 font-mono text-[11px] ${mutedText}`}>{container.number}</span>
-                        <span className={`mt-1 block text-[10px] ${mutedText}`}>PRF {container.proforma} · {formatEur(container.eur)} · {container.assigned}/{container.total}</span>
+                        <span className={`mt-1 block text-[10px] ${mutedText}`}>PRF {container.proforma} · {formatOceanEur(container.eur)} · {container.assigned}/{container.total}</span>
                       </span>
                       <StatusBadge tone={statusMeta[container.status].tone}>{statusMeta[container.status].label}</StatusBadge>
                       <ChevronDown size={15} className={`${styles.disclosureChevron} ${isExpanded ? styles.disclosureChevronOpen : ""}`} />
@@ -389,37 +435,33 @@ function BillCards({
 }
 
 function OceanTab({
+  model,
   onReceiptPreview,
   onBillOpen,
   onEta,
 }: {
+  model: AdminOceanFreightModel;
   onReceiptPreview: OpenReceiptPreview;
   onBillOpen: OpenBillDetail;
   onEta: () => void;
 }) {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [grouped, setGrouped] = useState(true);
-  const [view, setView] = useState<ViewMode>("table");
-  const [expandedContainerId, setExpandedContainerId] = useState<string | null>(null);
-
-  const filteredBills = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase("uk");
-    return oceanBillsOfLading.flatMap((bill) => {
-      const filteredContainers = bill.containers.filter((container) => {
-        const matchesStatus = status === "all" || container.status === status || bill.status === status;
-        const haystack = `${bill.id} ${bill.carrier || ""} ${bill.route || ""} ${container.name} ${container.number} ${container.proforma}`.toLocaleLowerCase("uk");
-        return matchesStatus && (!query || haystack.includes(query));
-      });
-      return filteredContainers.length ? [{ ...bill, containers: filteredContainers }] : [];
-    });
-  }, [search, status]);
-
+  const {
+    expandedContainerId,
+    filteredBills,
+    grouped,
+    search,
+    setGrouped,
+    setSearch,
+    setStatus,
+    setView,
+    status,
+    toggleContainer,
+    view,
+    visibleBillCount,
+    visibleCount,
+  } = model;
   const isFiltered = search.trim().length > 0 || status !== "all";
-  const visibleCount = filteredBills.reduce((count, bill) => count + bill.containers.length, 0);
-  const visibleBillCount = filteredBills.length;
   const showCards = view === "cards";
-  const toggleContainer = (id: string) => setExpandedContainerId((current) => current === id ? null : id);
 
   return (
     <div
@@ -439,7 +481,7 @@ function OceanTab({
           />
         )}
         filters={(
-          <select className={compactSelect} aria-label="Статус морського перевезення" value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)}>
+          <select className={compactSelect} aria-label="Статус морського перевезення" value={status} onChange={(event) => setStatus(event.target.value as OceanStatusFilter)}>
             {statusOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         )}
@@ -455,7 +497,7 @@ function OceanTab({
           />
         )}
         actions={(
-          <button type="button" aria-pressed={grouped} className={`button button-outline ${grouped ? "!border-[var(--orange)] !text-[var(--orange)]" : ""}`} onClick={() => setGrouped((value) => !value)}>
+          <button type="button" aria-pressed={grouped} className={`button button-outline ${grouped ? "!border-[var(--orange)] !text-[var(--orange)]" : ""}`} onClick={() => setGrouped(!grouped)}>
             <Grid2X2 size={14} /> Групувати за BL
           </button>
         )}
@@ -485,9 +527,8 @@ function OceanTab({
   );
 }
 
-function GroundTab({ onOpen }: { onOpen: () => void }) {
-  const [query, setQuery] = useState("");
-
+function GroundTab({ model, onOpen }: { model: AdminOceanFreightModel; onOpen: () => void }) {
+  const {groundQuery: query, setGroundQuery: setQuery} = model;
   return (
     <div
       id="ocean-ground-panel"
@@ -507,20 +548,20 @@ function GroundTab({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function DealerEquipmentTab() {
-  const [dealer, setDealer] = useState<(typeof dealerNames)[number]>(dealerNames[0]);
-  const [query, setQuery] = useState("");
-  const [year, setYear] = useState<"all" | "2026">("all");
-  const [type, setType] = useState<"all" | DealerEquipmentType>("all");
-  const [status, setStatus] = useState<DealerEquipmentStatus>("Assigned");
-
-  const rows = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase("uk");
-    return dealerEquipment.filter((item) => {
-      const haystack = `${item.vin} ${item.engine} ${item.model} ${item.code}`.toLocaleLowerCase("uk");
-      return item.dealer === dealer && (year === "all" || item.year === Number(year)) && (type === "all" || item.type === type) && item.status === status && (!normalized || haystack.includes(normalized));
-    });
-  }, [dealer, query, status, type, year]);
+function DealerEquipmentTab({model}: {model: AdminOceanFreightModel}) {
+  const {
+    dealer,
+    dealerQuery: query,
+    dealerRows: rows,
+    dealerStatus: status,
+    dealerType: type,
+    dealerYear: year,
+    setDealer,
+    setDealerQuery: setQuery,
+    setDealerStatus: setStatus,
+    setDealerType: setType,
+    setDealerYear: setYear,
+  } = model;
 
   return (
     <div
@@ -592,7 +633,7 @@ function UploadPreview({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 function ReceiptGroupTable({ receipt, editableNames = false }: { receipt: EquipmentReceiptPreview; editableNames?: boolean }) {
-  return <div className="grid gap-3">{receipt.groups.map((group) => <section key={group.containerNumber} className="overflow-hidden rounded-md border border-[var(--border)]"><header className="flex flex-wrap items-center gap-3 bg-[var(--surface-subtle)] px-4 py-3"><strong className="font-mono">{group.containerNumber}</strong><span className={`text-[10px] ${mutedText}`}>PRF: {group.proforma}</span><span className={`text-[10px] ${mutedText}`}>{group.units} units</span><StatusBadge tone="blue">Доказові рядки {group.rows.length}/{group.units}</StatusBadge><strong className="ml-auto">{formatEur(group.totalEur)}</strong></header><div className="data-table-wrap"><table className="data-table min-w-[760px]"><thead><tr><th>#</th><th>Model</th><th>VIN</th><th>Engine #</th><th>EUR</th><th>USD</th></tr></thead><tbody>{group.rows.map((unit) => <tr key={unit.id}><td>{unit.number}</td><td><span className="mr-2 font-mono text-[var(--blue)]">{unit.code}</span>{editableNames ? <input disabled value={unit.model} readOnly className="h-8 min-w-[270px] rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-2" /> : unit.model}</td><td className="font-mono text-[11px]">{unit.vin}</td><td className="font-mono text-[11px]">{unit.engine}</td><td>{formatEur(unit.eur)}</td><td>{unit.usd ? `$${unit.usd}` : "—"}</td></tr>)}</tbody></table></div></section>)}</div>;
+  return <div className="grid gap-3">{receipt.groups.map((group) => <section key={group.containerNumber} className="overflow-hidden rounded-md border border-[var(--border)]"><header className="flex flex-wrap items-center gap-3 bg-[var(--surface-subtle)] px-4 py-3"><strong className="font-mono">{group.containerNumber}</strong><span className={`text-[10px] ${mutedText}`}>PRF: {group.proforma}</span><span className={`text-[10px] ${mutedText}`}>{group.units} units</span><StatusBadge tone="blue">Доказові рядки {group.rows.length}/{group.units}</StatusBadge><strong className="ml-auto">{formatOceanEur(group.totalEur)}</strong></header><div className="data-table-wrap"><table className="data-table min-w-[760px]"><thead><tr><th>#</th><th>Model</th><th>VIN</th><th>Engine #</th><th>EUR</th><th>USD</th></tr></thead><tbody>{group.rows.map((unit) => <tr key={unit.id}><td>{unit.number}</td><td><span className="mr-2 font-mono text-[var(--blue)]">{unit.code}</span>{editableNames ? <input disabled value={unit.model} readOnly className="h-8 min-w-[270px] rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-2" /> : unit.model}</td><td className="font-mono text-[11px]">{unit.vin}</td><td className="font-mono text-[11px]">{unit.engine}</td><td>{formatOceanEur(unit.eur)}</td><td>{unit.usd ? `$${unit.usd}` : "—"}</td></tr>)}</tbody></table></div></section>)}</div>;
 }
 
 function EquipmentReceiptModal({ receipt, open, onClose }: { receipt: EquipmentReceiptPreview; open: boolean; onClose: () => void }) {
@@ -603,7 +644,7 @@ function EquipmentReceiptModal({ receipt, open, onClose }: { receipt: EquipmentR
   return (
     <Modal open={open} onClose={onClose} title="Створити прибуткову" description={`BL: ${receipt.billOfLadingId}`} className="!w-[min(900px,100%)]" footer={<><button type="button" className="button button-outline" onClick={onClose}>Скасувати</button><ReadOnlyButton>{existing ? "ПН уже создана" : "Підтвердити та створити"}</ReadOnlyButton></>}>
       <div className="grid gap-4">
-        <div className="flex flex-wrap items-center gap-4"><label className="field max-w-[180px]"><span>Комерційний курс EUR/USD</span><input disabled value={receipt.commercialRate.toFixed(4)} readOnly /></label><span>Units: <strong>{receipt.unitCount}</strong></span><span>Total EUR: <strong>{formatEur(receipt.totalEur)}</strong></span></div>
+        <div className="flex flex-wrap items-center gap-4"><label className="field max-w-[180px]"><span>Комерційний курс EUR/USD</span><input disabled value={receipt.commercialRate.toFixed(4)} readOnly /></label><span>Units: <strong>{receipt.unitCount}</strong></span><span>Total EUR: <strong>{formatOceanEur(receipt.totalEur)}</strong></span></div>
         <InlineNotice>Доказове покриття таблиці: <strong>{evidenceCoverage.evidencedRows}/{evidenceCoverage.sourceTotal}</strong> одиниць. Показані тільки рядки, зафіксовані у source evidence; відсутні рядки не домодельовані.</InlineNotice>
         {existing ? <div className="rounded-md border border-[#d9c796] bg-[var(--amber-soft)] p-4 text-[var(--amber)]"><div className="flex flex-wrap items-center gap-3"><FileCheck2 size={18} /><div className="min-w-[190px] flex-1"><strong className="block">ПН создана, не проведена</strong><span className="text-[10px]">Документов 1C: 1 · проведено: 0</span></div><ReadOnlyButton>Проверить статус 1C</ReadOnlyButton><ReadOnlyButton>Провести в 1C</ReadOnlyButton></div><StatusBadge tone="amber">{receipt.existingDocument?.number} · не проведена</StatusBadge></div> : null}
         <ReceiptGroupTable receipt={receipt} editableNames={!existing} />
@@ -639,7 +680,7 @@ function SummaryEquipmentReceiptModal({ bill, open, onClose }: { bill: OceanBill
           items={[
             { id: "containers", label: "Контейнери", value: bill.containers.length, icon: <Ship size={17} />, tone: "blue" },
             { id: "units", label: "Одиниці", value: `${assignedCount}/${unitCount}`, icon: <PackageCheck size={17} />, tone: "orange" },
-            { id: "eur", label: "Сума EUR", value: formatEur(totalEur), icon: <FileText size={17} />, tone: "green" },
+            { id: "eur", label: "Сума EUR", value: formatOceanEur(totalEur), icon: <FileText size={17} />, tone: "green" },
           ]}
         />
         <InlineNotice tone="warning">
@@ -654,7 +695,7 @@ function SummaryEquipmentReceiptModal({ bill, open, onClose }: { bill: OceanBill
                 <td>{container.name}</td>
                 <td className="font-mono">{container.proforma}</td>
                 <td>{container.assigned}/{container.total}</td>
-                <td>{formatEur(container.eur)}</td>
+                <td>{formatOceanEur(container.eur)}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -664,9 +705,8 @@ function SummaryEquipmentReceiptModal({ bill, open, onClose }: { bill: OceanBill
   );
 }
 
-function PartsReceiptModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [tab, setTab] = useState<PartsTab>("composition");
-  const tabItems: Array<{ id: PartsTab; label: string; count: number }> = [
+function PartsReceiptModal({ open, onClose, tab, onTabChange }: { open: boolean; onClose: () => void; tab: OceanPartsTab; onTabChange: (tab: OceanPartsTab) => void }) {
+  const tabItems: Array<{ id: OceanPartsTab; label: string; count: number }> = [
     { id: "composition", label: "Состав ПН", count: partsReceipt.linesReady },
     { id: "blocked", label: "Блокеры", count: partsReceipt.issueCounts.blocked },
     { id: "link", label: "Связать", count: partsReceipt.issueCounts.link },
@@ -678,7 +718,7 @@ function PartsReceiptModal({ open, onClose }: { open: boolean; onClose: () => vo
   const metrics = [
     [`${partsReceipt.linesReady}/${partsReceipt.linesTotal}`, "строк ПН"],
     [new Intl.NumberFormat("uk-UA").format(partsReceipt.quantity), "штук"],
-    [formatEur(partsReceipt.totalEur), "сумма EUR"],
+    [formatOceanEur(partsReceipt.totalEur), "сумма EUR"],
     [`${partsReceipt.mapped}/${partsReceipt.mappedTotal}`, "1C маппинг"],
     ["0", "связать"], ["0", "завести"], ["0", "перевод"], ["0", "цена"],
   ];
@@ -693,7 +733,7 @@ function PartsReceiptModal({ open, onClose }: { open: boolean; onClose: () => vo
         <AdminTabs
           items={tabItems.map((item) => ({ ...item, panelId: `parts-receipt-${item.id}-panel` }))}
           value={tab}
-          onValueChange={setTab}
+          onValueChange={onTabChange}
           label="Етапи підготовки ПН запчастин"
           mobileSelectLabel="Етап підготовки"
           size="compact"
@@ -711,7 +751,7 @@ function PartsReceiptModal({ open, onClose }: { open: boolean; onClose: () => vo
             <div className="data-table-wrap">
               <table className="data-table min-w-[840px]">
                 <thead><tr><th>Артикул</th><th>Наименование</th><th>1C карточка</th><th>Папка</th><th>Кол-во</th><th>Цена EUR</th></tr></thead>
-                <tbody>{partsReceipt.lines.map((line) => <tr key={line.article}><td><strong>{line.article}</strong><span className={`block text-[10px] ${mutedText}`}>{line.sourceCategory}</span></td><td>{line.name}</td><td><StatusBadge tone="green">Код 1C: {line.oneCCard}</StatusBadge></td><td className="max-w-[240px] text-[10px]">{line.folder}</td><td>{line.quantity}</td><td>{formatEur(line.eur)}</td></tr>)}</tbody>
+                <tbody>{partsReceipt.lines.map((line) => <tr key={line.article}><td><strong>{line.article}</strong><span className={`block text-[10px] ${mutedText}`}>{line.sourceCategory}</span></td><td>{line.name}</td><td><StatusBadge tone="green">Код 1C: {line.oneCCard}</StatusBadge></td><td className="max-w-[240px] text-[10px]">{line.folder}</td><td>{line.quantity}</td><td>{formatOceanEur(line.eur)}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
@@ -733,9 +773,13 @@ function PartsReceiptModal({ open, onClose }: { open: boolean; onClose: () => vo
 function ReceiptPreviewModal({
   preview,
   onClose,
+  partsTab,
+  onPartsTabChange,
 }: {
-  preview: Extract<Exclude<PreviewState, null>, { type: "receipt" }> | null;
+  preview: Extract<Exclude<OceanPreviewState, null>, { type: "receipt" }> | null;
   onClose: () => void;
+  partsTab: OceanPartsTab;
+  onPartsTabChange: (tab: OceanPartsTab) => void;
 }) {
   if (!preview) return null;
 
@@ -743,7 +787,7 @@ function ReceiptPreviewModal({
   if (!bill) return null;
 
   if (preview.receiptKind === "parts") {
-    return <PartsReceiptModal open onClose={onClose} />;
+    return <PartsReceiptModal open onClose={onClose} tab={partsTab} onTabChange={onPartsTabChange} />;
   }
 
   if (preview.billId === existingEquipmentReceipt.billOfLadingId) {
@@ -758,42 +802,145 @@ function ReceiptPreviewModal({
 }
 
 function EtaSafetyPreview({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return <Modal open={open} onClose={onClose} title="ETA — лише перегляд" description="Дата та статус контейнера не змінюються" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}><InlineNotice tone="warning">Цей date-chip у вихідній адмінці виконував зміну одразу. У клоні він відкриває тільки це інформаційне вікно; Save, Apply та Оновити ETA відсутні.</InlineNotice></Modal>;
+  return <Modal open={open} onClose={onClose} title="ETA — лише перегляд" description="Дата та статус контейнера не змінюються" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}><InlineNotice tone="warning">Ця дія відкриває інформаційний перегляд. Save, Apply та Оновити ETA недоступні.</InlineNotice></Modal>;
 }
 
-export function AdminOceanFreightPage() {
-  const [tab, setTab] = useState<PageTab>("ocean");
-  const [preview, setPreview] = useState<PreviewState>(null);
-  const closePreview = () => setPreview(null);
-  const receiptPreview = preview?.type === "receipt" ? preview : null;
-  const detailBill = preview?.type === "bill-detail"
-    ? oceanBillsOfLading.find((bill) => bill.id === preview.billId) ?? null
+function useAdminOceanFreightController(): AdminOceanFreightModel {
+  const [tab, setTab] = useState<OceanPageTab>("ocean");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<OceanStatusFilter>("all");
+  const [grouped, setGrouped] = useState(true);
+  const [view, setView] = useState<OceanViewMode>("table");
+  const [expandedContainerId, setExpandedContainerId] = useState<string | null>(null);
+  const [groundQuery, setGroundQuery] = useState("");
+  const [dealer, setDealer] = useState<(typeof dealerNames)[number]>(dealerNames[0]);
+  const [dealerQuery, setDealerQuery] = useState("");
+  const [dealerYear, setDealerYear] = useState<"all" | "2026">("all");
+  const [dealerType, setDealerType] = useState<"all" | DealerEquipmentType>("all");
+  const [dealerStatus, setDealerStatus] = useState<DealerEquipmentStatus>("Assigned");
+  const [preview, setPreview] = useState<OceanPreviewState>(null);
+  const [partsTab, setPartsTab] = useState<OceanPartsTab>("composition");
+  const [detailExpandedContainerId, setDetailExpandedContainerId] = useState<string | null>(null);
+
+  const filteredBills = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("uk");
+    return oceanBillsOfLading.flatMap((bill) => {
+      const filteredContainers = bill.containers.filter((container) => {
+        const matchesStatus = status === "all" || container.status === status || bill.status === status;
+        const haystack = `${bill.id} ${bill.carrier || ""} ${bill.route || ""} ${container.name} ${container.number} ${container.proforma}`.toLocaleLowerCase("uk");
+        return matchesStatus && (!query || haystack.includes(query));
+      });
+      return filteredContainers.length ? [{...bill, containers: filteredContainers}] : [];
+    });
+  }, [search, status]);
+
+  const dealerRows = useMemo(() => {
+    const normalized = dealerQuery.trim().toLocaleLowerCase("uk");
+    return dealerEquipment.filter((item) => {
+      const haystack = `${item.vin} ${item.engine} ${item.model} ${item.code}`.toLocaleLowerCase("uk");
+      return item.dealer === dealer
+        && (dealerYear === "all" || item.year === Number(dealerYear))
+        && (dealerType === "all" || item.type === dealerType)
+        && item.status === dealerStatus
+        && (!normalized || haystack.includes(normalized));
+    });
+  }, [dealer, dealerQuery, dealerStatus, dealerType, dealerYear]);
+
+  const openBillDetail = (billId: string) => {
+    const bill = oceanBillsOfLading.find((item) => item.id === billId);
+    setDetailExpandedContainerId(bill?.containers[0]?.id ?? null);
+    setPreview({type: "bill-detail", billId});
+  };
+
+  return {
+    tab,
+    setTab,
+    search,
+    setSearch,
+    status,
+    setStatus,
+    grouped,
+    setGrouped,
+    view,
+    setView,
+    expandedContainerId,
+    toggleContainer: (id) => setExpandedContainerId((current) => current === id ? null : id),
+    filteredBills,
+    visibleCount: filteredBills.reduce((count, bill) => count + bill.containers.length, 0),
+    visibleBillCount: filteredBills.length,
+    groundQuery,
+    setGroundQuery,
+    dealer,
+    setDealer,
+    dealerQuery,
+    setDealerQuery,
+    dealerYear,
+    setDealerYear,
+    dealerType,
+    setDealerType,
+    dealerStatus,
+    setDealerStatus,
+    dealerRows,
+    preview,
+    closePreview: () => setPreview(null),
+    openUpload: () => setPreview({type: "upload"}),
+    openGround: () => setPreview({type: "ground"}),
+    openEta: () => setPreview({type: "eta"}),
+    openReceipt: (billId, receiptKind) => setPreview({type: "receipt", billId, receiptKind}),
+    openBillDetail,
+    partsTab,
+    setPartsTab,
+    detailExpandedContainerId,
+    toggleDetailContainer: (id) => setDetailExpandedContainerId((current) => current === id ? null : id),
+  };
+}
+
+function CurrentAdminOceanFreightView({model}: {model: AdminOceanFreightModel}) {
+  const receiptPreview = model.preview?.type === "receipt" ? model.preview : null;
+  const billDetailPreview = model.preview?.type === "bill-detail" ? model.preview : null;
+  const detailBill = billDetailPreview
+    ? oceanBillsOfLading.find((bill) => bill.id === billDetailPreview.billId) ?? null
     : null;
 
   return (
-    <AdminPage>
+    <div className="contents" data-admin-ocean-renderer="current" data-brp-admin-fulfillment-renderer="shadcn">
+      <AdminPage>
       <AdminPageHeader
         icon={<Ship size={21} />}
         title="Морські перевезення"
         description="Відстеження контейнерів та розподіл техніки"
-        actions={<div className="flex flex-col gap-2 sm:flex-row"><button type="button" className="button button-primary" onClick={() => setPreview({ type: "upload" })}><Upload size={14} /> Завантажити документи</button><ReadOnlyButton>Оновити ETA</ReadOnlyButton></div>}
+        actions={<div className="flex flex-col gap-2 sm:flex-row"><button type="button" className="button button-primary" onClick={model.openUpload}><Upload size={14} /> Завантажити документи</button><ReadOnlyButton>Оновити ETA</ReadOnlyButton></div>}
       />
-      <PageTabs active={tab} onChange={setTab} />
-      {tab === "ocean" ? (
+      <PageTabs active={model.tab} onChange={model.setTab} />
+      {model.tab === "ocean" ? (
         <OceanTab
-          onReceiptPreview={(billId, receiptKind) => setPreview({ type: "receipt", billId, receiptKind })}
-          onBillOpen={(billId) => setPreview({ type: "bill-detail", billId })}
-          onEta={() => setPreview({ type: "eta" })}
+          model={model}
+          onReceiptPreview={model.openReceipt}
+          onBillOpen={model.openBillDetail}
+          onEta={model.openEta}
         />
       ) : null}
-      {tab === "ground" ? <GroundTab onOpen={() => setPreview({ type: "ground" })} /> : null}
-      {tab === "equipment" ? <DealerEquipmentTab /> : null}
+      {model.tab === "ground" ? <GroundTab model={model} onOpen={model.openGround} /> : null}
+      {model.tab === "equipment" ? <DealerEquipmentTab model={model} /> : null}
 
-      <UploadPreview open={preview?.type === "upload"} onClose={closePreview} />
-      <GroundPreview open={preview?.type === "ground"} onClose={closePreview} />
-      <ReceiptPreviewModal preview={receiptPreview} onClose={closePreview} />
-      {detailBill ? <OceanBillDetailModal bill={detailBill} open onClose={closePreview} /> : null}
-      <EtaSafetyPreview open={preview?.type === "eta"} onClose={closePreview} />
-    </AdminPage>
+      <UploadPreview open={model.preview?.type === "upload"} onClose={model.closePreview} />
+      <GroundPreview open={model.preview?.type === "ground"} onClose={model.closePreview} />
+      <ReceiptPreviewModal preview={receiptPreview} onClose={model.closePreview} partsTab={model.partsTab} onPartsTabChange={model.setPartsTab} />
+      {detailBill ? <OceanBillDetailModal bill={detailBill} open onClose={model.closePreview} expandedContainerId={model.detailExpandedContainerId} onContainerToggle={model.toggleDetailContainer} /> : null}
+      <EtaSafetyPreview open={model.preview?.type === "eta"} onClose={model.closePreview} />
+      </AdminPage>
+    </div>
+  );
+}
+
+export function AdminOceanFreightPage() {
+  const model = useAdminOceanFreightController();
+  return (
+    <RendererViewSwitch
+      slotId="admin-ocean-freight"
+      currentView={<CurrentAdminOceanFreightView model={model} />}
+      loadAstryxView={loadAstryxAdminOceanFreightView}
+      astryxViewProps={{model}}
+    />
   );
 }

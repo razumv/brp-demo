@@ -1,0 +1,564 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 28px;
+}
+
+.page > *,
+.stack > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pageHeader,
+.sectionHeader,
+.billSummary,
+.cardHeader,
+.cardActions,
+.listRow,
+.dialogHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pageHeader {
+  align-items: flex-start;
+}
+
+.pageIcon,
+.metricIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: var(--orange);
+  background: var(--orange-soft);
+}
+
+.pageTitle {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pageActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metricCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metricIcon {
+  width: 36px;
+  height: 36px;
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.metricValue {
+  display: block;
+  margin-top: 2px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.toolbarCard {
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.searchGrow {
+  flex: 1 1 320px;
+  min-width: 180px;
+}
+
+.toolbarMeta {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.mobileFullControl {
+  min-width: 0;
+}
+
+.tableScroller {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  color: var(--muted-foreground);
+  background: var(--surface-subtle);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.billRow td {
+  background: color-mix(in srgb, var(--surface-subtle) 82%, transparent);
+}
+
+.billSummary {
+  min-width: 0;
+}
+
+.rowPush {
+  margin-left: auto;
+}
+
+.disclosureButton,
+.dialogDisclosure > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.disclosureButton[aria-expanded="true"] svg,
+.dialogDisclosure > button[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.detailRow td {
+  background: var(--surface-subtle);
+}
+
+.containerFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 10px 4px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .93em;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.containerCard {
+  display: grid;
+  gap: 14px;
+}
+
+.cardHeader,
+.cardActions,
+.sectionHeader {
+  justify-content: space-between;
+}
+
+.cardFacts,
+.railFacts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px 14px;
+  margin: 0;
+}
+
+.cardFacts dt,
+.railFacts dt {
+  color: var(--muted-foreground);
+}
+
+.cardFacts dd,
+.railFacts dd {
+  margin: 0;
+  text-align: right;
+}
+
+.dialog {
+  display: grid;
+  min-width: 0;
+  max-height: 90vh;
+}
+
+.dialogBody {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  overflow: auto;
+}
+
+.dialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.dropZone {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 180px;
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-subtle);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.billDialogBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, .75fr);
+  min-height: 0;
+  overflow: auto;
+}
+
+.billDialogMain,
+.billDialogRail {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 20px;
+}
+
+.billDialogRail {
+  border-left: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+
+.billDialogRail section {
+  display: grid;
+  gap: 10px;
+}
+
+.billMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.billMetrics > * {
+  display: grid;
+  gap: 4px;
+}
+
+.billMetrics strong {
+  font-size: 18px;
+}
+
+.dialogSection {
+  display: grid;
+  gap: 10px;
+}
+
+.dialogDisclosure {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.dialogDisclosure > button {
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+}
+
+.dialogDisclosure > button span {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.dialogDisclosure .containerFacts {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+
+.listRow {
+  justify-content: space-between;
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.listRow:last-child {
+  border-bottom: 0;
+}
+
+.timeline {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding-left: 18px;
+  color: var(--muted-foreground);
+}
+
+.timeline li::before {
+  position: absolute;
+  top: 5px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  content: "";
+}
+
+.timeline li[data-state="complete"]::before {
+  background: var(--green);
+}
+
+.timeline li[data-state="current"]::before {
+  background: var(--orange);
+}
+
+.timeline small {
+  color: var(--muted-foreground);
+}
+
+.unitTable {
+  min-width: 1120px;
+}
+
+.vinPanel {
+  display: grid;
+  gap: 10px;
+}
+
+.vinTable {
+  min-width: 620px;
+}
+
+.paginationFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.headerMeta,
+.syncPanel,
+.inlineCopy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerMeta {
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.headerMeta > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.syncPanel {
+  align-items: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .searchGrow {
+    flex-basis: 100%;
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    gap: 14px;
+    padding: 18px 16px 28px;
+  }
+
+  .pageHeader {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pageActions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .pageActions > * {
+    flex: 1;
+  }
+
+  .metrics {
+    display: none;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .searchGrow {
+    min-width: 100%;
+  }
+
+  .toolbar > *:not(.searchGrow) {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    width: auto !important;
+  }
+
+  .mobileFullControl {
+    order: 1;
+    flex-basis: 100% !important;
+    width: 100% !important;
+  }
+
+  .mobileFullControl > * {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .toolbarMeta {
+    text-align: left;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionHeader,
+  .cardActions,
+  .dialogHeaderActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .formGrid,
+  .billMetrics {
+    grid-template-columns: 1fr;
+  }
+
+  .billDialogBody {
+    display: block;
+  }
+
+  .billDialogRail {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .billDialogMain,
+  .billDialogRail {
+    padding: 14px;
+  }
+
+  .dialogDisclosure > button {
+    flex-wrap: wrap;
+  }
+
+  .dialogDisclosure > button span {
+    width: 100%;
+    margin-left: 20px;
+  }
+
+  .syncPanel {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .syncPanel > * {
+    width: 100% !important;
+  }
+
+  .syncPanel > *:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .paginationFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
