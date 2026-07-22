@@ -32,6 +32,53 @@ test.beforeEach(async ({ page }) => {
   await seedDealerSession(page);
 });
 
+test("selected-model diagrams support count, search, fallback media, and original navigation", async ({ page }) => {
+  await page.goto("/catalog/CAN_OFF_EN_US/6e4abcb9-35a4-4a55-8801-c5fb2cb41603");
+
+  const gallery = page.getByRole("region", { name: "Схеми моделі" });
+  const query = page.getByRole("searchbox", { name: "Пошук схем" });
+  await expect(gallery.getByRole("link")).toHaveCount(41);
+  await expect(page.getByText("Знайдено 41 із 41 схем", { exact: true })).toBeVisible();
+
+  const thumbnail = gallery.getByRole("img", {
+    name: "Мініатюра схеми 00- Service - Maintenance Parts & Fluids",
+  });
+  await expect(thumbnail).toHaveAttribute("loading", "lazy");
+  await expect(gallery.locator('[data-diagram-thumbnail="fallback"]')).toHaveCount(40);
+  await expect(gallery.locator('[data-diagram-media]').first()).toHaveCSS("aspect-ratio", "16 / 10");
+
+  await query.fill("ENGINE cooling");
+  await expect(gallery.getByRole("link")).toHaveCount(1);
+  await expect(gallery.getByRole("link", { name: /02- Engine Cooling/ })).toBeVisible();
+
+  await query.fill("not a diagram");
+  await expect(page.getByText("Схем за цим запитом не знайдено.", { exact: true })).toBeVisible();
+
+  await query.fill("09- brakes");
+  await gallery.getByRole("link", { name: /09- Brakes/ }).click();
+  await expect(page).toHaveURL(/062bdf9d-05c3-470a-a043-8d10bd287a25\?diagram=10$/);
+  await expect(page.getByRole("heading", { name: "09- Brakes" })).toBeVisible();
+});
+
+test("all accessory families use lazy repository-owned brand artwork", async ({ page }) => {
+  await page.goto("/dealer/accessories");
+
+  const families = page.getByLabel("Сімейства аксесуарів");
+  for (const family of ["Can-Am Off-Road", "Can-Am On-Road", "Sea-Doo", "Ski-Doo"]) {
+    const image = families.getByRole("img", { name: `${family} — логотип сімейства` });
+    await expect(image).toBeVisible();
+    await expect(image).toHaveAttribute("loading", "lazy");
+    const imageSource = await image.getAttribute("src");
+    expect(decodeURIComponent(imageSource ?? "")).toContain("/images/catalog/");
+  }
+
+  await families.getByRole("button", { name: /^Ski-Doo/ }).click();
+  await expect(page.getByRole("button", { name: /LinQ Adventure Tunnel Bag/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Advex Helmet LED Utility Light/ })).toHaveCount(0);
+  await page.getByRole("searchbox", { name: "Пошук аксесуарів" }).fill("860202447");
+  await expect(page.getByRole("button", { name: /LinQ Adventure Tunnel Bag/ })).toBeVisible();
+});
+
 test("selected Advex accessory adds its display SKU and proven metadata", async ({ page }) => {
   await page.goto("/dealer/accessories");
 
@@ -105,6 +152,7 @@ test("source-style vehicle and product facets filter the same collection", async
   await page.getByLabel("Сортування", { exact: true }).selectOption("price-asc");
 
   await expect(page.getByRole("button", { name: /Advex Helmet LED Utility Light/ })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "В наявності · 1" })).toBeVisible();
   await expect(page.getByRole("button", { name: /XPS Extended Life Coolant/ })).toHaveCount(0);
 
   await page.getByRole("searchbox", { name: "Пошук аксесуарів" }).fill("невідомий артикул");

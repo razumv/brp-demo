@@ -1,9 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import {
   Check,
   ChevronRight,
-  Image as ImageIcon,
   RotateCcw,
   Search,
   ShoppingCart,
@@ -17,6 +17,7 @@ import { Modal, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   ACCESSORY_CATEGORY_OPTIONS,
   ACCESSORY_COMPATIBILITY_OPTIONS,
+  ACCESSORY_FAMILY_ARTWORK,
   ACCESSORY_FAMILY_CARDS,
   ACCESSORY_PRODUCTS,
   ACCESSORY_PURPOSE_OPTIONS,
@@ -35,6 +36,7 @@ import {
 } from "@/lib/dealer/accessories-data";
 import type { DealerCommandResult } from "@/lib/dealer/contracts";
 import { formatMoney, getPart } from "@/lib/mock-data";
+import { publicAssetPath } from "@/lib/public-base-path";
 import { cn } from "@/lib/utils";
 import { FeatureFrame } from "./feature-frame";
 import styles from "./accessories-page.module.css";
@@ -155,13 +157,19 @@ export function AccessoriesPage() {
               family: current.family === item.label ? "all" : item.label,
             }))}
           >
-            <span className={cn(
-              styles.familyIcon,
-              styles[`familyIcon${item.tone[0].toUpperCase()}${item.tone.slice(1)}`],
-            )}><ImageIcon size={19} /></span>
+            <span className={styles.familyArtwork}>
+              <Image
+                src={publicAssetPath(ACCESSORY_FAMILY_ARTWORK[item.label].src)}
+                width={ACCESSORY_FAMILY_ARTWORK[item.label].width}
+                height={ACCESSORY_FAMILY_ARTWORK[item.label].height}
+                sizes="72px"
+                loading="lazy"
+                alt={`${item.label} — логотип сімейства`}
+              />
+            </span>
             <span className={styles.familyCopy}>
               <strong>{item.label}</strong>
-              <small>{item.count} товарів · {item.photos} фото</small>
+              <small>{"count" in item ? `${item.count} товарів · ${item.photos} фото` : "Оригінальні аксесуари BRP"}</small>
             </span>
             <ChevronRight size={16} />
           </button>
@@ -379,8 +387,12 @@ export function AccessoriesPage() {
                   key={product.id}
                   onClick={() => openProduct(product.id)}
                 >
-                  <span className={cn(styles.productBadge, product.stock === 0 && styles.productBadgeOrder)}>
-                    {product.stock ? "Готово до замовлення" : "Під замовлення"}
+                  <span
+                    className={cn(styles.productBadge, product.stock === 0 && styles.productBadgeOrder)}
+                    role="status"
+                    data-availability={product.stock ? "in-stock" : "under-order"}
+                  >
+                    {product.stock ? `В наявності · ${product.stock}` : "Під замовлення"}
                   </span>
                   <span className={cn(styles.productVisual, styles[`productVisual${(index % 3) + 1}`])}>
                     <Sparkles size={38} />

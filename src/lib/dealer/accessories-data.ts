@@ -63,10 +63,24 @@ export type AccessoryFilters = Readonly<{
   sort: AccessorySort;
 }>;
 
+export type AccessoryFamilyArtwork = Readonly<{
+  src: string;
+  width: number;
+  height: number;
+}>;
+
+export const ACCESSORY_FAMILY_ARTWORK: Readonly<Record<AccessoryFamily, AccessoryFamilyArtwork>> = {
+  "Can-Am Off-Road": { src: "/images/catalog/CAN_OFF_EN_US.png", width: 296, height: 100 },
+  "Can-Am On-Road": { src: "/images/catalog/CAN_ONR_EN_US.png", width: 296, height: 100 },
+  "Sea-Doo": { src: "/images/catalog/SEA_DOO_EN_US.png", width: 1280, height: 162 },
+  "Ski-Doo": { src: "/images/catalog/SKI_DOO_EN_US.png", width: 1121, height: 270 },
+};
+
 export const ACCESSORY_FAMILY_CARDS = [
-  { label: "Can-Am Off-Road", count: 1556, photos: 1431, tone: "orange" },
-  { label: "Can-Am On-Road", count: 385, photos: 354, tone: "blue" },
-  { label: "Sea-Doo", count: 393, photos: 385, tone: "green" },
+  { label: "Can-Am Off-Road", count: 1556, photos: 1431 },
+  { label: "Can-Am On-Road", count: 385, photos: 354 },
+  { label: "Sea-Doo", count: 393, photos: 385 },
+  { label: "Ski-Doo" },
 ] as const;
 
 export const ACCESSORY_FAMILY_OPTIONS: readonly AccessoryFamily[] = [

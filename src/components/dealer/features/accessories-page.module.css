@@ -1,17 +1,17 @@
 .familyGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
 .familyCard {
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  min-height: 70px;
+  min-height: 76px;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -33,27 +33,22 @@
   transform: translateY(1px);
 }
 
-.familyIcon {
-  display: inline-grid;
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
+.familyArtwork {
+  display: grid;
+  width: 72px;
+  height: 46px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
   place-items: center;
 }
 
-.familyIconOrange {
-  background: var(--orange-soft);
-  color: var(--orange);
-}
-
-.familyIconBlue {
-  background: var(--blue-soft);
-  color: var(--blue);
-}
-
-.familyIconGreen {
-  background: var(--green-soft);
-  color: var(--green);
+.familyArtwork img {
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  object-fit: contain;
 }
 
 .familyCopy {
@@ -306,18 +301,18 @@
   min-height: 21px;
   align-items: center;
   padding: 3px 8px;
-  border: 1px solid color-mix(in srgb, var(--green) 25%, transparent);
+  border: 1px solid var(--color-border-green, color-mix(in srgb, var(--green) 32%, var(--border)));
   border-radius: 999px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 9px;
-  font-weight: 650;
+  background: var(--color-background-green, var(--green-soft));
+  color: color-mix(in srgb, var(--color-text-green, var(--green)) 88%, var(--foreground));
+  font-size: 10px;
+  font-weight: 720;
 }
 
 .productBadgeOrder {
-  border-color: color-mix(in srgb, var(--amber) 28%, transparent);
-  background: var(--amber-soft);
-  color: var(--amber);
+  border-color: var(--color-border-yellow, color-mix(in srgb, var(--amber) 34%, var(--border)));
+  background: var(--color-background-yellow, var(--amber-soft));
+  color: color-mix(in srgb, var(--color-text-yellow, var(--amber)) 88%, var(--foreground));
 }
 
 .productVisual {
@@ -521,6 +516,10 @@
 }
 
 @media (max-width: 1023px) {
+  .familyGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .accessoryLayout {
     grid-template-columns: 200px minmax(0, 1fr);
   }

@@ -68,7 +68,15 @@ function PartsTable({
                 <td><span className={styles.referenceBubble}>{part.reference}</span></td>
                 <td>
                   <strong className={styles.partNumber}>{part.number}</strong>
-                  {part.stock > 0 ? <small className={styles.inStock}>{part.stock} в наявності</small> : <small className={styles.outOfStock}>Немає на складі</small>}
+                  {part.stock > 0 ? (
+                    <small className={styles.inStock} role="status" data-availability="in-stock">
+                      В наявності · {part.stock}
+                    </small>
+                  ) : (
+                    <small className={styles.outOfStock} role="status" data-availability="out-of-stock">
+                      Немає на складі
+                    </small>
+                  )}
                   {part.supersededBy ? <small className={styles.replacement}>↪ {part.supersededBy}</small> : null}
                 </td>
                 <td className={styles.descriptionCell}>{part.description}</td>

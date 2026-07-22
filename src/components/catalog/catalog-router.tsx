@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -26,8 +26,11 @@ import {
 } from "@/lib/mock-data";
 import { DiagramViewer } from "@/components/catalog/diagram-viewer";
 import styles from "@/components/catalog/catalog.module.css";
+import { publicAssetPath } from "@/lib/public-base-path";
 import {
+  catalogDiagramThumbnails,
   dealerCatalogCascade,
+  filterDiagramNames,
   resolveCatalogSelection,
   type DealerCatalogNode,
   type ResolvedCatalogSelection,
@@ -556,7 +559,39 @@ function ConfigurationList() {
   );
 }
 
+function DiagramThumbnail({ diagram }: { diagram: string }) {
+  const [failed, setFailed] = useState(false);
+  const thumbnail = catalogDiagramThumbnails[diagram];
+
+  return (
+    <span className={styles.diagramMedia} data-diagram-media>
+      {thumbnail && !failed ? (
+        <Image
+          src={publicAssetPath(thumbnail)}
+          width={1440}
+          height={900}
+          sizes="(max-width: 760px) calc(100vw - 48px), (max-width: 1100px) 42vw, 280px"
+          loading="lazy"
+          alt={`Мініатюра схеми ${diagram}`}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className={styles.diagramFallback} data-diagram-thumbnail="fallback" aria-hidden="true">
+          <FileSearch size={28} />
+          <small>Схема</small>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function DiagramList() {
+  const [query, setQuery] = useState("");
+  const filteredDiagrams = useMemo(
+    () => filterDiagramNames(diagramNames, query),
+    [query],
+  );
+
   return (
     <SelectionList
       title="North America - OUTLANDER - 2X4 - STD - 500"
@@ -569,16 +604,52 @@ function DiagramList() {
         { label: "0001KTB00" },
       ]}
     >
-      <div className={styles.diagramListHeader}><span>Схеми</span><StatusBadge tone="orange">41</StatusBadge></div>
-      <div className={styles.diagramList}>
-        {diagramNames.map((diagram, index) => (
-          <Link className={styles.diagramListRow} href={`${diagramPath}?diagram=${index + 1}`} key={diagram}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <div><strong>{diagram}</strong><small>Деталі, посилання та ціни</small></div>
-            <ChevronRight size={16} />
-          </Link>
-        ))}
+      <div className={styles.diagramListHeader}>
+        <span>Схеми вибраної моделі</span>
+        <StatusBadge tone="orange">{diagramNames.length}</StatusBadge>
       </div>
+      <div className={styles.diagramGalleryToolbar}>
+        <div className={styles.diagramSearch}>
+          <BrpTextInput
+            type="search"
+            label="Пошук схем"
+            hideLabel
+            leadingIcon={<Search size={15} aria-hidden="true" />}
+            clearable
+            value={query}
+            onValueChange={setQuery}
+            placeholder="Назва або номер схеми…"
+          />
+        </div>
+        <p className={styles.diagramResultCount} aria-live="polite">
+          Знайдено {filteredDiagrams.length} із {diagramNames.length} схем
+        </p>
+      </div>
+      <section className={styles.diagramList} aria-label="Схеми моделі">
+        {filteredDiagrams.map((diagram) => {
+          const sourceIndex = diagramNames.indexOf(diagram);
+          return (
+            <Link className={styles.diagramListRow} href={`${diagramPath}?diagram=${sourceIndex + 1}`} key={diagram}>
+              <DiagramThumbnail diagram={diagram} />
+              <span className={styles.diagramCardBody}>
+                <span className={styles.diagramNumber}>{String(sourceIndex + 1).padStart(2, "0")}</span>
+                <span className={styles.diagramCardCopy}>
+                  <strong>{diagram}</strong>
+                  <small>Деталі, посилання та ціни</small>
+                </span>
+                <ChevronRight size={16} aria-hidden="true" />
+              </span>
+            </Link>
+          );
+        })}
+      </section>
+      {filteredDiagrams.length === 0 ? (
+        <div className={styles.diagramEmpty}>
+          <FileSearch size={24} />
+          <strong>Схем за цим запитом не знайдено.</strong>
+          <button type="button" className="button button-outline" onClick={() => setQuery("")}>Очистити пошук</button>
+        </div>
+      ) : null}
     </SelectionList>
   );
 }
