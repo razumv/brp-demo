@@ -2321,6 +2321,15 @@
     margin-bottom: 16px;
   }
 
+  .workshopBoard {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
+  }
+
+  .workshopColumn {
+    min-height: 0;
+  }
+
   .panelHeader {
     min-height: 52px;
     padding: 9px 12px;

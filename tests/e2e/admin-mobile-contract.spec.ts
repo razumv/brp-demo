@@ -213,6 +213,7 @@ test("catalog controlled filters keep ownership while their external panel is in
   await expect(category).toHaveValue("ATV");
   await expect(trigger).toContainText("1");
 
+  await category.focus();
   await page.keyboard.press("Escape");
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(trigger).toBeFocused();

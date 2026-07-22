@@ -23,6 +23,7 @@ test("dealer creates, filters, and deletes an unrelated customer", async ({ page
   await expect(page.getByRole("button", { name: "ПП Озерний", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Скинути фільтри" }).click();
   await page.getByRole("button", { name: "Клієнт Logos", exact: true }).click();
+  await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Категорія клієнтів").selectOption("wholesale");
   await expect(page.getByRole("heading", { name: "Клієнт Logos", exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "ПП Озерний", exact: true })).toBeVisible();
