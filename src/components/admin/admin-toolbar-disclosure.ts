@@ -13,6 +13,7 @@ export type AdminToolbarMobileDisclosure = {
   readonly controlsId?: string;
   readonly onExpandedChange?: (expanded: boolean) => void;
   readonly panelRef?: RefObject<HTMLElement | null>;
+  readonly triggerRef?: RefObject<HTMLElement | null>;
 };
 
 export function getDisclosedToolbarSections(

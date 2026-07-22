@@ -125,8 +125,8 @@ for (const route of [
 }
 
 for (const route of [
-  {path: "/admin/companies", listLabel: "Список компаній"},
-  {path: "/admin/users", listLabel: "Список користувачів"},
+  {path: "/admin/companies", listLabel: "Список компаній", action: /Працівники BRP Вышгород/},
+  {path: "/admin/users", listLabel: "Список користувачів", action: /Редагувати Користувач 01/},
 ] as const) {
   test(`Astryx ${route.path} mounts only the viewport-appropriate list at the 767/768px boundary`, async ({page}) => {
     await seedAdminSession(page);
@@ -136,12 +136,20 @@ for (const route of [
     await page.getByText("Список", {exact: true}).click();
     await expect(page.getByRole("table", {name: route.listLabel})).toHaveCount(0);
     await expect(page.locator(`section[aria-label="${route.listLabel}"]`)).toHaveCount(1);
+    const mobileAction = page.getByRole("button", {name: route.action}).first();
+    await mobileAction.focus();
+    await expect(mobileAction).toBeFocused();
     await expectNoDocumentOverflow(page);
 
     await page.setViewportSize({width: 768, height: 1000});
     await expect(page.getByRole("table", {name: route.listLabel})).toHaveCount(1);
     await expect(page.locator(`section[aria-label="${route.listLabel}"]`)).toHaveCount(0);
+    await expect(page.getByRole("button", {name: route.action}).first()).toBeFocused();
     await expectNoDocumentOverflow(page);
+
+    await page.setViewportSize({width: 767, height: 844});
+    await expect(page.getByRole("table", {name: route.listLabel})).toHaveCount(0);
+    await expect(page.getByRole("button", {name: route.action}).first()).toBeFocused();
   });
 }
 

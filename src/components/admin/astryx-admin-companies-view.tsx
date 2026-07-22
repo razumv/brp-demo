@@ -18,6 +18,7 @@ import {Building2, Filter, LockKeyhole, Pencil, Plus, Trash2, UserPlus, Users} f
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
 import {useMediaQuery} from "@/hooks/use-media-query";
+import {useResponsiveFocusBridge} from "@/hooks/use-responsive-focus-bridge";
 import {adminCompanies, emptyCompanyForm, type AdminCompany, type CompanyFormFixture} from "@/lib/admin-companies-data";
 import type {AdminCompaniesModel} from "./admin-companies-page";
 import {useAdminViewPreference} from "./use-admin-view-preference";
@@ -98,7 +99,7 @@ function CompanyEmployees({company, model}: {company: AdminCompany; model: Admin
   const employeeOpen = model.openEmployeesId === company.id;
   return (
     <>
-      <Button label={`Працівники ${company.name}`} icon={<Users size={14} />} endContent={company.employeeCount} variant="secondary" size="sm" onClick={() => model.toggleEmployees(company.id)} aria-expanded={employeeOpen} />
+      <span data-focus-key={`${company.id}:employees`}><Button label={`Працівники ${company.name}`} icon={<Users size={14} />} endContent={company.employeeCount} variant="secondary" size="sm" onClick={() => model.toggleEmployees(company.id)} aria-expanded={employeeOpen} /></span>
       {employeeOpen ? (
         <div className={styles.employeeList} role="region" aria-label={`Працівники ${company.name}`}>
           {company.employees.map((employee) => <Text key={employee.id} type="supporting" display="block">{employee.displayLabel} · {employee.role}</Text>)}
@@ -111,9 +112,9 @@ function CompanyEmployees({company, model}: {company: AdminCompany; model: Admin
 function CompanyActionSet({company, model}: {company: AdminCompany; model: AdminCompaniesModel}) {
   return (
     <>
-      <IconButton label={`Редагувати ${company.name}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати компанію" onClick={() => model.openDialog({mode: "edit", companyId: company.id})} />
-      <IconButton label={`Призначити працівника в ${company.name}`} icon={<UserPlus size={15} />} variant="ghost" tooltip="Призначити працівника" onClick={() => model.openDialog({mode: "assign", companyId: company.id})} />
-      <IconButton label={`Видалити ${company.name} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення компанії потребує підключення сервісу компаній." />
+      <span data-focus-key={`${company.id}:edit`}><IconButton label={`Редагувати ${company.name}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати компанію" onClick={() => model.openDialog({mode: "edit", companyId: company.id})} /></span>
+      <span data-focus-key={`${company.id}:assign`}><IconButton label={`Призначити працівника в ${company.name}`} icon={<UserPlus size={15} />} variant="ghost" tooltip="Призначити працівника" onClick={() => model.openDialog({mode: "assign", companyId: company.id})} /></span>
+      <span data-focus-key={`${company.id}:delete`}><IconButton label={`Видалити ${company.name} — недоступно`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення компанії потребує підключення сервісу компаній." /></span>
     </>
   );
 }
@@ -146,6 +147,7 @@ function CompanyCards({companies, model}: {companies: readonly AdminCompany[]; m
 
 function CompanyList({companies, model}: {companies: readonly AdminCompany[]; model: AdminCompaniesModel}) {
   const isDesktopViewport = useMediaQuery("(min-width: 768px)");
+  const [focusBridgeRef, onFocusCapture] = useResponsiveFocusBridge(isDesktopViewport);
   const columns = useMemo<TableColumn<CompanyTableRow>[]>(() => [
     {key: "name", header: "Компанія", width: proportional(1.4), renderCell: (company) => <div className={styles.tableIdentity}><span className={styles.companyIcon}><Building2 size={15} /></span><span><strong>{company.name}</strong><Text type="supporting" color="secondary" display="block">{company.managerSummary ?? "Менеджера не призначено"}</Text></span></div>},
     {key: "profileStatus", header: "Профіль", width: pixel(150), renderCell: (company) => <Badge label={companyProfileLabel(company.profileStatus)} variant={company.profileStatus === "complete" ? "success" : "warning"} />},
@@ -155,7 +157,7 @@ function CompanyList({companies, model}: {companies: readonly AdminCompany[]; mo
   ], [model]);
   const rows: CompanyTableRow[] = companies.map((company) => ({...company}));
 
-  return isDesktopViewport ? (
+  return <div ref={focusBridgeRef} onFocusCapture={onFocusCapture}>{isDesktopViewport ? (
       <Card padding={0} className={styles.desktopList}>
         <div className={styles.tableScroller}>
           <Table aria-label="Список компаній" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
@@ -169,7 +171,7 @@ function CompanyList({companies, model}: {companies: readonly AdminCompany[]; mo
           <div className={styles.cardActions}><CompanyEmployees company={company} model={model} /><CompanyActionSet company={company} model={model} /></div>
         </article>)}
       </section>
-  );
+  )}</div>;
 }
 
 export default function AstryxAdminCompaniesView({model, onReady}: Props) {

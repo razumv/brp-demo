@@ -292,6 +292,7 @@ function VehicleActions({
 function VehicleCatalog() {
   const { vehicleQuery: query, setVehicleQuery: setQuery, vehicleCategory: category, setVehicleCategory: setCategory, columnCategory, setColumnCategory, skuFilter, setSkuFilter, nameFilter, setNameFilter, colorFilter, setColorFilter, engineFilter, setEngineFilter, modelYearFilter, setModelYearFilter, productionYearFilter, setProductionYearFilter, advancedFiltersOpen, setAdvancedFiltersOpen } = useCatalogViewState();
   const advancedFiltersPanelRef = useRef<HTMLDivElement>(null);
+  const advancedFiltersTriggerRef = useRef<HTMLButtonElement>(null);
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -391,6 +392,7 @@ function VehicleCatalog() {
         )}
         actions={(
           <button
+            ref={advancedFiltersTriggerRef}
             type="button"
             className="button button-outline"
             aria-expanded={advancedFiltersOpen}
@@ -412,6 +414,7 @@ function VehicleCatalog() {
           controlsId: "catalog-vehicle-advanced-filters",
           onExpandedChange: setAdvancedFiltersOpen,
           panelRef: advancedFiltersPanelRef,
+          triggerRef: advancedFiltersTriggerRef,
         }}
       />
 

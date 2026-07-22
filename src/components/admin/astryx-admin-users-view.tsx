@@ -19,6 +19,7 @@ import {Building2, CheckCircle2, CircleX, Clock3, LockKeyhole, Pencil, ShieldChe
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
 import {useMediaQuery} from "@/hooks/use-media-query";
+import {useResponsiveFocusBridge} from "@/hooks/use-responsive-focus-bridge";
 import {adminUserCompanyOptions, adminUserRoleLabels, adminUserRoleOptions, adminUserTabs, dealerCompanyRoleOptions, managerPermissionRows, type AdminUserRecord} from "@/lib/admin-users-data";
 import type {AdminUsersModel} from "./admin-users-page";
 import {useAdminViewPreference} from "./use-admin-view-preference";
@@ -49,9 +50,9 @@ function UserBadges({user}: {user: AdminUserRecord}) {
 function UserActionSet({user, model}: {user: AdminUserRecord; model: AdminUsersModel}) {
   return (
     <>
-      <IconButton label={`Редагувати ${publicName(user.displayName)}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати користувача" onClick={() => model.setSelectedUser(user)} />
-      <IconButton label={`Деактивувати ${publicName(user.displayName)} — заблоковано`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача потребує підключення сервісу облікових записів." />
-      <IconButton label={`Видалити ${publicName(user.displayName)} — заблоковано`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача потребує підключення сервісу облікових записів." />
+      <span data-focus-key={`${user.id}:edit`}><IconButton label={`Редагувати ${publicName(user.displayName)}`} icon={<Pencil size={15} />} variant="ghost" tooltip="Редагувати користувача" onClick={() => model.setSelectedUser(user)} /></span>
+      <span data-focus-key={`${user.id}:deactivate`}><IconButton label={`Деактивувати ${publicName(user.displayName)} — заблоковано`} icon={<CircleX size={15} />} variant="destructive" isDisabled tooltip="Деактивація користувача потребує підключення сервісу облікових записів." /></span>
+      <span data-focus-key={`${user.id}:delete`}><IconButton label={`Видалити ${publicName(user.displayName)} — заблоковано`} icon={<Trash2 size={15} />} variant="destructive" isDisabled tooltip="Видалення користувача потребує підключення сервісу облікових записів." /></span>
     </>
   );
 }
@@ -78,6 +79,7 @@ function UserCards({users, model}: {users: readonly AdminUserRecord[]; model: Ad
 
 function UserList({users, model}: {users: readonly AdminUserRecord[]; model: AdminUsersModel}) {
   const isDesktopViewport = useMediaQuery("(min-width: 768px)");
+  const [focusBridgeRef, onFocusCapture] = useResponsiveFocusBridge(isDesktopViewport);
   const columns = useMemo<TableColumn<UserTableRow>[]>(() => [
     {key: "displayName", header: "Користувач", width: proportional(1.2), renderCell: (user) => <div className={styles.tableIdentity}><span className={styles.avatar}>{publicName(user.displayName).slice(-2)}</span><span><strong>{publicName(user.displayName)}</strong><Text type="supporting" color="secondary" display="block">{user.email}</Text></span></div>},
     {key: "company", header: "Компанія", width: proportional(1), renderCell: (user) => <div className={styles.userMeta}><Building2 size={14} /><Text>{user.company}</Text></div>},
@@ -87,7 +89,7 @@ function UserList({users, model}: {users: readonly AdminUserRecord[]; model: Adm
   ], [model]);
   const rows: UserTableRow[] = users.map((user) => ({...user}));
 
-  return isDesktopViewport ? (
+  return <div ref={focusBridgeRef} onFocusCapture={onFocusCapture}>{isDesktopViewport ? (
       <Card padding={0} className={styles.desktopList}>
         <div className={styles.tableScroller}>
           <Table aria-label="Список користувачів" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
@@ -102,7 +104,7 @@ function UserList({users, model}: {users: readonly AdminUserRecord[]; model: Adm
           <div className={styles.userActions}><UserActionSet user={user} model={model} /></div>
         </article>)}
       </section>
-  );
+  )}</div>;
 }
 
 function EditUserDialog({model}: {model: AdminUsersModel}) {

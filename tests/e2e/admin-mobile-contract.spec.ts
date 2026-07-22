@@ -218,6 +218,23 @@ test("catalog controlled filters keep ownership while their external panel is in
   await expect(trigger).toBeFocused();
 });
 
+test("catalog desktop detailed filters toggle closed and restore focus on Escape", async ({ page }) => {
+  await openAdminRoute(page, "/admin/catalog", 1440);
+  const trigger = page.getByRole("button", { name: /^Детальні фільтри/ });
+  const panel = page.locator("#catalog-vehicle-advanced-filters");
+
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await trigger.click();
+  await expect(panel).toHaveCount(0);
+
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
 test("mobile tab select takes over at the 767px breakpoint", async ({ page }) => {
   await openAdminRoute(page, "/admin/unit-shipping", 767);
   const mobileTabs = page.getByRole("combobox", { name: "Стан відвантаження" });

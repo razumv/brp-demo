@@ -249,7 +249,6 @@ export function AdminToolbar({
   const mobileDisclosureLabel = mobileDisclosure?.label ?? "Фільтри";
   const isIconOnlyMobileDisclosure = mobileDisclosure?.iconOnly !== false;
   const controlledExpandedChange = mobileDisclosure?.onExpandedChange;
-  const disclosurePanelRef = mobileDisclosure?.panelRef ?? mobileDisclosurePanelRef;
   const isControlledMobileDisclosure = Boolean(
     mobileDisclosure?.controlsId && controlledExpandedChange,
   );
@@ -272,7 +271,9 @@ export function AdminToolbar({
     open: mobileExpanded,
     onOpenChange: onMobileExpandedChange,
     triggerRef: mobileDisclosureTriggerRef,
-    panelRef: disclosurePanelRef,
+    panelRef: mobileDisclosurePanelRef,
+    additionalTriggerRef: mobileDisclosure?.triggerRef,
+    additionalPanelRef: mobileDisclosure?.panelRef,
     dismissOnPointerOutside: !isControlledMobileDisclosure || Boolean(mobileDisclosure?.panelRef),
   });
 
