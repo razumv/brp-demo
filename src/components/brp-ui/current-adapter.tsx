@@ -685,8 +685,8 @@ export const currentAdapter: BrpUiAdapter = {
   BrpTabs: CurrentTabs,
   BrpSegmentedControl: CurrentSegmentedControl,
   BrpToolbar: CurrentToolbar,
-  BrpCard: ({children, className = "", tone = "default", padding = "md"}) => (
-    <div className={`rounded-xl border shadow-sm ${cardClasses[tone]} ${cardPaddingClasses[padding]} ${className}`}>{children}</div>
+  BrpCard: ({children, tone = "default", padding = "md"}) => (
+    <div className={`rounded-xl border shadow-sm ${cardClasses[tone]} ${cardPaddingClasses[padding]}`}>{children}</div>
   ),
   BrpBadge: ({label, tone = "neutral", icon}) => (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${badgeClasses[tone]}`}>{icon}{label}</span>

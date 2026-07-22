@@ -1,5 +1,5 @@
 import path from "node:path";
-import { access, readFile, stat } from "node:fs/promises";
+import { access, readFile, readdir, stat } from "node:fs/promises";
 
 const outputDirectory = path.resolve("out");
 const basePath = (process.env.PWA_BASE_PATH ?? "/brp-demo").replace(/\/$/, "");
@@ -19,6 +19,14 @@ const requiredFiles = [
 const requiredPrecacheUrls = requiredFiles
   .filter((file) => file !== "sw.js")
   .map((file) => `${basePath}/${file}`);
+
+async function collectFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  return (await Promise.all(entries.map((entry) => {
+    const file = path.join(directory, entry.name);
+    return entry.isDirectory() ? collectFiles(file) : [file];
+  }))).flat();
+}
 
 await Promise.all(requiredFiles.map((file) => access(path.join(outputDirectory, file))));
 
@@ -71,6 +79,29 @@ if (unexpectedPrecacheUrl) {
 
 if (!precacheUrls.some((url) => url.startsWith(staticAssetPrefix))) {
   throw new Error("service worker precache is missing immutable _next/static assets for offline fallback");
+}
+
+const staticDirectory = path.join(outputDirectory, "_next/static");
+const emittedStaticFiles = await collectFiles(staticDirectory);
+const emittedCss = emittedStaticFiles.filter((file) => file.endsWith(".css"));
+const emittedJs = emittedStaticFiles.filter((file) => file.endsWith(".js"));
+const cssSources = await Promise.all(emittedCss.map(async (file) => ({ file, source: await readFile(file, "utf8") })));
+const jsSources = await Promise.all(emittedJs.map(async (file) => ({ file, source: await readFile(file, "utf8") })));
+const neutralCss = cssSources.filter(({ source }) => source.includes("data-astryx-theme") && source.includes("neutral") && source.includes("--color-text-primary"));
+if (neutralCss.length === 0) throw new Error("Pages output is missing emitted Astryx Neutral CSS.");
+const figtreeCss = cssSources.filter(({ source }) => source.includes("Figtree Variable"));
+if (figtreeCss.length === 0) throw new Error("Pages output is missing the Figtree font-face relationship.");
+const figtreeFontReferences = new Set(figtreeCss.flatMap(({ source }) => [...source.matchAll(/url\(([^)]+\.woff2)\)/g)].map((match) => match[1].replace(/["']/g, ""))));
+if (figtreeFontReferences.size < 2) throw new Error("Pages output must emit both Figtree Latin and Latin-Extended assets.");
+const astryxRuntime = jsSources.filter(({ source }) => source.includes("data-astryx-theme") || source.includes("renderer-pending"));
+if (astryxRuntime.length === 0) throw new Error("Pages output is missing the Astryx appearance runtime.");
+const contentDiscoveredAssets = [...neutralCss, ...figtreeCss, ...astryxRuntime].map(({ file }) => `${basePath}/${path.relative(outputDirectory, file).split(path.sep).join("/")}`);
+for (const url of new Set(contentDiscoveredAssets)) {
+  if (!precacheUrls.includes(url)) throw new Error(`service worker precache is missing content-discovered appearance asset ${url}`);
+}
+const emittedFontUrls = emittedStaticFiles.filter((file) => file.endsWith(".woff2")).map((file) => `${basePath}/${path.relative(outputDirectory, file).split(path.sep).join("/")}`);
+if (emittedFontUrls.length < 2 || emittedFontUrls.some((url) => !precacheUrls.includes(url))) {
+  throw new Error("All emitted immutable Figtree font assets must be precached.");
 }
 
 if (precacheUrls.some((url) => /\/admin\/|\.txt$|__next\./.test(url))) {

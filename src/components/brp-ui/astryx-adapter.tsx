@@ -200,7 +200,7 @@ export const astryxAdapter: BrpUiAdapter = {
   BrpToolbar: ({label, start, center, end, size = "md", orientation = "horizontal", divided, ref}) => (
     <AstryxToolbar ref={ref} label={label} startContent={start} centerContent={center} endContent={end} size={size} orientation={orientation} dividers={divided ? ["top", "bottom"] : undefined} />
   ),
-  BrpCard: ({children, className, tone = "default", padding = "md"}) => <AstryxCard className={className} variant={cardVariants[tone]} padding={cardPadding[padding]}>{children}</AstryxCard>,
+  BrpCard: ({children, tone = "default", padding = "md"}) => <AstryxCard variant={cardVariants[tone]} padding={cardPadding[padding]}>{children}</AstryxCard>,
   BrpBadge: ({label, tone = "neutral", icon}) => <AstryxBadge label={label} variant={badgeVariants[tone]} icon={icon} />,
   BrpStatusDot: ({label, tone, pulsing, tooltip}) => <AstryxStatusDot label={label} variant={tone === "danger" ? "error" : tone} isPulsing={pulsing} tooltip={tooltip} />,
   BrpTable: ({label, columns, rows, density = "balanced", dividers = "rows", striped, hover, emptyState}) => {

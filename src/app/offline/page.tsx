@@ -3,7 +3,6 @@
 import {useCallback, useEffect} from "react";
 import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {CurrentBrpUiProvider} from "@/components/brp-ui/current-brp-ui-provider";
-import { publicAssetPath } from "@/lib/public-base-path";
 import {CurrentOfflineView} from "./current-offline-view";
 import type {AstryxOfflineViewProps} from "./astryx-offline-view";
 
@@ -18,7 +17,7 @@ export default function OfflinePage() {
   }, [retry]);
 
   const viewProps: AstryxOfflineViewProps = {
-    homeHref: publicAssetPath("/"),
+    homeHref: "/",
     onRetry: retry,
   };
 

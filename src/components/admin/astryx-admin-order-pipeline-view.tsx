@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useLayoutEffect, type Ref} from "react";
+import {useEffect, useLayoutEffect, useRef} from "react";
 import {Badge} from "@astryxdesign/core/Badge";
 import {Banner} from "@astryxdesign/core/Banner";
 import {Button} from "@astryxdesign/core/Button";
@@ -130,6 +130,20 @@ function AstryxPeriodContent({model}: {model: AdminOrderPipelineModel}) {
 
 function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineModel; isRendererCommitted: boolean}) {
   const isOpen = isRendererCommitted && model.periodOpen;
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      model.setPeriodOpen(false);
+      queueMicrotask(() => triggerRef.current?.focus());
+    };
+    document.addEventListener("keydown", dismiss, true);
+    return () => document.removeEventListener("keydown", dismiss, true);
+  }, [isOpen, model]);
+
   return (
     <Popover
       label="Період замовлень"
@@ -146,7 +160,10 @@ function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineMo
     >
       {(trigger: PopoverTriggerRenderProps) => (
         <Button
-          ref={trigger.ref as Ref<HTMLButtonElement>}
+          ref={(element) => {
+            triggerRef.current = element;
+            (trigger.ref as (element: HTMLButtonElement | null) => void)(element);
+          }}
           label="Період"
           icon={<CalendarDays size={15} />}
           endContent={<ChevronDown size={14} />}

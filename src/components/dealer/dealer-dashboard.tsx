@@ -49,14 +49,16 @@ function DealerStatCard({icon, label, value, helper, tone = "default"}: {
   tone?: "default" | "info" | "warning";
 }) {
   return (
-    <BrpCard className="stat-card" tone={tone} padding="md">
-      <div className="stat-icon">{icon}</div>
-      <div className="min-w-0">
-        <p className="stat-label">{label}</p>
-        <div className="stat-value">{value}</div>
-        <div className="stat-helper">{helper}</div>
-      </div>
-    </BrpCard>
+    <div className="stat-card">
+      <BrpCard tone={tone} padding="none">
+        <div className="stat-icon">{icon}</div>
+        <div className="min-w-0">
+          <p className="stat-label">{label}</p>
+          <div className="stat-value">{value}</div>
+          <div className="stat-helper">{helper}</div>
+        </div>
+      </BrpCard>
+    </div>
   );
 }
 
@@ -121,7 +123,7 @@ export function DealerDashboard() {
       </section>
 
       <section className={styles.dashboardColumns}>
-        <BrpCard className={styles.dashboardPanel} padding="none">
+        <div className={styles.dashboardPanel}><BrpCard padding="none">
           <header className={styles.panelHeader}>
             <h2>Останні замовлення</h2>
             <Link href="/dealer/orders" className="button button-outline">
@@ -151,9 +153,9 @@ export function DealerDashboard() {
               <Link href="/catalog" className="button button-outline"><ShoppingCart size={15} /> Перейти до каталогу</Link>
             </div>
           )}
-        </BrpCard>
+        </BrpCard></div>
 
-        <BrpCard className={styles.dashboardPanel} padding="none">
+        <div className={styles.dashboardPanel}><BrpCard padding="none">
           <header className={styles.panelHeader}><h2>Потребує уваги</h2></header>
           <div className={styles.attentionList}>
             {processing.length ? (
@@ -171,10 +173,10 @@ export function DealerDashboard() {
               </div>
             )}
           </div>
-        </BrpCard>
+        </BrpCard></div>
       </section>
 
-      <BrpCard className={styles.shortcutsPanel} padding="none">
+      <div className={styles.shortcutsPanel}><BrpCard padding="none">
         <header className={styles.panelHeader}><h2>Доступні розділи</h2></header>
         <div className={styles.shortcutGrid}>
           {shortcuts.map(({ href, label, helper, icon: Icon }) => (
@@ -185,13 +187,13 @@ export function DealerDashboard() {
             </Link>
           ))}
         </div>
-      </BrpCard>
+      </BrpCard></div>
 
       <section className={styles.summaryGrid} aria-label="Додаткові показники">
-        <BrpCard className={styles.summaryCard} padding="sm"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard>
-        <BrpCard className={styles.summaryCard} padding="sm"><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></BrpCard>
-        <BrpCard className={styles.summaryCard} padding="sm"><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></BrpCard>
-        <BrpCard className={styles.summaryCard} padding="sm"><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></BrpCard>
+        <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard></div>
+        <div className={styles.summaryCard}><BrpCard padding="none"><span><Users size={17} /></span><div><small>Клієнтів</small><strong>{snapshot.customers.length}</strong></div></BrpCard></div>
+        <div className={styles.summaryCard}><BrpCard padding="none"><span><Wrench size={17} /></span><div><small>Робіт у майстерні</small><strong>{snapshot.workshopOrders.length}</strong></div></BrpCard></div>
+        <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageOpen size={17} /></span><div><small>Позицій у кошику</small><strong>{snapshot.cart.reduce((sum, line) => sum + line.quantity, 0)}</strong></div></BrpCard></div>
       </section>
     </main>
   );

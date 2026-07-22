@@ -105,6 +105,10 @@
 }
 
 .dashboardPanel {
+  display: contents;
+}
+
+.dashboardPanel > :global(*) {
   min-height: 330px;
   overflow: hidden;
 }
@@ -269,6 +273,10 @@
 }
 
 .shortcutsPanel {
+  display: contents;
+}
+
+.shortcutsPanel > :global(*) {
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -303,7 +311,7 @@
 }
 
 .shortcut > span,
-.summaryCard > span {
+.summaryCard > :global(*) > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -336,6 +344,10 @@
 }
 
 .summaryCard {
+  display: contents;
+}
+
+.summaryCard > :global(*) {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -343,18 +355,18 @@
   padding: 12px;
 }
 
-.summaryCard div {
+.summaryCard > :global(*) > div {
   display: flex;
   flex-direction: column;
 }
 
-.summaryCard small {
+.summaryCard > :global(*) small {
   color: var(--muted-foreground);
   font-size: 10px;
   text-transform: uppercase;
 }
 
-.summaryCard strong {
+.summaryCard > :global(*) strong {
   font-size: 17px;
 }
 
@@ -2284,7 +2296,7 @@
     margin-bottom: 16px;
   }
 
-  .statsGrid > :global(.stat-card) {
+  .statsGrid > :global(.stat-card) > :global(*) {
     min-height: 88px;
     padding: 12px;
   }
@@ -2518,7 +2530,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .statsGrid > :global(.stat-card) :global(.stat-icon) {
+  .statsGrid > :global(.stat-card) > :global(*) :global(.stat-icon) {
     display: none;
   }
 

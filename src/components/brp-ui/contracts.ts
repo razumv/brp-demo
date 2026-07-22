@@ -124,7 +124,6 @@ export interface BrpToolbarProps {
 
 export interface BrpCardProps {
   children: ReactNode;
-  className?: string;
   tone?: "default" | "muted" | "transparent" | "info" | "success" | "warning";
   padding?: "none" | "sm" | "md" | "lg";
 }

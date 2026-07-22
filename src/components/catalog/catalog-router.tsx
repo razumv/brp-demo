@@ -127,7 +127,7 @@ function QuickSearch() {
   };
 
   return (
-    <BrpCard className={styles.quickSearchPanel} padding="md">
+    <div className={styles.quickSearchPanel}><BrpCard padding="none">
       <div className={styles.quickSearchTitle}>
         <Search size={16} />
         <strong>Швидкий пошук</strong>
@@ -196,7 +196,7 @@ function QuickSearch() {
           ) : null}
         </form>
       </div>
-    </BrpCard>
+    </BrpCard></div>
   );
 }
 
@@ -427,6 +427,7 @@ function CatalogCascade() {
   return (
     <CatalogPage wide>
       <Breadcrumbs items={breadcrumbItems} />
+      <h1 className="sr-only">Каталог запчастин Can-Am SXS</h1>
       <section ref={viewportRef} className={styles.cascadeViewport} aria-label="Навігація каталогу">
         <div className={styles.cascadeGrid} data-column-count={columns.length}>
           {columns.map((column) => (
@@ -459,6 +460,7 @@ function CategoryBrowser() {
         { label: "Can-Am ATV" },
         { label: selectedYear },
       ]} />
+      <h1 className="sr-only">Каталог запчастин Can-Am ATV</h1>
       <div className={styles.browserGrid}>
         <section className={styles.browserColumn} aria-label="Категорії">
           <BrowserRow active>Can-Am ATV</BrowserRow>
@@ -502,7 +504,7 @@ function SelectionList({
     <CatalogPage>
       <Breadcrumbs items={breadcrumbs} />
       <PageHeader title={title} description={description} />
-      <BrpCard className={styles.selectionPanel} padding="none">{children}</BrpCard>
+      <div className={styles.selectionPanel}><BrpCard padding="none">{children}</BrpCard></div>
     </CatalogPage>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import {RefreshCw, WifiOff} from "lucide-react";
+import Link from "next/link";
 import styles from "./offline.module.css";
 
 type CurrentOfflineViewProps = {
@@ -21,7 +22,7 @@ export function CurrentOfflineView({homeHref, onRetry}: CurrentOfflineViewProps)
             <RefreshCw size={16} aria-hidden="true" />
             Спробувати знову
           </button>
-          <a href={homeHref}>На головну</a>
+          <Link href={homeHref}>На головну</Link>
         </div>
       </section>
     </main>

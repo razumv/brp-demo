@@ -59,7 +59,7 @@ export function OrderConfirmationPage({ id }: { id: string }) {
       </section>
 
       <div className={styles.confirmationContent}>
-        <BrpCard className={styles.receiptCard} padding="md">
+        <div className={styles.receiptCard}><BrpCard padding="none">
           <div className={styles.receiptTop}>
             <div><span>Номер замовлення</span><strong>{order.code}</strong><button type="button" aria-label="Скопіювати номер замовлення" onClick={async () => {
               const result = await commands.copyText({ text: order.code });
@@ -72,19 +72,19 @@ export function OrderConfirmationPage({ id }: { id: string }) {
             {order.po ? <code>PO: {order.po}</code> : null}
             <StatusBadge tone="blue">{order.delivery === "standard" ? "Доставка" : "Самовивіз"}</StatusBadge>
           </div>
-        </BrpCard>
+        </BrpCard></div>
         {copyFeedback ? <p className={styles.successMessage} role="status">{copyFeedback}</p> : null}
 
-        <BrpCard className={styles.nextSteps} padding="md">
+        <div className={styles.nextSteps}><BrpCard padding="none">
           <h2>Що далі</h2>
           <ol>
             <li><span className={styles.stepActive}><Clock3 size={17} /></span><div><strong>Створено</strong><small>Замовлення додано до списку дилера</small></div></li>
             <li><span><PackageCheck size={17} /></span><div><strong>Комплектація</strong><small>Статус з’явиться після підключення обробки замовлень</small></div></li>
             <li><span><Plane size={17} /></span><div><strong>Отримання</strong><small>{order.delivery === "standard" ? "Доставка після комплектації" : "Самовивіз після комплектації"}</small></div></li>
           </ol>
-        </BrpCard>
+        </BrpCard></div>
 
-        <BrpCard className={styles.confirmationLines} padding="none">
+        <div className={styles.confirmationLines}><BrpCard padding="none">
           <header>Позиції дилерів</header>
           {order.lines.map((line) => (
             <div key={line.partNumber}>
@@ -94,7 +94,7 @@ export function OrderConfirmationPage({ id }: { id: string }) {
               <b>{formatMoney(line.quantity * line.dealerPrice)}</b>
             </div>
           ))}
-        </BrpCard>
+        </BrpCard></div>
 
         <div className={styles.confirmationActions}>
           <Link className="button button-primary" href="/dealer/orders">Мої замовлення <ArrowRight size={15} /></Link>

@@ -971,6 +971,10 @@ a {
 }
 
 .stat-card {
+  display: contents;
+}
+
+.stat-card > * {
   display: flex;
   min-width: 0;
   min-height: 96px;

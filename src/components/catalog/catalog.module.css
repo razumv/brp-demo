@@ -51,6 +51,10 @@
 }
 
 .quickSearchPanel {
+  display: contents;
+}
+
+.quickSearchPanel > :global(*) {
   padding: 24px;
   margin-bottom: 28px;
   border-radius: 6px;
@@ -506,6 +510,10 @@
 }
 
 .selectionPanel {
+  display: contents;
+}
+
+.selectionPanel > :global(*) {
   overflow: hidden;
 }
 
@@ -1547,6 +1555,10 @@
 }
 
 .receiptCard {
+  display: contents;
+}
+
+.receiptCard > :global(*) {
   padding: 18px 20px;
 }
 
@@ -1624,10 +1636,14 @@
 }
 
 .nextSteps {
+  display: contents;
+}
+
+.nextSteps > :global(*) {
   padding: 17px 20px;
 }
 
-.nextSteps h2 {
+.nextSteps > :global(*) h2 {
   margin: 0 0 14px;
   color: var(--muted-foreground);
   font-size: 10px;
@@ -1636,13 +1652,13 @@
   text-transform: uppercase;
 }
 
-.nextSteps ol {
+.nextSteps > :global(*) ol {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.nextSteps li {
+.nextSteps > :global(*) li {
   position: relative;
   display: flex;
   align-items: center;
@@ -1650,7 +1666,7 @@
   min-height: 50px;
 }
 
-.nextSteps li + li::before {
+.nextSteps > :global(*) li + li::before {
   position: absolute;
   top: -10px;
   left: 17px;
@@ -1660,7 +1676,7 @@
   content: "";
 }
 
-.nextSteps li > span {
+.nextSteps > :global(*) li > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1672,28 +1688,32 @@
   color: var(--muted-foreground);
 }
 
-.nextSteps li > .stepActive {
+.nextSteps > :global(*) li > .stepActive {
   border-color: #f5c3a8;
   background: var(--orange-soft);
   color: var(--orange);
 }
 
-.nextSteps li > div {
+.nextSteps > :global(*) li > div {
   display: flex;
   flex-direction: column;
 }
 
-.nextSteps small {
+.nextSteps > :global(*) small {
   margin-top: 2px;
   color: var(--muted-foreground);
   font-size: 10px;
 }
 
 .confirmationLines {
+  display: contents;
+}
+
+.confirmationLines > :global(*) {
   overflow: hidden;
 }
 
-.confirmationLines header {
+.confirmationLines > :global(*) header {
   min-height: 39px;
   padding: 12px 17px;
   border-bottom: 1px solid var(--border);
@@ -1704,7 +1724,7 @@
   text-transform: uppercase;
 }
 
-.confirmationLines > div {
+.confirmationLines > :global(*) > div {
   display: grid;
   grid-template-columns: 98px minmax(0, 1fr) auto auto;
   align-items: center;
@@ -1715,15 +1735,15 @@
   font-size: 10px;
 }
 
-.confirmationLines > div:last-child {
+.confirmationLines > :global(*) > div:last-child {
   border-bottom: 0;
 }
 
-.confirmationLines > div > strong {
+.confirmationLines > :global(*) > div > strong {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.confirmationLines > div > span:nth-child(2) {
+.confirmationLines > :global(*) > div > span:nth-child(2) {
   overflow: hidden;
   color: var(--muted-foreground);
   text-overflow: ellipsis;
@@ -1815,7 +1835,7 @@
     font-size: 24px;
   }
 
-  .quickSearchPanel {
+  .quickSearchPanel > :global(*) {
     padding: 16px;
     margin-bottom: 18px;
   }
@@ -2194,11 +2214,11 @@
     margin-left: 0;
   }
 
-  .confirmationLines > div {
+  .confirmationLines > :global(*) > div {
     grid-template-columns: 88px minmax(0, 1fr) auto;
   }
 
-  .confirmationLines > div > b {
+  .confirmationLines > :global(*) > div > b {
     display: none;
   }
 
