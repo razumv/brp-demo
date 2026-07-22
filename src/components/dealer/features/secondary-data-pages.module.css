@@ -123,6 +123,8 @@
   }
 
   .tableRegion {
+    width: calc(100vw - 32px);
+    max-width: 100%;
     margin-inline: -2px;
   }
 
