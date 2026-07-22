@@ -433,7 +433,12 @@ export function AdminOrderDetail({id}: {id: string}) {
   const order = useMemo(() => resolveOrder(id, state.orders), [id, state.orders]);
 
   if (!order) {
-    return <main className="page page-narrow" data-admin-order-detail-renderer="current"><Panel className={styles.panelBody}><h1 className={styles.sectionTitle}>Замовлення не знайдено</h1><p className={styles.sectionCopy}>Немає зафіксованого замовлення або рядка пайплайна з таким id.</p><Link href="/admin/order-pipeline" className="button button-outline mt-4">До пайплайна</Link></Panel></main>;
+    return <RendererViewSwitch
+      slotId="admin-order-detail"
+      currentView={<main className="page page-narrow" data-admin-order-detail-renderer="current"><Panel className={styles.panelBody}><h1 className={styles.sectionTitle}>Замовлення не знайдено</h1><p className={styles.sectionCopy}>Немає зафіксованого замовлення або рядка пайплайна з таким id.</p><Link href="/admin/order-pipeline" className="button button-outline mt-4">До пайплайна</Link></Panel></main>}
+      loadAstryxView={loadAstryxAdminOrderDetailView}
+      astryxViewProps={{model: null}}
+    />;
   }
 
   const model: AdminOrderDetailViewModel = {

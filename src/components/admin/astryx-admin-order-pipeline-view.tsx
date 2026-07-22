@@ -305,10 +305,10 @@ export function AstryxAdminOrderPipelineView({model, onReady}: AstryxAdminOrderP
       <SummaryCards counts={model.summaryCounts} />
       {model.view === "list" ? <ListView model={model} /> : <KanbanView model={model} />}
       <SupplierOrderQueue />
-      <nav className={styles.pagination} aria-label="Пагінація замовлень">
+      <div className={styles.pagination}>
         <Text type="supporting">{model.visibleTotal} замовлень · сторінка {model.page} з {model.pageCount}</Text>
         <Pagination page={model.page} totalPages={model.pageCount} variant="pages" siblingCount={1} label="Пагінація замовлень" onChange={(page) => model.changePage(page as AdminPipelinePage)} />
-      </nav>
+      </div>
     </main>
   );
 }
