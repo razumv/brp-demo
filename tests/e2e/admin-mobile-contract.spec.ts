@@ -213,7 +213,9 @@ test("catalog controlled filters keep ownership while their external panel is in
   await expect(category).toHaveValue("ATV");
   await expect(trigger).toContainText("1");
 
-  await category.focus();
+  // A native select owns the first Escape while its OS-level popup is open.
+  // Verify the disclosure contract from a regular field inside the panel.
+  await page.getByRole("textbox", { name: "SKU" }).focus();
   await page.keyboard.press("Escape");
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(trigger).toBeFocused();
