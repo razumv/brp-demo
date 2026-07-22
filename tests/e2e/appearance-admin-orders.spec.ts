@@ -1,4 +1,4 @@
-import {expect, test, type Page} from "@playwright/test";
+import {expect, test, type Locator, type Page} from "@playwright/test";
 import {seedAdminSession} from "./support/admin-session";
 
 type DesignSystem = "shadcn" | "astryx";
@@ -52,9 +52,10 @@ async function publishAppearance(
   await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", colorMode);
 }
 
-async function expectDistinctSurfaceBackgrounds(page: Page, selectors: readonly string[]) {
-  const backgrounds = await Promise.all(selectors.map((selector) => page.locator(selector).first().evaluate((element) => getComputedStyle(element).backgroundColor)));
-  expect(new Set(backgrounds).size).toBeGreaterThan(1);
+async function expectPairwiseDistinctBackgrounds(elements: readonly Locator[]) {
+  const backgrounds = await Promise.all(elements.map((element) => element.evaluate((node) => getComputedStyle(node).backgroundColor)));
+  expect(backgrounds).not.toContain("rgba(0, 0, 0, 0)");
+  expect(new Set(backgrounds).size).toBe(backgrounds.length);
 }
 
 function pipelineViewControl(
@@ -151,10 +152,12 @@ test.describe("admin pipeline appearance matrix", () => {
       expect(await pipeline.locator('[data-operational-surface="pipeline-list-group"]').count()).toBeGreaterThan(0);
       expect(await pipeline.locator('[data-operational-surface="pipeline-list-body"]').count()).toBeGreaterThan(0);
       expect(await pipeline.locator('[data-operational-surface="pipeline-list-hover"]').count()).toBeGreaterThan(0);
-      await expectDistinctSurfaceBackgrounds(page, [
-        '[data-operational-surface="pipeline-toolbar-card"]',
-        '[data-operational-surface="pipeline-list-header"]',
-        '[data-operational-surface="pipeline-list-body"]',
+      await expectPairwiseDistinctBackgrounds([
+        pipeline,
+        pipeline.locator('[data-operational-surface="pipeline-toolbar-card"]'),
+        pipeline.locator('[data-operational-surface="pipeline-list-group"]').first(),
+        pipeline.locator('[data-operational-surface="pipeline-list-header"]').first(),
+        pipeline.locator('[data-operational-surface="pipeline-list-body"]').first(),
       ]);
 
       await pipelineViewControl(page, "Канбан", "astryx").click();

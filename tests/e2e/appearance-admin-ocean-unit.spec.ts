@@ -1,4 +1,4 @@
-import {expect, test, type Page} from "@playwright/test";
+import {expect, test, type Locator, type Page} from "@playwright/test";
 import {openAdminRoute, seedAdminSession} from "./support/admin-session";
 
 type DesignSystem = "shadcn" | "astryx";
@@ -79,9 +79,20 @@ async function expectNoDocumentOverflow(page: Page) {
   ))).toBeLessThanOrEqual(1);
 }
 
-async function expectDistinctSurfaceBackgrounds(page: Page, selectors: readonly string[]) {
-  const backgrounds = await Promise.all(selectors.map((selector) => page.locator(selector).first().evaluate((element) => getComputedStyle(element).backgroundColor)));
-  expect(new Set(backgrounds).size).toBeGreaterThan(1);
+async function expectPairwiseDistinctBackgrounds(elements: readonly Locator[]) {
+  const backgrounds = await Promise.all(elements.map((element) => element.evaluate((node) => getComputedStyle(node).backgroundColor)));
+  expect(backgrounds).not.toContain("rgba(0, 0, 0, 0)");
+  expect(new Set(backgrounds).size).toBe(backgrounds.length);
+}
+
+async function expectVisibleFocusOutline(element: Locator) {
+  const outline = await element.evaluate((node) => {
+    const styles = getComputedStyle(node);
+    return {color: styles.outlineColor, style: styles.outlineStyle, width: Number.parseFloat(styles.outlineWidth)};
+  });
+  expect(outline.style).not.toBe("none");
+  expect(outline.width).toBeGreaterThanOrEqual(1);
+  expect(outline.color).not.toBe("rgba(0, 0, 0, 0)");
 }
 
 test.describe("admin ocean freight appearance matrix", () => {
@@ -164,13 +175,24 @@ test.describe("admin ocean freight appearance matrix", () => {
       expect(await ocean.locator('[data-operational-surface="ocean-bl-group"]').count()).toBeGreaterThan(0);
       await expect(ocean.locator('[data-operational-surface="ocean-table-body"]')).toHaveCount(1);
       expect(await ocean.locator('[data-operational-surface="ocean-table-hover"]').count()).toBeGreaterThan(0);
-      await tableRegion.focus();
-      await expect(tableRegion).toBeFocused();
-      await expectDistinctSurfaceBackgrounds(page, [
-        '[data-operational-surface="ocean-table-header"]',
-        '[data-operational-surface="ocean-bl-group"]',
-        '[data-operational-surface="ocean-table-body"]',
+      await expectPairwiseDistinctBackgrounds([
+        ocean,
+        ocean.locator('[data-operational-surface="ocean-card"]'),
+        ocean.locator('[data-operational-surface="ocean-table-header"]'),
+        ocean.locator('[data-operational-surface="ocean-bl-group"]').first(),
+        ocean.locator('[data-operational-surface="ocean-table-body"]'),
       ]);
+
+      const firstContainerRow = ocean.locator('[data-operational-surface="ocean-table-hover"]').first();
+      const rowBackground = await firstContainerRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+      await firstContainerRow.hover();
+      await expect.poll(() => firstContainerRow.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(rowBackground);
+
+      await tableRegion.focus();
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+      await expect(tableRegion).toBeFocused();
+      await expectVisibleFocusOutline(tableRegion);
 
       await oceanViewControl(page, "Картки", "astryx").click();
       await expect(ocean.locator('[data-operational-surface="ocean-card"]')).toHaveCount(1);
