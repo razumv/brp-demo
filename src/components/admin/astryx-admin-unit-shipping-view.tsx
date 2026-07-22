@@ -44,7 +44,6 @@ const categoryOptions = UNIT_SHIPPING_CATEGORIES.map((category) => ({
 function isCategory(value: string): value is UnitShippingCategory {
   return UNIT_SHIPPING_CATEGORIES.some((category) => category === value);
 }
-
 function isTab(value: string): value is UnitShippingTab {
   return value === "remaining" || value === "shipped";
 }
@@ -189,4 +188,3 @@ export function AstryxAdminUnitShippingView({model, onReady}: {model: AdminUnitS
     </AstryxBrpUiProvider>
   );
 }
-
