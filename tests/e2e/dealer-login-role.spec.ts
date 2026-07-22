@@ -7,7 +7,7 @@ const STORAGE_KEY = "brp-clone-demo-state-v1";
 async function submitLogin(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.locator('input[type="password"]').fill(password);
+  await page.locator('input[type="password"]:visible').fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
 }
 
@@ -82,7 +82,7 @@ test("dealer profile has no local demo-data reset action", async ({ page }) => {
 test("an explicit admin email keeps the manager portal", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Електронна пошта").fill("admin@local.test");
-  await page.locator('input[type="password"]').fill("demo");
+  await page.locator('input[type="password"]:visible').fill("demo");
   await page.getByRole("button", { name: "Увійти" }).click();
 
   await expect(page).toHaveURL(/\/admin\/?$/);

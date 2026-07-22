@@ -1,19 +1,53 @@
 "use client";
 
 import { Check, PackageCheck, Search, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import {
   GLOBAL_PARTS_SEARCH_FIXTURES,
   GLOBAL_PARTS_SEARCH_TABS,
+  type GlobalPartsSearchFixture,
   type GlobalPartsSearchTab,
 } from "@/lib/global-parts-search-data";
 import { formatMoney } from "@/lib/mock-data";
 
-type DealerGlobalPartsSearchProps = {
+type SearchSurface = "desktop" | "mobile";
+
+type DealerGlobalPartsSearchControllerOptions = {
   query: string;
   onQueryChange: (query: string) => void;
+};
+
+export type DealerGlobalPartsSearchController = {
+  query: string;
+  trimmedQuery: string;
+  desktopOpen: boolean;
+  activeTab: GlobalPartsSearchTab;
+  quantities: Record<string, number>;
+  addedParts: Record<string, boolean>;
+  addingParts: Record<string, boolean>;
+  failedParts: Record<string, boolean>;
+  matchingParts: readonly GlobalPartsSearchFixture[];
+  visibleParts: readonly GlobalPartsSearchFixture[];
+  setDesktopOpen: (open: boolean) => void;
+  updateQuery: (nextQuery: string, surface: SearchSurface) => void;
+  clearQuery: (surface: SearchSurface) => void;
+  setActiveTab: (tab: GlobalPartsSearchTab) => void;
+  quantityFor: (partNumber: string) => number;
+  changeQuantity: (partNumber: string, delta: number) => void;
+  addPart: (partNumber: string) => Promise<void>;
+};
+
+type DealerGlobalPartsSearchProps = {
+  controller: DealerGlobalPartsSearchController;
   mobileOpen: boolean;
   onMobileClose: () => void;
   returnFocusRef: RefObject<HTMLButtonElement | null>;
@@ -28,13 +62,10 @@ const mobileFocusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-export function DealerGlobalPartsSearch({
+export function useDealerGlobalPartsSearchController({
   query,
   onQueryChange,
-  mobileOpen,
-  onMobileClose,
-  returnFocusRef,
-}: DealerGlobalPartsSearchProps) {
+}: DealerGlobalPartsSearchControllerOptions): DealerGlobalPartsSearchController {
   const { commands } = useDealerWorkflow();
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<GlobalPartsSearchTab>("all");
@@ -42,9 +73,6 @@ export function DealerGlobalPartsSearch({
   const [addedParts, setAddedParts] = useState<Record<string, boolean>>({});
   const [addingParts, setAddingParts] = useState<Record<string, boolean>>({});
   const [failedParts, setFailedParts] = useState<Record<string, boolean>>({});
-  const desktopRef = useRef<HTMLFormElement>(null);
-  const mobileDialogRef = useRef<HTMLDivElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
   const trimmedQuery = query.trim();
 
   const matchingParts = useMemo(() => {
@@ -62,6 +90,102 @@ export function DealerGlobalPartsSearch({
       : matchingParts.filter((part) => part.status === activeTab)
   ), [activeTab, matchingParts]);
 
+  const updateQuery = useCallback((nextQuery: string, surface: SearchSurface) => {
+    onQueryChange(nextQuery);
+    setAddedParts({});
+    setFailedParts({});
+    if (surface === "desktop") setDesktopOpen(Boolean(nextQuery.trim()));
+  }, [onQueryChange]);
+
+  const clearQuery = useCallback((surface: SearchSurface) => {
+    onQueryChange("");
+    setActiveTab("all");
+    setAddedParts({});
+    setFailedParts({});
+    if (surface === "desktop") setDesktopOpen(false);
+  }, [onQueryChange]);
+
+  const quantityFor = useCallback((partNumber: string) => quantities[partNumber] ?? 1, [quantities]);
+
+  const changeQuantity = useCallback((partNumber: string, delta: number) => {
+    setQuantities((current) => ({
+      ...current,
+      [partNumber]: Math.min(99, Math.max(1, (current[partNumber] ?? 1) + delta)),
+    }));
+    setAddedParts((current) => ({ ...current, [partNumber]: false }));
+    setFailedParts((current) => ({ ...current, [partNumber]: false }));
+  }, []);
+
+  const addPart = useCallback(async (partNumber: string) => {
+    if (addingParts[partNumber]) return;
+    setAddingParts((current) => ({ ...current, [partNumber]: true }));
+    setAddedParts((current) => ({ ...current, [partNumber]: false }));
+    setFailedParts((current) => ({ ...current, [partNumber]: false }));
+    try {
+      const result = await commands.addCartLine({
+        partNumber,
+        quantity: quantityFor(partNumber),
+      });
+      if (result.ok) {
+        setAddedParts((current) => ({ ...current, [partNumber]: true }));
+      } else {
+        setFailedParts((current) => ({ ...current, [partNumber]: true }));
+      }
+    } catch {
+      setFailedParts((current) => ({ ...current, [partNumber]: true }));
+    } finally {
+      setAddingParts((current) => ({ ...current, [partNumber]: false }));
+    }
+  }, [addingParts, commands, quantityFor]);
+
+  return {
+    query,
+    trimmedQuery,
+    desktopOpen,
+    activeTab,
+    quantities,
+    addedParts,
+    addingParts,
+    failedParts,
+    matchingParts,
+    visibleParts,
+    setDesktopOpen,
+    updateQuery,
+    clearQuery,
+    setActiveTab,
+    quantityFor,
+    changeQuantity,
+    addPart,
+  };
+}
+
+export function DealerGlobalPartsSearch({
+  controller,
+  mobileOpen,
+  onMobileClose,
+  returnFocusRef,
+}: DealerGlobalPartsSearchProps) {
+  const desktopRef = useRef<HTMLFormElement>(null);
+  const mobileDialogRef = useRef<HTMLDivElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    activeTab,
+    addedParts,
+    addingParts,
+    changeQuantity,
+    clearQuery,
+    desktopOpen,
+    failedParts,
+    quantityFor,
+    setActiveTab,
+    setDesktopOpen,
+    trimmedQuery,
+    updateQuery,
+    visibleParts,
+    addPart,
+    query,
+  } = controller;
+
   useEffect(() => {
     if (!desktopOpen) return;
     const closeOnOutsidePointer = (event: PointerEvent) => {
@@ -71,7 +195,7 @@ export function DealerGlobalPartsSearch({
     };
     document.addEventListener("pointerdown", closeOnOutsidePointer);
     return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [desktopOpen]);
+  }, [desktopOpen, setDesktopOpen]);
 
   useEffect(() => {
     if (!desktopOpen) return;
@@ -81,7 +205,7 @@ export function DealerGlobalPartsSearch({
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [desktopOpen]);
+  }, [desktopOpen, setDesktopOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -150,55 +274,6 @@ export function DealerGlobalPartsSearch({
       returnTarget?.focus({ preventScroll: true });
     };
   }, [mobileOpen, onMobileClose, returnFocusRef]);
-
-  const updateQuery = (nextQuery: string, surface: "desktop" | "mobile") => {
-    onQueryChange(nextQuery);
-    setAddedParts({});
-    setFailedParts({});
-    if (surface === "desktop") setDesktopOpen(Boolean(nextQuery.trim()));
-  };
-
-  const clearQuery = (surface: "desktop" | "mobile") => {
-    onQueryChange("");
-    setActiveTab("all");
-    setAddedParts({});
-    setFailedParts({});
-    if (surface === "desktop") setDesktopOpen(false);
-    else mobileInputRef.current?.focus();
-  };
-
-  const quantityFor = (partNumber: string) => quantities[partNumber] ?? 1;
-
-  const changeQuantity = (partNumber: string, delta: number) => {
-    setQuantities((current) => ({
-      ...current,
-      [partNumber]: Math.min(99, Math.max(1, (current[partNumber] ?? 1) + delta)),
-    }));
-    setAddedParts((current) => ({ ...current, [partNumber]: false }));
-    setFailedParts((current) => ({ ...current, [partNumber]: false }));
-  };
-
-  const addPart = async (partNumber: string) => {
-    if (addingParts[partNumber]) return;
-    setAddingParts((current) => ({ ...current, [partNumber]: true }));
-    setAddedParts((current) => ({ ...current, [partNumber]: false }));
-    setFailedParts((current) => ({ ...current, [partNumber]: false }));
-    try {
-      const result = await commands.addCartLine({
-        partNumber,
-        quantity: quantityFor(partNumber),
-      });
-      if (result.ok) {
-        setAddedParts((current) => ({ ...current, [partNumber]: true }));
-      } else {
-        setFailedParts((current) => ({ ...current, [partNumber]: true }));
-      }
-    } catch {
-      setFailedParts((current) => ({ ...current, [partNumber]: true }));
-    } finally {
-      setAddingParts((current) => ({ ...current, [partNumber]: false }));
-    }
-  };
 
   const renderResults = (panelId: string) => {
     return (
@@ -358,7 +433,14 @@ export function DealerGlobalPartsSearch({
               onChange={(event) => updateQuery(event.target.value, "mobile")}
             />
             {query ? (
-              <button type="button" aria-label="Очистити пошук" onClick={() => clearQuery("mobile")}><X size={16} /></button>
+              <button
+                type="button"
+                aria-label="Очистити пошук"
+                onClick={() => {
+                  clearQuery("mobile");
+                  mobileInputRef.current?.focus();
+                }}
+              ><X size={16} /></button>
             ) : null}
           </form>
           <div id="dealer-mobile-parts-results" className="mobile-parts-search-body">

@@ -93,7 +93,7 @@ test("preserves the Task 0 current-renderer catalog baseline and control geometr
   });
   await page.goto("/login");
   await page.getByLabel("Електронна пошта").fill("admin@local.test");
-  await page.locator('input[type="password"]').fill("demo");
+  await page.locator('input[type="password"]:visible').fill("demo");
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/admin\/?$/);
   await page.goto("/admin/catalog", { waitUntil: "networkidle" });
