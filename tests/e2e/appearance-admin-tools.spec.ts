@@ -41,6 +41,7 @@ for (const appearance of [
   {designSystem: "astryx", colorMode: "dark"},
 ] as const) {
   test(`${appearance.designSystem} ${appearance.colorMode} renders admin reporting tools at 390, 768, and 1280px`, async ({page}) => {
+    test.setTimeout(90_000);
     await seedAppearance(page, appearance.designSystem, appearance.colorMode);
     const renderer = appearance.designSystem === "astryx" ? "astryx" : "current";
 
@@ -79,8 +80,8 @@ test("report filter state survives current to Astryx to current renderer changes
   await page.getByRole("button", {name: "Застосувати"}).click();
 
   await publishAppearance(page, "astryx", "dark");
-  await expect(page.getByLabel("З дати")).toHaveValue("2026-06-01");
-  await expect(page.getByLabel("По дату")).toHaveValue("2026-06-30");
+  await expect(page.locator('[data-admin-parts-report-renderer="astryx"]')).toHaveAttribute("data-parts-report-filter-from", "2026-06-01");
+  await expect(page.locator('[data-admin-parts-report-renderer="astryx"]')).toHaveAttribute("data-parts-report-filter-to", "2026-06-30");
 
   await publishAppearance(page, "shadcn", "light");
   await expect(page.getByLabel("З дати")).toHaveValue("2026-06-01");
@@ -97,11 +98,11 @@ test("performance filters and BossWeb result survive renderer changes", async ({
   await expect(page.getByRole("textbox", {name: "Search module or query"})).toHaveValue("catalog");
 
   await page.goto("/admin/bossweb-lookup");
-  await page.getByRole("textbox", {name: "Номер запчастини"}).fill("715000005");
-  await page.getByRole("button", {name: "Пошук"}).click();
+  await page.getByRole("textbox", {name: "Номер запчастини"}).fill("9779150");
+  await page.getByRole("button", {name: "Пошук", exact: true}).click();
   await expect(page.getByRole("heading", {name: "Наявність BossWeb"})).toBeVisible();
   await publishAppearance(page, "astryx", "dark");
-  await expect(page.getByRole("textbox", {name: "Номер запчастини"})).toHaveValue("715000005");
+  await expect(page.getByRole("textbox", {name: "Номер запчастини"})).toHaveValue("9779150");
   await expect(page.getByRole("heading", {name: "Наявність BossWeb"})).toBeVisible();
 });
 

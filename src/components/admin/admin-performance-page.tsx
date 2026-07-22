@@ -9,6 +9,7 @@ import {
   Search,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import { Panel } from "@/components/shared/ui";
 import {
   filterPerformanceQueries,
@@ -20,6 +21,17 @@ import {
   type PerformanceRanking,
   type PerformanceSummary,
 } from "@/lib/admin-performance-data";
+
+const loadAstryxAdminPerformanceView = () => import("./astryx-admin-performance-view");
+
+export type PerformanceViewProps = {
+  query: string;
+  ranking: PerformanceRanking;
+  rows: readonly PerformanceQueryRecord[];
+  summary: PerformanceSummary;
+  onQueryChange: (value: string) => void;
+  onRankingChange: (value: PerformanceRanking) => void;
+};
 
 const integerFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
@@ -94,7 +106,7 @@ function PerformanceControls({
         type="button"
         disabled
         aria-disabled="true"
-        title="Refresh is disabled in this read-only clone"
+        title="Refresh requires a live pg_stat_statements connection"
         className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 text-[13px] font-medium text-[var(--muted-foreground)] opacity-60 disabled:cursor-not-allowed"
       >
         <RefreshCw size={15} aria-hidden="true" />
@@ -271,24 +283,50 @@ function QueryLeaderboard({ rows }: { rows: readonly PerformanceQueryRecord[] })
   );
 }
 
+function CurrentAdminPerformanceView({
+  query,
+  ranking,
+  rows,
+  summary,
+  onQueryChange,
+  onRankingChange,
+}: PerformanceViewProps) {
+  return (
+    <main className="page page-narrow" data-admin-performance-renderer="current">
+      <PerformanceHeader />
+      <PerformanceControls
+        query={query}
+        ranking={ranking}
+        onQueryChange={onQueryChange}
+        onRankingChange={onRankingChange}
+      />
+      <PerformanceKpis summary={summary} />
+      <QueryLeaderboard rows={rows} />
+    </main>
+  );
+}
+
 export function AdminPerformancePage() {
   const [ranking, setRanking] = useState<PerformanceRanking>("slowest-average");
   const [query, setQuery] = useState("");
   const dataset = performanceDatasets[ranking];
   const rows = useMemo(() => filterPerformanceQueries(dataset, query), [dataset, query]);
   const summary = useMemo(() => summarizePerformanceQueries(dataset), [dataset]);
+  const viewProps: PerformanceViewProps = {
+    query,
+    ranking,
+    rows,
+    summary,
+    onQueryChange: setQuery,
+    onRankingChange: setRanking,
+  };
 
   return (
-    <main className="page page-narrow">
-      <PerformanceHeader />
-      <PerformanceControls
-        query={query}
-        ranking={ranking}
-        onQueryChange={setQuery}
-        onRankingChange={setRanking}
-      />
-      <PerformanceKpis summary={summary} />
-      <QueryLeaderboard rows={rows} />
-    </main>
+    <RendererViewSwitch
+      slotId="admin-performance"
+      currentView={<CurrentAdminPerformanceView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminPerformanceView}
+      astryxViewProps={viewProps}
+    />
   );
 }

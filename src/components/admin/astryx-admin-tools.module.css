@@ -1,0 +1,283 @@
+.page {
+  display: grid;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  gap: 16px;
+}
+
+.pageHeader,
+.performanceHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pageHeader > :last-child {
+  margin-inline-start: auto;
+}
+
+.pageIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--orange);
+  background: var(--orange-soft);
+}
+
+.pageTitle,
+.performanceHeader > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.performanceHeader [data-astryx-component="Text"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reportFilters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(240px, 1.25fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpiGrid > * {
+  min-width: 0;
+}
+
+.kpiGrid strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiGrid small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted-foreground);
+}
+
+.kpiIcon {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 10px;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--orange);
+  background: var(--orange-soft);
+}
+
+.sectionCard {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sectionHeading {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionHeading > :last-child:not(:first-child) {
+  margin-inline-start: auto;
+}
+
+.tableScroller {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.tableScroller table {
+  min-width: 760px;
+}
+
+.orderLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.performanceToolbar,
+.lookupForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchGrow {
+  min-width: 180px;
+  flex: 1 1 360px;
+}
+
+.sql {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.mobileCards {
+  display: none;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metricList,
+.lookupFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.metricList dt,
+.lookupFacts dt {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.metricList dd,
+.lookupFacts dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.lookupGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lookupBody {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.lookupBody.lookupFacts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .reportFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lookupGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .pageHeader {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pageHeader > :last-child {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-inline-start: 0;
+  }
+
+  .reportFilters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reportFilters > :last-child {
+    width: 100%;
+  }
+
+  .presetRow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpiGrid strong {
+    font-size: 21px;
+  }
+
+  .performanceToolbar,
+  .lookupForm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .searchGrow {
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .performanceToolbar > *,
+  .lookupForm > * {
+    width: 100% !important;
+  }
+
+  .desktopTable {
+    display: none;
+  }
+
+  .mobileCards {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .sectionHeading {
+    flex-wrap: wrap;
+  }
+
+  .lookupBody.lookupFacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
