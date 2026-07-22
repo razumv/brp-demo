@@ -43,9 +43,9 @@ for (const appearance of appearances) {
       await seedRoute(page, row.role, appearance);
       const response = await page.goto(row.path, { waitUntil: "domcontentloaded" });
       expect(response?.status(), `${row.path} HTTP status`).toBeLessThan(400);
-      await expect(page.locator("html")).toHaveAttribute("data-design-system", appearance.designSystem);
-      await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", appearance.colorMode);
-      await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", /.+/);
+      await expect(page.locator("html"), `${row.path} design system`).toHaveAttribute("data-design-system", appearance.designSystem);
+      await expect(page.locator("html"), `${row.path} color mode`).toHaveAttribute("data-resolved-theme", appearance.colorMode);
+      await expect(page.locator("html"), `${row.path} renderer readiness`).not.toHaveAttribute("data-renderer-pending", /.+/);
       await expect(page.getByRole("heading").first(), `${row.path} heading`).toBeVisible();
       if (!row.specialBehaviors.includes("dense-scroller")) {
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), {

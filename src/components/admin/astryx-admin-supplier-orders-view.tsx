@@ -144,7 +144,7 @@ export default function AstryxAdminSupplierOrdersView({
 
   return (
     <AstryxBrpUiProvider>
-      <main className={styles.page} data-brp-admin-renderer="astryx">
+      <main className={styles.page} data-brp-admin-renderer="astryx" data-brp-admin-procurement-renderer="astryx">
         <header className={styles.header}>
           <span className={styles.headerIcon} aria-hidden="true"><FileText size={20} /></span>
           <div><h1>Замовлення постачальнику</h1><p>Статуси постачання, бекордери та винятки документів.</p></div>

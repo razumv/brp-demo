@@ -77,13 +77,14 @@ function positionHolderEntries(position: ConsignmentStockPosition) {
 
 function WarehouseMatrix({ positions }: { positions: readonly ConsignmentStockPosition[] }) {
   return (
-    <Panel className="overflow-hidden shadow-none">
-      <div
-        className="max-w-full overflow-x-auto"
-        role="region"
-        aria-label="Залишки по 16 дилерах"
-        tabIndex={0}
-      >
+    <>
+      <Panel className="hidden overflow-hidden shadow-none md:block">
+        <div
+          className="max-w-full overflow-x-auto"
+          role="region"
+          aria-label="Залишки по 16 дилерах"
+          tabIndex={0}
+        >
         <table className="min-w-[2380px] table-fixed border-separate border-spacing-0 text-[11px]">
           <caption className="sr-only">Матриця складських залишків по дилерській мережі</caption>
           <colgroup>
@@ -152,9 +153,28 @@ function WarehouseMatrix({ positions }: { positions: readonly ConsignmentStockPo
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
-    </Panel>
+          </table>
+        </div>
+      </Panel>
+      <ul className="grid list-none gap-2 p-0 md:hidden" aria-label="Картки залишків консигнації">
+        {positions.map((position) => (
+          <li key={position.partNumber} className="panel grid gap-2 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <strong className="font-mono text-xs">{position.partNumber}</strong>
+                <p className="mb-0 mt-1 text-xs text-[var(--muted-foreground)]">{position.description}</p>
+              </div>
+              <span className="badge badge-blue shrink-0">{position.total} од.</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {positionHolderEntries(position).map(({holder, quantity}) => (
+                <span key={holder.id} className="badge badge-neutral">{holder.name}: {quantity}</span>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -252,7 +272,8 @@ function CurrentAdminConsignmentView({
   onHolderChange,
 }: ConsignmentPageViewProps) {
   return (
-    <AdminPage>
+    <div data-brp-admin-procurement-renderer="shadcn">
+      <AdminPage>
       <AdminPageHeader
         title="Консигнація"
         description="Складські залишки по мережі, заявки дилерів, переміщення 1С"
@@ -358,7 +379,8 @@ function CurrentAdminConsignmentView({
           <RequestsView status={requestStatus} query={query} />
         </section>
       ) : null}
-    </AdminPage>
+      </AdminPage>
+    </div>
   );
 }
 

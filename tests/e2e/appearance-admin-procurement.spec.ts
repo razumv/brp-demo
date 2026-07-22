@@ -55,6 +55,33 @@ async function expectOnlyOneDialog(page: Page, name: string) {
   await expect(page.locator('[role="dialog"]:visible, dialog[open]')).toHaveCount(1);
 }
 
+async function selectAcrossRenderers(page: Page, name: string, value: string, optionName: string) {
+  const control = page.getByRole("combobox", {name});
+  if (await control.evaluate((element) => element instanceof HTMLSelectElement)) {
+    await control.selectOption(value);
+    return;
+  }
+  await control.click();
+  await page.getByRole("option", {name: optionName, exact: true}).click();
+}
+
+async function expectSelectionAcrossRenderers(page: Page, name: string, value: string, optionName: string) {
+  const control = page.getByRole("combobox", {name});
+  if (await control.evaluate((element) => element instanceof HTMLSelectElement)) {
+    await expect(control).toHaveValue(value);
+    return;
+  }
+  await expect(control).toContainText(optionName);
+}
+
+async function expectChoiceSelected(choice: Locator) {
+  if (await choice.getAttribute("aria-pressed") !== null) {
+    await expect(choice).toHaveAttribute("aria-pressed", "true");
+    return;
+  }
+  await expect(choice).toHaveAttribute("data-variant", "primary");
+}
+
 function alternate(designSystem: DesignSystem): DesignSystem {
   return designSystem === "shadcn" ? "astryx" : "shadcn";
 }
@@ -72,15 +99,14 @@ for (const mode of appearanceModes) {
       const search = page.getByRole("textbox", {name: "Пошук за номером SO або артикулом"});
       const period = page.getByRole("button", {name: "Період"});
       const sort = page.getByRole("combobox", {name: "Сортування замовлень постачальнику"});
-      const tabs = page.getByRole("tablist", {name: "Стан замовлень постачальнику"});
       await expect(search).toBeVisible();
       await expect(sort).toBeVisible();
       const [searchBox, periodBox] = await Promise.all([search.boundingBox(), period.boundingBox()]);
       expect((searchBox?.x ?? 0) + (searchBox?.width ?? 0)).toBeLessThanOrEqual(periodBox?.x ?? 0);
-      await page.getByRole("tab", {name: /Винятки/}).click();
+      await page.locator("button", {hasText: /Винятки/}).first().click();
       await page.getByRole("button", {name: /PDF не прив'язано/}).click();
       await search.fill("SO-2026");
-      await sort.selectOption("newest");
+      await selectAcrossRenderers(page, "Сортування замовлень постачальнику", "newest", "Спочатку нові");
       await period.click();
       await expectOnlyOneDialog(page, "Період замовлень постачальнику");
       await page.keyboard.press("Escape");
@@ -89,14 +115,15 @@ for (const mode of appearanceModes) {
 
       await switchRenderer(page, alternate(mode.designSystem), mode.colorMode);
       await expectProcurementRenderer(page, alternate(mode.designSystem));
-      await expect(tabs.getByRole("tab", {name: /Винятки/})).toHaveAttribute("aria-selected", "true");
-      await expect(page.getByRole("button", {name: /PDF не прив'язано/})).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByRole("tabpanel", {name: "Винятки"})).toBeVisible();
+      await expectChoiceSelected(page.getByRole("button", {name: /PDF не прив'язано/}));
       await expect(search).toHaveValue("SO-2026");
-      await expect(sort).toHaveValue("newest");
+      await expectSelectionAcrossRenderers(page, "Сортування замовлень постачальнику", "newest", "Спочатку нові");
 
       await switchRenderer(page, mode.designSystem, mode.colorMode);
       await expectProcurementRenderer(page, mode.designSystem);
       await expect(search).toHaveValue("SO-2026");
+      await expectSelectionAcrossRenderers(page, "Сортування замовлень постачальнику", "newest", "Спочатку нові");
       await expectNoDocumentOverflow(page);
     });
 
@@ -108,18 +135,17 @@ for (const mode of appearanceModes) {
       await expect(matrix).toHaveAttribute("tabindex", "0");
       expect(await matrix.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
       await expect(matrix.locator("th").first()).toHaveCSS("position", "sticky");
-      const holder = page.getByRole("combobox", {name: "Тримач консигнації"});
-      await holder.selectOption("vyshgorod");
+      await selectAcrossRenderers(page, "Тримач консигнації", "vyshgorod", "BRP Вышгород");
       await switchRenderer(page, alternate(mode.designSystem), mode.colorMode);
       await expectProcurementRenderer(page, alternate(mode.designSystem));
-      await expect(holder).toHaveValue("vyshgorod");
+      await expectSelectionAcrossRenderers(page, "Тримач консигнації", "vyshgorod", "BRP Вышгород");
       await switchRenderer(page, mode.designSystem, mode.colorMode);
       await expectNoDocumentOverflow(page);
 
       await openAdminRoute(page, "/admin/consignment", 390);
       await expectProcurementRenderer(page, mode.designSystem);
       await expect(page.getByRole("list", {name: "Картки залишків консигнації"})).toBeVisible();
-      await expect(page.getByRole("region", {name: "Залишки по 16 дилерах"})).toHaveCount(0);
+      await expect(page.getByRole("region", {name: "Залишки по 16 дилерах"})).toBeHidden();
       await expectNoDocumentOverflow(page);
     });
 

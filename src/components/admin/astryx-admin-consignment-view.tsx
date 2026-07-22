@@ -34,10 +34,12 @@ function holderQuantity(position: ConsignmentPageViewProps["filteredPositions"][
 }
 
 function MobilePositionCards({positions}: {positions: ConsignmentPageViewProps["filteredPositions"]}) {
-  return <div className={styles.mobileCards}>{positions.map((position) => (
-    <Card key={position.partNumber} padding={3}>
-      <strong>{position.partNumber}</strong><p>{position.description}</p><b>{position.total} од.</b>
-    </Card>
+  return <div className={styles.mobileCards} role="list" aria-label="Картки залишків консигнації">{positions.map((position) => (
+    <div key={position.partNumber} role="listitem">
+      <Card padding={3}>
+        <strong>{position.partNumber}</strong><p>{position.description}</p><b>{position.total} од.</b>
+      </Card>
+    </div>
   ))}</div>;
 }
 
@@ -106,7 +108,7 @@ export default function AstryxAdminConsignmentView({
 
   return (
     <AstryxBrpUiProvider>
-      <main className={styles.page} data-brp-admin-renderer="astryx">
+      <main className={styles.page} data-brp-admin-renderer="astryx" data-brp-admin-procurement-renderer="astryx">
         <header className={styles.header}><div><h1>Консигнація</h1><p>Складські залишки по мережі, заявки дилерів, переміщення 1С</p></div></header>
         <section className={styles.toolbar} aria-label="Пошук і фільтри консигнації">
           <TextInput label={searchPlaceholder} isLabelHidden value={query} onChange={onQueryChange} placeholder={searchPlaceholder} hasClear width="100%" />

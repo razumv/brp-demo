@@ -164,7 +164,9 @@ test("cold Astryx bootstrap recovers to a visible shadcn fallback when no render
     }));
   });
 
-  await page.goto("/login", {waitUntil: "domcontentloaded"});
+  // Login now owns a real Astryx renderer. An unknown route intentionally has no
+  // renderer slot and therefore remains the correct watchdog recovery probe.
+  await page.goto("/__appearance-no-renderer__", {waitUntil: "domcontentloaded"});
   await expect(page.locator("html")).toHaveAttribute("data-renderer-pending", "true");
   await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true", {
@@ -176,7 +178,7 @@ test("cold Astryx bootstrap recovers to a visible shadcn fallback when no render
   await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
   await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute("content", "#f6f8fa");
-  expect(consoleErrors).toEqual([]);
+  expect(consoleErrors.filter((message) => !/Failed to load resource.*404/i.test(message))).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
 

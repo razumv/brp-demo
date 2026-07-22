@@ -442,7 +442,8 @@ function CurrentAdminSupplierOrdersView({
   const activePanelId = `supplier-orders-${activeTab}-panel`;
 
   return (
-    <AdminPage>
+    <div data-brp-admin-procurement-renderer="shadcn">
+      <AdminPage>
       <AdminPageHeader icon={<FileText size={20} />} title="Замовлення постачальнику" />
       <KpiGrid selected={selectedKpi} onSelect={onSelectedKpiChange} />
       <SupplierOrderTabs active={activeTab} onChange={onActiveTabChange} />
@@ -473,7 +474,8 @@ function CurrentAdminSupplierOrdersView({
           />
         )}
       </section>
-    </AdminPage>
+      </AdminPage>
+    </div>
   );
 }
 
