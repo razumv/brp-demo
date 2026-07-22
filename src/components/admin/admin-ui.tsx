@@ -13,6 +13,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  useCallback,
   useId,
   useRef,
   useState,
@@ -247,8 +248,10 @@ export function AdminToolbar({
   const firstDisclosedSection = disclosedSections[0];
   const mobileDisclosureLabel = mobileDisclosure?.label ?? "Фільтри";
   const isIconOnlyMobileDisclosure = mobileDisclosure?.iconOnly !== false;
+  const controlledExpandedChange = mobileDisclosure?.onExpandedChange;
+  const disclosurePanelRef = mobileDisclosure?.panelRef ?? mobileDisclosurePanelRef;
   const isControlledMobileDisclosure = Boolean(
-    mobileDisclosure?.controlsId && mobileDisclosure.onExpandedChange,
+    mobileDisclosure?.controlsId && controlledExpandedChange,
   );
   const mobileExpanded = isControlledMobileDisclosure
     ? Boolean(mobileDisclosure?.expanded)
@@ -257,19 +260,19 @@ export function AdminToolbar({
     ? mobileDisclosure?.controlsId
     : disclosureId;
 
-  const onMobileExpandedChange = (expanded: boolean) => {
+  const onMobileExpandedChange = useCallback((expanded: boolean) => {
     if (isControlledMobileDisclosure) {
-      mobileDisclosure?.onExpandedChange?.(expanded);
+      controlledExpandedChange?.(expanded);
       return;
     }
     setMobileOpen(expanded);
-  };
+  }, [isControlledMobileDisclosure, controlledExpandedChange]);
 
   useDismissibleDataToolbarFilter({
     open: mobileExpanded,
     onOpenChange: onMobileExpandedChange,
     triggerRef: mobileDisclosureTriggerRef,
-    panelRef: mobileDisclosure?.panelRef ?? mobileDisclosurePanelRef,
+    panelRef: disclosurePanelRef,
     dismissOnPointerOutside: !isControlledMobileDisclosure || Boolean(mobileDisclosure?.panelRef),
   });
 

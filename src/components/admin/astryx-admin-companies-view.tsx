@@ -17,6 +17,7 @@ import {TextInput} from "@astryxdesign/core/TextInput";
 import {Building2, Filter, LockKeyhole, Pencil, Plus, Trash2, UserPlus, Users} from "lucide-react";
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
+import {useMediaQuery} from "@/hooks/use-media-query";
 import {adminCompanies, emptyCompanyForm, type AdminCompany, type CompanyFormFixture} from "@/lib/admin-companies-data";
 import type {AdminCompaniesModel} from "./admin-companies-page";
 import {useAdminViewPreference} from "./use-admin-view-preference";
@@ -144,6 +145,7 @@ function CompanyCards({companies, model}: {companies: readonly AdminCompany[]; m
 }
 
 function CompanyList({companies, model}: {companies: readonly AdminCompany[]; model: AdminCompaniesModel}) {
+  const isDesktopViewport = useMediaQuery("(min-width: 768px)");
   const columns = useMemo<TableColumn<CompanyTableRow>[]>(() => [
     {key: "name", header: "Компанія", width: proportional(1.4), renderCell: (company) => <div className={styles.tableIdentity}><span className={styles.companyIcon}><Building2 size={15} /></span><span><strong>{company.name}</strong><Text type="supporting" color="secondary" display="block">{company.managerSummary ?? "Менеджера не призначено"}</Text></span></div>},
     {key: "profileStatus", header: "Профіль", width: pixel(150), renderCell: (company) => <Badge label={companyProfileLabel(company.profileStatus)} variant={company.profileStatus === "complete" ? "success" : "warning"} />},
@@ -153,13 +155,13 @@ function CompanyList({companies, model}: {companies: readonly AdminCompany[]; mo
   ], [model]);
   const rows: CompanyTableRow[] = companies.map((company) => ({...company}));
 
-  return (
-    <>
+  return isDesktopViewport ? (
       <Card padding={0} className={styles.desktopList}>
         <div className={styles.tableScroller}>
           <Table aria-label="Список компаній" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
         </div>
       </Card>
+  ) : (
       <section className={styles.mobileList} aria-label="Список компаній">
         {companies.map((company) => <article key={company.id} className={styles.mobileListRow} data-record-id={company.id}>
           <div className={styles.companyTitle}><span className={styles.companyIcon}><Building2 size={16} /></span><div><Text weight="semibold" display="block">{company.name}</Text><Text type="supporting" color="secondary">{company.managerSummary ?? "Менеджера не призначено"}</Text></div></div>
@@ -167,7 +169,6 @@ function CompanyList({companies, model}: {companies: readonly AdminCompany[]; mo
           <div className={styles.cardActions}><CompanyEmployees company={company} model={model} /><CompanyActionSet company={company} model={model} /></div>
         </article>)}
       </section>
-    </>
   );
 }
 

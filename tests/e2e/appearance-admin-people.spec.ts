@@ -124,6 +124,27 @@ for (const route of [
   });
 }
 
+for (const route of [
+  {path: "/admin/companies", listLabel: "Список компаній"},
+  {path: "/admin/users", listLabel: "Список користувачів"},
+] as const) {
+  test(`Astryx ${route.path} mounts only the viewport-appropriate list at the 767/768px boundary`, async ({page}) => {
+    await seedAdminSession(page);
+    await seedAppearance(page, "astryx", "light");
+
+    await openAdminRoute(page, route.path, 767);
+    await page.getByText("Список", {exact: true}).click();
+    await expect(page.getByRole("table", {name: route.listLabel})).toHaveCount(0);
+    await expect(page.locator(`section[aria-label="${route.listLabel}"]`)).toHaveCount(1);
+    await expectNoDocumentOverflow(page);
+
+    await page.setViewportSize({width: 768, height: 1000});
+    await expect(page.getByRole("table", {name: route.listLabel})).toHaveCount(1);
+    await expect(page.locator(`section[aria-label="${route.listLabel}"]`)).toHaveCount(0);
+    await expectNoDocumentOverflow(page);
+  });
+}
+
 test("company search, filters, and create dialog survive renderer switching", async ({page}) => {
   await seedAdminSession(page);
   await seedAppearance(page, "shadcn", "light");

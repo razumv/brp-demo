@@ -18,6 +18,7 @@ import {TextInput} from "@astryxdesign/core/TextInput";
 import {Building2, CheckCircle2, CircleX, Clock3, LockKeyhole, Pencil, ShieldCheck, Trash2, UserRound, UsersRound} from "lucide-react";
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
+import {useMediaQuery} from "@/hooks/use-media-query";
 import {adminUserCompanyOptions, adminUserRoleLabels, adminUserRoleOptions, adminUserTabs, dealerCompanyRoleOptions, managerPermissionRows, type AdminUserRecord} from "@/lib/admin-users-data";
 import type {AdminUsersModel} from "./admin-users-page";
 import {useAdminViewPreference} from "./use-admin-view-preference";
@@ -76,6 +77,7 @@ function UserCards({users, model}: {users: readonly AdminUserRecord[]; model: Ad
 }
 
 function UserList({users, model}: {users: readonly AdminUserRecord[]; model: AdminUsersModel}) {
+  const isDesktopViewport = useMediaQuery("(min-width: 768px)");
   const columns = useMemo<TableColumn<UserTableRow>[]>(() => [
     {key: "displayName", header: "Користувач", width: proportional(1.2), renderCell: (user) => <div className={styles.tableIdentity}><span className={styles.avatar}>{publicName(user.displayName).slice(-2)}</span><span><strong>{publicName(user.displayName)}</strong><Text type="supporting" color="secondary" display="block">{user.email}</Text></span></div>},
     {key: "company", header: "Компанія", width: proportional(1), renderCell: (user) => <div className={styles.userMeta}><Building2 size={14} /><Text>{user.company}</Text></div>},
@@ -85,13 +87,13 @@ function UserList({users, model}: {users: readonly AdminUserRecord[]; model: Adm
   ], [model]);
   const rows: UserTableRow[] = users.map((user) => ({...user}));
 
-  return (
-    <>
+  return isDesktopViewport ? (
       <Card padding={0} className={styles.desktopList}>
         <div className={styles.tableScroller}>
           <Table aria-label="Список користувачів" data={rows} columns={columns} idKey="id" density="compact" dividers="rows" hasHover />
         </div>
       </Card>
+  ) : (
       <section className={styles.mobileList} aria-label="Список користувачів">
         {users.map((user) => <article key={user.id} className={styles.mobileListRow} data-record-id={user.id}>
           <div className={styles.userIdentity}><span className={styles.avatar}>{publicName(user.displayName).slice(-2)}</span><div><Text weight="semibold" display="block">{publicName(user.displayName)}</Text><Text type="supporting" color="secondary">{user.email}</Text></div></div>
@@ -100,7 +102,6 @@ function UserList({users, model}: {users: readonly AdminUserRecord[]; model: Adm
           <div className={styles.userActions}><UserActionSet user={user} model={model} /></div>
         </article>)}
       </section>
-    </>
   );
 }
 
