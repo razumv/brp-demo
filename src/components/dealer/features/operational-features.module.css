@@ -12,6 +12,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dataToolbarWrap {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
 .expandButton {
   display: inline-flex;
   align-items: center;
@@ -245,30 +250,8 @@
   font-weight: 650;
 }
 
-.lockedNotice {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--surface-subtle);
-  color: var(--muted-foreground);
-  font-size: 11px;
-}
-
-.lockedNotice > svg {
-  flex: 0 0 auto;
-}
-
-.lockedNotice > span {
-  min-width: 0;
-  flex: 1;
-}
-
-.lockedNotice > button {
-  flex: 0 0 auto;
+.workshopToolbar {
+  margin-bottom: 12px;
 }
 
 .workshopColumn {
@@ -370,15 +353,6 @@
   .slotRow > span:last-child {
     grid-column: 2;
     align-items: flex-start;
-  }
-
-  .lockedNotice {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .lockedNotice > button {
-    width: 100%;
   }
 
   .workshopBoard {

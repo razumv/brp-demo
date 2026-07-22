@@ -30,7 +30,7 @@ export async function seedAdminSession(page: Page) {
 export async function loginAsAdmin(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Електронна пошта").fill("admin@local.test");
-  await page.locator('input[type="password"]').fill("demo");
+  await page.locator('input[type="password"]:visible').fill("demo");
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/admin\/?$/);
 }

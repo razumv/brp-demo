@@ -1,25 +1,11 @@
 import { DealerFeaturePage } from "@/components/dealer/dealer-feature-page";
 import { AppShell } from "@/components/shell/app-shell";
-
-const dealerFeatures = [
-  "accessories",
-  "units",
-  "schedule",
-  "bossweb",
-  "workshop",
-  "documents",
-  "order-drafts",
-  "consignment",
-  "settlements",
-  "parts-inventory",
-  "network",
-  "parts-report",
-] as const;
+import { DEALER_FEATURES } from "@/lib/appearance/route-inventory";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return dealerFeatures.map((feature) => ({ feature }));
+  return DEALER_FEATURES.map((feature) => ({ feature }));
 }
 
 export default async function DealerFeatureRoute({

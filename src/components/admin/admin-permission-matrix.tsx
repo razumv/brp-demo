@@ -41,7 +41,7 @@ function PermissionSwitch({
       aria-label={`${rowLabel}: ${actionLabel} — ${checked ? "увімкнено" : "вимкнено"}, лише перегляд`}
       aria-disabled="true"
       disabled
-      title="Зміна дозволу заблокована у read-only демонстрації"
+      title="Зміна дозволу потребує підключення сервісу керування доступом"
       className={styles.permissionSwitch}
       data-state={checked ? "checked" : "unchecked"}
     >

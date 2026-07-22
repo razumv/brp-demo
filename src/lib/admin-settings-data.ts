@@ -1,4 +1,4 @@
-export type SettingsSectionId = "workers" | "queue" | "database";
+export type SettingsSectionId = "appearance" | "workers" | "queue" | "database";
 
 export type WorkerOption = {
   readonly value: number;
@@ -66,9 +66,19 @@ export const databaseSettings: readonly DatabaseSetting[] = [
   { id: "database", label: "База даних", value: "brp_catalog" },
 ];
 
-export const settingsSectionOrder: readonly SettingsSectionId[] = ["workers", "queue", "database"];
+export const settingsSectionOrder: readonly SettingsSectionId[] = ["appearance", "workers", "queue", "database"];
 
 const settingsSearchIndex: Readonly<Record<SettingsSectionId, string>> = {
+  appearance: [
+    "Оформлення",
+    "Дизайн-система",
+    "shadcn/ui",
+    "Astryx Neutral",
+    "Колірна тема",
+    "Системна",
+    "Світла",
+    "Темна",
+  ].join(" "),
   workers: [
     "Налаштування воркерів",
     "Паралельність воркерів",
@@ -110,7 +120,10 @@ export function assertSettingsDataInvariants() {
   assert(databaseSettings[0]?.label === "Підключення" && databaseSettings[0].value === "Підключено", "database connection");
   assert(databaseSettings[1]?.value === "PostgreSQL 16", "database type");
   assert(databaseSettings[2]?.value === "brp_catalog", "database name");
-  assert(filterSettingsSections("").join(",") === "workers,queue,database", "baseline search");
+  assert(filterSettingsSections("").join(",") === "appearance,workers,queue,database", "baseline search");
+  assert(filterSettingsSections("оформлення").join(",") === "appearance", "appearance search");
+  assert(filterSettingsSections("Astryx").join(",") === "appearance", "design system search");
+  assert(filterSettingsSections("темна").join(",") === "appearance", "color mode search");
   assert(filterSettingsSections("воркер").join(",") === "workers", "worker search");
   assert(filterSettingsSections("черг").join(",") === "queue", "queue search");
   assert(filterSettingsSections("черга").join(",") === "queue", "queue nominative search");

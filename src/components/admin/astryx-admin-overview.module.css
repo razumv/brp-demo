@@ -1,0 +1,233 @@
+.page {
+  display: grid;
+  gap: 24px;
+  padding: 28px 32px 44px;
+}
+
+.header {
+  display: grid;
+  gap: 5px;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metricCard {
+  display: grid;
+  min-height: 132px;
+  align-content: start;
+  gap: 8px;
+}
+
+.metricTop,
+.panelHeader,
+.recentOrder,
+.distributionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metricTop {
+  color: var(--color-text-secondary);
+}
+
+.metricIcon {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-inner);
+  background: var(--color-background-muted);
+  color: var(--color-icon-primary);
+}
+
+.metricIcon[data-tone="green"] {
+  background: var(--color-background-green);
+  color: var(--color-icon-green);
+}
+
+.metricIcon[data-tone="blue"] {
+  background: var(--color-background-blue);
+  color: var(--color-icon-blue);
+}
+
+.metricIcon[data-tone="amber"] {
+  background: var(--color-background-yellow);
+  color: var(--color-icon-yellow);
+}
+
+.metricValue {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.1;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+  gap: 16px;
+}
+
+.panel,
+.recentPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.panelHeader {
+  justify-content: space-between;
+}
+
+.panelHeader > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.queueList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.queueItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.readonlyNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-text-orange);
+}
+
+.distribution {
+  display: grid;
+  gap: 14px;
+}
+
+.distributionRow > :first-child {
+  flex: 1 1 108px;
+}
+
+.progressTrack {
+  width: min(42%, 220px);
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+}
+
+.progressTrack > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-success);
+}
+
+.progressTrack[data-value="72"] > span { width: 72%; }
+.progressTrack[data-value="19"] > span { width: 19%; }
+.progressTrack[data-value="9"] > span { width: 9%; }
+
+.recentList {
+  display: grid;
+  gap: 8px;
+}
+
+.recentOrder {
+  min-height: 62px;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  color: inherit;
+  text-decoration: none;
+}
+
+.recentOrder:hover {
+  background: var(--color-background-muted);
+}
+
+.orderCode {
+  min-width: 78px;
+  font-family: var(--font-family-code);
+}
+
+.orderCopy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 180px;
+  gap: 2px;
+}
+
+.orderDate {
+  min-width: 104px;
+}
+
+.orderAmount {
+  min-width: 86px;
+  text-align: end;
+}
+
+@media (max-width: 1080px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    gap: 18px;
+    padding: 20px 16px 32px;
+  }
+
+  .overviewGrid,
+  .statGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metricCard {
+    min-height: 0;
+  }
+
+  .recentOrder {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+  }
+
+  .orderCopy {
+    grid-column: 2;
+  }
+
+  .orderDate,
+  .orderAmount {
+    min-width: 0;
+  }
+
+  .orderDate {
+    grid-column: 1 / 2;
+    grid-row: 2;
+  }
+
+  .orderAmount {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .recentOrder > :last-child {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .progressTrack {
+    width: 34%;
+  }
+}

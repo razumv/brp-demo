@@ -23,8 +23,10 @@ import {
   AdminSegmentedControl,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
 import { Panel, StatusBadge } from "@/components/shared/ui";
+import {usePersistedBoolean} from "@/hooks/use-persisted-boolean";
 import {
   settlementDealers,
   settlementPeriodPresets,
@@ -51,7 +53,34 @@ function matchesDealer(dealer: SettlementDealer, query: string) {
   ].join(" ")).includes(normalizedQuery);
 }
 
-type SettlementSort = "name" | "movements" | "last-movement";
+export type SettlementSort = "name" | "movements" | "last-movement";
+
+export interface AdminSettlementsModel {
+  query: string;
+  setQuery(value: string): void;
+  expandedDealerId: string | null;
+  toggleDealer(dealerId: string): void;
+  sort: SettlementSort;
+  setSort(value: SettlementSort): void;
+  recentOnly: boolean;
+  setRecentOnly(value: boolean): void;
+  visibleDealers: readonly SettlementDealer[];
+  visibleKpis: {
+    dealers: number;
+    mappedDealers: number;
+    movements: number;
+  };
+  activePreset: SettlementPeriodPresetId | null;
+  startDate: string;
+  endDate: string;
+  setStartDate(value: string): void;
+  setEndDate(value: string): void;
+  applyPreset(presetId: SettlementPeriodPresetId): void;
+  diagnosticOpen: boolean;
+  setDiagnosticOpen(value: boolean): void;
+}
+
+const loadAstryxAdminSettlementsView = () => import("./astryx-admin-settlements-view");
 
 function parseMovementDate(value: string) {
   const [day, month, year] = value.split(".").map(Number);
@@ -65,7 +94,7 @@ const mostRecentMovementDate = settlementDealers.reduce<string>(
   settlementDealers[0].movements.lastMovementDate,
 );
 
-function SyncDiagnostic() {
+function SyncDiagnostic({onOpenChange}: {onOpenChange(open: boolean): void}) {
   const diagnostic = settlementSyncDiagnostic;
 
   return (
@@ -84,7 +113,7 @@ function SyncDiagnostic() {
             data-settlement-refresh
             className="button button-outline w-fit"
             disabled
-            title="Синхронізація з 1С вимкнена у read-only демонстрації"
+            title="Синхронізація з 1С недоступна: доступ лише для читання."
           >
             <LockKeyhole size={13} />
             <RefreshCw size={14} />
@@ -97,6 +126,7 @@ function SyncDiagnostic() {
         keepMounted
         hideActionsWhenMobileClosed
         dataComponent="settlements-diagnostic"
+        onOpenChange={onOpenChange}
       >
         <div data-settlement-diagnostic-grid className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
           <div className="grid content-start gap-2 text-[12px] text-[var(--muted-foreground)]">
@@ -128,19 +158,8 @@ function SyncDiagnostic() {
   );
 }
 
-function PeriodShell({ dealerId }: { dealerId: string }) {
-  const initialPreset = settlementPeriodPresets[0];
-  const [activePreset, setActivePreset] = useState<SettlementPeriodPresetId | null>(initialPreset.id);
-  const [startDate, setStartDate] = useState<string>(initialPreset.startDate);
-  const [endDate, setEndDate] = useState<string>(initialPreset.endDate);
-
-  const applyPreset = (presetId: SettlementPeriodPresetId) => {
-    const preset = settlementPeriodPresets.find((item) => item.id === presetId);
-    if (!preset) return;
-    setActivePreset(preset.id);
-    setStartDate(preset.startDate);
-    setEndDate(preset.endDate);
-  };
+function PeriodShell({ dealerId, model }: { dealerId: string; model: AdminSettlementsModel }) {
+  const {activePreset, startDate, endDate, setStartDate, setEndDate, applyPreset} = model;
 
   return (
     <div className="border-t border-[var(--border)] bg-[var(--surface-subtle)] p-4" id={`settlement-${dealerId}-detail`}>
@@ -152,7 +171,6 @@ function PeriodShell({ dealerId }: { dealerId: string }) {
             value={startDate}
             max={endDate}
             onChange={(event) => {
-              setActivePreset(null);
               setStartDate(event.target.value);
             }}
           />
@@ -164,7 +182,6 @@ function PeriodShell({ dealerId }: { dealerId: string }) {
             value={endDate}
             min={startDate}
             onChange={(event) => {
-              setActivePreset(null);
               setEndDate(event.target.value);
             }}
           />
@@ -183,7 +200,7 @@ function PeriodShell({ dealerId }: { dealerId: string }) {
           type="button"
           className="button button-outline shrink-0"
           disabled
-          title="Читання актуального балансу 1С вимкнене у read-only демонстрації"
+          title="Оновлення балансу недоступне: доступ лише для читання."
         >
           <LockKeyhole size={13} />
           <RefreshCw size={14} />
@@ -206,10 +223,12 @@ function DealerAccordionRow({
   dealer,
   expanded,
   onToggle,
+  model,
 }: {
   dealer: SettlementDealer;
   expanded: boolean;
   onToggle: () => void;
+  model: AdminSettlementsModel;
 }) {
   const detailId = `settlement-${dealer.id}-detail`;
 
@@ -245,16 +264,107 @@ function DealerAccordionRow({
         {expanded ? <ChevronUp size={16} className="shrink-0 text-[var(--muted-foreground)]" /> : <ChevronDown size={16} className="shrink-0 text-[var(--muted-foreground)]" />}
       </button>
 
-      {expanded ? <PeriodShell dealerId={dealer.id} /> : null}
+      {expanded ? <PeriodShell dealerId={dealer.id} model={model} /> : null}
     </article>
   );
 }
 
+function CurrentAdminSettlementsView({model}: {model: AdminSettlementsModel}) {
+  return (
+    <div data-brp-admin-fulfillment-renderer="shadcn">
+      <AdminPage>
+        <Link
+          href="/admin"
+          className="inline-flex w-fit items-center gap-1.5 text-[12px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+        >
+          <ArrowLeft size={14} />
+          Назад
+        </Link>
+
+        <AdminPageHeader
+          icon={<ArrowLeftRight size={20} />}
+          title="Взаєморозрахунки з дилерами"
+          description="Баланси дилерів з розбивкою по контрагентах в 1С (Bombardier / Bombardier СД / Sea Doo СД)"
+        />
+
+        <SyncDiagnostic onOpenChange={model.setDiagnosticOpen} />
+
+        <AdminKpiGrid
+          columns={3}
+          label="Показники взаєморозрахунків"
+          hideOnMobile
+          items={[
+            { id: "dealers", label: "Дилерів", value: model.visibleKpis.dealers, icon: <Building2 size={18} />, tone: "blue" },
+            { id: "mapped", label: "З маппінгом", value: model.visibleKpis.mappedDealers, icon: <CheckCircle2 size={18} />, tone: "green" },
+            { id: "movements", label: "Всього рухів", value: formatInteger(model.visibleKpis.movements), icon: <ArrowLeftRight size={18} /> },
+          ]}
+        />
+
+        <AdminToolbar
+          search={(
+            <AdminSearchField
+              value={model.query}
+              onValueChange={model.setQuery}
+              label="Фільтр за дилером або 1С контрагентом"
+              placeholder="Фільтр за дилером або 1С контрагентом…"
+              clearLabel="Очистити фільтр взаєморозрахунків"
+            />
+          )}
+          filters={(
+            <>
+              <label className="field min-w-0">
+                <span className="sr-only">Сортування дилерів</span>
+                <select value={model.sort} onChange={(event) => model.setSort(event.target.value as SettlementSort)} aria-label="Сортування дилерів">
+                  <option value="name">За назвою дилера</option>
+                  <option value="movements">За кількістю рухів</option>
+                  <option value="last-movement">За датою останнього руху</option>
+                </select>
+              </label>
+              <label className="inline-flex min-h-10 items-center gap-2 text-[11px]">
+                <input type="checkbox" checked={model.recentOnly} onChange={(event) => model.setRecentOnly(event.target.checked)} aria-label={`Лише рухи за ${mostRecentMovementDate}`} />
+                Останній рух {mostRecentMovementDate}
+              </label>
+            </>
+          )}
+          meta={<span className="hidden md:inline">{model.visibleDealers.length} з {settlementDealers.length} дилерів</span>}
+          mobileDisclosure={{ sections: ["filters"], activeCount: Number(model.sort !== "name") + Number(model.recentOnly), iconOnly: true }}
+        />
+
+        <section className="grid gap-2" aria-label="Дилери">
+          {model.visibleDealers.map((dealer) => (
+            <DealerAccordionRow
+              key={dealer.id}
+              dealer={dealer}
+              expanded={model.expandedDealerId === dealer.id}
+              onToggle={() => model.toggleDealer(dealer.id)}
+              model={model}
+            />
+          ))}
+
+          {model.visibleDealers.length === 0 ? (
+            <Panel className="grid min-h-52 place-items-center p-6 text-center shadow-none" as="section">
+              <div>
+                <Search size={38} strokeWidth={1.6} className="mx-auto text-[var(--faint)]" />
+                <p className="mb-0 mt-3 text-[14px] font-medium">Немає збігів</p>
+              </div>
+            </Panel>
+          ) : null}
+        </section>
+      </AdminPage>
+    </div>
+  );
+}
+
 export function AdminSettlementsPage() {
+  const initialPreset = settlementPeriodPresets[0];
   const [query, setQuery] = useState("");
   const [expandedDealerId, setExpandedDealerId] = useState<string | null>(null);
   const [sort, setSort] = useState<SettlementSort>("name");
   const [recentOnly, setRecentOnly] = useState(false);
+  const [activePreset, setActivePreset] = useState<SettlementPeriodPresetId | null>(initialPreset.id);
+  const [startDate, setStartDateState] = useState<string>(initialPreset.startDate);
+  const [endDate, setEndDateState] = useState<string>(initialPreset.endDate);
+  const {value: diagnosticOpen, setValue: setDiagnosticOpen} = usePersistedBoolean("admin.settlements.sync-diagnostic", false);
 
   const visibleDealers = useMemo(() => settlementDealers
     .filter((dealer) => matchesDealer(dealer, query))
@@ -271,84 +381,45 @@ export function AdminSettlementsPage() {
     movements: visibleDealers.reduce((total, dealer) => total + dealer.movements.total, 0),
   }), [visibleDealers]);
 
+  const model: AdminSettlementsModel = {
+    query,
+    setQuery,
+    expandedDealerId,
+    toggleDealer: (dealerId) => setExpandedDealerId((current) => current === dealerId ? null : dealerId),
+    sort,
+    setSort,
+    recentOnly,
+    setRecentOnly,
+    visibleDealers,
+    visibleKpis,
+    activePreset,
+    startDate,
+    endDate,
+    setStartDate: (value) => {
+      setActivePreset(null);
+      setStartDateState(value);
+    },
+    setEndDate: (value) => {
+      setActivePreset(null);
+      setEndDateState(value);
+    },
+    applyPreset: (presetId) => {
+      const preset = settlementPeriodPresets.find((item) => item.id === presetId);
+      if (!preset) return;
+      setActivePreset(preset.id);
+      setStartDateState(preset.startDate);
+      setEndDateState(preset.endDate);
+    },
+    diagnosticOpen,
+    setDiagnosticOpen,
+  };
+
   return (
-    <AdminPage>
-      <Link
-        href="/admin"
-        className="inline-flex w-fit items-center gap-1.5 text-[12px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-      >
-        <ArrowLeft size={14} />
-        Назад
-      </Link>
-
-      <AdminPageHeader
-        icon={<ArrowLeftRight size={20} />}
-        title="Взаєморозрахунки з дилерами"
-        description="Баланси дилерів з розбивкою по контрагентах в 1С (Bombardier / Bombardier СД / Sea Doo СД)"
-      />
-
-      <SyncDiagnostic />
-
-      <AdminKpiGrid
-        columns={3}
-        label="Показники взаєморозрахунків"
-        hideOnMobile
-        items={[
-          { id: "dealers", label: "Дилерів", value: visibleKpis.dealers, icon: <Building2 size={18} />, tone: "blue" },
-          { id: "mapped", label: "З маппінгом", value: visibleKpis.mappedDealers, icon: <CheckCircle2 size={18} />, tone: "green" },
-          { id: "movements", label: "Всього рухів", value: formatInteger(visibleKpis.movements), icon: <ArrowLeftRight size={18} /> },
-        ]}
-      />
-
-      <AdminToolbar
-        search={(
-          <AdminSearchField
-            value={query}
-            onValueChange={setQuery}
-            label="Фільтр за дилером або 1С контрагентом"
-            placeholder="Фільтр за дилером або 1С контрагентом…"
-            clearLabel="Очистити фільтр взаєморозрахунків"
-          />
-        )}
-        filters={(
-          <>
-            <label className="field min-w-0">
-              <span className="sr-only">Сортування дилерів</span>
-              <select value={sort} onChange={(event) => setSort(event.target.value as SettlementSort)} aria-label="Сортування дилерів">
-                <option value="name">За назвою дилера</option>
-                <option value="movements">За кількістю рухів</option>
-                <option value="last-movement">За датою останнього руху</option>
-              </select>
-            </label>
-            <label className="inline-flex min-h-10 items-center gap-2 text-[11px]">
-              <input type="checkbox" checked={recentOnly} onChange={(event) => setRecentOnly(event.target.checked)} aria-label={`Лише рухи за ${mostRecentMovementDate}`} />
-              Останній рух {mostRecentMovementDate}
-            </label>
-          </>
-        )}
-        meta={<span className="hidden md:inline">{visibleDealers.length} з {settlementDealers.length} дилерів</span>}
-        mobileDisclosure={{ sections: ["filters"], activeCount: Number(sort !== "name") + Number(recentOnly), iconOnly: true }}
-      />
-
-      <section className="grid gap-2" aria-label="Дилери">
-        {visibleDealers.map((dealer) => (
-          <DealerAccordionRow
-            key={dealer.id}
-            dealer={dealer}
-            expanded={expandedDealerId === dealer.id}
-            onToggle={() => setExpandedDealerId((current) => current === dealer.id ? null : dealer.id)}
-          />
-        ))}
-
-        {visibleDealers.length === 0 ? (
-          <Panel className="grid min-h-52 place-items-center p-6 text-center shadow-none" as="section">
-            <div>
-              <Search size={38} strokeWidth={1.6} className="mx-auto text-[var(--faint)]" />
-              <p className="mb-0 mt-3 text-[14px] font-medium">Немає збігів</p>
-            </div>
-          </Panel>
-        ) : null}
-      </section>
-    </AdminPage>
+    <RendererViewSwitch
+      slotId="admin-settlements"
+      currentView={<CurrentAdminSettlementsView model={model} />}
+      loadAstryxView={loadAstryxAdminSettlementsView}
+      astryxViewProps={{model}}
+    />
   );
 }

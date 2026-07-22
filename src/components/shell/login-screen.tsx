@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import {useCallback, useState, type FormEvent} from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, LockKeyhole, LogIn, Mail } from "lucide-react";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
+import {CurrentBrpUiProvider} from "@/components/brp-ui/current-brp-ui-provider";
 import { useDemoStore } from "@/components/providers/demo-store-provider";
 import { authenticateCredentials } from "@/lib/authenticate";
+import {CurrentLoginScreenView} from "./current-login-screen-view";
+import type {LoginScreenViewProps} from "./login-screen-view-props";
+
+const loadAstryxLoginScreenView = () => import("./astryx-login-screen-view");
 
 export function LoginScreen() {
   const router = useRouter();
@@ -15,7 +20,7 @@ export function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email.trim() || !password || submitting) return;
 
@@ -29,50 +34,31 @@ export function LoginScreen() {
     } finally {
       setSubmitting(false);
     }
+  }, [email, password, remember, router, setSession, submitting]);
+
+  const viewProps: LoginScreenViewProps = {
+    email,
+    password,
+    remember,
+    showPassword,
+    submitting,
+    onEmailChange: setEmail,
+    onPasswordChange: setPassword,
+    onRememberChange: setRemember,
+    onShowPasswordChange: setShowPassword,
+    onSubmit: submit,
   };
 
   return (
-    <main className="login-canvas">
-      <form className="login-card" onSubmit={submit}>
-        <header className="login-header">
-          <span className="login-icon"><LogIn size={21} /></span>
-          <div>
-            <h1>З поверненням</h1>
-            <p>Увійдіть для доступу до каталогу запчастин BRP</p>
-          </div>
-        </header>
-        <div className="login-body">
-          <label className="field">
-            <span>Електронна пошта</span>
-            <div className="input-with-icon">
-              <Mail size={15} />
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" autoComplete="email" />
-            </div>
-          </label>
-          <label className="field">
-            <span>Пароль</span>
-            <div className="input-with-icon">
-              <LockKeyhole size={15} />
-              <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" autoComplete="current-password" />
-              <button type="button" className="input-trailing" aria-label={showPassword ? "Приховати пароль" : "Показати пароль"} onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </label>
-          <label className="remember-row">
-            <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
-            <span>Запам&apos;ятати на 30 днів</span>
-          </label>
-          <button
-            type="submit"
-            className="button button-primary button-wide"
-            disabled={!email.trim() || !password || submitting}
-            aria-busy={submitting}
-          >
-            Увійти
-          </button>
-        </div>
-      </form>
-    </main>
+    <RendererViewSwitch
+      astryxViewProps={viewProps}
+      currentView={(
+        <CurrentBrpUiProvider>
+          <CurrentLoginScreenView {...viewProps} />
+        </CurrentBrpUiProvider>
+      )}
+      loadAstryxView={loadAstryxLoginScreenView}
+      slotId="login-screen"
+    />
   );
 }

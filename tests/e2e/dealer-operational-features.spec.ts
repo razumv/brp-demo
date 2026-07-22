@@ -25,16 +25,56 @@ test.describe("dealer operational features on desktop", () => {
     await loginAsDealer(page, dealerSessionOptions);
     await openDealerRoute(page, "/dealer/units", "Техніка", dealerSessionOptions);
 
-    await expect(page.getByTestId("unit-result-count")).toHaveText("9 одиниць · 3 контейнери");
-    await page.getByRole("searchbox", { name: "Пошук техніки" }).fill("CANYON REDR");
-    await expect(page.getByTestId("unit-result-count")).toHaveText("1 одиниця · 1 контейнер");
-    await expect(page.getByTestId("unit-desktop-table").getByText("RD CANYON REDR 1330 SE6 GN EU", { exact: true })).toBeVisible();
+    const unitSummary = page.getByRole("region", { name: "Зведення техніки" });
+    await expect(unitSummary.locator(".stat-card").filter({ hasText: "Готово прийняти" }).getByText("0", { exact: true })).toBeVisible();
+    await expect(unitSummary.locator(".stat-card").filter({ hasText: "Очікує РН" }).getByText("13", { exact: true })).toBeVisible();
+    await expect(unitSummary.locator(".stat-card").filter({ hasText: "Прийнято" }).getByText("0", { exact: true })).toBeVisible();
+    await expect(unitSummary.locator(".stat-card").filter({ hasText: "Мої одиниці" }).getByText("13", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("unit-result-count")).toHaveText("15 відправок · 13 одиниць");
 
-    await page.getByRole("tab", { name: /Мій склад 3/ }).click();
-    await expect(page.getByTestId("unit-result-count")).toHaveText("0 одиниць · 0 контейнерів");
-    await expect(page.getByRole("heading", { name: "За цим запитом техніки немає" })).toBeVisible();
-    await page.getByRole("searchbox", { name: "Пошук техніки" }).fill("");
-    await expect(page.getByTestId("unit-result-count")).toHaveText("3 одиниці · 2 контейнери");
+    const unitTable = page.getByTestId("unit-desktop-table");
+    const shipmentHeader = unitTable.locator("table").first().locator("thead > tr").first();
+    await expect(shipmentHeader.getByRole("columnheader").allTextContents()).resolves.toEqual([
+      "Розгорнути",
+      "Контейнер",
+      "Номер BL",
+      "Одиниці",
+      "ETA",
+      "Маршрут",
+      "Статус",
+      "Дія",
+    ]);
+    const hamuRow = unitTable.locator("tbody > tr").filter({ hasText: "HAMU4124410" }).first();
+    await expect(hamuRow).toContainText("1/4");
+    await expect(hamuRow).toContainText("May 11");
+    await expect(hamuRow).toContainText("В дорозі");
+    await expect(hamuRow).toContainText("Вільний склад");
+    const ffauRow = unitTable.locator("tbody > tr").filter({ hasText: "FFAU6292730" }).first();
+    await expect(ffauRow).toContainText("2/12");
+    await expect(ffauRow).toContainText("2 чекає РН");
+    await expect(unitTable.getByRole("columnheader", { name: "#" })).toBeVisible();
+    await expect(unitTable.getByText("RD SPYDER F3 LTD 1330 SE6 RD S", { exact: true })).toBeVisible();
+
+    const disclosure = page.getByRole("button", { name: "Згорнути контейнер HAMU4124410" });
+    await disclosure.click();
+    const closedDisclosure = page.getByRole("button", { name: "Розгорнути контейнер HAMU4124410" });
+    await closedDisclosure.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "Згорнути контейнер HAMU4124410" })).toBeFocused();
+    await page.keyboard.press("Space");
+    await expect(page.getByRole("button", { name: "Розгорнути контейнер HAMU4124410" })).toBeFocused();
+
+    await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("CANYON REDR");
+    await expect(page.getByTestId("unit-result-count")).toHaveText("1 відправка · 1 одиниця");
+    await expect(unitTable.getByText("RD CANYON REDR 1330 SE6 GN EU", { exact: true })).toBeVisible();
+    await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("");
+
+    await page.getByRole("button", { name: "Фільтри техніки" }).click();
+    await page.getByLabel("Дія").selectOption("awaiting_registration");
+    await expect(page.getByTestId("unit-result-count")).toHaveText("8 відправок · 9 одиниць");
+    await page.getByRole("button", { name: "Скинути фільтри" }).click();
+    await expect(page.getByTestId("unit-result-count")).toHaveText("15 відправок · 13 одиниць");
+    await expect(page.getByRole("button", { name: /прийняти|змінити статус|продати|відправити|синхронізувати/i })).toHaveCount(0);
 
     await openDealerRoute(page, "/dealer/schedule", "Графік поставки", dealerSessionOptions);
     await expect(page.getByTestId("schedule-timeframe")).toHaveText("липень — жовтень 2026");
@@ -48,21 +88,64 @@ test.describe("dealer operational features on desktop", () => {
     await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
     await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
 
-    await expect(page.getByText(/підтверджено лише створення нового замовлення-наряду/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Зміна статусу недоступна" }).first()).toBeDisabled();
+    await expect(page.getByText(/підтверджено лише створення нового замовлення-наряду/i)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Зміна статусу недоступна" })).toHaveCount(0);
+    await expect(page.locator('[draggable="true"], [data-dropzone], [aria-dropeffect]')).toHaveCount(0);
     await expect(page.getByText(/демонстрац|тестов|середовищ/i)).toHaveCount(0);
     await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
     await page.getByLabel("Опис *").fill("Сезонне технічне обслуговування");
+    await page.getByLabel("Механік").fill("Олексій");
+    await page.getByLabel("Нотатки").fill("Терміново до п’ятниці");
     await page.getByRole("button", { name: "Створити замовлення-наряд" }).click();
     await expect(page.getByRole("status")).toHaveText("Замовлення-наряд створено.");
-    await expect(page.getByRole("heading", { name: "Сезонне технічне обслуговування" })).toBeVisible();
+    const workshopCard = page.getByRole("article").filter({ hasText: "Сезонне технічне обслуговування" });
+    await expect(workshopCard).toBeVisible();
+    expect(await workshopCard.evaluate((element) => (element as HTMLElement).draggable)).toBe(false);
+    expect(await workshopCard.evaluate((element) => getComputedStyle(element).cursor)).not.toMatch(/grab|move/);
+
+    const workshopSearch = page.getByRole("searchbox", { name: /Пошук у майстерні/ });
+    for (const query of ["Сезонне", "Клієнт Logos", "Олексій", "Терміново"]) {
+      await workshopSearch.fill(query);
+      await expect(page.getByTestId("workshop-result-count")).toHaveText("1 замовлення");
+      await expect(workshopCard).toBeVisible();
+    }
+    await workshopSearch.fill("");
+    await page.getByRole("button", { name: "Фільтри майстерні" }).click();
+    await page.getByLabel("Етап").selectOption("scheduled");
+    await expect(page.getByTestId("workshop-result-count")).toHaveText("0 замовлень");
+    await page.getByLabel("Етап").selectOption("new");
+    await page.getByLabel("Тип роботи").selectOption("maintenance");
+    await expect(page.getByTestId("workshop-result-count")).toHaveText("1 замовлення");
+    await page.getByRole("button", { name: "Скинути фільтри" }).click();
+
+    const newColumn = page.getByTestId("workshop-column").nth(0);
+    const scheduledColumn = page.getByTestId("workshop-column").nth(1);
+    const cardBox = await workshopCard.boundingBox();
+    const targetBox = await scheduledColumn.boundingBox();
+    expect(cardBox).not.toBeNull();
+    expect(targetBox).not.toBeNull();
+    if (cardBox && targetBox) {
+      await page.mouse.move(cardBox.x + cardBox.width / 2, cardBox.y + cardBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 80, { steps: 5 });
+      await page.mouse.up();
+    }
+    await expect(newColumn).toContainText("Сезонне технічне обслуговування");
+    await expect(scheduledColumn).not.toContainText("Сезонне технічне обслуговування");
     await expect.poll(async () => page.evaluate((storageKey) => {
       const raw = window.localStorage.getItem(storageKey);
       if (!raw) return [];
-      return (JSON.parse(raw) as { workshopOrders?: Array<{ description: string }> }).workshopOrders ?? [];
+      return (JSON.parse(raw) as { workshopOrders?: Array<{ description: string; status: string }> }).workshopOrders ?? [];
     }, dealerStorageKey)).toContainEqual(expect.objectContaining({
       description: "Сезонне технічне обслуговування",
+      status: "new",
     }));
+
+    await page.reload();
+    await expect(page.getByRole("article").filter({ hasText: "Сезонне технічне обслуговування" })).toBeVisible();
+    await page.goto("/");
+    const dashboardSummary = page.getByRole("region", { name: "Додаткові показники" });
+    await expect(dashboardSummary.getByText("Робіт у майстерні").locator("..")).toContainText("1");
 
     await openDealerRoute(page, "/dealer/bossweb", "Пошук запчастин", dealerSessionOptions);
     await expect(page.getByText("Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
@@ -75,6 +158,29 @@ test.describe("dealer operational features on desktop", () => {
     expect(await page.getByRole("status").count()).toBe(0);
     await expect(page.getByRole("heading", { name: "Запчастину не знайдено" })).toBeVisible();
     await expect(page.getByText(/для демонстрації|онлайн-пошук виконується/i)).toHaveCount(0);
+  });
+
+  test("workshop keeps a failed durable create out of the board", async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key === storageKey && window.sessionStorage.getItem("block-workshop-write") === "1") {
+          throw new Error("storage blocked");
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    }, dealerStorageKey);
+    await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
+    await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
+    await page.evaluate(() => window.sessionStorage.setItem("block-workshop-write", "1"));
+
+    await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
+    await page.getByLabel("Опис *").fill("Робота без збереження");
+    await page.getByRole("button", { name: "Створити замовлення-наряд" }).click();
+
+    await expect(page.getByRole("dialog").getByRole("alert")).toHaveText("Не вдалося зберегти зміни на пристрої.");
+    await expect(page.getByText("Замовлення-наряд створено.")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Робота без збереження" })).toHaveCount(0);
   });
 
   test("dashboard reads the same dealer cart as accessories and order creation", async ({ page }) => {

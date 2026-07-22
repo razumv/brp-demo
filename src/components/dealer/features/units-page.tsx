@@ -6,21 +6,20 @@ import {
   Check,
   ChevronDown,
   Clock3,
-  Search,
   ShoppingCart,
   Warehouse,
 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
+import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpSelect, BrpTabs } from "@/components/brp-ui";
 import { EmptyState, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import {
-  dealerUnitRecords,
-  filterDealerUnitRecords,
-  formatDealerUnitDate,
+  dealerUnitShipments,
+  filterDealerUnitShipments,
   getDealerUnitCounts,
-  groupDealerUnitRecords,
+  type DealerUnitActionFilter,
   type DealerUnitRecord,
   type DealerUnitShipment,
-  type DealerUnitStage,
   type DealerUnitTab,
 } from "@/lib/dealer/units-data";
 import { ukrainianCount } from "@/lib/dealer/format";
@@ -28,53 +27,44 @@ import dealerStyles from "../dealer.module.css";
 import operationalStyles from "./operational-features.module.css";
 import { FeatureFrame } from "./feature-frame";
 
-const unitCounts = getDealerUnitCounts(dealerUnitRecords);
+const unitCounts = getDealerUnitCounts(dealerUnitShipments);
 
 const unitTabs = [
-  { id: "summary", label: "Зведення", icon: BarChart3, count: unitCounts.all },
-  { id: "incoming", label: "Вхідні", icon: Box, count: unitCounts.incoming },
-  { id: "stock", label: "Мій склад", icon: Warehouse, count: unitCounts.stock },
-  { id: "sold", label: "Продані", icon: ShoppingCart, count: unitCounts.sold },
+  { id: "summary", label: "Зведення", icon: BarChart3 },
+  { id: "incoming", label: "Вхідні", icon: Box },
+  { id: "stock", label: "Мій склад", icon: Warehouse },
+  { id: "sold", label: "Продані", icon: ShoppingCart },
 ] as const satisfies readonly {
   id: DealerUnitTab;
   label: string;
   icon: typeof Box;
-  count: number;
 }[];
 
-const stageLabels = {
-  incoming: "В дорозі",
-  stock: "На складі",
-  sold: "Продано",
-} as const satisfies Record<DealerUnitStage, string>;
-
-function resultCountLabel(unitCount: number, containerCount: number) {
-  return `${ukrainianCount(unitCount, ["одиниця", "одиниці", "одиниць"])} · ${ukrainianCount(containerCount, ["контейнер", "контейнери", "контейнерів"])}`;
+function shipmentCountLabel(shipments: readonly DealerUnitShipment[]) {
+  const units = shipments.reduce((total, shipment) => total + shipment.assignedUnits, 0);
+  return `${ukrainianCount(shipments.length, ["відправка", "відправки", "відправок"])} · ${ukrainianCount(units, ["одиниця", "одиниці", "одиниць"])}`;
 }
 
-function UnitStageBadge({ unit }: { unit: DealerUnitRecord }) {
-  if (unit.stage === "incoming") {
-    const ready = Boolean(unit.vin && unit.engineNumber);
-    return (
-      <StatusBadge tone={ready ? "green" : "amber"}>
-        {ready ? "Готово прийняти" : "Очікує VIN/двигун"}
-      </StatusBadge>
-    );
-  }
-
-  return <StatusBadge tone={unit.stage === "stock" ? "green" : "neutral"}>{stageLabels[unit.stage]}</StatusBadge>;
+function ShipmentStatusBadge({ shipment }: { shipment: DealerUnitShipment }) {
+  const label = shipment.status === "in_transit"
+    ? "В дорозі"
+    : shipment.status === "at_warehouse"
+      ? "На складі"
+      : "Продано";
+  const tone = shipment.status === "in_transit" ? "blue" : shipment.status === "at_warehouse" ? "green" : "neutral";
+  return <StatusBadge tone={tone}>● {label}</StatusBadge>;
 }
 
-function ShipmentStageBadge({ shipment }: { shipment: DealerUnitShipment }) {
-  const stages = new Set(shipment.units.map((unit) => unit.stage));
-  if (stages.size !== 1) return <StatusBadge tone="neutral">Кілька етапів</StatusBadge>;
-  const stage = shipment.units[0]?.stage;
-  if (!stage) return null;
-  return (
-    <StatusBadge tone={stage === "incoming" ? "blue" : stage === "stock" ? "green" : "neutral"}>
-      {stageLabels[stage]}
-    </StatusBadge>
-  );
+function ShipmentActionBadge({ shipment }: { shipment: DealerUnitShipment }) {
+  return shipment.action === "free_stock"
+    ? <StatusBadge tone="blue">● Вільний склад</StatusBadge>
+    : <StatusBadge tone="amber">● {shipment.assignedUnits} чекає РН</StatusBadge>;
+}
+
+function UnitStatusBadge({ unit }: { unit: DealerUnitRecord }) {
+  return unit.status === "free_stock"
+    ? <StatusBadge tone="blue">● Вільний склад</StatusBadge>
+    : <StatusBadge tone="amber">● Чекає РН</StatusBadge>;
 }
 
 function ShipmentUnitList({ shipment }: { shipment: DealerUnitShipment }) {
@@ -83,14 +73,13 @@ function ShipmentUnitList({ shipment }: { shipment: DealerUnitShipment }) {
       {shipment.units.map((unit) => (
         <li key={unit.id}>
           <div>
-            <strong>{unit.model}</strong>
+            <strong>{unit.number}. {unit.model}</strong>
             <span className={dealerStyles.mono}>{unit.sku} · {unit.year}</span>
           </div>
           <dl>
-            <div><dt>VIN</dt><dd className={dealerStyles.mono}>{unit.vin ?? "Не вказано"}</dd></div>
-            <div><dt>Двигун</dt><dd className={dealerStyles.mono}>{unit.engineNumber ?? "Не вказано"}</dd></div>
+            <div><dt>VIN</dt><dd className={dealerStyles.mono}>{unit.vin ?? "—"}</dd></div>
+            <div><dt>Статус</dt><dd><UnitStatusBadge unit={unit} /></dd></div>
           </dl>
-          <UnitStageBadge unit={unit} />
         </li>
       ))}
     </ul>
@@ -101,77 +90,80 @@ export function UnitsPage() {
   const [tab, setTab] = useState<DealerUnitTab>("incoming");
   const [expanded, setExpanded] = useState("HAMU4124410");
   const [query, setQuery] = useState("");
-  const filteredUnits = useMemo(
-    () => filterDealerUnitRecords(dealerUnitRecords, tab, query),
-    [query, tab],
+  const [actionFilter, setActionFilter] = useState<DealerUnitActionFilter>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const shipments = useMemo(
+    () => filterDealerUnitShipments(dealerUnitShipments, { tab, query, action: actionFilter }),
+    [actionFilter, query, tab],
   );
-  const shipments = useMemo(() => groupDealerUnitRecords(filteredUnits), [filteredUnits]);
-  const resultLabel = resultCountLabel(filteredUnits.length, shipments.length);
+  const resultLabel = shipmentCountLabel(shipments);
+  const changeQuery = (value: string) => {
+    setQuery(value);
+    if (!value.trim()) return;
+    const [firstMatch] = filterDealerUnitShipments(dealerUnitShipments, {
+      tab,
+      query: value,
+      action: actionFilter,
+    });
+    if (firstMatch) setExpanded(firstMatch.container);
+  };
 
   return (
     <FeatureFrame feature="units">
-      <div className={dealerStyles.featureTabs} role="tablist" aria-label="Розділи техніки">
-        {unitTabs.map(({ id, label, icon: Icon, count }) => (
-          <button
-            type="button"
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            aria-controls="dealer-units-panel"
-            tabIndex={tab === id ? 0 : -1}
-            onClick={() => setTab(id)}
-          >
-            <Icon size={15} /> {label} <span className={operationalStyles.tabCount}>{count}</span>
-          </button>
-        ))}
+      <div className={dealerStyles.featureTabs}>
+        <BrpTabs
+          label="Розділи техніки"
+          value={tab}
+          onValueChange={(value) => setTab(value as DealerUnitTab)}
+          options={unitTabs.map(({ id, label, icon: Icon }) => ({ value: id, label, icon: <Icon size={15} /> }))}
+          fill
+        />
       </div>
 
       <section className={dealerStyles.statsGrid} aria-label="Зведення техніки">
+        <StatCard label="Готово прийняти" value={unitCounts.readyToReceive} icon={<Check size={18} />} tone="green" />
+        <StatCard label="Очікує РН" value={unitCounts.awaitingRegistration} icon={<Clock3 size={18} />} tone="amber" />
+        <StatCard label="Прийнято" value={unitCounts.accepted} icon={<Warehouse size={18} />} tone="green" />
         <StatCard
-          label="Готово прийняти"
-          value={unitCounts.readyToReceive}
-          helper="VIN і двигун вказані"
-          icon={<Check size={18} />}
-          tone="green"
-        />
-        <StatCard
-          label="Очікує дані"
-          value={unitCounts.awaitingIdentifiers}
-          helper="Немає VIN або двигуна"
-          icon={<Clock3 size={18} />}
-          tone="amber"
-        />
-        <StatCard
-          label="На складі"
-          value={unitCounts.stock}
-          helper="Прийняті одиниці"
-          icon={<Warehouse size={18} />}
-          tone="green"
-        />
-        <StatCard
-          label="Усього техніки"
-          value={unitCounts.all}
-          helper={ukrainianCount(unitCounts.containers, ["контейнер", "контейнери", "контейнерів"])}
+          label="Мої одиниці"
+          value={unitCounts.owned}
+          helper={ukrainianCount(unitCounts.shipments, ["контейнер", "контейнери", "контейнерів"])}
           icon={<Box size={18} />}
           tone="blue"
         />
       </section>
 
       <Panel className={dealerStyles.unitsPanel}>
-        <div className={dealerStyles.unitsToolbar}>
-          <div className="toolbar-search">
-            <Search size={15} />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Пошук техніки"
-              placeholder="Контейнер, BL, модель, VIN або двигун…"
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </div>
-          <span data-testid="unit-result-count" aria-live="polite">{resultLabel}</span>
+        <div className={operationalStyles.dataToolbarWrap}>
+          <DealerDataToolbar
+            search={{
+              value: query,
+              onValueChange: changeQuery,
+              label: "Пошук техніки",
+              placeholder: "Контейнер, BL, модель, SKU або VIN…",
+            }}
+            filters={{
+              label: "Фільтри техніки",
+              activeCount: actionFilter === "all" ? 0 : 1,
+              open: filtersOpen,
+              onOpenChange: setFiltersOpen,
+              panelId: "dealer-unit-filters",
+              content: (
+                <BrpSelect
+                  label="Дія"
+                  value={actionFilter}
+                  onValueChange={(value) => setActionFilter(value as DealerUnitActionFilter)}
+                  options={[
+                    { value: "all", label: "Усі" },
+                    { value: "free_stock", label: "Вільний склад" },
+                    { value: "awaiting_registration", label: "Очікує РН" },
+                  ]}
+                />
+              ),
+              onClear: () => setActionFilter("all"),
+            }}
+            resultMeta={<span data-testid="unit-result-count">{resultLabel}</span>}
+          />
         </div>
 
         <div id="dealer-units-panel" role="tabpanel">
@@ -185,18 +177,17 @@ export function UnitsPage() {
                       <th>Контейнер</th>
                       <th>Номер BL</th>
                       <th>Одиниці</th>
-                      <th>Дата</th>
+                      <th>ETA</th>
                       <th>Маршрут</th>
-                      <th>Етап</th>
-                      <th>Дані приймання</th>
+                      <th>Статус</th>
+                      <th>Дія</th>
                     </tr>
                   </thead>
                   <tbody>
                     {shipments.map((shipment) => {
                       const isExpanded = expanded === shipment.container;
-                      const ready = shipment.units.filter((unit) => unit.vin && unit.engineNumber).length;
                       return (
-                        <Fragment key={`${shipment.container}:${shipment.bl}`}>
+                        <Fragment key={shipment.id}>
                           <tr>
                             <td>
                               <button
@@ -212,11 +203,11 @@ export function UnitsPage() {
                             </td>
                             <td><strong className={dealerStyles.mono}>{shipment.container}</strong></td>
                             <td className={dealerStyles.mono}>{shipment.bl}</td>
-                            <td><strong>{shipment.units.length}</strong></td>
-                            <td>{formatDealerUnitDate(shipment.arrivalDate)}</td>
+                            <td><strong>{shipment.assignedUnits}/{shipment.totalUnits}</strong></td>
+                            <td>{shipment.eta}</td>
                             <td>{shipment.route}</td>
-                            <td><ShipmentStageBadge shipment={shipment} /></td>
-                            <td>{ready} з {shipment.units.length}</td>
+                            <td><ShipmentStatusBadge shipment={shipment} /></td>
+                            <td><ShipmentActionBadge shipment={shipment} /></td>
                           </tr>
                           {isExpanded ? (
                             <tr id={`unit-shipment-${shipment.container}`}>
@@ -224,17 +215,18 @@ export function UnitsPage() {
                                 <p>Проформа: <strong className={dealerStyles.mono}>{shipment.proforma}</strong></p>
                                 <table className={dealerStyles.nestedTable}>
                                   <thead>
-                                    <tr><th>Модель</th><th>Артикул</th><th>Рік</th><th>VIN</th><th>Двигун</th><th>Статус</th></tr>
+                                    <tr><th>#</th><th>Модель</th><th>Артикул</th><th>Рік</th><th>VIN</th><th>Статус</th><th>Дія</th></tr>
                                   </thead>
                                   <tbody>
                                     {shipment.units.map((unit) => (
                                       <tr key={unit.id}>
+                                        <td>{unit.number}</td>
                                         <td>{unit.model}</td>
                                         <td className={dealerStyles.mono}>{unit.sku}</td>
                                         <td>{unit.year}</td>
-                                        <td className={dealerStyles.mono}>{unit.vin ?? "Не вказано"}</td>
-                                        <td className={dealerStyles.mono}>{unit.engineNumber ?? "Не вказано"}</td>
-                                        <td><UnitStageBadge unit={unit} /></td>
+                                        <td className={dealerStyles.mono}>{unit.vin ?? "—"}</td>
+                                        <td><UnitStatusBadge unit={unit} /></td>
+                                        <td>—</td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -253,20 +245,21 @@ export function UnitsPage() {
                 {shipments.map((shipment) => {
                   const isExpanded = expanded === shipment.container;
                   return (
-                    <article className={operationalStyles.unitMobileCard} key={`${shipment.container}:${shipment.bl}`}>
+                    <article className={operationalStyles.unitMobileCard} key={shipment.id}>
                       <button
                         type="button"
                         className={operationalStyles.unitMobileToggle}
+                        aria-label={`${isExpanded ? "Згорнути" : "Розгорнути"} контейнер ${shipment.container}`}
                         aria-expanded={isExpanded}
                         onClick={() => setExpanded(isExpanded ? "" : shipment.container)}
                       >
                         <span><strong className={dealerStyles.mono}>{shipment.container}</strong><small>Номер BL: {shipment.bl}</small></span>
-                        <span><ShipmentStageBadge shipment={shipment} /><ChevronDown size={15} className={isExpanded ? dealerStyles.chevronOpen : undefined} /></span>
+                        <span><ShipmentStatusBadge shipment={shipment} /><ChevronDown size={15} className={isExpanded ? dealerStyles.chevronOpen : undefined} /></span>
                       </button>
                       <dl className={operationalStyles.unitMobileMeta}>
-                        <div><dt>Одиниці</dt><dd>{shipment.units.length}</dd></div>
-                        <div><dt>Дата</dt><dd>{formatDealerUnitDate(shipment.arrivalDate)}</dd></div>
-                        <div><dt>Маршрут</dt><dd>{shipment.route}</dd></div>
+                        <div><dt>Одиниці</dt><dd>{shipment.assignedUnits}/{shipment.totalUnits}</dd></div>
+                        <div><dt>ETA</dt><dd>{shipment.eta}</dd></div>
+                        <div><dt>Дія</dt><dd><ShipmentActionBadge shipment={shipment} /></dd></div>
                       </dl>
                       {isExpanded ? <ShipmentUnitList shipment={shipment} /> : null}
                     </article>
@@ -277,7 +270,7 @@ export function UnitsPage() {
           ) : (
             <EmptyState
               title={query ? "За цим запитом техніки немає" : "У цьому розділі техніки немає"}
-              description={query ? "Перевірте номер контейнера, BL, модель або VIN." : "Колекція не містить одиниць для вибраного етапу."}
+              description={query ? "Перевірте номер контейнера, BL, модель, SKU або VIN." : "Змініть вкладку або скиньте фільтри."}
             />
           )}
         </div>

@@ -1,35 +1,11 @@
 import { AdminFeaturePage } from "@/components/admin/admin-feature-page";
 import { AppShell } from "@/components/shell/app-shell";
-
-const adminFeatures = [
-  "supplier-orders",
-  "consignment",
-  "returns",
-  "air-freight",
-  "ocean-freight",
-  "unit-shipping",
-  "warehouse",
-  "settlements",
-  "invoices",
-  "catalog",
-  "schedule",
-  "companies",
-  "dealer-access",
-  "users",
-  "permissions",
-  "tasks",
-  "analytics",
-  "parts-report",
-  "performance",
-  "bossweb-lookup",
-  "integrations",
-  "settings",
-] as const;
+import { ADMIN_FEATURES } from "@/lib/appearance/route-inventory";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return adminFeatures.map((feature) => ({ feature }));
+  return ADMIN_FEATURES.map((feature) => ({ feature }));
 }
 
 export default async function AdminFeatureRoute({

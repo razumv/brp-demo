@@ -4,16 +4,14 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileClock,
-  FileSpreadsheet,
   FolderOpen,
   Plus,
-  Search,
   ShoppingCart,
-  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
-import { LockedOperation } from "@/components/dealer/locked-operation";
+import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { formatDateTime } from "@/components/dealer/common";
 import { EmptyState, Modal, Panel } from "@/components/shared/ui";
 import type { DealerSnapshot } from "@/lib/dealer/contracts";
@@ -66,11 +64,6 @@ export function OrderDraftsPage() {
   }, [buyer, content, customerById, query, snapshot.drafts]);
 
   const activeFilterCount = Number(content !== "all") + Number(buyer !== "all");
-  const filterPanelId = "draft-filters";
-  const filterTriggerLabel = activeFilterCount
-    ? `Фільтри чернеток, активних: ${activeFilterCount}`
-    : "Фільтри чернеток";
-
   const resetFilters = () => {
     setContent("all");
     setBuyer("all");
@@ -110,48 +103,22 @@ export function OrderDraftsPage() {
   return (
     <FeatureFrame
       feature="order-drafts"
-      action={<button type="button" className="button button-primary" onClick={() => void startDraft()}><Plus size={15} /> Нова чернетка</button>}
+      action={<BrpButton label="Нова чернетка" icon={<Plus size={15} />} onPress={startDraft} />}
     >
       <Panel>
-        <div className={styles.toolbar}>
-          <label className={styles.searchField}>
-            <Search size={15} aria-hidden="true" />
-            <input aria-label="Пошук чернеток" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Назва, клієнт, PO або запчастина..." />
-          </label>
-          <button
-            type="button"
-            className={styles.filterTrigger}
-            aria-label={filterTriggerLabel}
-            aria-controls={filterPanelId}
-            aria-expanded={filtersOpen}
-            onClick={() => setFiltersOpen((current) => !current)}
-          >
-            <SlidersHorizontal size={15} aria-hidden="true" />
-            <span className={styles.filterTriggerLabel}>Фільтри чернеток</span>
-            {activeFilterCount ? <span className={styles.filterCount} data-filter-count>{activeFilterCount}</span> : null}
-          </button>
-          <LockedOperation label="Excel" icon={<FileSpreadsheet size={14} />} reason="Імпорт і експорт файлів недоступні." />
-        </div>
-        <div id={filterPanelId} className={styles.filterPanel} hidden={!filtersOpen}>
-          <label>
-            Вміст чернетки
-            <select value={content} onChange={(event) => setContent(event.target.value as DraftContentFilter)}>
-              <option value="all">Усі</option>
-              <option value="with-items">З позиціями</option>
-              <option value="empty">Порожні</option>
-            </select>
-          </label>
-          <label>
-            Покупець чернетки
-            <select value={buyer} onChange={(event) => setBuyer(event.target.value as DraftBuyerFilter)}>
-              <option value="all">Усі</option>
-              <option value="assigned">Призначений</option>
-              <option value="unassigned">Не призначений</option>
-            </select>
-          </label>
-          <button type="button" className="button button-outline" onClick={resetFilters} disabled={!activeFilterCount}>Скинути фільтри</button>
-        </div>
-        <p className={styles.resultCount}>Показано {filtered.length} з {snapshot.drafts.length}</p>
+        <DealerDataToolbar
+          search={{ value: query, onValueChange: setQuery, label: "Пошук чернеток", placeholder: "Назва, клієнт, PO або запчастина..." }}
+          filters={{
+            label: "Фільтри",
+            activeCount: activeFilterCount,
+            open: filtersOpen,
+            onOpenChange: setFiltersOpen,
+            panelId: "draft-filters",
+            onClear: resetFilters,
+            content: <><BrpSelect label="Вміст чернетки" value={content} onValueChange={(value) => setContent(value as DraftContentFilter)} options={[{ value: "all", label: "Усі" }, { value: "with-items", label: "З позиціями" }, { value: "empty", label: "Порожні" }]} /><BrpSelect label="Покупець чернетки" value={buyer} onValueChange={(value) => setBuyer(value as DraftBuyerFilter)} options={[{ value: "all", label: "Усі" }, { value: "assigned", label: "Призначений" }, { value: "unassigned", label: "Не призначений" }]} /></>,
+          }}
+          resultMeta={`Показано ${filtered.length} з ${snapshot.drafts.length}`}
+        />
         {feedback ? <p className={styles.feedback} role="status">{feedback}</p> : null}
 
         {filtered.length ? (

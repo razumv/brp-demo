@@ -1,0 +1,24 @@
+.page { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100%; gap: 1.25rem; overflow-x: hidden; color: var(--color-text-primary); min-width: 0; }
+.header { display: flex; align-items: flex-start; gap: .75rem; }
+.header > span { display: grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: var(--radius-element); color: var(--color-text-info); background: var(--color-background-blue); }
+.header > div { min-width: 0; flex: 1; }
+.header h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+.header p { margin: .35rem 0 0; color: var(--color-text-secondary); font-size: .875rem; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.kpis span, .kpis strong { display: block; }
+.kpis span { color: var(--color-text-secondary); font-size: .75rem; }
+.kpis strong { margin-top: .45rem; font-size: 1.5rem; line-height: 1; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100%; gap: 1rem; min-width: 0; }
+.toolbar { display: grid; grid-template-columns: minmax(12rem, 1fr) auto; gap: .75rem; align-items: end; }
+.tableScroller { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; border: 1px solid var(--color-border-default); border-radius: var(--radius-card); }
+.actions { display: flex; align-items: center; gap: .25rem; }
+.sectionTitle { margin: .25rem 0 -.25rem; font-size: 1rem; }
+.dialog { display: grid; gap: 1rem; }
+.dialog header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.dialog h2 { margin: 0; font-size: 1.15rem; }
+.dialog p { margin: 0; color: var(--color-text-secondary); }
+.dialogActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.details { display: grid; grid-template-columns: minmax(8rem, .65fr) minmax(0, 1.35fr); gap: .6rem 1rem; margin: 0; }
+.details dt { color: var(--color-text-secondary); font-size: .8rem; }
+.details dd { margin: 0; font-weight: 600; }
+@media (max-width: 767px) { .kpis { display: none; } .header { flex-wrap: wrap; } .header > :last-child { width: 100%; } .toolbar { grid-template-columns: 1fr; } }

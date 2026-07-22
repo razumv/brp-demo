@@ -16,6 +16,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import {BrpCard, BrpIconButton, BrpTextInput} from "@/components/brp-ui";
+import {useAppearance} from "@/components/appearance/use-appearance";
 import {
   CATALOG_IDS,
   catalogBrands,
@@ -58,7 +60,8 @@ const configurationResults = [
 ];
 
 function CatalogPage({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  return <div className={`page ${wide ? "" : "page-narrow"} ${styles.catalogPage}`}>{children}</div>;
+  const {renderedDesignSystem} = useAppearance();
+  return <div className={`page ${wide ? "" : "page-narrow"} ${styles.catalogPage}`} data-dealer-catalog-renderer={renderedDesignSystem}>{children}</div>;
 }
 
 function Breadcrumbs({
@@ -124,7 +127,7 @@ function QuickSearch() {
   };
 
   return (
-    <Panel className={styles.quickSearchPanel}>
+    <div className={styles.quickSearchPanel}><BrpCard padding="none">
       <div className={styles.quickSearchTitle}>
         <Search size={16} />
         <strong>Швидкий пошук</strong>
@@ -132,19 +135,21 @@ function QuickSearch() {
       </div>
       <div className={styles.searchColumns}>
         <form className={styles.searchField} onSubmit={submitModel}>
-          <label htmlFor="catalog-model-search">Модель</label>
+          <span className={styles.searchLabel}>Модель</span>
           <div className={styles.searchInput}>
-            <input
-              id="catalog-model-search"
+            <BrpTextInput
+              label="Модель"
+              hideLabel
+              type="search"
               value={modelQuery}
-              onChange={(event) => {
-                setModelQuery(event.target.value);
+              onValueChange={(value) => {
+                setModelQuery(value);
                 setModelSearched(false);
               }}
               placeholder="напр. 4STF, Outlander..."
-              autoComplete="off"
+              clearable
             />
-            <button type="submit" aria-label="Знайти модель"><Search size={16} /></button>
+            <BrpIconButton type="submit" label="Знайти модель" icon={<Search size={16} />} variant="secondary" />
           </div>
           {modelSearched ? (
             hasModel ? (
@@ -161,19 +166,21 @@ function QuickSearch() {
         </form>
 
         <form className={styles.searchField} onSubmit={submitPart}>
-          <label htmlFor="catalog-part-search">Запчастина</label>
+          <span className={styles.searchLabel}>Запчастина</span>
           <div className={styles.searchInput}>
-            <input
-              id="catalog-part-search"
+            <BrpTextInput
+              label="Запчастина"
+              hideLabel
+              type="search"
               value={partQuery}
-              onChange={(event) => {
-                setPartQuery(event.target.value);
+              onValueChange={(value) => {
+                setPartQuery(value);
                 setPartSearched(false);
               }}
               placeholder="напр. 507032417, brake..."
-              autoComplete="off"
+              clearable
             />
-            <button type="submit" aria-label="Знайти запчастину"><Search size={16} /></button>
+            <BrpIconButton type="submit" label="Знайти запчастину" icon={<Search size={16} />} variant="secondary" />
           </div>
           {partSearched ? (
             hasPart ? (
@@ -189,7 +196,7 @@ function QuickSearch() {
           ) : null}
         </form>
       </div>
-    </Panel>
+    </BrpCard></div>
   );
 }
 
@@ -420,6 +427,7 @@ function CatalogCascade() {
   return (
     <CatalogPage wide>
       <Breadcrumbs items={breadcrumbItems} />
+      <h1 className="sr-only">Каталог запчастин Can-Am SXS</h1>
       <section ref={viewportRef} className={styles.cascadeViewport} aria-label="Навігація каталогу">
         <div className={styles.cascadeGrid} data-column-count={columns.length}>
           {columns.map((column) => (
@@ -452,6 +460,7 @@ function CategoryBrowser() {
         { label: "Can-Am ATV" },
         { label: selectedYear },
       ]} />
+      <h1 className="sr-only">Каталог запчастин Can-Am ATV</h1>
       <div className={styles.browserGrid}>
         <section className={styles.browserColumn} aria-label="Категорії">
           <BrowserRow active>Can-Am ATV</BrowserRow>
@@ -495,7 +504,7 @@ function SelectionList({
     <CatalogPage>
       <Breadcrumbs items={breadcrumbs} />
       <PageHeader title={title} description={description} />
-      <Panel className={styles.selectionPanel}>{children}</Panel>
+      <div className={styles.selectionPanel}><BrpCard padding="none">{children}</BrpCard></div>
     </CatalogPage>
   );
 }

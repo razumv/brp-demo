@@ -11,7 +11,10 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     steps:
       - name: Checkout
@@ -38,11 +41,24 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Test admin responsive contract
         run: npm run test:e2e
 
+      - name: Test checked appearance route inventory
+        run: npx tsx --test tests/appearance-route-inventory.test.ts
+
+      - name: Test renderer, mode, browser and viewport matrix
+        run: npm run test:e2e:appearance:matrix
+
       - name: Test dealer Pages PWA contract
         run: npm run test:e2e:dealer-pages
+
+      - name: Test dual-renderer Pages and offline recovery
+        run: npm run test:e2e:appearance:pages -- --project=chromium
+
+      - name: Test real browsers and devices when release credentials are configured
+        if: ${{ env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != '' }}
+        run: npm run test:e2e:appearance:real-devices

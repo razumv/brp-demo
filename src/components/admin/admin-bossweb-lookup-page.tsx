@@ -9,11 +9,22 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import {
   normalizeBossWebPartQuery,
   resolveAdminBossWebLookup,
   type AdminBossWebLookupFixture,
+  type AdminBossWebLookupResolution,
 } from "@/lib/admin-bossweb-lookup-data";
+
+const loadAstryxAdminBossWebLookupView = () => import("./astryx-admin-bossweb-lookup-view");
+
+export type BossWebLookupViewProps = {
+  input: string;
+  resolution: AdminBossWebLookupResolution;
+  onInputChange: (value: string) => void;
+  onSearch: () => void;
+};
 
 function formatUsd(value: number) {
   return `$${value.toFixed(2)}`;
@@ -85,7 +96,7 @@ function BossWebCard({ fixture }: { fixture: AdminBossWebLookupFixture["bossWeb"
           type="button"
           disabled
           aria-label="Оновлення даних BossWeb вимкнено"
-          title="Зовнішнє оновлення BossWeb вимкнено у read-only демонстрації"
+          title="Оновлення потребує підключення до BossWeb"
           className="ml-auto grid size-8 shrink-0 place-items-center rounded-md text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-55"
         >
           <LockKeyhole size={11} className="sr-only" />
@@ -173,9 +184,32 @@ function LocalNoResult({ query }: { query: string }) {
       <Search size={32} strokeWidth={1.6} className="mx-auto text-[var(--faint)]" />
       <h2 className="mb-0 mt-3 text-[15px] font-semibold">Локальних даних не знайдено</h2>
       <p className="mb-0 mt-1 text-[12px] text-[var(--muted-foreground)]">
-        Для <span className="font-mono text-[var(--foreground)]">{query}</span> немає типізованого демо-результату. Зовнішній BossWeb не викликався.
+        Для <span className="font-mono text-[var(--foreground)]">{query}</span> немає даних у каталозі. Підключення до BossWeb недоступне.
       </p>
     </section>
+  );
+}
+
+function CurrentAdminBossWebLookupView({
+  input,
+  resolution,
+  onInputChange,
+  onSearch,
+}: BossWebLookupViewProps) {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSearch();
+  };
+
+  return (
+    <main className="page" data-admin-bossweb-renderer="current">
+      <div>
+        <LookupHeading />
+        <LookupForm value={input} onChange={onInputChange} onSubmit={submit} />
+        {resolution.state === "found" ? <FoundResult fixture={resolution.fixture} /> : null}
+        {resolution.state === "not-found" ? <LocalNoResult query={resolution.query} /> : null}
+      </div>
+    </main>
   );
 }
 
@@ -191,24 +225,26 @@ function AdminBossWebLookupContent() {
   }, [parameterPart]);
 
   const resolution = resolveAdminBossWebLookup(resolvedQuery);
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const search = () => {
     const normalized = normalizeBossWebPartQuery(input);
     if (!normalized) return;
     setInput(normalized);
     setResolvedQuery(normalized);
   };
+  const viewProps: BossWebLookupViewProps = {
+    input,
+    resolution,
+    onInputChange: setInput,
+    onSearch: search,
+  };
 
   return (
-    <main className="page">
-      <div>
-        <LookupHeading />
-        <LookupForm value={input} onChange={setInput} onSubmit={submit} />
-        {resolution.state === "found" ? <FoundResult fixture={resolution.fixture} /> : null}
-        {resolution.state === "not-found" ? <LocalNoResult query={resolution.query} /> : null}
-      </div>
-    </main>
+    <RendererViewSwitch
+      slotId="admin-bossweb-lookup"
+      currentView={<CurrentAdminBossWebLookupView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminBossWebLookupView}
+      astryxViewProps={viewProps}
+    />
   );
 }
 

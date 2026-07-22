@@ -1,0 +1,51 @@
+.page { display:grid; gap:16px; width:100%; min-width:0; }
+.page > * { min-width:0; }
+.header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.headerCopy { display:flex; align-items:flex-start; gap:12px; min-width:0; }
+.headerIcon { display:grid; place-items:center; width:40px; height:40px; flex:0 0 auto; border-radius:10px; color:var(--orange); background:var(--orange-soft); }
+.headerCopy h1 { margin:0; font-size:26px; line-height:1.15; }
+.headerCopy p { margin:4px 0 0; }
+.companySelector { width:min(320px, 100%); }
+.toolbar { display:grid; grid-template-columns:minmax(240px,1fr) auto; gap:10px; align-items:end; }
+.filterButton { display:none; }
+.filters { display:flex; gap:8px; min-width:0; }
+.filters > * { min-width:180px; }
+.teamGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:10px; }
+.teamCard { display:grid; gap:10px; min-width:0; }
+.teamTitle { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.teamMeta { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.permissionHeader { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.permissionHeader h2 { margin:0; font-size:18px; }
+.permissionHeader p { margin:2px 0 0; }
+.bulkActions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+.taskGrid { display:grid; gap:12px; }
+.taskCard { display:grid; gap:14px; }
+.taskHeader { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.taskTitle { display:flex; align-items:flex-start; gap:10px; min-width:0; }
+.queueMeta { display:flex; flex-wrap:wrap; gap:8px; }
+.targetGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.targetButton { width:100%; }
+.selectGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.presetGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.preset { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.danger { border-color:var(--destructive, #d1242f); }
+.empty { text-align:center; padding:24px; }
+
+@media (max-width:767px) {
+  .page { gap:12px; }
+  .header { flex-direction:column; }
+  .headerCopy h1 { font-size:22px; }
+  .companySelector { width:100%; }
+  .toolbar { grid-template-columns:minmax(0,1fr) auto; }
+  .filterButton { display:block; }
+  .filters { display:none; grid-column:1 / -1; flex-direction:column; }
+  .filtersOpen { display:flex; }
+  .filters > * { min-width:0; width:100%; }
+  .teamGrid { grid-template-columns:1fr; }
+  .teamMeta { grid-template-columns:1fr; }
+  .permissionHeader { align-items:flex-start; flex-direction:column; }
+  .bulkActions { width:100%; justify-content:flex-start; }
+  .taskHeader { align-items:stretch; flex-direction:column; }
+  .targetGrid { grid-template-columns:1fr; }
+  .selectGrid, .presetGrid { grid-template-columns:1fr; }
+}

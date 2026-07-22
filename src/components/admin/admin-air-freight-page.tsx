@@ -39,10 +39,27 @@ import {
   type AirFreightTone,
 } from "@/lib/admin-air-freight-data";
 import styles from "./admin.module.css";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
+import { useAppearance } from "@/components/appearance/use-appearance";
 
-type AirFreightTab = "overview" | "shipments";
-type ShipmentFilter = "all" | AirFreightShipmentStatus;
-type ShipmentView = "list" | "table";
+export type AirFreightTab = "overview" | "shipments";
+export type ShipmentFilter = "all" | AirFreightShipmentStatus;
+export type ShipmentView = "list" | "table";
+
+export type AdminAirFreightModel = {
+  tab: AirFreightTab;
+  setTab: (tab: AirFreightTab) => void;
+  createOpen: boolean;
+  openCreate: () => void;
+  closeCreate: () => void;
+  query: string;
+  setQuery: (query: string) => void;
+  filter: ShipmentFilter;
+  setFilter: (filter: ShipmentFilter) => void;
+  view: ShipmentView;
+  setView: (view: ShipmentView) => void;
+  filteredShipments: typeof airFreightShipments;
+};
 
 const toneClasses: Record<AirFreightTone, { soft: string; text: string; border: string }> = {
   neutral: {
@@ -114,10 +131,12 @@ function HeaderActions({ onShowShipments }: { onShowShipments: () => void }) {
         type="button"
         className="button button-outline"
         disabled
-        title="Демо: складська операція не підтверджена як безпечна"
+        aria-describedby="air-warehouse-disabled-reason"
+        title="Складська операція недоступна: доступ лише для читання."
       >
         <Warehouse size={15} /> Склад
       </button>
+      <span id="air-warehouse-disabled-reason" className="sr-only">Складська операція недоступна: доступ лише для читання.</span>
     </div>
   );
 }
@@ -211,7 +230,7 @@ function AttentionAndEvents() {
             <strong className="block text-sm">28 Pending Consolidation</strong>
             <small className="mt-1 block text-[10px] text-[var(--muted-foreground)]">Orders with items awaiting supplier order creation</small>
           </span>
-          <button type="button" className="button button-outline shrink-0" disabled title="Демо: операційна дія вимкнена">Вирішити</button>
+          <button type="button" className="button button-outline shrink-0" disabled title="Операційна дія недоступна: доступ лише для читання.">Вирішити</button>
         </div>
       </div>
 
@@ -273,20 +292,8 @@ function ShipmentMetrics() {
   );
 }
 
-function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ShipmentFilter>("all");
-  const [view, setView] = useState<ShipmentView>("list");
-
-  const filteredShipments = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase("uk");
-    return airFreightShipments.filter((shipment) => {
-      if (filter !== "all" && shipment.status !== filter) return false;
-      if (!normalized) return true;
-      return `${shipment.awb} ${shipment.proforma} ${shipment.shipmentNumber}`.toLocaleLowerCase("uk").includes(normalized);
-    });
-  }, [filter, query]);
-
+function ShipmentsTab({ model }: { model: AdminAirFreightModel }) {
+  const { query, filter, view, filteredShipments } = model;
   return (
     <div
       id="air-freight-shipments-panel"
@@ -299,7 +306,7 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
         search={(
           <AdminSearchField
             value={query}
-            onValueChange={setQuery}
+            onValueChange={model.setQuery}
             label="Пошук постачань"
             placeholder="Пошук AWB, проформа, номер постачання..."
           />
@@ -308,7 +315,7 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
           <AdminSegmentedControl
             items={shipmentFilters}
             value={filter}
-            onValueChange={setFilter}
+            onValueChange={model.setFilter}
             label="Статус постачання"
           />
         )}
@@ -319,12 +326,12 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
               { id: "table", label: "Таблиця", icon: <Grid2X2 size={15} /> },
             ]}
             value={view}
-            onValueChange={setView}
+            onValueChange={model.setView}
             label="Вигляд постачань"
           />
         )}
         actions={(
-          <button type="button" className="button button-primary" onClick={onCreate}>
+          <button type="button" className="button button-primary" onClick={model.openCreate}>
             <Plus size={15} /> Нове постачання
           </button>
         )}
@@ -343,39 +350,77 @@ function ShipmentsTab({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function NewShipmentPreview({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NewShipmentPreview({ model, open }: { model: AdminAirFreightModel; open: boolean }) {
   return (
-    <Modal open={open} onClose={onClose} title="Нове постачання" className="w-[min(768px,100%)]">
+    <Modal open={open} onClose={model.closeCreate} title="Нове постачання" className="w-[min(768px,100%)]">
       <button
         type="button"
         disabled
-        title="Демо: вибір і завантаження файлів вимкнені"
+        aria-describedby="air-upload-disabled-reason"
+        title="Завантаження файлів недоступне: доступ лише для читання."
         className="flex min-h-40 w-full cursor-not-allowed flex-col items-center justify-center rounded-md border border-dashed border-[var(--faint)] bg-[var(--surface-subtle)] px-6 py-8 text-center opacity-80"
       >
         <Upload size={30} className="mb-3 text-[var(--muted-foreground)]" />
         <strong className="text-sm font-medium text-[var(--muted-foreground)]">Перетягніть PDF файли сюди або натисніть для завантаження</strong>
         <span className="mt-2 max-w-xl text-[10px] leading-relaxed text-[var(--faint)]">Для авіа-постачання потрібен AWB. Ocean/митні файли ведуться у морській доставці та документообігу.</span>
       </button>
+      <span id="air-upload-disabled-reason" className="sr-only">Завантаження файлів недоступне: доступ лише для читання.</span>
     </Modal>
   );
 }
 
-export function AdminAirFreightPage() {
+function useAdminAirFreightModel(): AdminAirFreightModel {
   const [tab, setTab] = useState<AirFreightTab>("overview");
   const [createOpen, setCreateOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<ShipmentFilter>("all");
+  const [view, setView] = useState<ShipmentView>("list");
+  const filteredShipments = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("uk");
+    return airFreightShipments.filter((shipment) => {
+      if (filter !== "all" && shipment.status !== filter) return false;
+      if (!normalized) return true;
+      return `${shipment.awb} ${shipment.proforma} ${shipment.shipmentNumber}`.toLocaleLowerCase("uk").includes(normalized);
+    });
+  }, [filter, query]);
 
+  return {
+    tab, setTab, createOpen, openCreate: () => setCreateOpen(true), closeCreate: () => setCreateOpen(false),
+    query, setQuery, filter, setFilter, view, setView, filteredShipments,
+  };
+}
+
+function CurrentAdminAirFreightView({ model }: { model: AdminAirFreightModel }) {
+  const { renderedDesignSystem } = useAppearance();
   return (
+    <div data-brp-admin-procurement-renderer="shadcn" className="w-full">
     <AdminPage>
       <AdminPageHeader
         icon={<Plane size={21} />}
         title="Air Freight"
         description="Контролюйте замовлення постачальникам, постачання, приймання на склад, нестачі та передачу дилерам в одному робочому екрані."
-        actions={<HeaderActions onShowShipments={() => setTab("shipments")} />}
+        actions={<HeaderActions onShowShipments={() => model.setTab("shipments")} />}
       />
 
-      <AirFreightTabs active={tab} onChange={setTab} />
-      {tab === "overview" ? <OverviewTab /> : <ShipmentsTab onCreate={() => setCreateOpen(true)} />}
-      <NewShipmentPreview open={createOpen} onClose={() => setCreateOpen(false)} />
+      <AirFreightTabs active={model.tab} onChange={model.setTab} />
+      {model.tab === "overview" ? <OverviewTab /> : <ShipmentsTab model={model} />}
+      <NewShipmentPreview model={model} open={renderedDesignSystem === "shadcn" && model.createOpen} />
     </AdminPage>
+    </div>
+  );
+}
+
+const loadAstryxAdminAirFreightView = () => import("./astryx-admin-air-freight-view")
+  .then((module) => ({ default: module.AstryxAdminAirFreightView }));
+
+export function AdminAirFreightPage() {
+  const model = useAdminAirFreightModel();
+  return (
+    <RendererViewSwitch
+      slotId="admin-air-freight"
+      currentView={<CurrentAdminAirFreightView model={model} />}
+      loadAstryxView={loadAstryxAdminAirFreightView}
+      astryxViewProps={{ model }}
+    />
   );
 }

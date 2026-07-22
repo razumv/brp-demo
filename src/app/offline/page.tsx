@@ -1,32 +1,36 @@
 "use client";
 
-import { useEffect } from "react";
-import { RefreshCw, WifiOff } from "lucide-react";
-import { publicAssetPath } from "@/lib/public-base-path";
-import styles from "./offline.module.css";
+import {useCallback, useEffect} from "react";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
+import {CurrentBrpUiProvider} from "@/components/brp-ui/current-brp-ui-provider";
+import {CurrentOfflineView} from "./current-offline-view";
+import type {AstryxOfflineViewProps} from "./astryx-offline-view";
+
+const loadAstryxOfflineView = () => import("./astryx-offline-view");
 
 export default function OfflinePage() {
+  const retry = useCallback(() => window.location.reload(), []);
+
   useEffect(() => {
-    const reloadWhenOnline = () => window.location.reload();
-    window.addEventListener("online", reloadWhenOnline);
-    return () => window.removeEventListener("online", reloadWhenOnline);
-  }, []);
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [retry]);
+
+  const viewProps: AstryxOfflineViewProps = {
+    homeHref: "/",
+    onRetry: retry,
+  };
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card} aria-labelledby="offline-title">
-        <span className={styles.icon} aria-hidden="true"><WifiOff size={30} /></span>
-        <p className={styles.eyebrow}>BRP Parts Catalog</p>
-        <h1 id="offline-title">Немає з’єднання</h1>
-        <p className={styles.copy}>Перевірте інтернет і спробуйте ще раз. Сторінка автоматично оновиться після відновлення з’єднання.</p>
-        <div className={styles.actions}>
-          <button type="button" onClick={() => window.location.reload()}>
-            <RefreshCw size={16} aria-hidden="true" />
-            Спробувати знову
-          </button>
-          <a href={publicAssetPath("/")}>На головну</a>
-        </div>
-      </section>
-    </main>
+    <RendererViewSwitch
+      astryxViewProps={viewProps}
+      currentView={(
+        <CurrentBrpUiProvider>
+          <CurrentOfflineView {...viewProps} />
+        </CurrentBrpUiProvider>
+      )}
+      loadAstryxView={loadAstryxOfflineView}
+      slotId="offline-screen"
+    />
   );
 }

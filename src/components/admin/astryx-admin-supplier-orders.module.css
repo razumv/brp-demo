@@ -1,0 +1,30 @@
+.page { display: grid; gap: 1.25rem; color: var(--color-text-primary); }
+.header { display: flex; align-items: flex-start; gap: .75rem; }
+.header h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+.header p { margin: .35rem 0 0; color: var(--color-text-secondary); font-size: .875rem; }
+.headerIcon { display: grid; flex: 0 0 auto; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-element); color: var(--color-text-info); background: var(--color-background-blue); }
+.kpiGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.kpi { padding: 0 !important; overflow: hidden; }
+.kpiSelected { outline: 2px solid var(--color-border-focus); outline-offset: 1px; }
+.kpi button { display: grid; width: 100%; gap: .5rem; padding: 1rem; text-align: left; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.kpi span { color: var(--color-text-secondary); font-size: .75rem; font-weight: 600; }
+.kpi strong { font-size: 1.55rem; line-height: 1; }
+.toolbar { display: grid; grid-template-columns: minmax(14rem, 1fr) auto minmax(12rem, 14rem); gap: .75rem; align-items: end; }
+.panel { min-height: 10rem; }
+.calendarGrid { display: grid; grid-template-columns: repeat(2, minmax(13rem, 1fr)); gap: 1.25rem; }
+.calendarTitle { margin: 0 0 .75rem; text-align: center; font-size: .875rem; }
+.calendarDays { display: grid; grid-template-columns: repeat(7, 1fr); gap: .2rem; text-align: center; }
+.calendarDays > span { min-height: 1.6rem; color: var(--color-text-secondary); font-size: .7rem; }
+.calendarDay { min-width: 1.8rem; min-height: 1.8rem; border: 0; border-radius: var(--radius-element); color: inherit; background: transparent; cursor: pointer; }
+.calendarDay:hover { background: var(--color-background-muted); }
+.calendarDaySelected { color: var(--color-text-on-primary); background: var(--color-background-primary); }
+.calendarDayRange { color: var(--color-text-info); background: var(--color-background-blue); }
+.emptyState { display: grid; min-height: 16rem; place-items: center; align-content: center; text-align: center; color: var(--color-text-secondary); }
+.emptyState h2 { margin: .75rem 0 0; color: var(--color-text-primary); font-size: 1rem; }
+.emptyState p { margin: .45rem 0 0; }
+.exceptionFilters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+.exceptionList { display: grid; gap: .75rem; }
+.exception { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: .75rem; align-items: center; }
+.exception p { margin: .25rem 0 0; color: var(--color-text-secondary); font-size: .8rem; }
+.exception a { color: var(--color-text-link); font-weight: 600; }
+@media (max-width: 760px) { .kpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .toolbar { grid-template-columns: 1fr; } .calendarGrid { grid-template-columns: 1fr; } .exception { grid-template-columns: auto minmax(0, 1fr); } .exception :global(.astryx-badge), .exception a { grid-column: 2; } }

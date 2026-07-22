@@ -241,9 +241,9 @@ test("users expose mobile cards and preserve desktop grid", async ({ page }) => 
   await expectInactiveSurface(desktopGrid);
   await expect(page.getByRole("list", { name: "Активні користувачі" })).toHaveCount(1);
   await expect(page.getByRole("grid", { name: "Активні користувачі" })).toHaveCount(0);
-  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("demo-account");
-  const card = mobileCards.getByRole("listitem").filter({ hasText: "demo-account-03" });
-  await expect(card).toContainText("Демо-користувач 03");
+  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("account");
+  const card = mobileCards.getByRole("listitem").filter({ hasText: "account-03" });
+  await expect(card).toContainText("Користувач 03");
   await expect(card.getByRole("button", { name: /Редагувати/ })).toBeVisible();
   const mobileUserIds = await recordIds(mobileCards, 'li[data-record-id]');
   expect(mobileUserIds.length).toBeGreaterThan(1);
@@ -254,7 +254,7 @@ test("users expose mobile cards and preserve desktop grid", async ({ page }) => 
   await expect(desktopGrid).toBeVisible();
   await expect(page.getByRole("list", { name: "Активні користувачі" })).toHaveCount(0);
   await expect(page.getByRole("grid", { name: "Активні користувачі" })).toHaveCount(1);
-  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("demo-account");
+  await page.getByRole("textbox", { name: "Пошук користувачів" }).fill("account");
   const desktopUserIds = await recordIds(desktopGrid, '[role="row"][data-record-id]');
   expect(desktopUserIds).toHaveLength(mobileUserIds.length);
   expect(desktopUserIds).toEqual(mobileUserIds);

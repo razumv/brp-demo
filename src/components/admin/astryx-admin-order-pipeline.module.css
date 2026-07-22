@@ -1,0 +1,318 @@
+.page {
+  display: grid;
+  gap: 20px;
+  margin-inline: auto;
+  max-width: 1184px;
+  min-width: 0;
+  padding-block: 24px;
+}
+
+.header,
+.headerTitle,
+.availability,
+.toolbar,
+.filterGroup,
+.viewGroup,
+.summary,
+.summaryCard,
+.list,
+.listGroup,
+.listGroupHeader,
+.orderList,
+.orderRow,
+.orderIdentity,
+.orderProgress,
+.orderBadges,
+.kanban,
+.kanbanColumn,
+.kanbanCard,
+.kanbanHeader,
+.queueHeader,
+.pagination,
+.periodFooter,
+.periodGrid {
+  min-width: 0;
+}
+
+.header,
+.headerTitle,
+.availability,
+.toolbar,
+.filterGroup,
+.viewGroup,
+.summary,
+.summaryCard,
+.list,
+.listGroup,
+.listGroupHeader,
+.orderList,
+.orderRow,
+.orderIdentity,
+.orderProgress,
+.orderBadges,
+.kanban,
+.kanbanColumn,
+.kanbanCard,
+.kanbanHeader,
+.queueHeader,
+.pagination,
+.periodFooter,
+.periodGrid {
+  display: flex;
+}
+
+.header,
+.availability,
+.toolbar,
+.filterGroup,
+.viewGroup,
+.list,
+.listGroup,
+.orderList,
+.kanbanColumn,
+.kanbanCard {
+  gap: 12px;
+}
+
+.header,
+.availability,
+.toolbar,
+.list,
+.listGroup,
+.orderList,
+.kanbanColumn,
+.kanbanCard {
+  flex-direction: column;
+}
+
+.header {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.headerTitle {
+  align-items: center;
+  gap: 10px;
+}
+
+.availability,
+.toolbar,
+.pagination,
+.queueHeader {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.availability {
+  flex-direction: row;
+}
+
+.toolbar {
+  align-items: stretch;
+}
+
+.search {
+  flex: 1 1 420px;
+  min-width: min(100%, 280px);
+}
+
+.astryxToolbar {
+  width: 100%;
+}
+
+.filterGroup,
+.viewGroup {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.summaryCard {
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 82px;
+}
+
+.summaryCount {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.listGroupHeader {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.groupButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 8px;
+  padding: 0;
+  text-align: start;
+}
+
+.groupButton:focus-visible,
+.orderRow:focus-visible,
+.kanbanLink:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--color-border-accent, var(--blue));
+  outline-offset: 3px;
+}
+
+.orderRow {
+  border-block-start: 1px solid var(--color-border-default, var(--border));
+  color: inherit;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(72px, 0.6fr) minmax(160px, 1.8fr) minmax(80px, 0.8fr) minmax(80px, 0.7fr) minmax(86px, 0.7fr) minmax(150px, 1fr);
+  padding-block: 12px;
+  text-decoration: none;
+}
+
+.orderIdentity {
+  align-items: center;
+  display: contents;
+}
+
+.orderSubline {
+  display: block;
+  margin-top: 2px;
+}
+
+.orderProgress {
+  align-items: center;
+  gap: 8px;
+}
+
+.progressTrack {
+  background: var(--color-background-muted, var(--surface-subtle));
+  border-radius: 99px;
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+}
+
+.progressFill {
+  background: var(--color-background-accent, var(--blue));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.progress0 { width: 0; }
+.progress12 { width: 12%; }
+.progress25 { width: 25%; }
+.progress50 { width: 50%; }
+.progress75 { width: 75%; }
+.progress100 { width: 100%; }
+
+.orderBadges {
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.kanban {
+  display: grid;
+  gap: 12px;
+  grid-auto-columns: minmax(244px, 1fr);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.kanbanHeader {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanbanLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.kanbanMeta,
+.periodFooter {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.kanbanProgress {
+  margin-top: 12px;
+}
+
+.periodGrid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.calendarHeading {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.calendarDay {
+  align-items: center;
+  aspect-ratio: 1;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.calendarDay:hover,
+.calendarDaySelected {
+  background: var(--color-background-accent, var(--orange));
+  color: var(--color-text-on-accent, white);
+}
+
+.calendarDayMuted { opacity: 0.45; }
+
+.periodFooter { border-top: 1px solid var(--color-border-default, var(--border)); margin-top: 16px; padding-top: 12px; }
+.periodActions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.queueHeader { gap: 16px; }
+.queueCopy { display: grid; gap: 4px; }
+.disabledReason { margin-top: 8px; }
+
+@media (max-width: 767px) {
+  .page { gap: 16px; padding-block: 16px; }
+  .availability, .toolbar, .pagination, .queueHeader { align-items: stretch; flex-direction: column; }
+  .filterGroup, .viewGroup { width: 100%; }
+  .viewGroup > * { flex: 1 1 100%; }
+  .summary { display: none; }
+  .orderRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .orderRow > :nth-child(3), .orderRow > :nth-child(4) { display: none; }
+  .orderRow > :nth-child(5) { text-align: end; }
+  .orderRow > :nth-child(6) { grid-column: 1 / -1; }
+  .orderBadges { justify-content: flex-start; }
+  .periodGrid { grid-template-columns: 1fr; }
+}

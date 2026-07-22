@@ -1,0 +1,61 @@
+.canvas {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  place-items: center;
+  background: var(--color-background-canvas, var(--background));
+}
+
+.card {
+  width: min(100%, 432px);
+  box-shadow: var(--shadow-card);
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.header {
+  display: grid;
+  gap: 7px;
+  padding: 24px 24px 4px;
+}
+
+.body {
+  display: grid;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.headerIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--color-background-orange, var(--orange-soft));
+  color: var(--color-text-orange, var(--orange));
+}
+
+.passwordField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .canvas {
+    padding: 16px;
+  }
+
+  .header {
+    padding: 20px 18px 2px;
+  }
+
+  .body {
+    padding: 0 18px 20px;
+  }
+}

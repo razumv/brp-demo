@@ -76,11 +76,11 @@ export const partsReportPeriodPresets = [
 
 export const syntheticManagerOptions = [
   { id: "all", label: "Усі менеджери", identity: "synthetic-display-only" },
-  { id: "demo-manager-1", label: "Демо-менеджер 1", identity: "synthetic-display-only" },
-  { id: "demo-manager-2", label: "Демо-менеджер 2", identity: "synthetic-display-only" },
-  { id: "demo-manager-3", label: "Демо-менеджер 3", identity: "synthetic-display-only" },
-  { id: "demo-manager-4", label: "Демо-менеджер 4", identity: "synthetic-display-only" },
-  { id: "demo-manager-5", label: "Демо-менеджер 5", identity: "synthetic-display-only" },
+  { id: "demo-manager-1", label: "Менеджер 1", identity: "synthetic-display-only" },
+  { id: "demo-manager-2", label: "Менеджер 2", identity: "synthetic-display-only" },
+  { id: "demo-manager-3", label: "Менеджер 3", identity: "synthetic-display-only" },
+  { id: "demo-manager-4", label: "Менеджер 4", identity: "synthetic-display-only" },
+  { id: "demo-manager-5", label: "Менеджер 5", identity: "synthetic-display-only" },
 ] as const satisfies readonly SyntheticManagerOption[];
 
 export const initialPartsReportFilter: PartsReportFilter = {
@@ -104,7 +104,7 @@ export const partsReportOrders = [
     status: "new",
     date: "18.07.2026, 01:40",
     dealer: "Logos",
-    placedBy: "Демо-оператор",
+    placedBy: "Оператор",
     placedByIdentity: "synthetic-display-only",
     manager: "Не указан",
     positions: 1,

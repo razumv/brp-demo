@@ -4,21 +4,23 @@ import {
   CalendarDays,
   Check,
   FileClock,
-  LockKeyhole,
   Plus,
   Wrench,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
+import { ukrainianCount } from "@/lib/dealer/format";
 import {
+  filterWorkshopOrders,
   getWorkshopColumnCounts,
   groupWorkshopOrders,
   workshopStages,
-  workshopTransitionCapability,
   workshopTypeLabels,
 } from "@/lib/dealer/workshop-data";
-import type { WorkshopOrderInput } from "@/lib/types";
+import type { WorkshopOrder, WorkshopOrderInput } from "@/lib/types";
 import { formatDateTime } from "../common";
 import dealerStyles from "../dealer.module.css";
 import operationalStyles from "./operational-features.module.css";
@@ -49,8 +51,21 @@ export function WorkshopPage() {
   const [form, setForm] = useState<WorkshopOrderInput>(() => emptyWorkshopForm(firstCustomerId));
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const counts = useMemo(() => getWorkshopColumnCounts(snapshot.workshopOrders), [snapshot.workshopOrders]);
-  const groups = useMemo(() => groupWorkshopOrders(snapshot.workshopOrders), [snapshot.workshopOrders]);
+  const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState<"all" | WorkshopOrder["status"]>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | WorkshopOrder["type"]>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filteredOrders = useMemo(() => filterWorkshopOrders(
+    snapshot.workshopOrders,
+    snapshot.customers,
+    {
+      query,
+      stages: stageFilter === "all" ? [] : [stageFilter],
+      types: typeFilter === "all" ? [] : [typeFilter],
+    },
+  ), [query, snapshot.customers, snapshot.workshopOrders, stageFilter, typeFilter]);
+  const counts = useMemo(() => getWorkshopColumnCounts(filteredOrders), [filteredOrders]);
+  const groups = useMemo(() => groupWorkshopOrders(filteredOrders), [filteredOrders]);
   const customerById = useMemo(
     () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
     [snapshot.customers],
@@ -70,9 +85,13 @@ export function WorkshopPage() {
       notes: form.notes.trim(),
     });
     if (!result.ok) {
-      setError(result.kind === "validation-error"
-        ? result.issues[0]?.message ?? "Не вдалося створити замовлення-наряд."
-        : "Не вдалося створити замовлення-наряд.");
+      if (result.kind === "validation-error") {
+        setError(result.issues[0]?.message ?? "Не вдалося створити замовлення-наряд.");
+      } else if (result.kind === "local-error") {
+        setError(result.message);
+      } else {
+        setError("Не вдалося створити замовлення-наряд.");
+      }
       return;
     }
     setForm(emptyWorkshopForm(form.customerId));
@@ -85,19 +104,17 @@ export function WorkshopPage() {
     <FeatureFrame
       feature="workshop"
       action={(
-        <button
-          type="button"
-          className="button button-primary"
+        <BrpButton
+          label="Нове замовлення-наряд"
+          icon={<Plus size={15} />}
           disabled={!snapshot.customers.length}
-          onClick={() => {
+          onPress={() => {
             setForm((current) => ({ ...current, customerId: current.customerId || firstCustomerId }));
             setError("");
             setConfirmation("");
             setOpen(true);
           }}
-        >
-          <Plus size={15} /> Нове замовлення-наряд
-        </button>
+        />
       )}
     >
       {confirmation ? <p className={operationalStyles.successMessage} role="status">{confirmation}</p> : null}
@@ -117,17 +134,47 @@ export function WorkshopPage() {
         })}
       </section>
 
-      <div className={operationalStyles.lockedNotice} role="note">
-        <LockKeyhole size={16} aria-hidden="true" />
-        <span id="workshop-transition-reason">{workshopTransitionCapability.reason}</span>
-        <button
-          type="button"
-          className="button button-outline"
-          disabled
-          aria-describedby="workshop-transition-reason"
-        >
-          Зміна статусу недоступна
-        </button>
+      <div className={operationalStyles.workshopToolbar}>
+        <DealerDataToolbar
+          search={{
+            value: query,
+            onValueChange: setQuery,
+            label: "Пошук у майстерні",
+            placeholder: "Опис, клієнт, механік або нотатки…",
+          }}
+          filters={{
+            label: "Фільтри майстерні",
+            activeCount: Number(stageFilter !== "all") + Number(typeFilter !== "all"),
+            open: filtersOpen,
+            onOpenChange: setFiltersOpen,
+            panelId: "workshop-filters",
+            content: (
+              <>
+                <BrpSelect
+                  label="Етап"
+                  value={stageFilter}
+                  onValueChange={(value) => setStageFilter(value as "all" | WorkshopOrder["status"])}
+                  options={[{ value: "all", label: "Усі етапи" }, ...workshopStages.map((stage) => ({ value: stage.id, label: stage.label }))]}
+                />
+                <BrpSelect
+                  label="Тип роботи"
+                  value={typeFilter}
+                  onValueChange={(value) => setTypeFilter(value as "all" | WorkshopOrder["type"])}
+                  options={[{ value: "all", label: "Усі типи" }, ...Object.entries(workshopTypeLabels).map(([value, label]) => ({ value, label }))]}
+                />
+              </>
+            ),
+            onClear: () => {
+              setStageFilter("all");
+              setTypeFilter("all");
+            },
+          }}
+          resultMeta={(
+            <span data-testid="workshop-result-count">
+              {ukrainianCount(filteredOrders.length, ["замовлення", "замовлення", "замовлень"])}
+            </span>
+          )}
+        />
       </div>
 
       <div className={`${dealerStyles.workshopBoard} ${operationalStyles.workshopBoard}`}>
@@ -144,7 +191,7 @@ export function WorkshopPage() {
               {orders.length ? (
                 <div className={operationalStyles.workshopOrderList}>
                   {orders.map((order) => (
-                    <article className={operationalStyles.workshopOrder} key={order.id}>
+                    <article className={operationalStyles.workshopOrder} draggable={false} key={order.id}>
                       <StatusBadge tone={stage.tone}>{workshopTypeLabels[order.type]}</StatusBadge>
                       <h3>{order.description}</h3>
                       <p>{customerById.get(order.customerId)?.name ?? "Клієнта не знайдено"}</p>

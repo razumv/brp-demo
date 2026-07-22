@@ -150,12 +150,12 @@ export const oneCIntegrationKpis = [
   { id: "positions", label: "Усього позицій", value: 262, helper: "Записи експорту за весь час", tone: "blue" },
 ] as const satisfies readonly OneCKpi[];
 
-const exportDealers = ["Logos", "Сервісний дилер A", "Демо-дилер Київ", "Демо-дилер Південь", "Демо-дилер Центр"] as const;
+const exportDealers = ["Logos", "Сервісний дилер A", "BRP Київ", "BRP Південь", "BRP Центр"] as const;
 
 export const oneCExportHistory: readonly OneCExportRow[] = Array.from({ length: 262 }, (_, index) => ({
   id: `export-demo-${String(index + 1).padStart(3, "0")}`,
   orderCode: index === 0 ? "LOG-01" : `EXP-${String(index + 1).padStart(3, "0")}`,
-  partNumber: index === 0 ? "9779150" : `DEMO-${String(2_000_000 + index)}`,
+  partNumber: index === 0 ? "9779150" : `PART-${String(2_000_000 + index)}`,
   quantity: (index % 4) + 1,
   dealer: exportDealers[index % exportDealers.length],
   status: "Очікує",
@@ -222,9 +222,9 @@ export const representative4WTJUnits: readonly UnitMappingRecord[] = Array.from(
   const linked = index < 32;
   return {
     id: `unit-4wtj-demo-${String(index + 1).padStart(3, "0")}`,
-    vin: `DEMO4WTJ${String(index + 1).padStart(9, "0")}`,
-    engineCode: `MR-DEMO-${String(8_000_000 + index)}`,
-    nomenclature: linked ? `Номенклатура 1С · демо ${String(index + 1).padStart(2, "0")}` : null,
+    vin: `4WTJ${String(index + 1).padStart(13, "0")}`,
+    engineCode: `MR-${String(8_000_000 + index)}`,
+    nomenclature: linked ? `Номенклатура 1С · ${String(index + 1).padStart(2, "0")}` : null,
     state: linked ? "linked" : "pending",
   };
 });
@@ -260,7 +260,7 @@ export const dealerMappingRows: readonly DealerMappingRow[] = dealerMappingBluep
   connections: Array.from({ length: count }, (_, connectionIndex) => ({
     id: `dealer-${dealerIndex + 1}-connection-${connectionIndex + 1}`,
     category: connectionCategories[connectionIndex % connectionCategories.length],
-    label: `Синтетичний контрагент ${dealerIndex + 1}.${connectionIndex + 1}`,
+    label: `Контрагент ${dealerIndex + 1}.${connectionIndex + 1}`,
     identity: "synthetic-display-only",
   })),
 }));
@@ -285,14 +285,14 @@ export const representativeBossWebPositions = [
   { position: 1000, partNumber: "715010164", description: "ARM_SUSPENSION LWR L B-450 ASSY", ordered: 1, backordered: 0, shipped: 0 },
   { position: 1100, partNumber: "715010170", description: "KNUCKLE FL ASSY", ordered: 1, backordered: 0, shipped: 0 },
   { position: 1200, partNumber: "715010171", description: "KNUCKLE FR ASSY", ordered: 1, backordered: 0, shipped: 0 },
-  { position: 1300, partNumber: "DEMO-POS-13", description: "REPRESENTATIVE POSITION 13", ordered: 1, backordered: 0, shipped: 0 },
+  { position: 1300, partNumber: "POSITION-13", description: "REPRESENTATIVE POSITION 13", ordered: 1, backordered: 0, shipped: 0 },
 ].map((position, index) => ({ ...position, id: `boss-position-demo-${index + 1}`, eta: "—" })) satisfies readonly BossWebOrderPosition[];
 
 export const bossWebOrders: readonly BossWebOrderRow[] = Array.from({ length: 200 }, (_, index) => ({
   id: `boss-order-demo-${String(index + 1).padStart(3, "0")}`,
-  orderNumber: `BW-DEMO-${String(index + 1).padStart(4, "0")}`,
+  orderNumber: `BW-${String(index + 1).padStart(4, "0")}`,
   date: `${String(15 - (index % 12)).padStart(2, "0")}.07.2026`,
-  customerOrder: `DEMO-${index % 3 === 0 ? "AIR" : "REG"}-${String(index + 1).padStart(4, "0")}`,
+  customerOrder: `${index % 3 === 0 ? "AIR" : "REG"}-${String(index + 1).padStart(4, "0")}`,
   type: "Regular",
   status: index < 25 ? "Not Delivered" : "Totally Delivered",
   linkedSalesOrder: null,
@@ -302,8 +302,8 @@ export const bossWebOrders: readonly BossWebOrderRow[] = Array.from({ length: 20
 
 export const bossWebMatchingRows: readonly BossWebMatchingRow[] = Array.from({ length: 232 }, (_, index) => ({
   id: `boss-match-demo-${String(index + 1).padStart(3, "0")}`,
-  orderNumber: `BW-MATCH-DEMO-${String(index + 1).padStart(4, "0")}`,
-  customerOrder: `DEMO-CUSTOMER-${String(index + 1).padStart(4, "0")}`,
+  orderNumber: `BW-MATCH-${String(index + 1).padStart(4, "0")}`,
+  customerOrder: `CUSTOMER-${String(index + 1).padStart(4, "0")}`,
   status: index < 25 ? "Not Delivered" : "Totally Delivered",
 }));
 

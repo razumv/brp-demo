@@ -26,6 +26,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import {
   AdminIconAction,
   AdminKpiGrid,
@@ -62,6 +63,8 @@ import {
   type InvoiceTabId,
 } from "@/lib/admin-invoices-data";
 
+const loadAstryxAdminInvoicesView = () => import("./astryx-admin-invoices-view");
+
 const tabItems: ReadonlyArray<{ id: InvoiceTabId; label: string; icon: typeof FileText }> = [
   { id: "contracts", label: "Контракти", icon: FileText },
   { id: "appendices", label: "Додатки", icon: FileText },
@@ -75,12 +78,54 @@ const uploadLabels: Partial<Record<InvoiceTabId, string>> = {
   cost: "Завантажити документи",
 };
 
+const uploadLockedReasons: Partial<Record<InvoiceTabId, string>> = {
+  appendices: "Потрібне підключення сервісу документів",
+  invoices: "Потрібна інтеграція імпорту VIN з 1С",
+  cost: "Потрібне підключення сервісу документів",
+};
+
 const pageKpiIcons = {
   shipments: FileText,
   ready: Clock3,
   missing: AlertTriangle,
   formed: CheckCircle2,
 } as const;
+
+export type InvoiceSummaryPreview =
+  | { kind: "shipment"; item: InvoiceShipmentGroup }
+  | { kind: "formed"; item: FormedInvoice }
+  | null;
+
+export type AdminInvoicesViewProps = {
+  tab: InvoiceTabId;
+  contractsCreating: boolean;
+  contractsQuery: string;
+  selectedContract: InvoiceContract | null;
+  appendicesQuery: string;
+  selectedAppendix: InvoiceAppendix | null;
+  invoiceQuery: string;
+  invoiceFilter: InvoiceShipmentFilter;
+  invoicePreview: InvoiceSummaryPreview;
+  costView: InvoiceCostView;
+  costQuery: string;
+  costMonthMenuOpen: boolean;
+  selectedMonths: readonly InvoiceCostMonthId[];
+  selectedCostCard: InvoiceCostCard | null;
+  onTabChange: (tab: InvoiceTabId) => void;
+  onContractsCreatingChange: (creating: boolean) => void;
+  onContractsQueryChange: (query: string) => void;
+  onSelectedContractChange: (contract: InvoiceContract | null) => void;
+  onAppendicesQueryChange: (query: string) => void;
+  onSelectedAppendixChange: (appendix: InvoiceAppendix | null) => void;
+  onInvoiceQueryChange: (query: string) => void;
+  onInvoiceFilterChange: (filter: InvoiceShipmentFilter) => void;
+  onInvoicePreviewChange: (preview: InvoiceSummaryPreview) => void;
+  onCostViewChange: (view: InvoiceCostView) => void;
+  onCostQueryChange: (query: string) => void;
+  onCostMonthMenuOpenChange: (open: boolean) => void;
+  onSelectedMonthsChange: (months: readonly InvoiceCostMonthId[]) => void;
+  onSelectedCostCardChange: (card: InvoiceCostCard | null) => void;
+};
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
@@ -192,7 +237,7 @@ function NewContractPreview({ onClose }: { onClose: () => void }) {
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
           <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
-          <LockedButton className="button-primary" title="Створення контракту вимкнене у read-only клоні">Створити контракт</LockedButton>
+          <LockedButton className="button-primary" title="Потрібне підключення реєстру договорів для запису">Створити контракт</LockedButton>
         </div>
       </div>
     </Panel>
@@ -241,21 +286,18 @@ function ContractDetailModal({ contract, onClose }: { contract: InvoiceContract 
   );
 }
 
-function ContractsTab() {
-  const [creating, setCreating] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedContract, setSelectedContract] = useState<InvoiceContract | null>(null);
+function ContractsTab(props: Pick<AdminInvoicesViewProps, "contractsCreating" | "contractsQuery" | "selectedContract" | "onContractsCreatingChange" | "onContractsQueryChange" | "onSelectedContractChange">) {
 
   const visibleContracts = useMemo(() => {
-    const needle = normalize(query);
+    const needle = normalize(props.contractsQuery);
     if (!needle) return invoiceContracts;
     return invoiceContracts.filter((contract) => normalize(`${contract.shortNumber} ${contract.supplier} ${contract.buyer}`).includes(needle));
-  }, [query]);
+  }, [props.contractsQuery]);
 
-  if (creating) {
+  if (props.contractsCreating) {
     return (
       <section id="invoices-contracts-panel" role="tabpanel" aria-labelledby="invoices-contracts-panel-tab">
-        <NewContractPreview onClose={() => setCreating(false)} />
+        <NewContractPreview onClose={() => props.onContractsCreatingChange(false)} />
       </section>
     );
   }
@@ -268,15 +310,15 @@ function ContractsTab() {
       </div>
 
       <AdminToolbar
-        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук контрактів" placeholder="Пошук номера, постачальника або покупця..." />}
-        actions={<button type="button" className="button button-primary" onClick={() => setCreating(true)}><Plus size={15} /> Новий контракт</button>}
+        search={<AdminSearchField value={props.contractsQuery} onValueChange={props.onContractsQueryChange} label="Пошук контрактів" placeholder="Пошук номера, постачальника або покупця..." />}
+        actions={<button type="button" className="button button-primary" onClick={() => props.onContractsCreatingChange(true)}><Plus size={15} /> Новий контракт</button>}
         meta={<span className="hidden md:inline">{visibleContracts.length} з {invoiceContracts.length}</span>}
       />
 
       <div className="grid gap-3">
         {visibleContracts.map((contract) => (
           <Panel key={contract.id} as="article" className="flex min-h-[74px] flex-col gap-3 border-[#b7dfbf] bg-[var(--green-soft)] p-4 shadow-none sm:flex-row sm:items-center">
-            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => setSelectedContract(contract)} aria-haspopup="dialog">
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => props.onSelectedContractChange(contract)} aria-haspopup="dialog">
               <ChevronRight size={15} className="shrink-0 text-[var(--muted-foreground)]" />
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-2">
@@ -287,10 +329,10 @@ function ContractsTab() {
               </span>
             </button>
             <div className="flex flex-wrap gap-1 sm:justify-end" aria-label={`Дії контракту ${contract.shortNumber}`}>
-              <AdminIconAction label={`Переглянути контракт ${contract.shortNumber}`} tooltip="Безпечний перегляд реквізитів" icon={<Eye size={14} />} tone="primary" onClick={() => setSelectedContract(contract)} />
-              <AdminIconAction label={`Редагувати контракт ${contract.shortNumber}`} tooltip="Редагування вимкнене у read-only клоні" icon={<Pencil size={14} />} disabled />
-              <AdminIconAction label={`Дублювати контракт ${contract.shortNumber}`} tooltip="Дублювання вимкнене у read-only клоні" icon={<Copy size={14} />} disabled />
-              <AdminIconAction label={`Видалити контракт ${contract.shortNumber}`} tooltip="Видалення вимкнене у read-only клоні" icon={<Trash2 size={14} />} tone="danger" disabled />
+              <AdminIconAction label={`Переглянути контракт ${contract.shortNumber}`} tooltip="Безпечний перегляд реквізитів" icon={<Eye size={14} />} tone="primary" onClick={() => props.onSelectedContractChange(contract)} />
+              <AdminIconAction label={`Редагувати контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для змін" icon={<Pencil size={14} />} disabled />
+              <AdminIconAction label={`Дублювати контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для створення копії" icon={<Copy size={14} />} disabled />
+              <AdminIconAction label={`Видалити контракт ${contract.shortNumber}`} tooltip="Потрібне підключення реєстру договорів для видалення" icon={<Trash2 size={14} />} tone="danger" disabled />
             </div>
           </Panel>
         ))}
@@ -298,7 +340,7 @@ function ContractsTab() {
           <EmptyState compact title="Контрактів не знайдено" description="Змініть номер, постачальника або покупця у пошуку." icon={<FileText size={24} />} />
         ) : null}
       </div>
-      <ContractDetailModal contract={selectedContract} onClose={() => setSelectedContract(null)} />
+      <ContractDetailModal contract={props.selectedContract} onClose={() => props.onSelectedContractChange(null)} />
     </section>
   );
 }
@@ -397,20 +439,18 @@ function AppendixKpis() {
   );
 }
 
-function AppendicesTab() {
-  const [query, setQuery] = useState("");
-  const [selectedAppendix, setSelectedAppendix] = useState<InvoiceAppendix | null>(null);
+function AppendicesTab(props: Pick<AdminInvoicesViewProps, "appendicesQuery" | "selectedAppendix" | "onAppendicesQueryChange" | "onSelectedAppendixChange">) {
   const visibleAppendices = useMemo(() => {
-    const needle = normalize(query);
+    const needle = normalize(props.appendicesQuery);
     if (!needle) return invoiceAppendices;
     return invoiceAppendices.filter((appendix) => normalize(`${appendix.name} ${appendix.date} ${appendix.composition} ${appendix.shipment} ${appendix.contractNumber} ${appendix.amount}`).includes(needle));
-  }, [query]);
+  }, [props.appendicesQuery]);
 
   return (
     <section id="invoices-appendices-panel" role="tabpanel" aria-labelledby="invoices-appendices-panel-tab" className="grid gap-4">
       <AppendixKpis />
       <AdminToolbar
-        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук додатків" placeholder="Пошук додатка, відправки або контракту..." />}
+        search={<AdminSearchField value={props.appendicesQuery} onValueChange={props.onAppendicesQueryChange} label="Пошук додатків" placeholder="Пошук додатка, відправки або контракту..." />}
         meta={<span className="hidden md:inline">{visibleAppendices.length} з {invoiceAppendixSourceTotals.appendices}</span>}
       />
       <AdminTableShell
@@ -424,7 +464,7 @@ function AppendicesTab() {
                 <tr key={appendix.id}>
                   <td>
                     {appendix.preview ? (
-                      <button type="button" className="font-semibold text-[var(--blue)] hover:underline" onClick={() => setSelectedAppendix(appendix)} aria-haspopup="dialog">{appendix.name}</button>
+                      <button type="button" className="font-semibold text-[var(--blue)] hover:underline" onClick={() => props.onSelectedAppendixChange(appendix)} aria-haspopup="dialog">{appendix.name}</button>
                     ) : <strong className="font-semibold">{appendix.name}</strong>}
                   </td>
                   <td>{appendix.date}</td>
@@ -435,7 +475,7 @@ function AppendicesTab() {
                   <td className="text-right font-semibold text-[var(--green)]">{appendix.amount}</td>
                   <td>
                     <div className="flex min-w-max items-center gap-1">
-                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити підтверджений документ" : "Повний preview не зафіксовано у source"} icon={<Eye size={13} />} tone="primary" onClick={() => setSelectedAppendix(appendix)} disabled={!appendix.preview} />
+                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити підтверджений документ" : "Повний preview не зафіксовано у source"} icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedAppendixChange(appendix)} disabled={!appendix.preview} />
                       <AdminIconAction label={`Митний документ ${appendix.name}`} tooltip="Генерація митного документа вимкнена" icon={<Download size={13} />} disabled />
                       <AdminIconAction label={`Банківський документ ${appendix.name}`} tooltip="Генерація банківського документа вимкнена" icon={<Landmark size={13} />} disabled />
                       <AdminIconAction label={`Видалити ${appendix.name}`} tooltip="Видалення додатка вимкнене" icon={<Trash2 size={13} />} tone="danger" disabled />
@@ -447,7 +487,7 @@ function AppendicesTab() {
             </tbody>
           </table>
       </AdminTableShell>
-      <AppendixDetailModal appendix={selectedAppendix} onClose={() => setSelectedAppendix(null)} />
+      <AppendixDetailModal appendix={props.selectedAppendix} onClose={() => props.onSelectedAppendixChange(null)} />
     </section>
   );
 }
@@ -457,11 +497,6 @@ const invoiceFilters: ReadonlyArray<{ id: InvoiceShipmentFilter; label: string; 
   { id: "in-transit", label: "В дорозі", count: invoiceShipmentSourceCounts["in-transit"] },
   { id: "arrived", label: "Прибув", count: invoiceShipmentSourceCounts.arrived },
 ];
-
-type InvoiceSummaryPreview =
-  | { kind: "shipment"; item: InvoiceShipmentGroup }
-  | { kind: "formed"; item: FormedInvoice }
-  | null;
 
 function InvoiceSummaryModal({ preview, onClose }: { preview: InvoiceSummaryPreview; onClose: () => void }) {
   if (!preview) return null;
@@ -494,28 +529,25 @@ function InvoiceSummaryModal({ preview, onClose }: { preview: InvoiceSummaryPrev
   );
 }
 
-function InvoicesTab() {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<InvoiceShipmentFilter>("all");
-  const [preview, setPreview] = useState<InvoiceSummaryPreview>(null);
-  const normalizedQuery = query.trim().toLocaleLowerCase("uk-UA");
+function InvoicesTab(props: Pick<AdminInvoicesViewProps, "invoiceQuery" | "invoiceFilter" | "invoicePreview" | "onInvoiceQueryChange" | "onInvoiceFilterChange" | "onInvoicePreviewChange">) {
+  const normalizedQuery = props.invoiceQuery.trim().toLocaleLowerCase("uk-UA");
   const visibleGroups = useMemo(() => invoiceShipmentGroups.filter((group) => {
-    const filterMatch = filter === "all" || group.filterState === filter;
+    const filterMatch = props.invoiceFilter === "all" || group.filterState === props.invoiceFilter;
     const queryMatch = !normalizedQuery || group.billOfLading.toLocaleLowerCase("uk-UA").includes(normalizedQuery);
     return filterMatch && queryMatch;
-  }), [filter, normalizedQuery]);
+  }), [props.invoiceFilter, normalizedQuery]);
   const visibleFormedInvoices = useMemo(() => formedInvoices.filter((invoice) => (
     !normalizedQuery || normalize(`${invoice.invoiceNumber} ${invoice.containerNumber} ${invoice.total} ${invoice.date}`).includes(normalizedQuery)
   )), [normalizedQuery]);
-  const sourceGroupedCount = filter === "all" ? invoiceShipmentSourceCounts.groupedAll : filter === "in-transit" ? invoiceShipmentSourceCounts.groupedInTransit : invoiceShipmentSourceCounts.groupedArrived;
+  const sourceGroupedCount = props.invoiceFilter === "all" ? invoiceShipmentSourceCounts.groupedAll : props.invoiceFilter === "in-transit" ? invoiceShipmentSourceCounts.groupedInTransit : invoiceShipmentSourceCounts.groupedArrived;
 
   return (
     <section id="invoices-invoices-panel" role="tabpanel" aria-labelledby="invoices-invoices-panel-tab" className="grid gap-4">
       <AdminToolbar
-        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук інвойсів" placeholder="Пошук інвойсів..." />}
-        filters={<AdminSegmentedControl items={invoiceFilters.map((item) => ({ id: item.id, label: item.label, count: item.count }))} value={filter} onValueChange={setFilter} label="Статус відвантажень" />}
+        search={<AdminSearchField value={props.invoiceQuery} onValueChange={props.onInvoiceQueryChange} label="Пошук інвойсів" placeholder="Пошук інвойсів..." />}
+        filters={<AdminSegmentedControl items={invoiceFilters.map((item) => ({ id: item.id, label: item.label, count: item.count }))} value={props.invoiceFilter} onValueChange={props.onInvoiceFilterChange} label="Статус відвантажень" />}
         meta={`${visibleGroups.length} BL · ${visibleFormedInvoices.length} інвойсів`}
-        mobileDisclosure={{ sections: ["filters"], activeCount: Number(filter !== "all") }}
+        mobileDisclosure={{ sections: ["filters"], activeCount: Number(props.invoiceFilter !== "all") }}
       />
 
       <AdminTableShell notice={visibleGroups.length ? <RepresentativeNotice shown={visibleGroups.length} total={sourceGroupedCount} noun="згрупованих BL" /> : undefined} scrollLabel="Відвантаження для інвойсів">
@@ -524,14 +556,14 @@ function InvoicesTab() {
                 <thead><tr><th>Контейнер</th><th>Назва</th><th>Проформа</th><th>Одиниці</th><th>EUR</th><th>Готовність</th><th>Контракт</th><th>Додаток</th><th>Інвойс</th><th>Сума</th><th>Дії</th></tr></thead>
                 <tbody>{visibleGroups.map((group) => (
                   <tr key={group.id}>
-                    <td><button type="button" className="font-mono font-semibold text-[var(--orange)] hover:underline" onClick={() => setPreview({ kind: "shipment", item: group })} aria-haspopup="dialog">BL {group.billOfLading}</button></td>
+                    <td><button type="button" className="font-mono font-semibold text-[var(--orange)] hover:underline" onClick={() => props.onInvoicePreviewChange({ kind: "shipment", item: group })} aria-haspopup="dialog">BL {group.billOfLading}</button></td>
                     <td>{group.containerCount} контейнер{group.containerCount === 1 ? "" : "и"}</td>
                     <td>—</td>
                     <td className="tabular-nums">{group.unitCount}</td>
                     <td>—</td>
                     <td><div className="flex flex-wrap gap-1"><StatusBadge tone="amber">{group.readiness}</StatusBadge><StatusBadge tone="green">ETA: {group.eta} ({group.visibleStatusLabel})</StatusBadge></div></td>
                     <td>—</td><td>—</td><td>—</td><td>—</td>
-                    <td><div className="flex min-w-max items-center gap-1"><AdminIconAction label={`Переглянути BL ${group.billOfLading}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => setPreview({ kind: "shipment", item: group })} /><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></div></td>
+                    <td><div className="flex min-w-max items-center gap-1"><AdminIconAction label={`Переглянути BL ${group.billOfLading}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "shipment", item: group })} /><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></div></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -544,16 +576,16 @@ function InvoicesTab() {
           {visibleFormedInvoices.map((invoice) => (
             <article key={invoice.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
               <FileText size={16} className="shrink-0 text-[var(--blue)]" />
-              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPreview({ kind: "formed", item: invoice })} aria-haspopup="dialog"><strong className="block font-mono text-[12px] text-[var(--blue)] hover:underline">{invoice.invoiceNumber}</strong><span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{invoice.containerNumber} · {invoice.unitCount} од. · {invoice.total}</span></button>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => props.onInvoicePreviewChange({ kind: "formed", item: invoice })} aria-haspopup="dialog"><strong className="block font-mono text-[12px] text-[var(--blue)] hover:underline">{invoice.invoiceNumber}</strong><span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{invoice.containerNumber} · {invoice.unitCount} од. · {invoice.total}</span></button>
               <time className="text-[10px] text-[var(--muted-foreground)]">{invoice.date}</time>
-              <AdminIconAction label={`Переглянути інвойс ${invoice.invoiceNumber}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => setPreview({ kind: "formed", item: invoice })} />
+              <AdminIconAction label={`Переглянути інвойс ${invoice.invoiceNumber}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "formed", item: invoice })} />
               <AdminIconAction label={`Завантажити DOCX ${invoice.invoiceNumber}`} tooltip="Завантаження DOCX вимкнене" icon={<Download size={13} />} disabled />
             </article>
           ))}
           </div>
         ) : <EmptyState compact title="Сформованих інвойсів не знайдено" description="Змініть пошуковий запит або очистьте поле пошуку." />}
       </AdminTableShell>
-      <InvoiceSummaryModal preview={preview} onClose={() => setPreview(null)} />
+      <InvoiceSummaryModal preview={props.invoicePreview} onClose={() => props.onInvoicePreviewChange(null)} />
     </section>
   );
 }
@@ -634,7 +666,7 @@ function CostDetailModal({ card, onClose }: { card: InvoiceCostCard | null; onCl
   ] as const;
 
   return (
-    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Read-only розшифровка source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Деталізація source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
       <div className="grid gap-4">
         <InlineNotice tone={card.incomplete ? "warning" : "info"}>
           {card.incomplete ? "У source-картці є незаповнені витрати; вони залишені як «—». " : ""}Перегляд не архівує BL і не змінює курс або суми.
@@ -647,35 +679,30 @@ function CostDetailModal({ card, onClose }: { card: InvoiceCostCard | null; onCl
   );
 }
 
-function CostTab() {
-  const [view, setView] = useState<InvoiceCostView>("active");
-  const [query, setQuery] = useState("");
-  const [monthMenuOpen, setMonthMenuOpen] = useState(false);
-  const [selectedMonths, setSelectedMonths] = useState<readonly InvoiceCostMonthId[]>(invoiceCostMonths.map((month) => month.id));
-  const [selectedCard, setSelectedCard] = useState<InvoiceCostCard | null>(null);
+function CostTab(props: Pick<AdminInvoicesViewProps, "costView" | "costQuery" | "costMonthMenuOpen" | "selectedMonths" | "selectedCostCard" | "onCostViewChange" | "onCostQueryChange" | "onCostMonthMenuOpenChange" | "onSelectedMonthsChange" | "onSelectedCostCardChange">) {
   const visibleCards = useMemo(() => invoiceCostCards.filter((card) => {
-    const viewMatch = view === "archive" ? card.archived : view === "incomplete" ? !card.archived && card.incomplete : !card.archived;
-    const allMonthsSelected = selectedMonths.length === invoiceCostMonths.length;
-    const monthMatch = card.month ? selectedMonths.includes(card.month) : allMonthsSelected;
-    const queryMatch = !normalize(query) || normalize(`${card.billOfLading} ${card.shipmentLabel}`).includes(normalize(query));
+    const viewMatch = props.costView === "archive" ? card.archived : props.costView === "incomplete" ? !card.archived && card.incomplete : !card.archived;
+    const allMonthsSelected = props.selectedMonths.length === invoiceCostMonths.length;
+    const monthMatch = card.month ? props.selectedMonths.includes(card.month) : allMonthsSelected;
+    const queryMatch = !normalize(props.costQuery) || normalize(`${card.billOfLading} ${card.shipmentLabel}`).includes(normalize(props.costQuery));
     return viewMatch && monthMatch && queryMatch;
-  }), [query, selectedMonths, view]);
-  const sourceCount = invoiceCostSourceCounts[view];
+  }), [props.costQuery, props.costView, props.selectedMonths]);
+  const sourceCount = invoiceCostSourceCounts[props.costView];
 
-  const toggleMonth = (month: InvoiceCostMonthId) => setSelectedMonths((current) => current.includes(month) ? current.filter((item) => item !== month) : [...current, month]);
+  const toggleMonth = (month: InvoiceCostMonthId) => props.onSelectedMonthsChange(props.selectedMonths.includes(month) ? props.selectedMonths.filter((item) => item !== month) : [...props.selectedMonths, month]);
 
   return (
     <section id="invoices-cost-panel" role="tabpanel" aria-labelledby="invoices-cost-panel-tab" className="grid gap-4">
-      <CostKpis view={view} />
+      <CostKpis view={props.costView} />
       <AdminToolbar
-        search={<AdminSearchField value={query} onValueChange={setQuery} label="Пошук собівартості" placeholder="Пошук BL або відправки..." />}
-        filters={<MonthMenu open={monthMenuOpen} selected={selectedMonths} onToggleOpen={() => setMonthMenuOpen((value) => !value)} onClose={() => setMonthMenuOpen(false)} onToggleMonth={toggleMonth} onAll={() => setSelectedMonths(invoiceCostMonths.map((month) => month.id))} onReset={() => setSelectedMonths([])} />}
-        view={<AdminSegmentedControl items={[{ id: "active", label: "Активні" }, { id: "archive", label: "Архів" }, { id: "incomplete", label: "Незаповнені" }]} value={view} onValueChange={setView} label="Стан даних собівартості" />}
+        search={<AdminSearchField value={props.costQuery} onValueChange={props.onCostQueryChange} label="Пошук собівартості" placeholder="Пошук BL або відправки..." />}
+        filters={<MonthMenu open={props.costMonthMenuOpen} selected={props.selectedMonths} onToggleOpen={() => props.onCostMonthMenuOpenChange(!props.costMonthMenuOpen)} onClose={() => props.onCostMonthMenuOpenChange(false)} onToggleMonth={toggleMonth} onAll={() => props.onSelectedMonthsChange(invoiceCostMonths.map((month) => month.id))} onReset={() => props.onSelectedMonthsChange([])} />}
+        view={<AdminSegmentedControl items={[{ id: "active", label: "Активні" }, { id: "archive", label: "Архів" }, { id: "incomplete", label: "Незаповнені" }]} value={props.costView} onValueChange={props.onCostViewChange} label="Стан даних собівартості" />}
         actions={<AdminIconAction label="Експорт Excel" tooltip="Експорт Excel вимкнений" icon={<Download size={14} />} disabled />}
         meta={`${visibleCards.length} BL`}
         mobileDisclosure={{
           sections: ["filters", "actions"],
-          activeCount: Number(selectedMonths.length !== invoiceCostMonths.length),
+          activeCount: Number(props.selectedMonths.length !== invoiceCostMonths.length),
         }}
       />
       <AdminTableShell title="Дані собівартості за коносаментом" notice={visibleCards.length ? <RepresentativeNotice shown={visibleCards.length} total={sourceCount} noun="BL-карток" /> : undefined}>
@@ -684,8 +711,8 @@ function CostTab() {
               {visibleCards.map((card) => (
                 <article key={card.id} className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]" role="region" aria-label={`Картка собівартості BL ${card.billOfLading}`} tabIndex={0}>
                   <div className="grid min-w-[1050px] grid-cols-[28px_90px_72px_132px_150px_repeat(4,105px)_112px_70px_72px] items-center gap-2 px-3 py-3 text-[10px]">
-                    <button type="button" className="grid size-7 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" onClick={() => setSelectedCard(card)} aria-label={`Переглянути BL ${card.billOfLading}`} aria-haspopup="dialog"><ChevronRight size={14} /></button>
-                    <button type="button" className="font-mono text-left text-[12px] font-semibold text-[var(--blue)] hover:underline" onClick={() => setSelectedCard(card)} aria-haspopup="dialog">BL {card.billOfLading}</button>
+                    <button type="button" className="grid size-7 place-items-center rounded text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" onClick={() => props.onSelectedCostCardChange(card)} aria-label={`Переглянути BL ${card.billOfLading}`} aria-haspopup="dialog"><ChevronRight size={14} /></button>
+                    <button type="button" className="font-mono text-left text-[12px] font-semibold text-[var(--blue)] hover:underline" onClick={() => props.onSelectedCostCardChange(card)} aria-haspopup="dialog">BL {card.billOfLading}</button>
                     <span className="text-[var(--muted-foreground)]">{card.shipmentLabel}</span>
                     {card.eta ? <StatusBadge tone="green">ETA: {card.eta}</StatusBadge> : <span className="text-[var(--muted-foreground)]">ETA: —</span>}
                     <span className="text-[var(--green)]">Товар: <strong>{card.goodsEur}</strong> <span className="text-[var(--muted-foreground)]">({card.goodsUsd}) @{card.exchangeRate.toFixed(2)}</span></span>
@@ -695,39 +722,65 @@ function CostTab() {
                     <span className="text-[var(--purple)]">Гот.:<strong className="mt-1 block">{card.cash}</strong></span>
                     <span className="text-[var(--amber)]">Всього:<strong className="mt-1 block text-[12px]">{card.total}</strong></span>
                     <span className="text-[var(--muted-foreground)]">Собів.:<strong className="mt-1 block text-[var(--foreground)]">{card.costPercent}</strong></span>
-                    <span className="flex items-center gap-1"><AdminIconAction label={`Переглянути BL ${card.billOfLading}`} tooltip="Безпечний перегляд собівартості" icon={<Eye size={13} />} tone="primary" onClick={() => setSelectedCard(card)} /><AdminIconAction label={card.archived ? `Відновити BL ${card.billOfLading}` : `Архівувати BL ${card.billOfLading}`} tooltip={card.archived ? "Відновлення BL вимкнене" : "Архівація BL вимкнена"} icon={card.archived ? <RotateCcw size={13} /> : <Archive size={13} />} disabled /></span>
+                    <span className="flex items-center gap-1"><AdminIconAction label={`Переглянути BL ${card.billOfLading}`} tooltip="Безпечний перегляд собівартості" icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedCostCardChange(card)} /><AdminIconAction label={card.archived ? `Відновити BL ${card.billOfLading}` : `Архівувати BL ${card.billOfLading}`} tooltip={card.archived ? "Відновлення BL вимкнене" : "Архівація BL вимкнена"} icon={card.archived ? <RotateCcw size={13} /> : <Archive size={13} />} disabled /></span>
                   </div>
-                  {view === "incomplete" ? <div className="border-t border-[var(--border)] bg-[var(--amber-soft)] px-3 py-2 text-[10px] text-[var(--amber)]"><AlertTriangle size={13} className="mr-1 inline" />Є незаповнені витрати</div> : null}
+                  {props.costView === "incomplete" ? <div className="border-t border-[var(--border)] bg-[var(--amber-soft)] px-3 py-2 text-[10px] text-[var(--amber)]"><AlertTriangle size={13} className="mr-1 inline" />Є незаповнені витрати</div> : null}
                 </article>
               ))}
             </div>
         ) : <EmptyState compact title="Даних за обраними місяцями немає" description="Оберіть інший місяць або поверніть фільтр «Всі місяці»." />}
       </AdminTableShell>
-      <CostDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+      <CostDetailModal card={props.selectedCostCard} onClose={() => props.onSelectedCostCardChange(null)} />
     </section>
+  );
+}
+
+function CurrentAdminInvoicesView(props: AdminInvoicesViewProps) {
+  const uploadLabel = uploadLabels[props.tab];
+
+  return (
+    <div data-admin-invoices-renderer="current"><AdminPage>
+      <AdminPageHeader
+        icon={<FileText size={20} />}
+        title="Інвойси та документи"
+        description="Керування інвойсами, контрактами та митними документами"
+        actions={uploadLabel ? <LockedButton title={uploadLockedReasons[props.tab] ?? "Потрібна інтеграція сервісу документів"}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
+      />
+      <div className="grid gap-5">
+        <PageKpis />
+        <InvoiceTabs active={props.tab} onChange={props.onTabChange} />
+        {props.tab === "contracts" ? <ContractsTab {...props} /> : null}
+        {props.tab === "appendices" ? <AppendicesTab {...props} /> : null}
+        {props.tab === "invoices" ? <InvoicesTab {...props} /> : null}
+        {props.tab === "cost" ? <CostTab {...props} /> : null}
+      </div>
+    </AdminPage></div>
   );
 }
 
 export function AdminInvoicesPage() {
   const [tab, setTab] = useState<InvoiceTabId>("contracts");
-  const uploadLabel = uploadLabels[tab];
+  const [contractsCreating, setContractsCreating] = useState(false);
+  const [contractsQuery, setContractsQuery] = useState("");
+  const [selectedContract, setSelectedContract] = useState<InvoiceContract | null>(null);
+  const [appendicesQuery, setAppendicesQuery] = useState("");
+  const [selectedAppendix, setSelectedAppendix] = useState<InvoiceAppendix | null>(null);
+  const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceShipmentFilter>("all");
+  const [invoicePreview, setInvoicePreview] = useState<InvoiceSummaryPreview>(null);
+  const [costView, setCostView] = useState<InvoiceCostView>("active");
+  const [costQuery, setCostQuery] = useState("");
+  const [costMonthMenuOpen, setCostMonthMenuOpen] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState<readonly InvoiceCostMonthId[]>(invoiceCostMonths.map((month) => month.id));
+  const [selectedCostCard, setSelectedCostCard] = useState<InvoiceCostCard | null>(null);
 
-  return (
-    <AdminPage>
-      <AdminPageHeader
-        icon={<FileText size={20} />}
-        title="Інвойси та документи"
-        description="Керування інвойсами, контрактами та митними документами"
-        actions={uploadLabel ? <LockedButton title={`${uploadLabel} вимкнене у read-only клоні`}><Upload size={14} /> {uploadLabel}</LockedButton> : undefined}
-      />
-      <div className="grid gap-5">
-        <PageKpis />
-        <InvoiceTabs active={tab} onChange={setTab} />
-        {tab === "contracts" ? <ContractsTab /> : null}
-        {tab === "appendices" ? <AppendicesTab /> : null}
-        {tab === "invoices" ? <InvoicesTab /> : null}
-        {tab === "cost" ? <CostTab /> : null}
-      </div>
-    </AdminPage>
-  );
+  const viewProps: AdminInvoicesViewProps = {
+    tab, contractsCreating, contractsQuery, selectedContract, appendicesQuery, selectedAppendix, invoiceQuery, invoiceFilter, invoicePreview, costView, costQuery, costMonthMenuOpen, selectedMonths, selectedCostCard,
+    onTabChange: setTab, onContractsCreatingChange: setContractsCreating, onContractsQueryChange: setContractsQuery, onSelectedContractChange: setSelectedContract,
+    onAppendicesQueryChange: setAppendicesQuery, onSelectedAppendixChange: setSelectedAppendix, onInvoiceQueryChange: setInvoiceQuery, onInvoiceFilterChange: setInvoiceFilter,
+    onInvoicePreviewChange: setInvoicePreview, onCostViewChange: setCostView, onCostQueryChange: setCostQuery, onCostMonthMenuOpenChange: setCostMonthMenuOpen,
+    onSelectedMonthsChange: setSelectedMonths, onSelectedCostCardChange: setSelectedCostCard,
+  };
+
+  return <RendererViewSwitch slotId="admin-invoices" currentView={<CurrentAdminInvoicesView {...viewProps} />} loadAstryxView={loadAstryxAdminInvoicesView} astryxViewProps={viewProps} />;
 }

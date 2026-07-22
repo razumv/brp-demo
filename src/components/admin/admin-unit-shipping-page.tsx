@@ -21,6 +21,7 @@ import {
   AdminToolbar,
 } from "@/components/admin/admin-ui";
 import { Panel, StatusBadge } from "@/components/shared/ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import {
   REMAINING_UNIT_SHIPMENTS,
   SHIPPED_UNIT_SHIPMENTS,
@@ -32,15 +33,58 @@ import {
 } from "@/lib/admin-unit-shipping-data";
 import styles from "./admin.module.css";
 
-const DEFAULT_SYNC_FROM = "2025-10-18";
-const DEFAULT_SYNC_TO = "2026-07-18";
+export const DEFAULT_SYNC_FROM = "2025-10-18";
+export const DEFAULT_SYNC_TO = "2026-07-18";
 const DEFAULT_PAGE_SIZE = 50;
+
+export type UnitShippingModelOption = BossWebShipment["model"];
+
+export type AdminUnitShippingModel = {
+  activeTab: UnitShippingTab;
+  selectTab(tab: UnitShippingTab): void;
+  query: string;
+  setQuery(value: string): void;
+  category: UnitShippingCategory;
+  selectCategory(value: UnitShippingCategory): void;
+  period: string;
+  setPeriod(value: string): void;
+  modelNumber: string;
+  setModelNumber(value: string): void;
+  shippedFrom: string;
+  setShippedFrom(value: string): void;
+  shippedTo: string;
+  setShippedTo(value: string): void;
+  syncFrom: string;
+  setSyncFrom(value: string): void;
+  syncTo: string;
+  setSyncTo(value: string): void;
+  pageSize: number;
+  setPageSize(value: number): void;
+  currentPage: number;
+  totalPages: number;
+  setPage(value: number): void;
+  expandedOrderId: string | null;
+  toggleOrder(id: string): void;
+  remainingFiltered: BossWebShipment[];
+  shippedFiltered: BossWebShipment[];
+  activeRecords: readonly BossWebShipment[];
+  filteredRecords: BossWebShipment[];
+  pageRecords: BossWebShipment[];
+  periods: string[];
+  models: UnitShippingModelOption[];
+  activePanelId: string;
+  activeFilterCount: number;
+  resetFilters(): void;
+};
+
+const loadAstryxAdminUnitShippingView = () => import("./astryx-admin-unit-shipping-view")
+  .then((module) => ({default: module.AstryxAdminUnitShippingView}));
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
-function filterShipments(
+export function filterShipments(
   records: readonly BossWebShipment[],
   query: string,
   category: UnitShippingCategory,
@@ -78,7 +122,7 @@ function uniqueValues(values: readonly string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "uk-UA"));
 }
 
-export function AdminUnitShippingPage() {
+function useAdminUnitShippingController(): AdminUnitShippingModel {
   const [activeTab, setActiveTab] = useState<UnitShippingTab>("remaining");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<UnitShippingCategory>("Всі");
@@ -159,7 +203,113 @@ export function AdminUnitShippingPage() {
     setExpandedOrderId(null);
   };
 
+  return {
+    activeTab,
+    selectTab,
+    query,
+    setQuery: (value) => {
+      setQuery(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    category,
+    selectCategory,
+    period,
+    setPeriod: (value) => {
+      setPeriod(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    modelNumber,
+    setModelNumber: (value) => {
+      setModelNumber(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    shippedFrom,
+    setShippedFrom: (value) => {
+      setShippedFrom(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    shippedTo,
+    setShippedTo: (value) => {
+      setShippedTo(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    syncFrom,
+    setSyncFrom,
+    syncTo,
+    setSyncTo,
+    pageSize,
+    setPageSize: (value) => {
+      setPageSize(value);
+      setPage(1);
+      setExpandedOrderId(null);
+    },
+    currentPage,
+    totalPages,
+    setPage: (value) => {
+      setPage(Math.max(1, Math.min(totalPages, value)));
+      setExpandedOrderId(null);
+    },
+    expandedOrderId,
+    toggleOrder: (id) => setExpandedOrderId((current) => current === id ? null : id),
+    remainingFiltered,
+    shippedFiltered,
+    activeRecords,
+    filteredRecords,
+    pageRecords,
+    periods,
+    models,
+    activePanelId,
+    activeFilterCount,
+    resetFilters,
+  };
+}
+
+function CurrentAdminUnitShippingView({model}: {model: AdminUnitShippingModel}) {
+  const {
+    activeTab,
+    selectTab,
+    query,
+    setQuery,
+    category,
+    selectCategory,
+    period,
+    setPeriod,
+    modelNumber,
+    setModelNumber,
+    shippedFrom,
+    setShippedFrom,
+    shippedTo,
+    setShippedTo,
+    syncFrom,
+    setSyncFrom,
+    syncTo,
+    setSyncTo,
+    pageSize,
+    setPageSize,
+    currentPage,
+    totalPages,
+    setPage,
+    expandedOrderId,
+    toggleOrder,
+    remainingFiltered,
+    shippedFiltered,
+    activeRecords,
+    filteredRecords,
+    pageRecords,
+    periods,
+    models,
+    activePanelId,
+    activeFilterCount,
+    resetFilters,
+  } = model;
+
   return (
+    <div className="contents" data-admin-unit-shipping-renderer="current" data-brp-admin-fulfillment-renderer="shadcn">
     <AdminPage>
       <AdminPageHeader
         icon={<Truck size={20} />}
@@ -190,7 +340,7 @@ export function AdminUnitShippingPage() {
                 className="button button-primary col-span-2 h-11 w-full whitespace-nowrap md:col-auto md:h-9 md:w-auto"
                 disabled
                 aria-describedby="bossweb-sync-safety"
-                title="Синхронізацію вимкнено у read-only демонстрації"
+                title="Зовнішня синхронізація недоступна: доступ лише для читання."
               >
                 <RefreshCw size={14} /> Синхр. з BossWeb
               </button>
@@ -223,11 +373,7 @@ export function AdminUnitShippingPage() {
           search={(
             <AdminSearchField
               value={query}
-              onValueChange={(value) => {
-                setQuery(value);
-                setPage(1);
-                setExpandedOrderId(null);
-              }}
+              onValueChange={setQuery}
               label="Пошук замовлення або моделі"
               placeholder="Пошук замовлення, моделі..."
             />
@@ -252,7 +398,6 @@ export function AdminUnitShippingPage() {
                 value={period}
                 onChange={(event) => {
                   setPeriod(event.target.value);
-                  setPage(1);
                 }}
               >
                 <option value="">Всі періоди</option>
@@ -264,7 +409,6 @@ export function AdminUnitShippingPage() {
                 value={modelNumber}
                 onChange={(event) => {
                   setModelNumber(event.target.value);
-                  setPage(1);
                 }}
               >
                 <option value="">Всі моделі</option>
@@ -281,7 +425,6 @@ export function AdminUnitShippingPage() {
                       value={shippedFrom}
                       onChange={(event) => {
                         setShippedFrom(event.target.value);
-                        setPage(1);
                       }}
                     />
                   </label>
@@ -294,7 +437,6 @@ export function AdminUnitShippingPage() {
                       value={shippedTo}
                       onChange={(event) => {
                         setShippedTo(event.target.value);
-                        setPage(1);
                       }}
                     />
                   </label>
@@ -371,7 +513,7 @@ export function AdminUnitShippingPage() {
                               className="inline-flex max-w-full items-center gap-1 font-mono text-[11px] text-blue-600 hover:underline dark:text-blue-400"
                               aria-expanded={expanded}
                               aria-label={`Показати або приховати VIN за замовленням ${orderNumber}`}
-                              onClick={() => setExpandedOrderId(expanded ? null : record.id)}
+                              onClick={() => toggleOrder(record.id)}
                             >
                               <span>{orderNumber}</span>{expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                             </button>
@@ -434,8 +576,6 @@ export function AdminUnitShippingPage() {
                   value={pageSize}
                   onChange={(event) => {
                     setPageSize(Number(event.target.value));
-                    setPage(1);
-                    setExpandedOrderId(null);
                   }}
                 >
                   {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
@@ -447,8 +587,7 @@ export function AdminUnitShippingPage() {
                 aria-label="Попередня сторінка"
                 disabled={currentPage === 1}
                 onClick={() => {
-                  setPage((value) => Math.max(1, value - 1));
-                  setExpandedOrderId(null);
+                  setPage(currentPage - 1);
                 }}
               >
                 <ChevronLeft size={14} />
@@ -460,8 +599,7 @@ export function AdminUnitShippingPage() {
                 aria-label="Наступна сторінка"
                 disabled={currentPage === totalPages}
                 onClick={() => {
-                  setPage((value) => Math.min(totalPages, value + 1));
-                  setExpandedOrderId(null);
+                  setPage(currentPage + 1);
                 }}
               >
                 <ChevronRight size={14} />
@@ -471,5 +609,18 @@ export function AdminUnitShippingPage() {
         </Panel>
       </section>
     </AdminPage>
+    </div>
+  );
+}
+
+export function AdminUnitShippingPage() {
+  const model = useAdminUnitShippingController();
+  return (
+    <RendererViewSwitch
+      slotId="admin-unit-shipping"
+      currentView={<CurrentAdminUnitShippingView model={model} />}
+      loadAstryxView={loadAstryxAdminUnitShippingView}
+      astryxViewProps={{model}}
+    />
   );
 }

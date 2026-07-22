@@ -1,0 +1,368 @@
+.page {
+  display: grid;
+  width: min(100%, 1360px);
+  min-width: 0;
+  margin-inline: auto;
+  gap: 20px;
+  color: var(--color-text-primary);
+}
+
+.backLink {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-text-primary);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.pageHeader p {
+  max-width: 820px;
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.pageIcon,
+.kpiIcon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-element);
+}
+
+.pageIcon {
+  width: 40px;
+  height: 40px;
+  background: var(--color-background-orange);
+  color: var(--color-icon-orange);
+}
+
+.diagnosticCard {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.diagnosticTrigger {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagnosticContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.diagnosticFacts,
+.diagnosticAside {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.diagnosticFacts p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.diagnosticFacts strong {
+  color: var(--color-text-primary);
+}
+
+.diagnosticAside code,
+.periodShell code {
+  overflow-wrap: anywhere;
+  font-family: var(--font-family-code);
+}
+
+.diagnosticAction {
+  align-self: start;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpiCard {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.kpiIcon {
+  width: 38px;
+  height: 38px;
+  background: var(--color-background-muted);
+  color: var(--color-icon-primary);
+}
+
+.kpiIcon[data-tone="blue"] { background: var(--color-background-blue); color: var(--color-icon-blue); }
+.kpiIcon[data-tone="green"] { background: var(--color-background-green); color: var(--color-icon-green); }
+
+.kpiCard > span:last-child {
+  display: grid;
+  gap: 3px;
+}
+
+.kpiCard small {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.kpiCard strong {
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.toolbarCard {
+  min-width: 0;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, auto) minmax(190px, auto) auto;
+  min-width: 0;
+  gap: 12px;
+  align-items: end;
+}
+
+.resultCount {
+  align-self: center;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dealerList {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.dealerCard {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dealerTrigger {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(80px, 118px) minmax(72px, 100px) minmax(118px, 150px) 24px;
+  width: 100%;
+  min-height: 60px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dealerTrigger:hover {
+  background: var(--color-background-muted);
+}
+
+.dealerName,
+.dealerMetric,
+.dealerDate {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.dealerName strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dealerName small {
+  display: none;
+}
+
+.dealerMetric,
+.dealerDate {
+  text-align: right;
+}
+
+.dealerMetric strong,
+.dealerDate strong {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dealerMetric small,
+.dealerDate small,
+.dealerName small {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.chevron {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  font-size: 18px;
+}
+
+.periodShell {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+}
+
+.periodControls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.dateField {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.dateField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  outline: none;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.dateField input:focus-visible {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-background-blue);
+}
+
+.emptyCard {
+  min-height: 220px;
+}
+
+@media (max-width: 1060px) {
+  .diagnosticContent {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr);
+  }
+
+  .diagnosticAction {
+    grid-column: 1 / -1;
+  }
+
+  .toolbar {
+    grid-template-columns: minmax(240px, 1fr) minmax(210px, auto);
+  }
+
+  .periodControls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    gap: 16px;
+  }
+
+  .pageHeader h1 {
+    font-size: 24px;
+  }
+
+  .pageHeader p {
+    font-size: 13px;
+  }
+
+  .kpiGrid {
+    display: none;
+  }
+
+  .diagnosticContent,
+  .toolbar,
+  .periodControls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .diagnosticAction {
+    grid-column: auto;
+  }
+
+  .resultCount {
+    display: none;
+  }
+
+  .dealerTrigger {
+    grid-template-columns: minmax(0, 1fr) minmax(66px, auto) 24px;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .dealerName small {
+    display: block;
+  }
+
+  .dealerMetric:first-of-type,
+  .dealerDate {
+    display: none;
+  }
+
+  .periodShell {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 430px) {
+  .pageHeader {
+    gap: 10px;
+  }
+
+  .pageIcon {
+    width: 38px;
+    height: 38px;
+  }
+}

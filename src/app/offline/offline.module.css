@@ -104,12 +104,63 @@
   outline-offset: 2px;
 }
 
+.astryxPage {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  place-items: center;
+  background: var(--color-background-body);
+}
+
+.astryxCard {
+  display: grid;
+  width: min(100%, 430px);
+  justify-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-menu);
+}
+
+.astryxIcon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--color-background-orange, var(--orange-soft));
+  color: var(--color-text-orange, var(--orange));
+}
+
+.astryxCopy {
+  max-width: 348px;
+  margin: 13px auto 24px;
+  line-height: 1.55;
+}
+
+.astryxActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
 @media (max-width: 480px) {
   .card {
     padding: 28px 22px;
   }
 
   .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .astryxActions {
+    width: 100%;
     align-items: stretch;
     flex-direction: column;
   }

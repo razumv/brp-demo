@@ -5,8 +5,12 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 export default defineConfig({
   testDir: "./tests/e2e",
   testIgnore: [
+    "**/astryx-foundation.spec.ts",
     "**/dealer-auth-navigation.spec.ts",
     "**/dealer-pwa-pages.spec.ts",
+    "**/pwa-appearance.spec.ts",
+    "**/real-device-smoke.spec.ts",
+    "**/route-renderer-matrix.spec.ts",
   ],
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,

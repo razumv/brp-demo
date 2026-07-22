@@ -51,6 +51,10 @@
 }
 
 .quickSearchPanel {
+  display: contents;
+}
+
+.quickSearchPanel > :global(*) {
   padding: 24px;
   margin-bottom: 28px;
   border-radius: 6px;
@@ -89,7 +93,7 @@
   min-width: 0;
 }
 
-.searchField > label {
+.searchLabel {
   display: block;
   margin-bottom: 5px;
   color: var(--muted-foreground);
@@ -100,44 +104,20 @@
 .searchInput {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 36px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface-subtle);
+  overflow: visible;
 }
 
-.searchInput:focus-within {
-  border-color: var(--orange);
-  box-shadow: 0 0 0 1px var(--orange);
-}
-
-.searchInput input {
+.searchInput > :first-child {
   width: 100%;
   min-width: 0;
-  height: 34px;
-  padding: 0 10px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--foreground);
 }
 
 .searchInput button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: 0 0 40px;
   width: 40px;
-  height: 34px;
-  border: 0;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-
-.searchInput button:hover {
-  color: var(--orange);
+  height: 40px;
 }
 
 .searchResult {
@@ -530,6 +510,10 @@
 }
 
 .selectionPanel {
+  display: contents;
+}
+
+.selectionPanel > :global(*) {
   overflow: hidden;
 }
 
@@ -817,6 +801,34 @@
 .selectorGroup label:focus-within {
   outline: 2px solid var(--orange);
   outline-offset: 2px;
+}
+
+.diagramSelector {
+  display: flex;
+  align-items: center;
+  min-width: 210px;
+  gap: 8px;
+}
+
+.diagramSelector > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.diagramSelector b {
+  flex: 0 0 auto;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.secondaryAction {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.secondaryAction > button {
+  height: 38px;
 }
 
 .secondaryAction:hover,
@@ -1112,16 +1124,13 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--orange);
-  cursor: pointer;
+  border: 0;
+  background: transparent;
 }
 
-.tableCartButton:hover {
-  border-color: var(--orange);
-  background: var(--orange-soft);
+.tableCartButton > button {
+  width: 32px;
+  height: 32px;
 }
 
 .visuallyHidden {
@@ -1546,6 +1555,10 @@
 }
 
 .receiptCard {
+  display: contents;
+}
+
+.receiptCard > :global(*) {
   padding: 18px 20px;
 }
 
@@ -1623,10 +1636,14 @@
 }
 
 .nextSteps {
+  display: contents;
+}
+
+.nextSteps > :global(*) {
   padding: 17px 20px;
 }
 
-.nextSteps h2 {
+.nextSteps > :global(*) h2 {
   margin: 0 0 14px;
   color: var(--muted-foreground);
   font-size: 10px;
@@ -1635,13 +1652,13 @@
   text-transform: uppercase;
 }
 
-.nextSteps ol {
+.nextSteps > :global(*) ol {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.nextSteps li {
+.nextSteps > :global(*) li {
   position: relative;
   display: flex;
   align-items: center;
@@ -1649,7 +1666,7 @@
   min-height: 50px;
 }
 
-.nextSteps li + li::before {
+.nextSteps > :global(*) li + li::before {
   position: absolute;
   top: -10px;
   left: 17px;
@@ -1659,7 +1676,7 @@
   content: "";
 }
 
-.nextSteps li > span {
+.nextSteps > :global(*) li > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1671,28 +1688,32 @@
   color: var(--muted-foreground);
 }
 
-.nextSteps li > .stepActive {
+.nextSteps > :global(*) li > .stepActive {
   border-color: #f5c3a8;
   background: var(--orange-soft);
   color: var(--orange);
 }
 
-.nextSteps li > div {
+.nextSteps > :global(*) li > div {
   display: flex;
   flex-direction: column;
 }
 
-.nextSteps small {
+.nextSteps > :global(*) small {
   margin-top: 2px;
   color: var(--muted-foreground);
   font-size: 10px;
 }
 
 .confirmationLines {
+  display: contents;
+}
+
+.confirmationLines > :global(*) {
   overflow: hidden;
 }
 
-.confirmationLines header {
+.confirmationLines > :global(*) header {
   min-height: 39px;
   padding: 12px 17px;
   border-bottom: 1px solid var(--border);
@@ -1703,7 +1724,7 @@
   text-transform: uppercase;
 }
 
-.confirmationLines > div {
+.confirmationLines > :global(*) > div {
   display: grid;
   grid-template-columns: 98px minmax(0, 1fr) auto auto;
   align-items: center;
@@ -1714,15 +1735,15 @@
   font-size: 10px;
 }
 
-.confirmationLines > div:last-child {
+.confirmationLines > :global(*) > div:last-child {
   border-bottom: 0;
 }
 
-.confirmationLines > div > strong {
+.confirmationLines > :global(*) > div > strong {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.confirmationLines > div > span:nth-child(2) {
+.confirmationLines > :global(*) > div > span:nth-child(2) {
   overflow: hidden;
   color: var(--muted-foreground);
   text-overflow: ellipsis;
@@ -1791,6 +1812,19 @@
     display: none;
   }
 
+  .diagramHeader {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .diagramIdentity {
+    flex: 1 1 100%;
+  }
+
+  .diagramActions {
+    margin-left: auto;
+  }
+
   .diagramWorkspace {
     grid-template-columns: minmax(0, 48%) minmax(500px, 52%);
   }
@@ -1814,7 +1848,7 @@
     font-size: 24px;
   }
 
-  .quickSearchPanel {
+  .quickSearchPanel > :global(*) {
     padding: 16px;
     margin-bottom: 18px;
   }
@@ -1990,6 +2024,10 @@
     margin-left: auto;
   }
 
+  .diagramSelector {
+    min-width: 140px;
+  }
+
   .diagramActions > .secondaryAction:first-of-type {
     display: none;
   }
@@ -2018,6 +2056,10 @@
     height: 42px;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+  }
+
+  .mobileDiagramTabs > * {
+    width: 100%;
   }
 
   .mobileDiagramTabs button {
@@ -2185,11 +2227,11 @@
     margin-left: 0;
   }
 
-  .confirmationLines > div {
+  .confirmationLines > :global(*) > div {
     grid-template-columns: 88px minmax(0, 1fr) auto;
   }
 
-  .confirmationLines > div > b {
+  .confirmationLines > :global(*) > div > b {
     display: none;
   }
 

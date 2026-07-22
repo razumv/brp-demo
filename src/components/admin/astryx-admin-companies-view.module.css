@@ -1,0 +1,25 @@
+.page { display: grid; gap: 1rem; min-width: 0; max-width: 1184px; margin-inline: auto; padding-block: 1.5rem; }
+.header, .headerCopy, .toolbar, .cardActions, .companyMeta, .dialogActions { display: flex; align-items: center; }
+.header { justify-content: space-between; gap: .75rem; }
+.headerCopy { min-width: 0; gap: .75rem; align-items: flex-start; }
+.headerCopy h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+.headerCopy p { margin: .3rem 0 0; }
+.headerIcon, .companyIcon { display: grid; flex: 0 0 auto; place-items: center; border-radius: var(--radius-element); background: var(--color-background-orange); color: var(--color-icon-warning); }
+.headerIcon { width: 2.5rem; height: 2.5rem; }
+.companyIcon { width: 2rem; height: 2rem; }
+.toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
+.filters { display: none; grid-column: 1 / -1; gap: .5rem; }
+.filtersOpen { display: grid; }
+.companyGrid { display: grid; gap: .75rem; }
+.companyCard { display: grid; gap: .75rem; min-width: 0; }
+.companyTitle { display: flex; min-width: 0; gap: .65rem; align-items: center; }
+.companyTitle > div { min-width: 0; }
+.companyMeta { flex-wrap: wrap; gap: .5rem; justify-content: space-between; }
+.cardActions { flex-wrap: wrap; gap: .3rem; }
+.employeeList { display: grid; gap: .3rem; padding: .65rem; border-radius: var(--radius-element); background: var(--color-background-muted); }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+.kpis h2 { margin: .35rem 0 0; font-size: 1.4rem; }
+.dialogFields { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+.dialogActions { justify-content: flex-end; gap: .5rem; }
+@media (min-width: 768px) { .toolbar { grid-template-columns: minmax(14rem, 1fr) minmax(10rem, .45fr) minmax(10rem, .45fr); } .mobileFilterButton { display: none; } .filters { display: contents; } .companyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dialogFields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .companyGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

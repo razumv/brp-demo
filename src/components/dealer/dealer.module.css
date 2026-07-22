@@ -105,6 +105,10 @@
 }
 
 .dashboardPanel {
+  display: contents;
+}
+
+.dashboardPanel > :global(*) {
   min-height: 330px;
   overflow: hidden;
 }
@@ -269,6 +273,10 @@
 }
 
 .shortcutsPanel {
+  display: contents;
+}
+
+.shortcutsPanel > :global(*) {
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -303,7 +311,7 @@
 }
 
 .shortcut > span,
-.summaryCard > span {
+.summaryCard > :global(*) > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -336,6 +344,10 @@
 }
 
 .summaryCard {
+  display: contents;
+}
+
+.summaryCard > :global(*) {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -343,18 +355,18 @@
   padding: 12px;
 }
 
-.summaryCard div {
+.summaryCard > :global(*) > div {
   display: flex;
   flex-direction: column;
 }
 
-.summaryCard small {
+.summaryCard > :global(*) small {
   color: var(--muted-foreground);
   font-size: 10px;
   text-transform: uppercase;
 }
 
-.summaryCard strong {
+.summaryCard > :global(*) strong {
   font-size: 17px;
 }
 
@@ -403,26 +415,29 @@
   overflow: hidden;
 }
 
-.ordersToolbar,
 .customerToolbar,
 .productToolbar,
 .unitsToolbar,
-.simpleToolbar,
-.scheduleFilters {
+.simpleToolbar {
   display: flex;
   align-items: center;
   gap: 9px;
 }
 
-.ordersToolbar,
 .simpleToolbar {
   padding: 14px;
   border-bottom: 1px solid var(--border);
 }
 
-.ordersToolbar > select {
-  width: auto;
-  min-width: 150px;
+.ordersToolbar {
+  padding: 14px 14px 0;
+}
+
+.orderViewModes {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 14px;
+  border-bottom: 1px solid var(--border);
 }
 
 .orderRow {
@@ -1050,14 +1065,6 @@
 }
 
 /* Customers */
-
-.customerToolbar {
-  margin-bottom: 16px;
-}
-
-.customerToolbar > :first-child {
-  max-width: 390px;
-}
 
 .customerLayout {
   display: grid;
@@ -1934,14 +1941,6 @@
   font-weight: 650;
 }
 
-.scheduleFilters {
-  margin-bottom: 12px;
-}
-
-.scheduleFilters > :last-child {
-  max-width: 320px;
-}
-
 .scheduleColumns {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(0, 1.1fr);
@@ -2297,7 +2296,7 @@
     margin-bottom: 16px;
   }
 
-  .statsGrid > :global(.stat-card) {
+  .statsGrid > :global(.stat-card) > :global(*) {
     min-height: 88px;
     padding: 12px;
   }
@@ -2350,28 +2349,22 @@
     border-bottom: 0;
   }
 
-  .ordersToolbar,
   .customerToolbar,
   .productToolbar,
   .unitsToolbar,
-  .simpleToolbar,
-  .scheduleFilters {
+  .simpleToolbar {
     align-items: stretch;
     flex-wrap: wrap;
   }
 
-  .ordersToolbar > *,
   .customerToolbar > *,
   .productToolbar > *,
-  .simpleToolbar > *,
-  .scheduleFilters > * {
+  .simpleToolbar > * {
     width: 100%;
     max-width: none !important;
   }
 
-  .ordersToolbar :global(.segmented),
-  .customerToolbar :global(.segmented),
-  .scheduleFilters :global(.segmented) {
+  .customerToolbar :global(.segmented) {
     overflow-x: auto;
   }
 
@@ -2515,10 +2508,6 @@
     min-width: 570px;
   }
 
-  .scheduleFilters :global(.segmented) {
-    display: flex;
-  }
-
   .slotDetail {
     display: none;
   }
@@ -2541,7 +2530,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .statsGrid > :global(.stat-card) :global(.stat-icon) {
+  .statsGrid > :global(.stat-card) > :global(*) :global(.stat-icon) {
     display: none;
   }
 

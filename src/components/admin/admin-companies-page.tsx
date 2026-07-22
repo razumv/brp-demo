@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { Modal, Panel, StatusBadge } from "@/components/shared/ui";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import {
   AdminFormGrid,
   AdminIconAction,
@@ -100,6 +101,24 @@ function CompanyKpis() {
 
 type CompanyProfileFilter = "all" | CompanyProfileStatus;
 type CompanyManagerFilter = "all" | "assigned" | "unassigned";
+
+export interface AdminCompaniesModel {
+  query: string;
+  setQuery(value: string): void;
+  profileStatus: CompanyProfileFilter;
+  setProfileStatus(value: CompanyProfileFilter): void;
+  managerState: CompanyManagerFilter;
+  setManagerState(value: CompanyManagerFilter): void;
+  visibleCompanies: readonly AdminCompany[];
+  openEmployeesId: string | null;
+  toggleEmployees(companyId: string): void;
+  closeEmployees(): void;
+  dialog: CompanyDialog;
+  openDialog(next: Exclude<CompanyDialog, null>): void;
+  closeDialog(): void;
+}
+
+const loadAstryxAdminCompaniesView = () => import("./astryx-admin-companies-view");
 
 function SearchToolbar({ query, onQueryChange, onCreate, profileStatus, managerState, onProfileStatusChange, onManagerStateChange }: {
   query: string;
@@ -297,7 +316,7 @@ function CompanyIdentity({ company, titleId }: { company: AdminCompany; titleId?
       <span className="min-w-0">
         <strong id={titleId} className="block text-[13px] leading-snug">{company.name}</strong>
         {company.managerSummary ? (
-          <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">Менеджер: демо-профіль</span>
+          <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">Менеджер призначений</span>
         ) : null}
       </span>
     </div>
@@ -334,7 +353,7 @@ function RowActions({ company, onEdit, onAssign }: {
       />
       <AdminIconAction
         label={`Видалити ${company.name} — заблоковано`}
-        tooltip="Видалення заблоковано у read-only демонстрації"
+        tooltip="Видалення компанії потребує підключення сервісу компаній."
         icon={<Trash2 size={15} />}
         tone="danger"
         disabled
@@ -522,7 +541,7 @@ function PreviewDialogs({ dialog, onClose }: { dialog: CompanyDialog; onClose: (
         footer={(
           <>
             <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
-            <LockedButton title="Призначення заблоковано у read-only демонстрації" className="button-primary">
+            <LockedButton title="Призначення працівника потребує підключення сервісу облікових записів." className="button-primary">
               Призначити працівника
             </LockedButton>
           </>
@@ -533,7 +552,7 @@ function PreviewDialogs({ dialog, onClose }: { dialog: CompanyDialog; onClose: (
           <select className="input" value="" disabled aria-disabled="true" aria-label="Оберіть працівника — список заблоковано">
             <option value="">Оберіть працівника</option>
           </select>
-          <span className="text-[9px] text-[var(--muted-foreground)]">Ідентифікатори облікових записів не зберігаються у локальному клоні.</span>
+          <span className="text-[9px] text-[var(--muted-foreground)]">Для призначення потрібен доступ до облікових записів.</span>
         </label>
       </Modal>
     );
@@ -557,7 +576,7 @@ function PreviewDialogs({ dialog, onClose }: { dialog: CompanyDialog; onClose: (
         <>
           <button type="button" className="button button-outline" onClick={onClose}>Скасувати</button>
           <LockedButton
-            title={`${editing ? "Оновлення" : "Створення"} заблоковано у read-only демонстрації`}
+            title={`${editing ? "Оновлення" : "Створення"} компанії потребує підключення сервісу компаній.`}
             className="button-primary"
           >
             {editing ? "Оновити компанію" : "Створити компанію"}
@@ -600,7 +619,24 @@ export function AdminCompaniesPage() {
     setDialog(next);
   };
 
-  return (
+  const model: AdminCompaniesModel = {
+    query,
+    setQuery: updateQuery,
+    profileStatus,
+    setProfileStatus,
+    managerState,
+    setManagerState,
+    visibleCompanies,
+    openEmployeesId,
+    toggleEmployees,
+    closeEmployees: () => setOpenEmployeesId(null),
+    dialog,
+    openDialog,
+    closeDialog: () => setDialog(null),
+  };
+
+  const currentView = (
+    <div data-admin-companies-renderer="shadcn">
     <AdminPage>
       <AdminPageHeader
         icon={<Building2 size={20} />}
@@ -639,5 +675,15 @@ export function AdminCompaniesPage() {
 
       <PreviewDialogs dialog={dialog} onClose={() => setDialog(null)} />
     </AdminPage>
+    </div>
+  );
+
+  return (
+    <RendererViewSwitch
+      slotId="admin-companies"
+      currentView={currentView}
+      loadAstryxView={loadAstryxAdminCompaniesView}
+      astryxViewProps={{ model }}
+    />
   );
 }

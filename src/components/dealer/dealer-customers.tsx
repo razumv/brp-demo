@@ -9,12 +9,13 @@ import {
   Package,
   Phone,
   Plus,
-  Search,
   Star,
   Trash2,
   UsersRound,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
+import { useAppearance } from "@/components/appearance/use-appearance";
+import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { EmptyState, Modal, PageHeader, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
 import type {
   DealerCommandResult,
@@ -22,10 +23,12 @@ import type {
   DealerCustomerInput,
 } from "@/lib/dealer/contracts";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
+import { ukrainianCount } from "@/lib/dealer/format";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import type { EquipmentInput } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useDealerWorkflow } from "./dealer-workflow-provider";
+import { DealerDataToolbar } from "./dealer-data-toolbar";
 import { Initials, Metric, SectionHeading } from "./common";
 import styles from "./dealer.module.css";
 
@@ -165,9 +168,11 @@ function EquipmentForm({
 }
 
 export function CustomersPage() {
+  const { renderedDesignSystem } = useAppearance();
   const { snapshot: state, commands } = useDealerWorkflow();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof categories)[number]>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -197,12 +202,12 @@ export function CustomersPage() {
   const categoryCount = (category: DealerCustomerCategory) => state.customers.filter((customer) => customer.category === category).length;
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-customers-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<UsersRound size={21} />}
         title="Клієнти"
         description={`${state.customers.length} загалом`}
-        action={<button type="button" className="button button-primary" onClick={() => setCreateOpen(true)}><Plus size={15} /> Додати клієнта</button>}
+        action={<BrpButton label="Додати клієнта" icon={<Plus size={15} />} onPress={() => setCreateOpen(true)} />}
       />
 
       <section className={styles.statsGrid} aria-label="Показники клієнтів">
@@ -212,16 +217,19 @@ export function CustomersPage() {
         <StatCard label="Опт" value={categoryCount("wholesale")} icon={<Package size={18} />} tone="orange" />
       </section>
 
-      <div className={styles.customerToolbar}>
-        <div className="toolbar-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Пошук за ім’ям, телефоном, email..." aria-label="Пошук клієнтів" /></div>
-        <div className="segmented" aria-label="Категорії клієнтів">
-          {categories.map((value) => (
-            <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>
-              {value === "all" ? "Всі" : categoryLabels[value]}
-            </button>
-          ))}
-        </div>
-      </div>
+      <DealerDataToolbar
+        search={{ value: query, onValueChange: setQuery, label: "Пошук клієнтів", placeholder: "Пошук за ім’ям, телефоном, email..." }}
+        filters={{
+          label: "Фільтри",
+          activeCount: Number(filter !== "all"),
+          open: filtersOpen,
+          onOpenChange: setFiltersOpen,
+          panelId: "customer-filters",
+          onClear: () => setFilter("all"),
+          content: <BrpSelect label="Категорія клієнтів" value={filter} onValueChange={(value) => setFilter(value as (typeof categories)[number])} options={categories.map((value) => ({ value, label: value === "all" ? "Всі" : categoryLabels[value] }))} />,
+        }}
+        resultMeta={ukrainianCount(filtered.length, ["клієнт", "клієнти", "клієнтів"])}
+      />
 
       <section className={styles.customerLayout}>
         <Panel className={styles.customerListPanel}>

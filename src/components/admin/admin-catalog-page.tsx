@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Box,
   Bug,
@@ -32,6 +32,7 @@ import {
   AdminTabs,
   AdminToolbar,
 } from "@/components/admin/admin-ui";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import { EmptyState, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   catalogGlobalMetrics,
@@ -65,6 +66,45 @@ const primaryTabs: ReadonlyArray<{ id: CatalogPrimaryTab; label: string; icon: t
 
 const vehicleCategoryTabs = ["all", "ATV", "SSV", "PWC"] as const;
 const distributorCategoryTabs = ["ATV", "SSV", "3WV", "PWC"] as const;
+
+const loadAstryxAdminCatalogView = () => import("./astryx-admin-catalog-view");
+
+function useCatalogPageViewState() {
+  const [activeTab, setActiveTab] = useState<CatalogPrimaryTab>("vehicles");
+  const [vehicleQuery, setVehicleQuery] = useState("");
+  const [vehicleCategory, setVehicleCategory] = useState<VehicleCategoryFilter>("all");
+  const [columnCategory, setColumnCategory] = useState<VehicleCategoryFilter>("all");
+  const [skuFilter, setSkuFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [colorFilter, setColorFilter] = useState("");
+  const [engineFilter, setEngineFilter] = useState("");
+  const [modelYearFilter, setModelYearFilter] = useState("");
+  const [productionYearFilter, setProductionYearFilter] = useState("");
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [distributorCategory, setDistributorCategory] = useState<DistributorPriceCategory>("ATV");
+  const [distributorQuery, setDistributorQuery] = useState("");
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugQuery, setDebugQuery] = useState("");
+  const [submittedDebugQuery, setSubmittedDebugQuery] = useState<string | null>(null);
+  const [healthOpen, setHealthOpen] = useState(true);
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
+  const [partsQuery, setPartsQuery] = useState("");
+  const [partStatus, setPartStatus] = useState<PartStatusFilter>("all");
+  const [partLine, setPartLine] = useState<PartLineFilter>("all");
+  const [partType, setPartType] = useState<PartTypeFilter>("all");
+  const [partsPage, setPartsPage] = useState(1);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({sku: 132, name: 320, color: 180, prices: 132});
+  return {activeTab, setActiveTab, vehicleQuery, setVehicleQuery, vehicleCategory, setVehicleCategory, columnCategory, setColumnCategory, skuFilter, setSkuFilter, nameFilter, setNameFilter, colorFilter, setColorFilter, engineFilter, setEngineFilter, modelYearFilter, setModelYearFilter, productionYearFilter, setProductionYearFilter, advancedFiltersOpen, setAdvancedFiltersOpen, activeMenu, setActiveMenu, distributorCategory, setDistributorCategory, distributorQuery, setDistributorQuery, debugOpen, setDebugOpen, debugQuery, setDebugQuery, submittedDebugQuery, setSubmittedDebugQuery, healthOpen, setHealthOpen, importHistoryOpen, setImportHistoryOpen, partsQuery, setPartsQuery, partStatus, setPartStatus, partLine, setPartLine, partType, setPartType, partsPage, setPartsPage, columnWidths, setColumnWidths};
+}
+
+export type CatalogPageViewProps = ReturnType<typeof useCatalogPageViewState>;
+const CatalogViewStateContext = createContext<CatalogPageViewProps | null>(null);
+function useCatalogViewState() {
+  const value = useContext(CatalogViewStateContext);
+  if (!value) throw new Error("Catalog view state must be provided by AdminCatalogPage.");
+  return value;
+}
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
@@ -123,7 +163,7 @@ function SearchField({ value, onChange, placeholder, label }: {
 function RepresentativeNotice({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
     <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
-      Репрезентативна source-вибірка: показано {shown} з {formatInteger(total)} {noun}. Загальний лічильник збережено точно.
+      Показано {shown} з {formatInteger(total)} {noun}. Загальний лічильник збережено точно.
     </p>
   );
 }
@@ -189,7 +229,10 @@ function VehicleActions({
   sku: string;
   surface: "desktop" | "mobile";
 }) {
-  const [open, setOpen] = useState(false);
+  const { activeMenu, setActiveMenu } = useCatalogViewState();
+  const menuKey = `${surface}-${productId}`;
+  const open = activeMenu === menuKey;
+  const setOpen = useCallback((next: boolean) => setActiveMenu(next ? menuKey : null), [menuKey, setActiveMenu]);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = `${surface}-${productId}`;
@@ -214,7 +257,7 @@ function VehicleActions({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   const triggerClassName = surface === "desktop"
     ? "icon-button icon-button-small"
@@ -232,14 +275,14 @@ function VehicleActions({
         aria-label={`Меню продукту ${sku}`}
         aria-expanded={open}
         aria-controls={actionsId}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => setOpen(!open)}
       >
         <EllipsisVertical size={16} />
       </button>
       {open ? (
         <div id={actionsId} role="group" aria-label={`Дії продукту ${sku}`} className={menuClassName}>
-          <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування вимкнене у read-only клоні"><LockKeyhole size={13} /> Редагувати</button>
-          <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення вимкнене у read-only клоні"><Trash2 size={13} /> Видалити</button>
+          <button type="button" disabled className="button button-ghost justify-start text-[12px]" title="Редагування потребує підключення сервісу каталогу"><LockKeyhole size={13} /> Редагувати</button>
+          <button type="button" disabled className="button button-ghost justify-start text-[12px] text-[var(--red)]" title="Видалення потребує підключення сервісу каталогу"><Trash2 size={13} /> Видалити</button>
         </div>
       ) : null}
     </div>
@@ -247,16 +290,7 @@ function VehicleActions({
 }
 
 function VehicleCatalog() {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<VehicleCategoryFilter>("all");
-  const [columnCategory, setColumnCategory] = useState<VehicleCategoryFilter>("all");
-  const [skuFilter, setSkuFilter] = useState("");
-  const [nameFilter, setNameFilter] = useState("");
-  const [colorFilter, setColorFilter] = useState("");
-  const [engineFilter, setEngineFilter] = useState("");
-  const [modelYearFilter, setModelYearFilter] = useState("");
-  const [productionYearFilter, setProductionYearFilter] = useState("");
-  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
+  const { vehicleQuery: query, setVehicleQuery: setQuery, vehicleCategory: category, setVehicleCategory: setCategory, columnCategory, setColumnCategory, skuFilter, setSkuFilter, nameFilter, setNameFilter, colorFilter, setColorFilter, engineFilter, setEngineFilter, modelYearFilter, setModelYearFilter, productionYearFilter, setProductionYearFilter, advancedFiltersOpen, setAdvancedFiltersOpen } = useCatalogViewState();
 
   const visibleProducts = useMemo(() => catalogVehicleProducts.filter((product) => {
     if (category !== "all" && product.category !== category) return false;
@@ -416,7 +450,7 @@ function VehicleCatalog() {
       ) : null}
 
       <Panel className="min-w-0 overflow-visible shadow-none">
-        <RepresentativeNotice shown={visibleProducts.length} total={sourceTotalForCurrentCategory} noun="продуктів у source" />
+        <RepresentativeNotice shown={visibleProducts.length} total={sourceTotalForCurrentCategory} noun="продуктів" />
         <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Товари каталогу">
           {visibleProducts.map((product) => (
             <li key={product.id} data-record-id={product.id} aria-labelledby={`catalog-vehicles-${product.id}-title`} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
@@ -438,7 +472,7 @@ function VehicleCatalog() {
             </li>
           ))}
           {isTrueNoResult ? <li><EmptyState compact icon={<Package size={22} />} title="Продуктів ще немає" description="Товари з'являться тут, коли дані каталогу будуть доступні." /></li> : null}
-          {!isTrueNoResult && visibleProducts.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає рядків цієї категорії. Точний загальний лічильник показано вище.</li> : null}
+          {!isTrueNoResult && visibleProducts.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">Для цієї категорії немає доступних рядків. Загальний лічильник показано вище.</li> : null}
         </ul>
         <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця товарів каталогу" tabIndex={0}>
           <table className="data-table min-w-[1120px]">
@@ -467,7 +501,7 @@ function VehicleCatalog() {
                 <tr><td colSpan={11}><EmptyState compact icon={<Package size={22} />} title="Продуктів ще немає" description="Товари з'являться тут, коли дані каталогу будуть доступні." /></td></tr>
               ) : null}
               {!isTrueNoResult && visibleProducts.length === 0 ? (
-                <tr><td colSpan={11} className="py-10 text-center text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає рядків цієї категорії. Точний загальний лічильник показано вище.</td></tr>
+                <tr><td colSpan={11} className="py-10 text-center text-[var(--muted-foreground)]">Для цієї категорії немає доступних рядків. Загальний лічильник показано вище.</td></tr>
               ) : null}
             </tbody>
           </table>
@@ -478,8 +512,7 @@ function VehicleCatalog() {
 }
 
 function DistributorPrices() {
-  const [category, setCategory] = useState<DistributorPriceCategory>("ATV");
-  const [query, setQuery] = useState("");
+  const { distributorCategory: category, setDistributorCategory: setCategory, distributorQuery: query, setDistributorQuery: setQuery } = useCatalogViewState();
 
   const visibleRows = useMemo(() => distributorPriceRows.filter((row) => {
     if (row.category !== category) return false;
@@ -523,7 +556,7 @@ function DistributorPrices() {
       />
 
       <Panel className="min-w-0 overflow-hidden shadow-none">
-        <RepresentativeNotice shown={visibleRows.length} total={distributorSourceCounts[category]} noun={`цін категорії ${category} у source`} />
+        <RepresentativeNotice shown={visibleRows.length} total={distributorSourceCounts[category]} noun={`цін категорії ${category}`} />
         <ul className="grid list-none gap-3 p-3 md:hidden" aria-label="Ціни дистриб’ютора">
           {visibleRows.map((row) => (
             <li key={row.id} data-record-id={row.id} aria-labelledby={`catalog-distributor-${row.id}-title`} className="grid gap-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
@@ -539,7 +572,7 @@ function DistributorPrices() {
               </dl>
             </li>
           ))}
-          {visibleRows.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає відповідних рядків. Точний загальний лічильник збережено.</li> : null}
+          {visibleRows.length === 0 ? <li className="px-3 py-8 text-center text-[11px] text-[var(--muted-foreground)]">Відповідних рядків немає. Загальний лічильник збережено.</li> : null}
         </ul>
         <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця цін дистриб’ютора" tabIndex={0}>
           <table className="data-table min-w-[1160px]">
@@ -553,7 +586,7 @@ function DistributorPrices() {
                 </tr>
               ))}
               {visibleRows.length === 0 ? (
-                <tr><td colSpan={12} className="py-10 text-center text-[var(--muted-foreground)]">У репрезентативній source-вибірці немає відповідних рядків. Точний загальний лічильник збережено.</td></tr>
+                <tr><td colSpan={12} className="py-10 text-center text-[var(--muted-foreground)]">Відповідних рядків немає. Загальний лічильник збережено.</td></tr>
               ) : null}
             </tbody>
           </table>
@@ -564,9 +597,7 @@ function DistributorPrices() {
 }
 
 function DebugPricing() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
+  const { debugOpen: open, setDebugOpen: setOpen, debugQuery: query, setDebugQuery: setQuery, submittedDebugQuery: submittedQuery, setSubmittedDebugQuery: setSubmittedQuery } = useCatalogViewState();
   const hasObservedResult = normalize(submittedQuery ?? "") === normalize(catalogPricingDebugResult.sku);
 
   return (
@@ -619,7 +650,7 @@ function DebugPricing() {
 
           {submittedQuery && !hasObservedResult ? (
             <p className="m-0 rounded-md border border-dashed border-[var(--border)] bg-[var(--surface-subtle)] p-4 text-center text-[11px] text-[var(--muted-foreground)]">
-              Для цього SKU немає source-observed debug fixture. Зовнішній запит не виконувався.
+              Для цього SKU немає даних для розрахунку. Підключення до сервісу ціноутворення недоступне.
             </p>
           ) : null}
         </div>
@@ -629,7 +660,7 @@ function DebugPricing() {
 }
 
 function CatalogHealth() {
-  const [open, setOpen] = useState(true);
+  const { healthOpen: open, setHealthOpen: setOpen } = useCatalogViewState();
   return (
     <Panel className="overflow-hidden shadow-none">
       <button type="button" className="flex min-h-12 w-full items-center gap-2 px-4 text-left text-[13px] font-semibold" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
@@ -660,7 +691,7 @@ function CatalogHealth() {
 }
 
 function ImportHistory() {
-  const [open, setOpen] = useState(false);
+  const { importHistoryOpen: open, setImportHistoryOpen: setOpen } = useCatalogViewState();
   return (
     <Panel className="overflow-hidden shadow-none">
       <button type="button" className="flex min-h-12 w-full items-center gap-2 px-4 text-left text-[13px] font-medium" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
@@ -669,7 +700,7 @@ function ImportHistory() {
       </button>
       {open ? (
         <>
-          <RepresentativeNotice shown={catalogImportHistory.length} total={20} noun="імпортів у source" />
+          <RepresentativeNotice shown={catalogImportHistory.length} total={20} noun="імпортів" />
           <div className="data-table-wrap" role="region" aria-label="Історія імпорту" tabIndex={0}>
             <table className="data-table min-w-[900px]">
               <thead><tr><th>Date</th><th>Mode</th><th>SKUs</th><th>New/Upd</th><th>Changes</th><th>Chains</th><th>Duration</th><th>Статус</th></tr></thead>
@@ -685,11 +716,7 @@ function ImportHistory() {
 }
 
 function PartsCatalog() {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<PartStatusFilter>("all");
-  const [line, setLine] = useState<PartLineFilter>("all");
-  const [type, setType] = useState<PartTypeFilter>("all");
-  const [page, setPage] = useState(1);
+  const { partsQuery: query, setPartsQuery: setQuery, partStatus: status, setPartStatus: setStatus, partLine: line, setPartLine: setLine, partType: type, setPartType: setType, partsPage: page, setPartsPage: setPage } = useCatalogViewState();
 
   const hasFilters = Boolean(normalize(query) || status !== "all" || line !== "all" || type !== "all");
   const visibleRows = useMemo(() => catalogParts.filter((part) => {
@@ -764,7 +791,7 @@ function PartsCatalog() {
             </li>
           ))}
           {exactNoResult ? <li className="px-3 py-10 text-center text-[var(--muted-foreground)]">Нічого не знайдено.</li> : null}
-          {!hasFilters && !fixturePageCovered ? <li className="px-3 py-10 text-center text-[11px] text-[var(--muted-foreground)]">Сторінку {page} можна переглянути у локальній пагінації, але її рядки не входять до репрезентативного source fixture.</li> : null}
+          {!hasFilters && !fixturePageCovered ? <li className="px-3 py-10 text-center text-[11px] text-[var(--muted-foreground)]">Для сторінки {page} немає доступних рядків каталогу.</li> : null}
         </ul>
         <div className="data-table-wrap hidden [contain:paint] md:block" role="region" aria-label="Таблиця каталогу запчастин" tabIndex={0}>
           <table className="data-table min-w-[1040px]">
@@ -779,7 +806,7 @@ function PartsCatalog() {
                 </tr>
               ))}
               {exactNoResult ? <tr><td colSpan={10} className="py-12 text-center text-[var(--muted-foreground)]">Нічого не знайдено.</td></tr> : null}
-              {!hasFilters && !fixturePageCovered ? <tr><td colSpan={10} className="py-12 text-center text-[var(--muted-foreground)]">Сторінку {page} можна переглянути у локальній пагінації, але її рядки не входять до репрезентативного source fixture.</td></tr> : null}
+              {!hasFilters && !fixturePageCovered ? <tr><td colSpan={10} className="py-12 text-center text-[var(--muted-foreground)]">Для сторінки {page} немає доступних рядків каталогу.</td></tr> : null}
             </tbody>
           </table>
         </div>
@@ -795,17 +822,32 @@ function PartsCatalog() {
   );
 }
 
-export function AdminCatalogPage() {
-  const [activeTab, setActiveTab] = useState<CatalogPrimaryTab>("vehicles");
-
+function CurrentAdminCatalogView() {
+  const { activeTab, setActiveTab } = useCatalogViewState();
   return (
-    <AdminPage>
+    <div data-admin-catalog-renderer="current">
+      <AdminPage>
       <AdminPageHeader icon={<Database size={20} />} title="Керування каталогом" description="Товари, ціни дистриб'ютора та каталог запчастин" />
       <GlobalKpis />
       <PrimaryTabs active={activeTab} onChange={setActiveTab} />
       {activeTab === "vehicles" ? <VehicleCatalog /> : null}
       {activeTab === "distributor" ? <DistributorPrices /> : null}
       {activeTab === "parts" ? <PartsCatalog /> : null}
-    </AdminPage>
+      </AdminPage>
+    </div>
+  );
+}
+
+export function AdminCatalogPage() {
+  const viewProps = useCatalogPageViewState();
+  return (
+    <CatalogViewStateContext.Provider value={viewProps}>
+      <RendererViewSwitch
+        slotId="admin-catalog"
+        currentView={<CurrentAdminCatalogView />}
+        loadAstryxView={loadAstryxAdminCatalogView}
+        astryxViewProps={viewProps}
+      />
+    </CatalogViewStateContext.Provider>
   );
 }

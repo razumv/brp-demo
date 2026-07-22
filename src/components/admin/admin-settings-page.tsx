@@ -34,7 +34,12 @@ import {
   type QueueMetric,
   type SettingsSectionId,
 } from "@/lib/admin-settings-data";
+import {AppearanceSettingsSection} from "@/components/appearance/appearance-settings-section";
+import {CurrentBrpUiProvider} from "@/components/brp-ui/current-brp-ui-provider";
+import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
 import styles from "./admin-settings.module.css";
+
+const loadAstryxAdminSettingsView = () => import("./astryx-admin-settings-view");
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: string | number }>;
 
@@ -153,17 +158,22 @@ function DatabasePanel() {
 }
 
 const sectionRenderers: Readonly<Record<SettingsSectionId, () => React.ReactNode>> = {
+  appearance: () => <AppearanceSettingsSection />,
   workers: () => <WorkerPanel />,
   queue: () => <QueuePanel />,
   database: () => <DatabasePanel />,
 };
 
-export function AdminSettingsPage() {
-  const [query, setQuery] = useState("");
-  const visibleSections = useMemo(() => filterSettingsSections(query), [query]);
+export interface AdminSettingsViewProps {
+  query: string;
+  setQuery: (value: string) => void;
+  visibleSections: readonly SettingsSectionId[];
+}
+
+function CurrentAdminSettingsView({query, setQuery, visibleSections}: AdminSettingsViewProps) {
 
   return (
-    <AdminPage>
+    <div data-admin-settings-renderer="shadcn"><AdminPage>
       <AdminPageHeader
         icon={<Settings size={20} />}
         title="Налаштування"
@@ -192,6 +202,20 @@ export function AdminSettingsPage() {
       ) : (
         <div className={styles.emptyState}>{SETTINGS_EMPTY_COPY}</div>
       )}
-    </AdminPage>
+    </AdminPage></div>
+  );
+}
+
+export function AdminSettingsPage() {
+  const [query, setQuery] = useState("");
+  const visibleSections = useMemo(() => filterSettingsSections(query), [query]);
+  const viewProps = {query, setQuery, visibleSections};
+  return (
+    <RendererViewSwitch
+      slotId="admin-settings"
+      currentView={<CurrentBrpUiProvider><CurrentAdminSettingsView {...viewProps} /></CurrentBrpUiProvider>}
+      loadAstryxView={loadAstryxAdminSettingsView}
+      astryxViewProps={viewProps}
+    />
   );
 }

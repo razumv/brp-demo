@@ -13,6 +13,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import { InlineNotice, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import { useAppearance } from "@/components/appearance/use-appearance";
+import { BrpButton, BrpSwitch, BrpTextInput } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import styles from "./dealer.module.css";
 
@@ -27,6 +29,7 @@ const permissions = [
 ];
 
 export function TeamAccessPage() {
+  const { renderedDesignSystem } = useAppearance();
   const { identity } = useDealerWorkflow();
   if (!identity) {
     return (
@@ -39,7 +42,7 @@ export function TeamAccessPage() {
   const { displayName: name, email } = identity;
 
   return (
-    <main className="page page-narrow">
+    <main className="page page-narrow" data-dealer-team-access-renderer={renderedDesignSystem}>
       <PageHeader
         icon={<UsersRound size={21} />}
         title="Команда і доступи"
@@ -56,7 +59,7 @@ export function TeamAccessPage() {
         <div className="data-table-wrap">
           <table className="data-table">
             <thead><tr><th>Назва</th><th>Email</th><th>Роль</th><th>Статус доступу</th><th>Профіль</th></tr></thead>
-            <tbody><tr><td><strong>{name}</strong></td><td>{email}</td><td>Головний дилер</td><td><StatusBadge tone="green">Основний акаунт</StatusBadge></td><td><button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}>Оберіть профіль</button></td></tr></tbody>
+            <tbody><tr><td><strong>{name}</strong></td><td>{email}</td><td>Головний дилер</td><td><StatusBadge tone="green">Основний акаунт</StatusBadge></td><td><BrpButton label="Оберіть профіль" disabled ariaDescribedBy={accessReasonId} /></td></tr></tbody>
           </table>
         </div>
       </Panel>
@@ -68,25 +71,22 @@ export function TeamAccessPage() {
         </header>
         <div className={styles.accountBadges}><StatusBadge tone="neutral">Головний дилер</StatusBadge><StatusBadge tone="green">Основний акаунт</StatusBadge><StatusBadge tone="neutral">Оберіть профіль</StatusBadge></div>
         <div className={styles.accountControls}>
-          <label className="field"><span>Ім&apos;я акаунта</span><input value={name} readOnly disabled aria-describedby={accessReasonId} /></label>
-          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}>Зберегти ім&apos;я</button>
+          <BrpTextInput label="Ім'я акаунта" value={name} onValueChange={() => undefined} disabled ariaDescribedBy={accessReasonId} />
+          <BrpButton label="Зберегти ім'я" disabled ariaDescribedBy={accessReasonId} />
           <span className={styles.quickLabel}>Швидкий доступ</span>
-          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}><ShieldCheck size={15} /> Дати Full Access</button>
-          <button type="button" className="button button-outline" disabled aria-describedby={accessReasonId}><LockKeyhole size={15} /> Без доступу</button>
+          <BrpButton label="Дати Full Access" icon={<ShieldCheck size={15} />} disabled ariaDescribedBy={accessReasonId} />
+          <BrpButton label="Без доступу" icon={<LockKeyhole size={15} />} disabled ariaDescribedBy={accessReasonId} />
         </div>
       </Panel>
 
       <Panel className={styles.permissionsPanel}>
-        <header><div><h2>Права профілю</h2><p>Показані лише функції, доступні вашій компанії.</p></div><button type="button" className="button button-primary" disabled aria-describedby={accessReasonId}><Save size={14} /> Зберегти</button></header>
+        <header><div><h2>Права профілю</h2><p>Показані лише функції, доступні вашій компанії.</p></div><BrpButton label="Зберегти" icon={<Save size={14} />} disabled ariaDescribedBy={accessReasonId} /></header>
         <div>
           {permissions.map(({ label, helper, icon: Icon, enabled }, index) => (
             <div className={styles.permissionRow} key={`${label}-${helper}-${index}`}>
               <span className={styles.permissionIcon}>{enabled ? <CheckCircle2 size={17} /> : <Icon size={17} />}</span>
               <span><strong>{label}</strong><small>{helper}</small></span>
-              <label className={styles.switch} title="Керується адміністратором">
-                <input type="checkbox" checked={enabled} disabled readOnly aria-describedby={accessReasonId} />
-                <i />
-              </label>
+              <BrpSwitch label={`${label}: ${helper}`} checked={enabled} onCheckedChange={() => undefined} disabled hideLabel ariaDescribedBy={accessReasonId} />
             </div>
           ))}
         </div>

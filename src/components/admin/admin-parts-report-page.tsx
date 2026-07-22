@@ -13,6 +13,7 @@ import {
   RefreshCw,
   UserRound,
 } from "lucide-react";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import { Panel } from "@/components/shared/ui";
 import {
   initialPartsReportFilter,
@@ -29,6 +30,15 @@ import {
   type PartsReportPeriodPreset,
   type SyntheticManagerId,
 } from "@/lib/admin-parts-report-data";
+
+const loadAstryxAdminPartsReportView = () => import("./astryx-admin-parts-report-view");
+
+export type PartsReportViewProps = {
+  draftFilter: PartsReportFilter;
+  appliedFilter: PartsReportFilter;
+  onDraftFilterChange: (next: PartsReportFilter) => void;
+  onApplyFilter: () => void;
+};
 
 function formatUsd(amount: number) {
   return `$${amount.toFixed(2)}`;
@@ -286,12 +296,19 @@ function PaymentsTable() {
   );
 }
 
-export function AdminPartsReportPage() {
-  const [draftFilter, setDraftFilter] = useState<PartsReportFilter>({ ...initialPartsReportFilter });
-  const [appliedFilter, setAppliedFilter] = useState<PartsReportFilter>({ ...initialPartsReportFilter });
-
+function CurrentAdminPartsReportView({
+  draftFilter,
+  appliedFilter,
+  onDraftFilterChange,
+  onApplyFilter,
+}: PartsReportViewProps) {
   return (
-    <main className="page">
+    <main
+      className="page"
+      data-admin-parts-report-renderer="current"
+      data-parts-report-filter-from={draftFilter.from}
+      data-parts-report-filter-to={draftFilter.to}
+    >
       <div className="space-y-6">
         <header className="page-header !mb-0">
           <div className="min-w-0">
@@ -304,7 +321,7 @@ export function AdminPartsReportPage() {
           <button
             type="button"
             disabled
-            title="Оновлення звіту вимкнено у read-only демонстрації"
+            title="Оновлення потребує підключення сервісу звітів"
             className="button button-primary !min-h-8 px-4 text-[13px] disabled:opacity-70"
           >
             <LockKeyhole size={12} className="sr-only" />
@@ -315,8 +332,8 @@ export function AdminPartsReportPage() {
 
         <FilterPanel
           draft={draftFilter}
-          onChange={setDraftFilter}
-          onApply={() => setAppliedFilter({ ...draftFilter })}
+          onChange={onDraftFilterChange}
+          onApply={onApplyFilter}
         />
 
         <DataControlNotice />
@@ -333,5 +350,25 @@ export function AdminPartsReportPage() {
         <PaymentsTable />
       </div>
     </main>
+  );
+}
+
+export function AdminPartsReportPage() {
+  const [draftFilter, setDraftFilter] = useState<PartsReportFilter>({ ...initialPartsReportFilter });
+  const [appliedFilter, setAppliedFilter] = useState<PartsReportFilter>({ ...initialPartsReportFilter });
+  const viewProps: PartsReportViewProps = {
+    draftFilter,
+    appliedFilter,
+    onDraftFilterChange: setDraftFilter,
+    onApplyFilter: () => setAppliedFilter({ ...draftFilter }),
+  };
+
+  return (
+    <RendererViewSwitch
+      slotId="admin-parts-report"
+      currentView={<CurrentAdminPartsReportView {...viewProps} />}
+      loadAstryxView={loadAstryxAdminPartsReportView}
+      astryxViewProps={viewProps}
+    />
   );
 }

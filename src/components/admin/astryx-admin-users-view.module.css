@@ -1,0 +1,31 @@
+.page { display: grid; gap: 1rem; min-width: 0; max-width: 1184px; margin-inline: auto; padding-block: 1.5rem; }
+.headerCopy, .userIdentity, .userMeta, .userBadges, .userActions, .dialogActions { display: flex; align-items: center; }
+.headerCopy { min-width: 0; gap: .75rem; align-items: flex-start; }
+.headerCopy h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+.headerCopy p { margin: .3rem 0 0; }
+.headerIcon, .avatar { display: grid; flex: 0 0 auto; place-items: center; border-radius: 999px; background: var(--color-background-orange); color: var(--color-icon-warning); }
+.headerIcon { width: 2.5rem; height: 2.5rem; }
+.avatar { width: 2rem; height: 2rem; font-size: .72rem; font-weight: 700; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+.kpis > div { display: grid; gap: .35rem; }
+.kpis h2 { margin: 0; font-size: 1.35rem; }
+.toolbar { display: grid; gap: .7rem; }
+.userGrid { display: grid; gap: .7rem; }
+.userCard { display: grid; gap: .7rem; min-width: 0; }
+.userIdentity { min-width: 0; gap: .65rem; }
+.userIdentity > div { min-width: 0; overflow: hidden; }
+.userIdentity span, .userIdentity p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.userMeta { gap: .35rem; }
+.userBadges { flex-wrap: wrap; gap: .4rem; }
+.userActions { flex-wrap: wrap; gap: .3rem; }
+.dialogFields { display: grid; gap: .75rem; }
+.dialogActions { justify-content: flex-end; gap: .5rem; }
+.permissions { display: grid; gap: .6rem; margin-top: 1rem; }
+.permissions > div:first-child { display: flex; gap: .5rem; align-items: center; justify-content: space-between; }
+.permissions h3 { margin: 0; font-size: 1rem; }
+.permissionsScroll { overflow-x: auto; border: 1px solid var(--color-border-emphasized); border-radius: var(--radius-container); }
+.permissions table { width: 100%; min-width: 36rem; border-collapse: collapse; font-size: .75rem; }
+.permissions th, .permissions td { padding: .55rem .65rem; text-align: left; border-bottom: 1px solid var(--color-border-default); }
+.permissions thead { background: var(--color-background-muted); }
+@media (min-width: 768px) { .toolbar { grid-template-columns: minmax(16rem, 1fr) minmax(28rem, auto); align-items: end; } .userGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dialogFields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .userGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

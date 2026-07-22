@@ -35,7 +35,7 @@ test("dealer can navigate on desktop and sign out", async ({ page }) => {
   await expect(page).toHaveURL(/\/dealer\/orders\/?$/);
 
   await page.getByRole("button", { name: "Профіль" }).click();
-  await page.getByRole("button", { name: "Вийти" }).click();
+  await page.getByRole("menuitem", { name: "Вийти" }).click();
   await expect(page).toHaveURL(/\/login\/?$/);
   await expect(page.getByRole("button", { name: "Увійти" })).toBeVisible();
 });

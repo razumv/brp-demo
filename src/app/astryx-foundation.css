@@ -1,0 +1,40 @@
+[data-design-system="astryx"] body,
+[data-design-system="astryx"] #brp-app-root {
+  min-height: 100%;
+  background: var(--color-background-body);
+  color: var(--color-text-primary);
+  font-family: "Figtree Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Keep the compatibility provider structurally permanent without perturbing
+   the preserved current renderer's layout box or screenshot geometry. */
+body > [data-astryx-theme="brp-current-compatibility"] {
+  display: contents;
+  --font-family-body: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  --font-family-heading: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  color: var(--foreground) !important;
+  color-scheme: normal !important;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* defineTheme emits scoped prose defaults for every Theme, including the
+   compatibility Theme. Put a zero-specificity counter-reset in a later CSS
+   layer so unlayered legacy component rules still win while otherwise
+   unstyled prose keeps the exact inheritance it had before Theme existed. */
+@layer components {
+  @scope (body > [data-astryx-theme="brp-current-compatibility"]) to ([data-astryx-theme]) {
+    :where(h1, h2, h3, h4, h5, h6, p, small) {
+      color: inherit;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
+
+    :where(code, pre) {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+    }
+  }
+}

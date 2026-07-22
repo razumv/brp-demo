@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { BrpIconButton, BrpSelect, BrpTextInput } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { Modal, Panel, StatusBadge } from "@/components/shared/ui";
 import {
@@ -325,39 +326,44 @@ export function AccessoriesPage() {
 
         <section className={styles.productsSection} aria-label="Аксесуари">
           <div className={styles.productToolbar}>
-            <label className={styles.productSearch}>
-              <Search size={15} aria-hidden="true" />
-              <input
+            <div className={styles.productSearch}>
+              <BrpTextInput
                 type="search"
-                aria-label="Пошук аксесуарів"
+                label="Пошук аксесуарів"
+                hideLabel
+                leadingIcon={<Search size={15} aria-hidden="true" />}
+                clearable
                 value={filters.query}
-                onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
+                onValueChange={(value) => setFilters((current) => ({ ...current, query: value }))}
                 placeholder="Назва або артикул..."
               />
-            </label>
-            <button
-              type="button"
-              className={styles.mobileFilterTrigger}
-              aria-label="Фільтри аксесуарів"
-              aria-expanded={filtersExpanded}
-              aria-controls="accessory-filter-panel"
-              onClick={toggleFilters}
-            >
-              <SlidersHorizontal size={18} />
-            </button>
-            <select
-              className={cn("select", styles.toolbarSort)}
-              aria-label="Сортування"
+            </div>
+            <div className={styles.mobileFilterTrigger}>
+              <BrpIconButton
+                label="Фільтри аксесуарів"
+                icon={<SlidersHorizontal size={18} />}
+                variant="secondary"
+                expanded={filtersExpanded}
+                ariaControls="accessory-filter-panel"
+                onPress={toggleFilters}
+              />
+            </div>
+            <div className={styles.toolbarSort}>
+              <BrpSelect
+              label="Сортування"
+              hideLabel
               value={filters.sort}
-              onChange={(event) => setFilters((current) => ({
+              onValueChange={(value) => setFilters((current) => ({
                 ...current,
-                sort: event.target.value as AccessorySort,
+                sort: value as AccessorySort,
               }))}
-            >
-              <option value="featured">Рекомендовані</option>
-              <option value="price-asc">Ціна: від нижчої</option>
-              <option value="price-desc">Ціна: від вищої</option>
-            </select>
+              options={[
+                { value: "featured", label: "Рекомендовані" },
+                { value: "price-asc", label: "Ціна: від нижчої" },
+                { value: "price-desc", label: "Ціна: від вищої" },
+              ]}
+              />
+            </div>
           </div>
 
           <p className={styles.resultCount} aria-live="polite">

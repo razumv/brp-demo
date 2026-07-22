@@ -15,6 +15,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { Modal, Panel } from "@/components/shared/ui";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 import {
   AdminIconAction,
   AdminKpiGrid,
@@ -44,6 +45,19 @@ import {
 
 type PreviewMenu = "role" | "company" | "dealer-role" | null;
 
+export interface AdminUsersModel {
+  tab: AdminUserTab;
+  setTab(value: AdminUserTab): void;
+  query: string;
+  setQuery(value: string): void;
+  selectedUser: AdminUserRecord | null;
+  setSelectedUser(user: AdminUserRecord | null): void;
+  visibleUsers: readonly AdminUserRecord[];
+  resultCount: number;
+}
+
+const loadAstryxAdminUsersView = () => import("./astryx-admin-users-view");
+
 const userGrid = "grid min-w-[1080px] grid-cols-[minmax(230px,2fr)_minmax(220px,1.8fr)_minmax(155px,1.3fr)_100px_100px_110px_125px]";
 
 const roleToneClasses: Record<AdminUserRole, string> = {
@@ -66,6 +80,14 @@ const permissionLabels: Record<(typeof permissionKeys)[number], string> = {
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
+}
+
+function publicUserName(user: AdminUserRecord) {
+  return user.displayName.replace(/^Демо-користувач/, "Користувач");
+}
+
+function publicAccountLabel(user: AdminUserRecord) {
+  return user.accountLabel.replace(/^demo-account/, "account");
 }
 
 function userKpiItems() {
@@ -113,11 +135,11 @@ function UserIdentity({ user, titleId }: { user: AdminUserRecord; titleId?: stri
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] text-[10px] font-semibold text-[var(--muted-foreground)]" aria-hidden="true">
-        {user.displayName.slice(-2)}
+        {publicUserName(user).slice(-2)}
       </span>
       <span className="min-w-0">
-        <strong id={titleId} className="block truncate text-[12px] font-semibold">{user.displayName}</strong>
-        <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">{user.accountLabel}</span>
+        <strong id={titleId} className="block truncate text-[12px] font-semibold">{publicUserName(user)}</strong>
+        <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">{publicAccountLabel(user)}</span>
       </span>
     </div>
   );
@@ -127,7 +149,7 @@ function Contact({ user }: { user: AdminUserRecord }) {
   return (
     <span className="min-w-0">
       <span className="block truncate text-[11px]">{user.email}</span>
-      <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">@{user.accountLabel}</span>
+      <span className="mt-0.5 block truncate text-[9px] text-[var(--muted-foreground)]">@{publicAccountLabel(user)}</span>
     </span>
   );
 }
@@ -136,22 +158,22 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
   return (
     <div className={compact ? "flex flex-wrap items-center gap-1 [&>button]:!size-11 md:[&>button]:!size-8" : "flex items-center justify-end gap-1"}>
       <AdminIconAction
-        label={`Деактивувати ${user.displayName} — заблоковано`}
-        tooltip="Деактивацію заблоковано у read-only демонстрації"
+        label={`Деактивувати ${publicUserName(user)} — заблоковано`}
+        tooltip="Деактивація користувача потребує підключення сервісу облікових записів."
         icon={<CircleX size={15} />}
         tone="danger"
         disabled
       />
       <AdminIconAction
-        label={`Редагувати ${user.displayName}`}
+        label={`Редагувати ${publicUserName(user)}`}
         tooltip="Редагувати користувача"
         icon={<Pencil size={15} />}
         tone="primary"
         onClick={onEdit}
       />
       <AdminIconAction
-        label={`Видалити ${user.displayName} — заблоковано`}
-        tooltip="Видалення заблоковано у read-only демонстрації"
+        label={`Видалити ${publicUserName(user)} — заблоковано`}
+        tooltip="Видалення користувача потребує підключення сервісу облікових записів."
         icon={<Trash2 size={15} />}
         tone="danger"
         disabled
@@ -317,7 +339,7 @@ function PermissionSwitch({ state, label }: { state: Exclude<PermissionState, "n
       aria-disabled="true"
       aria-pressed={enabled}
       aria-label={`${label}: ${enabled ? "увімкнено" : "вимкнено"}; зміна заблокована`}
-      title="Зміна дозволу заблокована у read-only демонстрації"
+      title="Зміна дозволу потребує підключення сервісу контролю доступу."
       className={`relative mx-auto block h-5 w-9 cursor-not-allowed rounded-full border opacity-100 ${enabled ? "border-[#1a7f37] bg-[#1a7f37] dark:border-[#3fb950] dark:bg-[#238636]" : "border-[var(--border)] bg-[var(--surface-subtle)]"}`}
     >
       <span className={`absolute top-[2px] size-3 rounded-full bg-white shadow-sm dark:bg-[#f0f6fc] ${enabled ? "right-[2px]" : "left-[2px]"}`} aria-hidden="true" />
@@ -356,7 +378,7 @@ function ManagerPermissionMatrix() {
           disabled
           aria-disabled="true"
           className="cursor-not-allowed text-left text-[10px] text-[var(--muted-foreground)] opacity-70 sm:text-right"
-          title="Скидання дозволів заблоковано у read-only демонстрації"
+          title="Скидання дозволів потребує підключення сервісу контролю доступу."
         >
           Скинути до ролі за замовчуванням
         </button>
@@ -408,7 +430,7 @@ function EditUserPreview({ user, onClose }: { user: AdminUserRecord | null; onCl
       open
       onClose={onClose}
       title="Редагувати користувача"
-      description={`Оновити роль та компанію для ${user.displayName}`}
+      description={`Оновити роль та компанію для ${publicUserName(user)}`}
       className="!w-[min(760px,100%)]"
       footer={(
         <>
@@ -418,7 +440,7 @@ function EditUserPreview({ user, onClose }: { user: AdminUserRecord | null; onCl
             disabled
             aria-disabled="true"
             className="button button-primary"
-            title="Збереження заблоковано у read-only демонстрації"
+            title="Збереження змін потребує підключення сервісу облікових записів."
           >
             Зберегти зміни
           </button>
@@ -498,7 +520,24 @@ export function AdminUsersPage() {
 
   const resultCount = normalize(deferredQuery) ? visibleUsers.length : adminUserTotals.active;
 
-  return (
+  const setUserTab = (nextTab: AdminUserTab) => {
+    setSelectedUser(null);
+    setTab(nextTab);
+  };
+
+  const model: AdminUsersModel = {
+    tab,
+    setTab: setUserTab,
+    query,
+    setQuery,
+    selectedUser,
+    setSelectedUser,
+    visibleUsers,
+    resultCount,
+  };
+
+  const currentView = (
+    <div data-admin-users-renderer="shadcn">
     <AdminPage>
       <AdminPageHeader
         icon={<UsersRound size={20} />}
@@ -521,10 +560,7 @@ export function AdminUsersPage() {
           <AdminTabs
             items={userTabItems()}
             value={tab}
-            onValueChange={(nextTab) => {
-              setSelectedUser(null);
-              setTab(nextTab);
-            }}
+            onValueChange={setUserTab}
             label="Стани користувачів"
             mobileSelectLabel="Стани користувачів"
             size="compact"
@@ -545,5 +581,15 @@ export function AdminUsersPage() {
 
       <EditUserPreview key={selectedUser?.id ?? "closed"} user={selectedUser} onClose={() => setSelectedUser(null)} />
     </AdminPage>
+    </div>
+  );
+
+  return (
+    <RendererViewSwitch
+      slotId="admin-users"
+      currentView={currentView}
+      loadAstryxView={loadAstryxAdminUsersView}
+      astryxViewProps={{ model }}
+    />
   );
 }

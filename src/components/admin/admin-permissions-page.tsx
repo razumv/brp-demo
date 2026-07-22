@@ -58,6 +58,7 @@ import {
   type AdminPermissionRole,
   type AdminPermissionRoleDefinition,
 } from "@/lib/admin-permissions-data";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
 
 const actionIcons: Readonly<Record<AdminPermissionAction, LucideIcon>> = {
   read: Eye,
@@ -112,7 +113,7 @@ function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
 }
 
-type PermissionStateFilter = "all" | "on" | "off";
+export type PermissionStateFilter = "all" | "on" | "off";
 
 function PermissionStateFilterControl({
   value,
@@ -142,7 +143,7 @@ function roleDefinition(role: AdminPermissionRole): AdminPermissionRoleDefinitio
   return adminPermissionRoles.find((item) => item.id === role) ?? adminPermissionRoles[0];
 }
 
-function matrixActions(role: AdminPermissionRoleDefinition): readonly PermissionMatrixAction<AdminPermissionAction>[] {
+export function matrixActions(role: AdminPermissionRoleDefinition): readonly PermissionMatrixAction<AdminPermissionAction>[] {
   return role.actions.map((action) => {
     const Icon = actionIcons[action];
     return {
@@ -154,7 +155,7 @@ function matrixActions(role: AdminPermissionRoleDefinition): readonly Permission
   });
 }
 
-function matrixRows(entities: readonly AdminPermissionEntity[]): readonly PermissionMatrixRow<AdminPermissionAction>[] {
+export function matrixRows(entities: readonly AdminPermissionEntity[]): readonly PermissionMatrixRow<AdminPermissionAction>[] {
   return entities.map((entity) => {
     const Icon = entityIcons[entity.icon];
     return {
@@ -176,7 +177,7 @@ function ReadOnlyQuickButton({ children, tone = "neutral" }: {
       type="button"
       disabled
       aria-disabled="true"
-      title="Зміна дозволів заблокована у read-only демонстрації"
+      title="Зміна дозволів потребує підключення сервісу керування доступом"
       className={`button button-outline ${tone === "danger" ? "button-danger" : ""}`}
     >
       {children}
@@ -184,26 +185,21 @@ function ReadOnlyQuickButton({ children, tone = "neutral" }: {
   );
 }
 
-export function AdminPermissionsPage() {
-  const [activeRole, setActiveRole] = useState<AdminPermissionRole>("manager");
-  const [query, setQuery] = useState("");
-  const [permissionState, setPermissionState] = useState<PermissionStateFilter>("all");
-  const role = roleDefinition(activeRole);
-  const normalizedQuery = normalize(query);
+export interface AdminPermissionsViewProps {
+  activeRole: AdminPermissionRole;
+  setActiveRole(value: AdminPermissionRole): void;
+  query: string;
+  setQuery(value: string): void;
+  permissionState: PermissionStateFilter;
+  setPermissionState(value: PermissionStateFilter): void;
+  role: AdminPermissionRoleDefinition;
+  filteredEntities: readonly AdminPermissionEntity[];
+}
 
-  const filteredEntities = useMemo(() => {
-    return role.entities.filter((entity) => {
-      const searchableActions = role.actions
-        .filter((action) => entity.permissions[action] !== undefined)
-        .map((action) => adminPermissionActionLabels[action]);
-      const matchesQuery = !normalizedQuery || [entity.label, ...searchableActions]
-        .some((value) => normalize(value).includes(normalizedQuery));
-      const permissionStates = Object.values(entity.permissions);
-      const matchesState = permissionState === "all" || permissionStates.includes(permissionState);
-      return matchesQuery && matchesState;
-    });
-  }, [normalizedQuery, permissionState, role]);
+const loadAstryxAdminPermissionsView = () => import("./astryx-admin-permissions-view");
 
+function CurrentAdminPermissionsView(props: AdminPermissionsViewProps) {
+  const {activeRole, setActiveRole, query, setQuery, permissionState, setPermissionState, role, filteredEntities} = props;
   const roleTabs = adminPermissionRoles.map((item) => ({
     id: item.id,
     label: item.label,
@@ -213,6 +209,7 @@ export function AdminPermissionsPage() {
   }));
 
   return (
+    <div data-admin-permissions-renderer="shadcn">
     <AdminPage>
       <AdminPageHeader
         icon={<ShieldCheck size={20} />}
@@ -258,18 +255,34 @@ export function AdminPermissionsPage() {
         }}
       />
 
-      <section
-        id={`admin-permissions-${activeRole}-panel`}
-        role="tabpanel"
-        aria-labelledby={`admin-permissions-${activeRole}-panel-tab`}
-        className="min-w-0"
-      >
-        <AdminPermissionMatrix
-          actions={matrixActions(role)}
-          rows={matrixRows(filteredEntities)}
-          ariaLabel={`Дозволи ролі ${role.label}`}
-        />
+      <section id={`admin-permissions-${activeRole}-panel`} role="tabpanel" className="min-w-0">
+        <AdminPermissionMatrix actions={matrixActions(role)} rows={matrixRows(filteredEntities)} ariaLabel={`Дозволи ролі ${role.label}`} />
       </section>
     </AdminPage>
+    </div>
   );
+}
+
+export function AdminPermissionsPage() {
+  const [activeRole, setActiveRole] = useState<AdminPermissionRole>("manager");
+  const [query, setQuery] = useState("");
+  const [permissionState, setPermissionState] = useState<PermissionStateFilter>("all");
+  const role = roleDefinition(activeRole);
+  const normalizedQuery = normalize(query);
+
+  const filteredEntities = useMemo(() => {
+    return role.entities.filter((entity) => {
+      const searchableActions = role.actions
+        .filter((action) => entity.permissions[action] !== undefined)
+        .map((action) => adminPermissionActionLabels[action]);
+      const matchesQuery = !normalizedQuery || [entity.label, ...searchableActions]
+        .some((value) => normalize(value).includes(normalizedQuery));
+      const permissionStates = Object.values(entity.permissions);
+      const matchesState = permissionState === "all" || permissionStates.includes(permissionState);
+      return matchesQuery && matchesState;
+    });
+  }, [normalizedQuery, permissionState, role]);
+
+  const viewProps: AdminPermissionsViewProps = {activeRole, setActiveRole, query, setQuery, permissionState, setPermissionState, role, filteredEntities};
+  return <RendererViewSwitch slotId="admin-permissions" currentView={<CurrentAdminPermissionsView {...viewProps} />} loadAstryxView={loadAstryxAdminPermissionsView} astryxViewProps={viewProps} />;
 }

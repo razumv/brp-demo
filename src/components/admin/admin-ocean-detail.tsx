@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Box,
   CheckCircle2,
@@ -225,13 +224,15 @@ export function OceanBillDetailModal({
   bill,
   open,
   onClose,
+  expandedContainerId,
+  onContainerToggle,
 }: {
   bill: OceanBillOfLading;
   open: boolean;
   onClose: () => void;
+  expandedContainerId: string | null;
+  onContainerToggle(id: string): void;
 }) {
-  const [expandedContainerId, setExpandedContainerId] = useState<string | null>(bill.containers[0]?.id ?? null);
-
   const detail = bill.detail;
   const unitCount = bill.containers.reduce((total, container) => total + container.total, 0);
   const assignedCount = bill.containers.reduce((total, container) => total + container.assigned, 0);
@@ -245,7 +246,7 @@ export function OceanBillDetailModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={bill.id}
+      title={`BL ${bill.id}`}
       className={styles.billModal}
       bodyClassName={styles.billModalBody}
       headerMeta={(
@@ -288,7 +289,7 @@ export function OceanBillDetailModal({
                       className={styles.billContainerSummary}
                       aria-expanded={isExpanded}
                       aria-controls={contentId}
-                      onClick={() => setExpandedContainerId((current) => current === container.id ? null : container.id)}
+                      onClick={() => onContainerToggle(container.id)}
                     >
                       <ChevronDown size={14} className={`${styles.disclosureChevron} ${isExpanded ? styles.disclosureChevronOpen : ""}`} />
                       <strong className="font-mono">{container.number}</strong>
@@ -378,7 +379,7 @@ export function OceanBillDetailModal({
                     <span className="flex items-center gap-2">
                       <DocumentState document={document} />
                       {document.action !== "none" ? (
-                        <button type="button" disabled className="icon-button !h-6 !w-6" title="Демо: лише перегляд" aria-label={`${document.action === "download" ? "Завантажити" : "Додати"} ${document.label}`}>
+                        <button type="button" disabled className="icon-button !h-6 !w-6" title="Документ доступний лише для перегляду" aria-label={`${document.action === "download" ? "Завантажити" : "Додати"} ${document.label}`}>
                           {document.action === "download" ? <Download size={12} /> : <Upload size={12} />}
                         </button>
                       ) : null}
