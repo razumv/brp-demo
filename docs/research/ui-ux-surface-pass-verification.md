@@ -2,8 +2,8 @@
 
 ## Scope
 
-- Source candidate: `9543606` (`codex/ui-ux-surface-pass`)
-- Evidence report revision: `eeda2fb` (this report was added after the source candidate and does not change product code)
+- Source candidate: `54f5bb1` (`codex/ui-ux-surface-pass`)
+- Evidence history: `3643576` added the report, `3c0b7bd` recorded the incomplete release gates, and this documentation follow-up reconciles the report with the reviewed branch tip.
 - Comparison base: `d6e06a198740933e0af02160fecf56feadc6710c` (`origin/main` merge base)
 - Scope: the shared shell, the shadcn and Astryx renderers, responsive admin and dealer routes, search/filter toolbars, catalog discovery, and user/company/permission density changes introduced by this surface pass.
 
@@ -19,8 +19,8 @@ This is a UI certification pass. It does not claim that unavailable external int
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| `npm run lint` | Passed | ESLint completed with exit code 0. |
-| `npm run typecheck` | Passed | TypeScript completed with exit code 0. |
+| `npm run lint` | Passed | ESLint completed with exit code 0 at source candidate `54f5bb1`. |
+| `npm run typecheck` | Passed | TypeScript completed with exit code 0 at source candidate `54f5bb1`. |
 | `npm run test:dealer-state` | Passed | 26/26 dealer state tests passed. |
 | `npm run test:appearance` | Passed | 87/87 appearance and Astryx tests passed. |
 | `npm run build` | Passed | Production Next.js build completed successfully. |
@@ -29,6 +29,8 @@ This is a UI certification pass. It does not claim that unavailable external int
 | Focused browser reproductions | Passed | The two exact serial commands below each passed 1/1. |
 
 The Pages export contains `out/index.html` and `out/manifest.webmanifest` after the successful build.
+
+The final review follow-up hardened nested Escape ownership and added browser contracts for desktop controlled-filter dismissal, responsive people-list focus continuity in both breakpoint directions, and `/brp-demo` catalog artwork loading. Those scenarios are committed but remain part of the pending release-runner browser gate because the local Playwright Chromium cache was unavailable after host disk cleanup.
 
 Exact focused browser commands:
 
