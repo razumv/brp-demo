@@ -26,6 +26,8 @@ import {
   type ReturnCondition,
   type ReturnDealerId,
 } from "@/lib/admin-returns-data";
+import { RendererViewSwitch } from "@/components/appearance/renderer-view-switch";
+import { useAppearance } from "@/components/appearance/use-appearance";
 
 function normalize(value: string) {
   return value.trim().toLocaleLowerCase("uk-UA");
@@ -44,7 +46,7 @@ function matchesLine(line: EligibleReturnLine, query: string) {
   return normalize(`${line.orderNumber} ${line.partNumber} ${line.description}`).includes(normalizedQuery);
 }
 
-type ReturnPreviewState = {
+export type ReturnPreviewState = {
   selectedLineIds: readonly string[];
   quantities: Readonly<Record<string, number>>;
   conditions: Readonly<Record<string, ReturnCondition>>;
@@ -56,25 +58,53 @@ const emptyPreviewState: ReturnPreviewState = {
   conditions: {},
 };
 
-function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export type AdminReturnsModel = {
+  status: AdminReturnStatusFilter;
+  setStatus: (status: AdminReturnStatusFilter) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  createOpen: boolean;
+  openCreate: () => void;
+  closeCreate: () => void;
+  dealerId: ReturnDealerId | "";
+  dealer: (typeof returnDealers)[number] | null;
+  dealerLines: readonly EligibleReturnLine[];
+  visibleLines: readonly EligibleReturnLine[];
+  note: string;
+  setNote: (note: string) => void;
+  lineQuery: string;
+  setLineQuery: (query: string) => void;
+  preview: ReturnPreviewState;
+  selectedUnitCount: number;
+  visibleReturns: typeof sourceAdminReturns;
+  selectDealer: (dealerId: ReturnDealerId | "") => void;
+  toggleLine: (line: EligibleReturnLine) => void;
+  updateQuantity: (line: EligibleReturnLine, value: string) => void;
+  updateCondition: (lineId: string, condition: ReturnCondition) => void;
+};
+
+function useAdminReturnsModel(): AdminReturnsModel {
+  const [status, setStatus] = useState<AdminReturnStatusFilter>("draft");
+  const [query, setQuery] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const [dealerId, setDealerId] = useState<ReturnDealerId | "">("");
   const [note, setNote] = useState("");
   const [lineQuery, setLineQuery] = useState("");
   const [preview, setPreview] = useState<ReturnPreviewState>(emptyPreviewState);
 
   const dealer = returnDealers.find((item) => item.id === dealerId) ?? null;
-  const dealerLines = useMemo(
-    () => representativeEligibleReturnLines.filter((line) => line.dealerId === dealerId),
-    [dealerId],
-  );
-  const visibleLines = useMemo(
-    () => dealerLines.filter((line) => matchesLine(line, lineQuery)),
-    [dealerLines, lineQuery],
-  );
-  const selectedUnitCount = preview.selectedLineIds.reduce(
-    (total, lineId) => total + (preview.quantities[lineId] ?? 0),
-    0,
-  );
+  const dealerLines = useMemo(() => representativeEligibleReturnLines.filter((line) => line.dealerId === dealerId), [dealerId]);
+  const visibleLines = useMemo(() => dealerLines.filter((line) => matchesLine(line, lineQuery)), [dealerLines, lineQuery]);
+  const selectedUnitCount = preview.selectedLineIds.reduce((total, lineId) => total + (preview.quantities[lineId] ?? 0), 0);
+  const visibleReturns = useMemo(() => {
+    const normalizedQuery = normalize(query);
+    return sourceAdminReturns.filter((item) => {
+      if (status !== "all" && item.status !== status) return false;
+      if (!normalizedQuery) return true;
+      const itemDealer = returnDealers.find((candidate) => candidate.id === item.dealerId);
+      return normalize(`${item.number} ${item.orderNumber} ${itemDealer?.name ?? ""} ${itemDealer?.code ?? ""} ${item.note ?? ""}`).includes(normalizedQuery);
+    });
+  }, [query, status]);
 
   const resetPreview = () => {
     setDealerId("");
@@ -82,64 +112,55 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
     setLineQuery("");
     setPreview(emptyPreviewState);
   };
-
-  const closeDialog = () => {
+  const closeCreate = () => {
     resetPreview();
-    onClose();
+    setCreateOpen(false);
   };
-
   const selectDealer = (nextDealerId: ReturnDealerId | "") => {
     setDealerId(nextDealerId);
     setLineQuery("");
     setPreview(emptyPreviewState);
   };
-
   const toggleLine = (line: EligibleReturnLine) => {
-    const selected = preview.selectedLineIds.includes(line.id);
-    if (selected) {
-      const quantities = Object.fromEntries(
-        Object.entries(preview.quantities).filter(([lineId]) => lineId !== line.id),
-      );
-      const conditions = Object.fromEntries(
-        Object.entries(preview.conditions).filter(([lineId]) => lineId !== line.id),
-      );
-      setPreview({
-        selectedLineIds: preview.selectedLineIds.filter((lineId) => lineId !== line.id),
-        quantities,
-        conditions,
-      });
-      return;
-    }
-
-    setPreview({
-      selectedLineIds: [...preview.selectedLineIds, line.id],
-      quantities: { ...preview.quantities, [line.id]: line.availableQuantity },
-      conditions: { ...preview.conditions, [line.id]: "unused" },
+    setPreview((current) => {
+      const selected = current.selectedLineIds.includes(line.id);
+      if (selected) {
+        return {
+          selectedLineIds: current.selectedLineIds.filter((lineId) => lineId !== line.id),
+          quantities: Object.fromEntries(Object.entries(current.quantities).filter(([lineId]) => lineId !== line.id)),
+          conditions: Object.fromEntries(Object.entries(current.conditions).filter(([lineId]) => lineId !== line.id)),
+        };
+      }
+      return {
+        selectedLineIds: [...current.selectedLineIds, line.id],
+        quantities: { ...current.quantities, [line.id]: line.availableQuantity },
+        conditions: { ...current.conditions, [line.id]: "unused" },
+      };
     });
   };
-
   const updateQuantity = (line: EligibleReturnLine, rawValue: string) => {
     const numericValue = Number.parseInt(rawValue, 10);
-    const quantity = Number.isNaN(numericValue)
-      ? 1
-      : Math.min(line.availableQuantity, Math.max(1, numericValue));
-    setPreview((current) => ({
-      ...current,
-      quantities: { ...current.quantities, [line.id]: quantity },
-    }));
+    const quantity = Number.isNaN(numericValue) ? 1 : Math.min(line.availableQuantity, Math.max(1, numericValue));
+    setPreview((current) => ({ ...current, quantities: { ...current.quantities, [line.id]: quantity } }));
+  };
+  const updateCondition = (lineId: string, condition: ReturnCondition) => {
+    setPreview((current) => ({ ...current, conditions: { ...current.conditions, [lineId]: condition } }));
   };
 
-  const updateCondition = (lineId: string, condition: ReturnCondition) => {
-    setPreview((current) => ({
-      ...current,
-      conditions: { ...current.conditions, [lineId]: condition },
-    }));
+  return {
+    status, setStatus, query, setQuery, createOpen, openCreate: () => setCreateOpen(true), closeCreate,
+    dealerId, dealer, dealerLines, visibleLines, note, setNote, lineQuery, setLineQuery, preview,
+    selectedUnitCount, visibleReturns, selectDealer, toggleLine, updateQuantity, updateCondition,
   };
+}
+
+function CreateReturnDialog({ model, open }: { model: AdminReturnsModel; open: boolean }) {
+  const { dealerId, dealer, dealerLines, visibleLines, note, lineQuery, preview, selectedUnitCount } = model;
 
   return (
     <Modal
       open={open}
-      onClose={closeDialog}
+      onClose={model.closeCreate}
       title="Оформити повернення від дилера"
       description="Оберіть дилера, відмітьте позиції до повернення, вкажіть стан та кількість."
       className="!w-[min(1120px,100%)]"
@@ -149,7 +170,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
             {preview.selectedLineIds.length} позицій · {selectedUnitCount} шт
           </p>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <button type="button" className="button button-outline" onClick={closeDialog}>
+            <button type="button" className="button button-outline" onClick={model.closeCreate}>
               Скасувати
             </button>
             <button
@@ -157,11 +178,13 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
               className="button button-primary"
               disabled
               aria-disabled="true"
-              title="Створення чернетки заблоковано у read-only демонстрації"
+              aria-describedby="returns-create-disabled-reason"
+              title="Створення чернетки заблоковано: доступ лише для читання."
             >
               <LockKeyhole size={14} />
               Створити чернетку
             </button>
+            <span id="returns-create-disabled-reason" className="sr-only">Створення чернетки заблоковано: доступ лише для читання.</span>
           </div>
         </div>
       )}
@@ -172,7 +195,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
             <span>Дилер</span>
             <select
               value={dealerId}
-              onChange={(event) => selectDealer(event.target.value as ReturnDealerId | "")}
+              onChange={(event) => model.selectDealer(event.target.value as ReturnDealerId | "")}
               autoComplete="off"
             >
               <option value="">— оберіть дилера —</option>
@@ -187,7 +210,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
             <textarea
               className="!min-h-20"
               value={note}
-              onChange={(event) => setNote(event.target.value)}
+              onChange={(event) => model.setNote(event.target.value)}
               placeholder="Що менеджеру варто знати про це повернення."
               autoComplete="off"
             />
@@ -206,7 +229,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
               {dealer.eligibleLineCount > 0 ? (
                 <AdminSearchField
                   value={lineQuery}
-                  onValueChange={setLineQuery}
+                  onValueChange={model.setLineQuery}
                   label="Пошук позицій до повернення"
                   placeholder="Пошук за замовленням, артикулом або описом..."
                   maxWidth={360}
@@ -263,7 +286,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
                                 <input
                                   type="checkbox"
                                   checked={selected}
-                                  onChange={() => toggleLine(line)}
+                                  onChange={() => model.toggleLine(line)}
                                   aria-label={`Обрати ${line.orderNumber}, ${line.partNumber}`}
                                   className="size-4 accent-[var(--orange)]"
                                 />
@@ -285,7 +308,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
                                   min={1}
                                   max={line.availableQuantity}
                                   value={preview.quantities[line.id] ?? line.availableQuantity}
-                                  onChange={(event) => updateQuantity(line, event.target.value)}
+                                  onChange={(event) => model.updateQuantity(line, event.target.value)}
                                   aria-label={`Кількість для ${line.partNumber}`}
                                 />
                               ) : <span className="text-[var(--faint)]">—</span>}
@@ -295,7 +318,7 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
                                 <select
                                   className="select !min-h-8 !py-1 text-[11px]"
                                   value={preview.conditions[line.id] ?? "unused"}
-                                  onChange={(event) => updateCondition(line.id, event.target.value as ReturnCondition)}
+                                  onChange={(event) => model.updateCondition(line.id, event.target.value as ReturnCondition)}
                                   aria-label={`Стан для ${line.partNumber}`}
                                 >
                                   {returnConditions.map((condition) => (
@@ -324,22 +347,11 @@ function CreateReturnDialog({ open, onClose }: { open: boolean; onClose: () => v
   );
 }
 
-export function AdminReturnsPage() {
-  const [status, setStatus] = useState<AdminReturnStatusFilter>("draft");
-  const [query, setQuery] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-
-  const visibleReturns = useMemo(() => {
-    const normalizedQuery = normalize(query);
-    return sourceAdminReturns.filter((item) => {
-      if (status !== "all" && item.status !== status) return false;
-      if (!normalizedQuery) return true;
-      const dealer = returnDealers.find((candidate) => candidate.id === item.dealerId);
-      return normalize(`${item.number} ${item.orderNumber} ${dealer?.name ?? ""} ${dealer?.code ?? ""} ${item.note ?? ""}`).includes(normalizedQuery);
-    });
-  }, [query, status]);
-
+function CurrentAdminReturnsView({ model }: { model: AdminReturnsModel }) {
+  const { status, query, visibleReturns } = model;
+  const { renderedDesignSystem } = useAppearance();
   return (
+    <div data-brp-admin-procurement-renderer="shadcn" className="w-full">
     <AdminPage>
       <AdminPageHeader
         icon={<RotateCcw size={20} />}
@@ -349,7 +361,7 @@ export function AdminReturnsPage() {
           <button
             type="button"
             className="button button-primary px-4"
-            onClick={() => setCreateOpen(true)}
+            onClick={model.openCreate}
           >
             <Plus size={14} />
             Оформити повернення
@@ -361,7 +373,7 @@ export function AdminReturnsPage() {
         search={(
           <AdminSearchField
             value={query}
-            onValueChange={setQuery}
+            onValueChange={model.setQuery}
             label="Пошук повернень"
             placeholder="Пошук за поверненням, дилером, замовленням, нотаткою..."
           />
@@ -370,21 +382,25 @@ export function AdminReturnsPage() {
           <AdminSegmentedControl
             items={adminReturnStatusFilters}
             value={status}
-            onValueChange={setStatus}
+            onValueChange={model.setStatus}
             label="Статус повернення"
           />
         )}
         actions={(
+          <>
           <button
             type="button"
             className="button button-outline shrink-0"
             disabled
-            title="Оновлення вимкнено у read-only демонстрації"
+            aria-describedby="returns-refresh-disabled-reason"
+            title="Оновлення вимкнено: доступ лише для читання."
           >
             <LockKeyhole size={13} />
             <RefreshCw size={14} />
             Оновити
           </button>
+          <span id="returns-refresh-disabled-reason" className="sr-only">Оновлення вимкнено: доступ лише для читання.</span>
+          </>
         )}
         meta={`${visibleReturns.length} повернень`}
         mobileDisclosure={{ sections: ["filters"], activeCount: Number(status !== "draft"), iconOnly: true }}
@@ -401,7 +417,23 @@ export function AdminReturnsPage() {
         </div>
       </Panel>
 
-      <CreateReturnDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateReturnDialog model={model} open={renderedDesignSystem === "shadcn" && model.createOpen} />
     </AdminPage>
+    </div>
+  );
+}
+
+const loadAstryxAdminReturnsView = () => import("./astryx-admin-returns-view")
+  .then((module) => ({ default: module.AstryxAdminReturnsView }));
+
+export function AdminReturnsPage() {
+  const model = useAdminReturnsModel();
+  return (
+    <RendererViewSwitch
+      slotId="admin-returns"
+      currentView={<CurrentAdminReturnsView model={model} />}
+      loadAstryxView={loadAstryxAdminReturnsView}
+      astryxViewProps={{ model }}
+    />
   );
 }

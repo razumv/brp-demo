@@ -1,0 +1,77 @@
+.page {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 1184px;
+  margin-inline: auto;
+  padding: 24px 20px 48px;
+}
+
+.pageHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-text-accent, var(--orange));
+  background: var(--color-background-warning, var(--orange-soft));
+}
+
+.titleCopy { min-width: 0; }
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--color-border-default, var(--border));
+  border-radius: var(--radius-container, 8px);
+  background: var(--color-background-card, var(--surface));
+}
+
+.toolbarEnd,
+.footerActions,
+.dialogFooter,
+.sectionHeader,
+.lineControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbarEnd { min-width: 0; }
+.statusScroller { display: flex; min-width: 0; overflow-x: auto; }
+.dialogBody, .lines, .lineList { display: grid; gap: 12px; }
+.dialogFields { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr); gap: 16px; }
+.sectionHeader { justify-content: space-between; align-items: end; }
+.lineList { max-height: 430px; overflow: auto; }
+.lineGrid { display: grid; grid-template-columns: auto minmax(220px, 1fr) auto auto; align-items: center; gap: 12px; }
+.lineControls { justify-content: end; }
+.numberField { display: grid; gap: 4px; color: var(--color-text-secondary, var(--muted-foreground)); font-size: 11px; }
+.numberField input { width: 88px; min-height: 32px; padding: 4px 8px; border: 1px solid var(--color-border-default, var(--border)); border-radius: var(--radius-sm, 6px); background: var(--color-background-default, var(--surface)); color: inherit; }
+.dialogFooter { justify-content: space-between; width: 100%; }
+
+@media (max-width: 900px) {
+  .toolbar { grid-template-columns: minmax(0, 1fr); }
+  .toolbarEnd { width: 100% !important; max-width: 100%; overflow: hidden; }
+  .statusScroller { flex: 1 1 0; }
+}
+
+@media (max-width: 760px) {
+  .page { padding: 20px 16px 40px; }
+  .pageHeader { grid-template-columns: auto minmax(0, 1fr); }
+  .pageHeader > :last-child { grid-column: 1 / -1; width: 100%; }
+  .toolbarEnd { max-width: 100%; }
+  .dialogFields, .lineGrid { grid-template-columns: 1fr; }
+  .sectionHeader, .dialogFooter { align-items: stretch; flex-direction: column; }
+  .lineControls { justify-content: stretch; flex-wrap: wrap; }
+  .footerActions { width: 100%; }
+}

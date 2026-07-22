@@ -52,7 +52,7 @@ async function expectLockedWithoutRequest(page: Page, action: Locator, reason: s
 
 async function expectOnlyOneDialog(page: Page, name: string) {
   await expect(page.getByRole("dialog", {name})).toHaveCount(1);
-  await expect(page.locator("[role=dialog]")).toHaveCount(1);
+  await expect(page.locator('[role="dialog"]:visible, dialog[open]')).toHaveCount(1);
 }
 
 function alternate(designSystem: DesignSystem): DesignSystem {
