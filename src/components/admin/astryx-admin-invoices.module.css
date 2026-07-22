@@ -1,4 +1,4 @@
-.page { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100%; gap: 1.25rem; color: var(--color-text-primary); min-width: 0; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100%; gap: 1.25rem; overflow-x: hidden; color: var(--color-text-primary); min-width: 0; }
 .header { display: flex; align-items: flex-start; gap: .75rem; }
 .header > span { display: grid; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; place-items: center; border-radius: var(--radius-element); color: var(--color-text-info); background: var(--color-background-blue); }
 .header > div { min-width: 0; flex: 1; }
