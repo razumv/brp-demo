@@ -159,13 +159,12 @@ test.describe("dealer operational features on desktop", () => {
     await expect(dashboardSummary.getByText("Робіт у майстерні").locator("..")).toContainText("1");
 
     await openDealerRoute(page, "/dealer/bossweb", "Пошук запчастин", dealerSessionOptions);
-    await expect(page.getByText("Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
-    await expect(page.getByText("Пошук виконується лише в локальному довіднику. Онлайн-наявність BossWeb, заміни та ETA не завантажуються.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Перевіряйте номер запчастини у довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Дані про онлайн-наявність BossWeb, заміни та ETA стануть доступні після підключення сервісу.", { exact: true })).toBeVisible();
     await expect(page.getByText("COOLANT,EXT LIFE", { exact: true })).toBeVisible();
-    await expect(page.getByText(/лише в локальному довіднику/i)).toBeVisible();
+    await expect(page.getByText(/локальн(ому|ий) довідник/i)).toHaveCount(0);
     await page.getByRole("searchbox", { name: "Номер запчастини" }).fill("0000000");
-    await page.getByRole("button", { name: "Пошук" }).click();
-    expect(await page.getByRole("button", { name: "Пошук" }).isEnabled()).toBe(true);
+    await expect(page.getByText("Запчастину не знайдено")).toBeVisible();
     expect(await page.getByRole("status").count()).toBe(0);
     await expect(page.getByRole("heading", { name: "Запчастину не знайдено" })).toBeVisible();
     await expect(page.getByText(/для демонстрації|онлайн-пошук виконується/i)).toHaveCount(0);

@@ -257,11 +257,11 @@ function GroundPanel({model}: {model: AdminOceanFreightModel}) {
   return (
     <Card padding={4} width="100%">
       <div className={styles.sectionHeader}>
-        <span><Heading level={2}>Наземна доставка</Heading><Text color="secondary">Пошук та локальний перегляд рейсів.</Text></span>
+        <span><Heading level={2}>Наземна доставка</Heading><Text color="secondary">Пошук та перегляд рейсів.</Text></span>
         <Button label="Додати перевезення" variant="primary" onClick={model.openGround} />
       </div>
       <TextInput label="Пошук наземної доставки" value={model.groundQuery} onChange={model.setGroundQuery} placeholder="Номер рейсу, перевізник або маршрут..." isLabelHidden startIcon={<Search size={15} />} width="100%" />
-      <EmptyState title={model.groundQuery ? "Рейси не знайдено" : "Наземних рейсів поки немає"} description="Новий запис відкривається у безпечному локальному перегляді." icon={<Truck size={26} />} />
+      <EmptyState title={model.groundQuery ? "Рейси не знайдено" : "Наземних рейсів поки немає"} description="Новий запис відкривається у режимі перевірки без надсилання." icon={<Truck size={26} />} />
     </Card>
   );
 }
@@ -349,7 +349,7 @@ function PreviewDialogs({model, committed}: {model: AdminOceanFreightModel; comm
   const receiptBill = receiptPreview ? oceanBillsOfLading.find((bill) => bill.id === receiptPreview.billId) ?? null : null;
   return (
     <>
-      <InfoDialog open={committed && model.preview?.type === "upload"} title="Завантаження документів" subtitle="Локальний перегляд пакета документів" onClose={model.closePreview}><Banner status="info" title="Пакет підготовлено до перевірки" description="Оберіть документи та перевірте їх перед передаванням у підключений workflow." /><div className={styles.dropZone}><Upload size={28} /><strong>Перетягніть файли сюди</strong><Text color="secondary">PDF, XLSX або зображення</Text></div></InfoDialog>
+      <InfoDialog open={committed && model.preview?.type === "upload"} title="Завантаження документів" subtitle="Перевірка пакета документів" onClose={model.closePreview}><Banner status="info" title="Пакет підготовлено до перевірки" description="Оберіть документи та перевірте їх перед передаванням у підключений workflow." /><div className={styles.dropZone}><Upload size={28} /><strong>Перетягніть файли сюди</strong><Text color="secondary">PDF, XLSX або зображення</Text></div></InfoDialog>
       <InfoDialog open={committed && model.preview?.type === "ground"} title="Нове наземне перевезення" subtitle="Інформаційний перегляд форми" onClose={model.closePreview}><div className={styles.formGrid}><TextInput label="Номер рейсу" value="" onChange={() => undefined} placeholder="Наприклад, LAND-026" width="100%" /><TextInput label="Перевізник" value="" onChange={() => undefined} placeholder="Назва перевізника" width="100%" /><TextInput label="Маршрут" value="" onChange={() => undefined} placeholder="Пункт відправлення — пункт прибуття" width="100%" /></div></InfoDialog>
       <InfoDialog open={committed && model.preview?.type === "eta"} title="ETA — лише перегляд" subtitle="Дата та статус контейнера не змінюються" onClose={model.closePreview}><Banner status="warning" title="Зовнішнє оновлення недоступне" description="Можна переглянути поточну ETA, але збереження й застосування нової дати вимкнені для поточного доступу." /></InfoDialog>
       <InfoDialog open={committed && Boolean(receiptBill)} title={receiptBill?.receipt.kind === "parts" ? "Прибуткова запчастин" : "Прибуткова техніки"} subtitle={receiptBill ? `BL ${receiptBill.id} · ${receiptStateLabel(receiptBill)}` : undefined} onClose={model.closePreview}>{receiptBill?.receipt.kind === "parts" ? <PartsReceiptContent model={model} /> : <ReceiptContent bill={receiptBill} />}</InfoDialog>

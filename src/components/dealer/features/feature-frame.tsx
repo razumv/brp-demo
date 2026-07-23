@@ -30,12 +30,12 @@ const featureDefinitions: Record<string, FeatureDefinition> = {
   "order-drafts": { title: "Чернетки", description: "Незавершені замовлення, збережені для подальшої роботи.", icon: FileClock },
   consignment: { title: "Консигнація", description: "Залишки, мережа та запити на відвантаження.", icon: PackageOpen },
   settlements: { title: "Взаєморозрахунки", description: "Баланс та історія руху коштів з дистриб’ютором.", icon: CircleDollarSign },
-  "parts-inventory": { title: "Запчастини", description: "Поточні локальні залишки та контроль дефіциту.", icon: Wrench },
+  "parts-inventory": { title: "Запчастини", description: "Поточні складські залишки та контроль дефіциту.", icon: Wrench },
   units: { title: "Техніка", description: "Вхідні контейнери, склад і продана техніка.", icon: Box },
   network: { title: "Дилерська мережа", description: "Доступні запчастини й техніка в дилерській мережі.", icon: Globe2 },
-  workshop: { title: "Майстерня", description: "Локальна дошка сервісних робіт та планування.", icon: Wrench },
+  workshop: { title: "Майстерня", description: "Дошка сервісних робіт та планування.", icon: Wrench },
   "parts-report": { title: "Звіт ЗЧ", description: "Аналітика замовлень запчастин за обраний період.", icon: BarChart3 },
-  bossweb: { title: "Пошук запчастин", description: "Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", icon: Search },
+  bossweb: { title: "Пошук запчастин", description: "Перевіряйте номер запчастини у довіднику перед створенням замовлення.", icon: Search },
   schedule: { title: "Графік поставки", description: "Майбутні поставки техніки, слоти та вільні залишки.", icon: CalendarDays },
 };
 

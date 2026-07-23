@@ -207,7 +207,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       timeline: [{
         id: "event-" + timestamp,
         label: "Замовлення створено",
-        detail: "Локальне демонстраційне замовлення",
+        detail: "Замовлення створено дилером",
         createdAt: new Date(timestamp).toISOString(),
       }],
     };

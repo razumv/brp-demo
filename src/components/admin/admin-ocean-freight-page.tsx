@@ -215,7 +215,7 @@ function EtaChip({ container, onOpen }: { container: OceanContainer; onOpen: () 
         event.stopPropagation();
         onOpen();
       }}
-      title="Безпечний локальний перегляд: ETA не змінюється"
+      title="Режим перевірки: ETA не змінюється"
       className="inline-flex min-h-7 items-center gap-1 rounded-full border-0 bg-[var(--green-soft)] px-2 text-[10px] text-[var(--green)] hover:ring-1 hover:ring-[var(--orange)]"
     >
       <CalendarDays size={12} />

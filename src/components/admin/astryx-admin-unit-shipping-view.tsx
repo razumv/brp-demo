@@ -177,7 +177,7 @@ export function AstryxAdminUnitShippingView({model, onReady}: {model: AdminUnitS
             <Button label="Синхр. з BossWeb" variant="primary" icon={<RefreshCw size={14} />} isDisabled tooltip="Зовнішня синхронізація недоступна: доступ лише для читання." />
           </div>
         </header>
-        <Banner status="info" title="Локальний діапазон дат" description={<span className={styles.inlineCopy}><LockKeyhole size={13} aria-hidden="true" /> Дати змінюються лише локально; зовнішня синхронізація заблокована.</span>} />
+        <Banner status="info" title="Попередній діапазон дат" description={<span className={styles.inlineCopy}><LockKeyhole size={13} aria-hidden="true" /> Зовнішня синхронізація дат стане доступна після підключення сервісу.</span>} />
         <SegmentedControl label="Стан відвантаження" value={model.activeTab} onChange={(value) => { if (isTab(value)) model.selectTab(value); }} layout="hug">
           <SegmentedControlItem value="remaining" label={`Залишок до відвантаження (${model.remainingFiltered.length})`} />
           <SegmentedControlItem value="shipped" label={`Відвантажені замовлення (${model.shippedFiltered.length})`} />

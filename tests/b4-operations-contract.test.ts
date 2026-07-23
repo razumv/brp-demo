@@ -38,6 +38,28 @@ test("admin UI never exposes clone or local implementation wording", () => {
   }
 });
 
+test("priority workflows do not expose implementation labels or redundant BossWeb submit", () => {
+  const prioritySources = [
+    "src/components/dealer/features/bossweb-page.tsx",
+    "src/components/dealer/features/feature-frame.tsx",
+    "src/components/admin/astryx-admin-overview-view.tsx",
+    "src/components/admin/admin-consignment-page.tsx",
+    "src/components/admin/admin-order-detail.tsx",
+    "src/components/admin/astryx-admin-order-detail-view.tsx",
+    "src/components/admin/astryx-admin-unit-shipping-view.tsx",
+    "src/components/admin/admin-ocean-freight-page.tsx",
+    "src/components/admin/astryx-admin-ocean-freight-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(prioritySources, /демо|демонстраційн|клон|локальн(?:а|е|ий|і|ому)\s+(?:верс|перегляд|вибірк|замовлен|фільтр|діапазон|довідник)/i);
+  assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
+});
+
+test("route-specific admin surfaces use theme tokens for neutral switch fills", () => {
+  assert.doesNotMatch(read("src/components/admin/admin-users-page.tsx"), /bg-white|dark:bg-\[#f0f6fc\]/);
+  assert.doesNotMatch(read("src/components/admin/admin-permission-matrix.module.css"), /background:\s*#fff(?:fff)?/i);
+});
+
 test("appearance matrix contains every B4 certification viewport exactly", () => {
   const config = read("playwright.appearance-matrix.config.ts");
 

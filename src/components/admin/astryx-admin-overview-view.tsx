@@ -128,7 +128,7 @@ export default function AstryxAdminOverviewView({
           <header className={styles.panelHeader}>
             <div>
               <Heading level={2}>Останні замовлення</Heading>
-              <Text type="supporting" color="secondary">Локальні замовлення показуються першими.</Text>
+              <Text type="supporting" color="secondary">Нові замовлення показуються першими.</Text>
             </div>
             <Button href="/admin/order-pipeline" label="Відкрити пайплайн" variant="secondary" />
           </header>

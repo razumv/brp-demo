@@ -363,7 +363,7 @@ function CurrentAdminConsignmentView({
           <div aria-live="polite">
             <strong className="text-sm">{networkCount} позицій · {networkUnits} од.</strong>
             <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
-              Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. Репрезентативна локальна вибірка: {filteredPositions.length} рядків.
+              Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. У поточному перегляді: {filteredPositions.length} рядків.
             </p>
           </div>
           <NetworkTable positions={filteredPositions} />
