@@ -103,7 +103,7 @@ function UnitCollection({ container }: { container: OceanContainer }) {
   );
 }
 
-function EvidenceLimitedContainer({ bill, container }: { bill: OceanBillOfLading; container: OceanContainer }) {
+function SummaryOnlyContainer({ bill, container }: { bill: OceanBillOfLading; container: OceanContainer }) {
   const quantityLabel = container.cargoType === "parts" ? "Позиції" : "Одиниці";
   return (
     <div className={styles.evidenceSummary}>
@@ -114,7 +114,7 @@ function EvidenceLimitedContainer({ bill, container }: { bill: OceanBillOfLading
         <div className={styles.summaryFact}><span>EUR</span><strong>{formatEur(container.eur)}</strong></div>
       </div>
       <InlineNotice>
-        Джерело підтверджує підсумок контейнера, але не повний VIN-склад. Рядки техніки не домодельовані.
+        Для контейнера доступні лише підсумкові дані. Повний перелік VIN ще не завантажено.
       </InlineNotice>
     </div>
   );
@@ -130,14 +130,14 @@ function ExactContainerContent({
   showFacts: boolean;
 }) {
   const detail = container.detail;
-  if (!detail) return <EvidenceLimitedContainer bill={bill} container={container} />;
+  if (!detail) return <SummaryOnlyContainer bill={bill} container={container} />;
 
   return (
     <div className={showFacts ? styles.inlineGrid : undefined}>
       <div className={styles.unitRegion}>
         <div className={styles.unitRegionHeader}>
           <span>Одиниці ({detail.units.length})</span>
-          <span>Confirmed by invoice: {detail.units.filter((unit) => unit.invoiceNumber).length}/{container.total}</span>
+          <span>Підтверджено інвойсом: {detail.units.filter((unit) => unit.invoiceNumber).length}/{container.total}</span>
         </div>
         <UnitCollection container={container} />
       </div>
@@ -276,7 +276,7 @@ export function OceanBillDetailModal({
             <header className={styles.detailSectionHeader}>
               <Box size={14} />
               <strong id={`bl-${bill.id}-containers`}>Контейнери</strong>
-              <span>{bill.containers.length} container · {unitCount} {quantityNoun}{totalWeight ? ` · ${formatWeight(totalWeight)}` : ""}</span>
+              <span>{bill.containers.length} конт. · {unitCount} {quantityNoun}{totalWeight ? ` · ${formatWeight(totalWeight)}` : ""}</span>
             </header>
             <div className={styles.billContainerList}>
               {bill.containers.map((container) => {
@@ -344,7 +344,7 @@ export function OceanBillDetailModal({
           </section>
 
           <section className={styles.railSection} data-dialog-section="bl-receipt-1c">
-            <h3 className={styles.sectionEyebrow}>Приходные 1C</h3>
+            <h3 className={styles.sectionEyebrow}>Прибуткові документи 1C</h3>
             {detail ? (
               <div className={styles.receiptState}>
                 <CheckCircle2 size={16} />
@@ -354,7 +354,7 @@ export function OceanBillDetailModal({
                 </div>
               </div>
             ) : (
-              <InlineNotice>Деталі 1C не зафіксовані у source evidence.</InlineNotice>
+              <InlineNotice>Деталі документа 1C ще не завантажено.</InlineNotice>
             )}
           </section>
 
@@ -388,14 +388,14 @@ export function OceanBillDetailModal({
                 ))}
               </ul>
             ) : (
-              <InlineNotice>Склад документів не зафіксований у source evidence.</InlineNotice>
+              <InlineNotice>Документи для цього BL ще не завантажено.</InlineNotice>
             )}
           </section>
 
           <section className={styles.railSection} data-dialog-section="bl-timeline">
             <h3 className={styles.sectionEyebrow}>Хронологія відстеження</h3>
             {detail ? <ol className={styles.timeline}>{detail.milestones.map((item) => <Milestone key={item.id} item={item} />)}</ol> : (
-              <InlineNotice>Milestones не зафіксовані у source evidence.</InlineNotice>
+              <InlineNotice>Події відстеження для цього BL ще не завантажено.</InlineNotice>
             )}
           </section>
         </aside>

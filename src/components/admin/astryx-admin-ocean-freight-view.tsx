@@ -55,10 +55,10 @@ import {
 import styles from "./astryx-admin-ocean-unit.module.css";
 
 const oceanMetricItems = [
-  {label: "Total BLs", value: 32, icon: <FileText size={18} aria-hidden="true" />},
+  {label: "Усього BL", value: 32, icon: <FileText size={18} aria-hidden="true" />},
   {label: "In transit", value: 36, icon: <Ship size={18} aria-hidden="true" />},
-  {label: "Containers", value: 71, icon: <Truck size={18} aria-hidden="true" />},
-  {label: "Arrived", value: 35, icon: <CheckCircle2 size={18} aria-hidden="true" />},
+  {label: "Контейнери", value: 71, icon: <Truck size={18} aria-hidden="true" />},
+  {label: "Прибули", value: 35, icon: <CheckCircle2 size={18} aria-hidden="true" />},
 ] as const;
 
 const pageTabOptions = oceanTabs.map((item) => ({value: item.id, label: item.label}));
@@ -151,7 +151,7 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
                   <div className={styles.billSummary}>
                     <Button label={`Деталі BL ${bill.id}`} variant="ghost" size="sm" icon={<FileText size={14} />} onClick={() => model.openBillDetail(bill.id)} />
                     <Badge variant={statusVariant(bill.status)} label={statusLabel(bill.status)} />
-                    <Text color="secondary">{bill.containers.length} container · ETA {bill.eta}</Text>
+                    <Text color="secondary">{bill.containers.length} конт. · ETA {bill.eta}</Text>
                     <span className={styles.rowPush}><ReceiptAction bill={bill} model={model} /></span>
                   </div>
                 </td>

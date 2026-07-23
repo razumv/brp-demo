@@ -39,6 +39,19 @@ test("admin UI never exposes clone or local implementation wording", () => {
   }
 });
 
+test("Ocean dialogs describe unavailable business data without implementation evidence copy", () => {
+  const oceanSources = [
+    "src/components/admin/admin-ocean-detail.tsx",
+    "src/components/admin/admin-ocean-freight-page.tsx",
+    "src/components/admin/astryx-admin-ocean-freight-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    oceanSources,
+    /source evidence|доказов(?:е|і)\s+(?:покриття|рядки)|домодельован|preview не/i,
+  );
+});
+
 test("priority workflows do not expose implementation labels or redundant BossWeb submit", () => {
   const prioritySources = [
     "src/components/dealer/features/bossweb-page.tsx",

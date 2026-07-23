@@ -152,10 +152,10 @@ export function formatOceanEur(value: number) {
 
 function OceanKpis() {
   const items = [
-    { id: "bills", label: "Total BLs", value: OCEAN_KPIS.billsOfLading, icon: <FileText size={18} />, tone: "blue" },
-    { id: "transit", label: "In Transit", value: OCEAN_KPIS.inTransit, icon: <Ship size={18} />, tone: "blue" },
-    { id: "containers", label: "Containers", value: OCEAN_KPIS.containers, icon: <Truck size={18} />, tone: "orange" },
-    { id: "arrived", label: "Arrived", value: OCEAN_KPIS.arrived, icon: <CheckCircle2 size={18} />, tone: "green" },
+    { id: "bills", label: "Усього BL", value: OCEAN_KPIS.billsOfLading, icon: <FileText size={18} />, tone: "blue" },
+    { id: "transit", label: "У дорозі", value: OCEAN_KPIS.inTransit, icon: <Ship size={18} />, tone: "blue" },
+    { id: "containers", label: "Контейнери", value: OCEAN_KPIS.containers, icon: <Truck size={18} />, tone: "orange" },
+    { id: "arrived", label: "Прибули", value: OCEAN_KPIS.arrived, icon: <CheckCircle2 size={18} />, tone: "green" },
   ] as const;
 
   return <AdminKpiGrid hideOnMobile items={items} label="Показники морських перевезень" />;
@@ -326,7 +326,7 @@ function ContainerTable({
                         <strong className="font-mono">{bill.id}</strong>
                       </button>
                       <StatusBadge tone={statusMeta[bill.status].tone}>{statusMeta[bill.status].label}</StatusBadge>
-                      <span className={mutedText}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span>
+                      <span className={mutedText}>{bill.containers.length} {bill.containers.length === 1 ? "контейнер" : "контейнери"}</span>
                       <span className={`text-[10px] ${bill.receipt.state === "created-unposted" ? "text-[var(--amber)]" : bill.receipt.state === "posted" ? "text-[var(--green)]" : mutedText}`}>{receiptStateLabel(bill)}</span>
                       <span className="ml-auto"><ReceiptPreviewButton bill={bill} onOpen={onPreview} /></span>
                     </div>
@@ -397,7 +397,7 @@ function BillCards({
                 <Ship size={18} className="shrink-0 text-[var(--blue)]" />
                 <span className="min-w-0 flex-1">
                   <strong className="font-mono">{bill.id}</strong>
-                  <span className={`ml-2 ${mutedText}`}>{bill.containers.length} {bill.containers.length === 1 ? "container" : "containers"}</span>
+                  <span className={`ml-2 ${mutedText}`}>{bill.containers.length} {bill.containers.length === 1 ? "контейнер" : "контейнери"}</span>
                   <span className={`mt-1 block text-[10px] ${mutedText}`}>{bill.carrier ? `${bill.carrier} · ` : ""}{bill.route ? `${bill.route} · ` : ""}ETA: {bill.eta}</span>
                 </span>
                 <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
@@ -622,7 +622,7 @@ function UploadPreview({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 function ReceiptGroupTable({ receipt, editableNames = false }: { receipt: EquipmentReceiptPreview; editableNames?: boolean }) {
-  return <div className="grid gap-3">{receipt.groups.map((group) => <section key={group.containerNumber} className="overflow-hidden rounded-md border border-[var(--border)]"><header className="flex flex-wrap items-center gap-3 bg-[var(--surface-subtle)] px-4 py-3"><strong className="font-mono">{group.containerNumber}</strong><span className={`text-[10px] ${mutedText}`}>PRF: {group.proforma}</span><span className={`text-[10px] ${mutedText}`}>{group.units} units</span><StatusBadge tone="blue">Доказові рядки {group.rows.length}/{group.units}</StatusBadge><strong className="ml-auto">{formatOceanEur(group.totalEur)}</strong></header><div className="data-table-wrap"><table className="data-table min-w-[760px]"><thead><tr><th>#</th><th>Model</th><th>VIN</th><th>Engine #</th><th>EUR</th><th>USD</th></tr></thead><tbody>{group.rows.map((unit) => <tr key={unit.id}><td>{unit.number}</td><td><span className="mr-2 font-mono text-[var(--blue)]">{unit.code}</span>{editableNames ? <input disabled value={unit.model} readOnly className="h-8 min-w-[270px] rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-2" /> : unit.model}</td><td className="font-mono text-[11px]">{unit.vin}</td><td className="font-mono text-[11px]">{unit.engine}</td><td>{formatOceanEur(unit.eur)}</td><td>{unit.usd ? `$${unit.usd}` : "—"}</td></tr>)}</tbody></table></div></section>)}</div>;
+  return <div className="grid gap-3">{receipt.groups.map((group) => <section key={group.containerNumber} className="overflow-hidden rounded-md border border-[var(--border)]"><header className="flex flex-wrap items-center gap-3 bg-[var(--surface-subtle)] px-4 py-3"><strong className="font-mono">{group.containerNumber}</strong><span className={`text-[10px] ${mutedText}`}>PRF: {group.proforma}</span><span className={`text-[10px] ${mutedText}`}>{group.units} units</span><StatusBadge tone="blue">Завантажено {group.rows.length}/{group.units}</StatusBadge><strong className="ml-auto">{formatOceanEur(group.totalEur)}</strong></header><div className="data-table-wrap"><table className="data-table min-w-[760px]"><thead><tr><th>#</th><th>Model</th><th>VIN</th><th>Engine #</th><th>EUR</th><th>USD</th></tr></thead><tbody>{group.rows.map((unit) => <tr key={unit.id}><td>{unit.number}</td><td><span className="mr-2 font-mono text-[var(--blue)]">{unit.code}</span>{editableNames ? <input disabled value={unit.model} readOnly className="h-8 min-w-[270px] rounded border border-[var(--border)] bg-[var(--surface-subtle)] px-2" /> : unit.model}</td><td className="font-mono text-[11px]">{unit.vin}</td><td className="font-mono text-[11px]">{unit.engine}</td><td>{formatOceanEur(unit.eur)}</td><td>{unit.usd ? `$${unit.usd}` : "—"}</td></tr>)}</tbody></table></div></section>)}</div>;
 }
 
 function EquipmentReceiptModal({ receipt, open, onClose }: { receipt: EquipmentReceiptPreview; open: boolean; onClose: () => void }) {
@@ -634,10 +634,10 @@ function EquipmentReceiptModal({ receipt, open, onClose }: { receipt: EquipmentR
     <Modal open={open} onClose={onClose} title="Створити прибуткову" description={`BL: ${receipt.billOfLadingId}`} className="!w-[min(900px,100%)]" footer={<><button type="button" className="button button-outline" onClick={onClose}>Скасувати</button><ReadOnlyButton>{existing ? "ПН уже создана" : "Підтвердити та створити"}</ReadOnlyButton></>}>
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-4"><label className="field max-w-[180px]"><span>Комерційний курс EUR/USD</span><input disabled value={receipt.commercialRate.toFixed(4)} readOnly /></label><span>Units: <strong>{receipt.unitCount}</strong></span><span>Total EUR: <strong>{formatOceanEur(receipt.totalEur)}</strong></span></div>
-        <InlineNotice>Доказове покриття таблиці: <strong>{evidenceCoverage.evidencedRows}/{evidenceCoverage.sourceTotal}</strong> одиниць. Показані тільки рядки, зафіксовані у source evidence; відсутні рядки не домодельовані.</InlineNotice>
+        <InlineNotice>Завантажено <strong>{evidenceCoverage.evidencedRows}/{evidenceCoverage.sourceTotal}</strong> одиниць. Решта рядків стане доступною після синхронізації.</InlineNotice>
         {existing ? <div className="rounded-md border border-[#d9c796] bg-[var(--amber-soft)] p-4 text-[var(--amber)]"><div className="flex flex-wrap items-center gap-3"><FileCheck2 size={18} /><div className="min-w-[190px] flex-1"><strong className="block">ПН создана, не проведена</strong><span className="text-[10px]">Документов 1C: 1 · проведено: 0</span></div><ReadOnlyButton>Проверить статус 1C</ReadOnlyButton><ReadOnlyButton>Провести в 1C</ReadOnlyButton></div><StatusBadge tone="amber">{receipt.existingDocument?.number} · не проведена</StatusBadge></div> : null}
         <ReceiptGroupTable receipt={receipt} editableNames={!existing} />
-        {existing ? <InlineNotice tone="warning">Повторное создание заблокировано: {receipt.existingDocument?.number}</InlineNotice> : <InlineNotice>Фінальна дія вимкнена. Preview не змінює receipt, статус BL або складський стан.</InlineNotice>}
+        {existing ? <InlineNotice tone="warning">Повторне створення заблоковано: {receipt.existingDocument?.number}</InlineNotice> : <InlineNotice>Створення вимкнено, доки дані не синхронізовано з обліковою системою.</InlineNotice>}
       </div>
     </Modal>
   );
@@ -673,7 +673,7 @@ function SummaryEquipmentReceiptModal({ bill, open, onClose }: { bill: OceanBill
           ]}
         />
         <InlineNotice tone="warning">
-          Для цього BL джерело підтверджує контейнерний підсумок, але не повний VIN-склад приходної. Preview не домодельовує відсутні рядки й не змінює документи, статуси чи склад.
+          Для цього BL доступний контейнерний підсумок, але повний перелік VIN ще не завантажено. Створення прибуткової буде доступне після синхронізації складу.
         </InlineNotice>
         <AdminTableShell scrollLabel={`Контейнери BL ${bill.id}`}>
           <table className="data-table min-w-[720px]">
@@ -716,7 +716,7 @@ function PartsReceiptModal({ open, onClose, tab, onTabChange }: { open: boolean;
       <div className="grid gap-4">
         <InlineNotice tone="warning">ПН уже создана: {partsReceipt.document.number} · не проведена</InlineNotice>
         <InlineNotice tone="warning">ПН создана, не проведена. Создано документов: 1, проведено: 0.</InlineNotice>
-        <InlineNotice>Доказове покриття таблиці: <strong>{OCEAN_RESEARCH_COVERAGE.parts.evidencedRows}/{OCEAN_RESEARCH_COVERAGE.parts.sourceTotal}</strong> готових рядків. Решта рядків не домодельована.</InlineNotice>
+        <InlineNotice>Завантажено <strong>{OCEAN_RESEARCH_COVERAGE.parts.evidencedRows}/{OCEAN_RESEARCH_COVERAGE.parts.sourceTotal}</strong> готових рядків. Решта стане доступною після синхронізації.</InlineNotice>
         <section className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">{metrics.map(([value, label]) => <div key={label} className={`${surfaceCard} p-3`}><strong className="block text-[18px]">{value}</strong><span className={`text-[9px] uppercase ${mutedText}`}>{label}</span></div>)}</section>
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] p-3"><span className="mr-auto"><strong>Документы 1C</strong><StatusBadge tone="amber">{partsReceipt.document.number} · synced · не проведена</StatusBadge></span><ReadOnlyButton>Проверить статус 1C</ReadOnlyButton><ReadOnlyButton>Провести в 1C</ReadOnlyButton></div>
         <AdminTabs
@@ -735,7 +735,7 @@ function PartsReceiptModal({ open, onClose, tab, onTabChange }: { open: boolean;
             className="overflow-hidden rounded-md border border-[var(--border)]"
           >
             <div className={`border-b border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2 text-[10px] uppercase ${mutedText}`}>
-              Состав приходной накладной · доказові рядки {OCEAN_RESEARCH_COVERAGE.parts.evidencedRows}/{OCEAN_RESEARCH_COVERAGE.parts.sourceTotal}
+              Склад прибуткової накладної · завантажено {OCEAN_RESEARCH_COVERAGE.parts.evidencedRows}/{OCEAN_RESEARCH_COVERAGE.parts.sourceTotal}
             </div>
             <div className="data-table-wrap">
               <table className="data-table min-w-[840px]">
