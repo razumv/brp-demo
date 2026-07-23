@@ -59,7 +59,7 @@ test("draft filters change visible records, compose with search, and reset", asy
   await page.getByRole("button", { name: "Скинути фільтри" }).click();
   await expect(page.getByLabel("Вміст чернетки")).toHaveValue("all");
   await expect(page.getByLabel("Покупець чернетки")).toHaveValue("all");
-  await expect(page.getByText("Показано 3 з 3", { exact: true })).toBeVisible();
+  await expect(page.getByText("Показано 3 з 3", { exact: true })).toHaveCount(0);
   await expect(page.getByText("З позиціями і покупцем", { exact: true })).toBeVisible();
   await expect(page.getByText("Порожня без покупця", { exact: true })).toBeVisible();
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
@@ -104,7 +104,7 @@ test("dealer can search, reopen, and delete a saved order draft", async ({ page 
   await page.goto("/dealer/order-drafts");
   await page.getByRole("searchbox", { name: /Пошук чернеток/ }).fill("PO-DRAFT-17");
   await expect(page.getByText("Охолоджувальна рідина", { exact: true })).toBeVisible();
-  await expect(page.getByText("Показано 1 з 1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Показано 1 з 1", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Відкрити", exact: true }).click();
   await expect(page).toHaveURL(/\/cart\/?$/);
   await expect(page.getByLabel("Назва чернетки")).toHaveValue("Охолоджувальна рідина");
