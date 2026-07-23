@@ -341,10 +341,10 @@ function ChatModal({ order, open, onClose }: { order: AdminOrderFixture; open: b
 
 function PreviewTable({ order, delivery, replenishment, onDelivery, onReplenishment }: { order: AdminOrderFixture; delivery: DeliveryChannel; replenishment: number; onDelivery: (value: DeliveryChannel) => void; onReplenishment: (value: number) => void }) {
   const activeLines = order.lines.filter((line) => line.status !== "cancelled");
-  if (!activeLines.length) return <EmptyState compact title="Немає підтверджених позицій для preview" description="Для цього рядка немає evidence-backed складу позицій; розрахунок не вигадується." />;
+  if (!activeLines.length) return <EmptyState compact title="Немає позицій для попереднього розрахунку" description="Додайте або підтвердьте позиції замовлення, щоб переглянути розподіл." />;
   return (
     <div className="grid gap-4">
-      <InlineNotice>Репрезентативний layout джерельного preview. Значення нижче не записуються до замовлення.</InlineNotice>
+      <InlineNotice>Попередній розрахунок не змінює замовлення, доки його не буде підтверджено.</InlineNotice>
       <div className="grid gap-3 sm:grid-cols-2"><label className="field"><span>Канал доставки</span><select value={delivery} onChange={(event) => onDelivery(event.target.value as DeliveryChannel)}><option value="air">air</option><option value="ocean">ocean</option></select></label><label className="field"><span>Поповнення, к-сть</span><input type="number" min={0} value={replenishment} onChange={(event) => onReplenishment(Math.max(0, Number(event.target.value) || 0))} /></label></div>
       <div className="data-table-wrap rounded-md border border-[var(--border)]"><table className="data-table min-w-[1120px]"><thead><tr><th>Артикул</th><th>Запитано</th><th>Склад зараз</th><th>Зі складу</th><th>Після підтвердження</th><th>Оборот</th><th>Відкрито Logos</th><th>До замовлення</th><th>Канал</th><th>Рішення Logos</th></tr></thead><tbody>{activeLines.map((line) => {
         const stock = Number.parseInt(line.stockSource, 10) || 0;
