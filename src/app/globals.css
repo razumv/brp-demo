@@ -2317,6 +2317,16 @@ a {
 }
 
 @media (max-width: 720px) {
+  .brp-astryx-shell-mobile-menu,
+  .brp-astryx-shell-mobile-search,
+  .brp-astryx-shell-mobile-theme {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    flex: 0 0 44px !important;
+  }
+
   .brp-astryx-shell-top-nav {
     padding-inline: 10px;
   }

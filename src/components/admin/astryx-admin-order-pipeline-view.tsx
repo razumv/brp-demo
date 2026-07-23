@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useLayoutEffect} from "react";
+import {useEffect, useLayoutEffect} from "react";
 import {Badge} from "@astryxdesign/core/Badge";
 import {Banner} from "@astryxdesign/core/Banner";
 import {Button} from "@astryxdesign/core/Button";
@@ -137,6 +137,19 @@ function AstryxPeriodContent({model}: {model: AdminOrderPipelineModel}) {
 
 function PeriodFilter({model, isRendererCommitted}: {model: AdminOrderPipelineModel; isRendererCommitted: boolean}) {
   const isOpen = isRendererCommitted && model.periodOpen;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" && event.key !== "Esc") return;
+      event.preventDefault();
+      model.setPeriodOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape, {capture: true});
+    return () => window.removeEventListener("keydown", closeOnEscape, {capture: true});
+  }, [isOpen, model]);
 
   return (
     <Popover

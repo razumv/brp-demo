@@ -1,5 +1,5 @@
 import {expect, test, type Page} from "@playwright/test";
-import {loginAsAdmin} from "./support/admin-session";
+import {loginAsAdmin, seedAdminSession} from "./support/admin-session";
 import {seedDealerWorkflowSession} from "./support/dealer-workflow-session";
 
 type DesignSystem = "shadcn" | "astryx";
@@ -62,6 +62,24 @@ test("admin login opens one complete Astryx shell with grouped selected navigati
   const themeAction = page.getByRole("button", {name: "switch_to_dark"});
   await themeAction.click();
   await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
+});
+
+test("Astryx mobile header actions expose 44px touch targets", async ({page}) => {
+  await page.setViewportSize({width: 390, height: 844});
+  await seedAppearance(page, "astryx", "dark");
+  await seedAdminSession(page);
+  await page.goto("/admin");
+  await publishAppearance(page, "astryx", "dark");
+  await expect(page.locator('[data-brp-shell-renderer="astryx"]')).toHaveCount(1);
+
+  for (const name of ["Меню", "Пошук", "switch_to_light"]) {
+    const action = page.getByRole("button", {name});
+    await expect(action).toBeVisible();
+    const box = await action.boundingBox();
+    expect(box, `${name} must have a measurable touch target`).not.toBeNull();
+    expect(box?.width, `${name} touch target width`).toBeGreaterThanOrEqual(44);
+    expect(box?.height, `${name} touch target height`).toBeGreaterThanOrEqual(44);
+  }
 });
 
 test("Astryx desktop rail persists after reload and keeps compact navigation focusable", async ({page}) => {
