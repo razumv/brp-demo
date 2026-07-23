@@ -40,11 +40,6 @@ const unitTabs = [
   icon: typeof Box;
 }[];
 
-function shipmentCountLabel(shipments: readonly DealerUnitShipment[]) {
-  const units = shipments.reduce((total, shipment) => total + shipment.assignedUnits, 0);
-  return `${ukrainianCount(shipments.length, ["відправка", "відправки", "відправок"])} · ${ukrainianCount(units, ["одиниця", "одиниці", "одиниць"])}`;
-}
-
 function ShipmentStatusBadge({ shipment }: { shipment: DealerUnitShipment }) {
   const label = shipment.status === "in_transit"
     ? "В дорозі"
@@ -96,7 +91,6 @@ export function UnitsPage() {
     () => filterDealerUnitShipments(dealerUnitShipments, { tab, query, action: actionFilter }),
     [actionFilter, query, tab],
   );
-  const resultLabel = shipmentCountLabel(shipments);
   const changeQuery = (value: string) => {
     setQuery(value);
     if (!value.trim()) return;
@@ -162,7 +156,6 @@ export function UnitsPage() {
               ),
               onClear: () => setActionFilter("all"),
             }}
-            resultMeta={<span data-testid="unit-result-count">{resultLabel}</span>}
           />
         </div>
 

@@ -12,7 +12,6 @@ import { DealerDataToolbar } from "@/components/dealer/dealer-data-toolbar";
 import { BrpButton, BrpSelect } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { EmptyState, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
-import { ukrainianCount } from "@/lib/dealer/format";
 import {
   filterWorkshopOrders,
   getWorkshopColumnCounts,
@@ -197,11 +196,6 @@ export function WorkshopPage() {
               setTypeFilter("all");
             },
           }}
-          resultMeta={(
-            <span data-testid="workshop-result-count">
-              {ukrainianCount(filteredOrders.length, ["замовлення", "замовлення", "замовлень"])}
-            </span>
-          )}
         />
       </div>
 

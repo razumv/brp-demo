@@ -298,7 +298,6 @@ function CurrentAdminUnitShippingView({model}: {model: AdminUnitShippingModel}) 
     toggleOrder,
     remainingFiltered,
     shippedFiltered,
-    activeRecords,
     filteredRecords,
     pageRecords,
     periods,
@@ -449,7 +448,6 @@ function CurrentAdminUnitShippingView({model}: {model: AdminUnitShippingModel}) 
               <X size={14} /> Скинути
             </button>
           )}
-          meta={<span aria-live="polite">Показано {filteredRecords.length} з {activeRecords.length}</span>}
           mobileDisclosure={{ sections: ["filters", "actions"], activeCount: activeFilterCount }}
         />
 

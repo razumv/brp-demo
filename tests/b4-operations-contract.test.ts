@@ -78,6 +78,25 @@ test("warehouse does not expose secondary shown-of-total notices", () => {
   }
 });
 
+test("approved dealer and admin routes omit decorative result counters", () => {
+  const sources = [
+    "src/components/dealer/dealer-orders.tsx",
+    "src/components/dealer/dealer-customers.tsx",
+    "src/components/dealer/features/order-drafts-page.tsx",
+    "src/components/dealer/features/units-page.tsx",
+    "src/components/dealer/features/workshop-page.tsx",
+    "src/components/admin/admin-dealer-access-page.tsx",
+    "src/components/admin/astryx-admin-dealer-access-view.tsx",
+    "src/components/admin/admin-unit-shipping-page.tsx",
+    "src/components/admin/astryx-admin-unit-shipping-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    sources,
+    /resultMeta=|Показано\s*\{?[\s\S]{0,80}\sз\s\{?|Показано\s*\{?[\s\S]{0,40}(?:користувач|прав)/i,
+  );
+});
+
 test("route-specific admin surfaces use theme tokens for neutral switch fills", () => {
   assert.doesNotMatch(read("src/components/admin/admin-users-page.tsx"), /bg-white|dark:bg-\[#f0f6fc\]/);
   assert.doesNotMatch(read("src/components/admin/admin-permission-matrix.module.css"), /background:\s*#fff(?:fff)?/i);
