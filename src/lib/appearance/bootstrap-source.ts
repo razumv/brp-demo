@@ -86,7 +86,7 @@ const APPEARANCE_BOOTSTRAP_SOURCE = String.raw`(function(){
   try{
     apply(preference);
     if(preference.designSystem==="astryx"){
-      w.__BRP_ASTRYX_WATCHDOG__=setTimeout(function(){recover("renderer-watchdog-timeout");},4000);
+      w.__BRP_ASTRYX_WATCHDOG__=setTimeout(function(){recover("renderer-watchdog-timeout");},15000);
     }
   }catch(ignore){
     recover("bootstrap-application-failed");

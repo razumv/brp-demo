@@ -170,7 +170,7 @@ test("cold Astryx bootstrap recovers to a visible shadcn fallback when no render
   await expect(page.locator("html")).toHaveAttribute("data-renderer-pending", "true");
   await expect(page.locator("html")).toHaveAttribute("data-astryx-theme", "brp-current-compatibility");
   await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", "true", {
-    timeout: 7_000,
+    timeout: 18_000,
   });
   await expect(page.locator("html")).toHaveAttribute("data-design-system", "shadcn");
   await expect(page.locator("html")).toHaveAttribute("data-color-mode", "light");

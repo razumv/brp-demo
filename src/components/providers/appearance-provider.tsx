@@ -611,7 +611,7 @@ export function AppearanceProvider({children}: {children: ReactNode}) {
     clearProviderWatchdog();
     providerWatchdogRef.current = window.setTimeout(() => {
       coordinator.fail(new Error("Astryx renderer readiness timed out."));
-    }, 4_000);
+    }, 15_000);
     return transitionId;
   }, [clearProviderWatchdog, coordinator]);
 
