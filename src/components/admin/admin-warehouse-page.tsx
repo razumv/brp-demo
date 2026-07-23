@@ -71,6 +71,8 @@ export interface AdminWarehouseModel {
   receiving: {
     shipmentId: WarehouseShipmentId;
     setShipmentId(value: WarehouseShipmentId): void;
+    query: string;
+    setQuery(value: string): void;
   };
   receiptSummary: {
     view: ReceiptSummaryView;
@@ -231,14 +233,29 @@ function ProcessNavigation({ active, onChange }: {
 }
 
 function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
-  const {shipmentId, setShipmentId} = model;
+  const {query, setQuery, shipmentId, setShipmentId} = model;
   const shipment = warehouseShipments.find((item) => item.id === shipmentId) ?? warehouseShipments[0];
+  const visibleLines = useMemo(() => {
+    const needle = normalize(query);
+    if (!needle) return shipment.manifest.representativeLines;
+    return shipment.manifest.representativeLines.filter((line) => normalize(
+      `${line.partNumber} ${line.description} ${line.quantity}`,
+    ).includes(needle));
+  }, [query, shipment]);
 
   return (
     <section className="grid gap-4">
       <AdminToolbar
         className="[&>div:first-child]:w-full [&>div:last-child]:w-full md:[&>div:first-child]:w-auto md:[&>div:last-child]:w-auto"
         mobileDisclosure={{ sections: [] }}
+        search={(
+          <AdminSearchField
+            value={query}
+            onValueChange={setQuery}
+            label="Пошук у packing list"
+            placeholder="Артикул або опис…"
+          />
+        )}
         filters={(
           <label className="field w-full min-w-0 lg:max-w-[460px]">
             <span className="sr-only">Постачання</span>
@@ -312,7 +329,7 @@ function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
             <table className="data-table min-w-[620px]">
               <thead><tr><th>Артикул</th><th>Опис</th><th className="text-right">К-ть</th><th className="text-center">Скан</th></tr></thead>
               <tbody>
-                {shipment.manifest.representativeLines.map((line) => (
+                {visibleLines.map((line) => (
                   <tr key={line.id}>
                     <td className="font-mono font-semibold">{line.partNumber}</td>
                     <td>{line.description}</td>
@@ -320,6 +337,9 @@ function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
                     <td className="text-center text-[var(--faint)]">{line.scannedQuantity ?? "—"}</td>
                   </tr>
                 ))}
+                {!visibleLines.length ? (
+                  <tr><td colSpan={4} className="py-8 text-center text-[var(--muted-foreground)]">Позицій не знайдено</td></tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -948,6 +968,7 @@ function CurrentAdminWarehouseView({model}: {model: AdminWarehouseModel}) {
 export function AdminWarehousePage() {
   const [activeProcess, setActiveProcess] = useState<WarehouseProcessId>("receiving");
   const [shipmentId, setShipmentId] = useState<WarehouseShipmentId>(warehouseShipments[0].id);
+  const [receivingQuery, setReceivingQuery] = useState("");
   const [receiptView, setReceiptView] = useState<ReceiptSummaryView>("parts");
   const [receiptShipment, setReceiptShipment] = useState("all");
   const [receiptQuery, setReceiptQuery] = useState("");
@@ -969,7 +990,7 @@ export function AdminWarehousePage() {
   const model: AdminWarehouseModel = {
     activeProcess,
     setActiveProcess,
-    receiving: {shipmentId, setShipmentId},
+    receiving: {shipmentId, setShipmentId, query: receivingQuery, setQuery: setReceivingQuery},
     receiptSummary: {
       view: receiptView,
       setView: setReceiptView,

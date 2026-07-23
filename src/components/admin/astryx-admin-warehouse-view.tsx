@@ -172,6 +172,13 @@ function LockedButton({label, reason, icon, isIconOnly = false}: {
 function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
   const shipment = warehouseShipments.find((item) => item.id === model.shipmentId) ?? warehouseShipments[0];
   const receivingReason = "Запуск приймання недоступний: доступ лише для читання.";
+  const visibleLines = useMemo(() => {
+    const needle = normalize(model.query);
+    if (!needle) return shipment.manifest.representativeLines;
+    return shipment.manifest.representativeLines.filter((line) => normalize(
+      `${line.partNumber} ${line.description} ${line.quantity}`,
+    ).includes(needle));
+  }, [model.query, shipment]);
 
   return (
     <section className={styles.section} aria-label="Приймання">
@@ -186,6 +193,15 @@ function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
               value: item.id,
               label: `${item.proforma} · ${item.shipmentNumber} · ${item.status}`,
             }))}
+            width="100%"
+          />
+          <TextInput
+            label="Пошук у packing list"
+            isLabelHidden
+            value={model.query}
+            onChange={model.setQuery}
+            placeholder="Артикул або опис…"
+            hasClear
             width="100%"
           />
           <div className={styles.actionRow}>
@@ -223,9 +239,9 @@ function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
           <div className={styles.tableScroll} role="region" aria-label="Packing list" tabIndex={0}>
             <table className={styles.table}>
               <thead><tr><th>Артикул</th><th>Опис</th><th>К-ть</th><th>Скан</th></tr></thead>
-              <tbody>{shipment.manifest.representativeLines.map((line) => (
+              <tbody>{visibleLines.map((line) => (
                 <tr key={line.id}><th scope="row">{line.partNumber}</th><td>{line.description}</td><td>{line.quantity}</td><td>{line.scannedQuantity ?? "—"}</td></tr>
-              ))}</tbody>
+              ))}{!visibleLines.length ? <tr><td colSpan={4}>Позицій не знайдено</td></tr> : null}</tbody>
             </table>
           </div>
         </Card>

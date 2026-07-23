@@ -170,6 +170,10 @@
   grid-template-columns: minmax(260px, 1fr) auto;
 }
 
+.receivingToolbar {
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+}
+
 .actionRow {
   display: flex;
   flex-wrap: wrap;
