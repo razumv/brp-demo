@@ -13,7 +13,7 @@ import type {
   DealerSnapshot,
 } from "@/lib/dealer/contracts";
 import { dealerCustomerCategories } from "@/lib/dealer/contracts";
-import type { CustomerInput, EquipmentInput } from "@/lib/types";
+import type { CustomerInput, EquipmentInput, WorkshopOrder } from "@/lib/types";
 
 const sourceFixtureCustomerId = "codex-qa-client";
 const sourceFixtureOrderId = "a20b2bdd-2a1f-4322-a50a-fe68a17f4963";
@@ -190,6 +190,21 @@ export function deleteDealerEquipment(
   if (!equipment) throw new Error("Техніку не знайдено.");
   if (equipment.customerId !== input.customerId) throw new Error("Техніка не належить клієнту.");
   return { ...state, equipment: state.equipment.filter((item) => item.id !== input.id) };
+}
+
+export function transitionDealerWorkshopOrder(
+  state: DealerLocalState,
+  input: { id: string; status: WorkshopOrder["status"] },
+): DealerLocalState {
+  if (!state.workshopOrders.some((order) => order.id === input.id)) {
+    throw new Error("Замовлення-наряд не знайдено.");
+  }
+  return {
+    ...state,
+    workshopOrders: state.workshopOrders.map((order) => (
+      order.id === input.id ? { ...order, status: input.status } : order
+    )),
+  };
 }
 
 export function updateDealerOrderBuilder(

@@ -84,13 +84,13 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("button", { name: /Sea-Doo липень 2026/ })).toBeVisible();
   });
 
-  test("workshop exposes local creation only and BossWeb reports local lookup states", async ({ page }) => {
+  test("workshop persists an accessible local status transition and BossWeb reports local lookup states", async ({ page }) => {
     await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
     await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
 
     await expect(page.getByText(/підтверджено лише створення нового замовлення-наряду/i)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Зміна статусу недоступна" })).toHaveCount(0);
-    await expect(page.locator('[draggable="true"], [data-dropzone], [aria-dropeffect]')).toHaveCount(0);
+    await expect(page.locator('[data-workshop-dropzone]')).toHaveCount(4);
     await expect(page.getByText(/демонстрац|тестов|середовищ/i)).toHaveCount(0);
     await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
     await page.getByLabel("Опис *").fill("Сезонне технічне обслуговування");
@@ -100,8 +100,7 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("status")).toHaveText("Замовлення-наряд створено.");
     const workshopCard = page.getByRole("article").filter({ hasText: "Сезонне технічне обслуговування" });
     await expect(workshopCard).toBeVisible();
-    expect(await workshopCard.evaluate((element) => (element as HTMLElement).draggable)).toBe(false);
-    expect(await workshopCard.evaluate((element) => getComputedStyle(element).cursor)).not.toMatch(/grab|move/);
+    await expect(workshopCard).toHaveAttribute("draggable", "true");
 
     const workshopSearch = page.getByRole("searchbox", { name: /Пошук у майстерні/ });
     for (const query of ["Сезонне", "Клієнт Logos", "Олексій", "Терміново"]) {
@@ -120,25 +119,16 @@ test.describe("dealer operational features on desktop", () => {
 
     const newColumn = page.getByTestId("workshop-column").nth(0);
     const scheduledColumn = page.getByTestId("workshop-column").nth(1);
-    const cardBox = await workshopCard.boundingBox();
-    const targetBox = await scheduledColumn.boundingBox();
-    expect(cardBox).not.toBeNull();
-    expect(targetBox).not.toBeNull();
-    if (cardBox && targetBox) {
-      await page.mouse.move(cardBox.x + cardBox.width / 2, cardBox.y + cardBox.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 80, { steps: 5 });
-      await page.mouse.up();
-    }
-    await expect(newColumn).toContainText("Сезонне технічне обслуговування");
-    await expect(scheduledColumn).not.toContainText("Сезонне технічне обслуговування");
+    await workshopCard.getByLabel("Перемістити Сезонне технічне обслуговування").selectOption("scheduled");
+    await expect(newColumn).not.toContainText("Сезонне технічне обслуговування");
+    await expect(scheduledColumn).toContainText("Сезонне технічне обслуговування");
     await expect.poll(async () => page.evaluate((storageKey) => {
       const raw = window.localStorage.getItem(storageKey);
       if (!raw) return [];
       return (JSON.parse(raw) as { workshopOrders?: Array<{ description: string; status: string }> }).workshopOrders ?? [];
     }, dealerStorageKey)).toContainEqual(expect.objectContaining({
       description: "Сезонне технічне обслуговування",
-      status: "new",
+      status: "scheduled",
     }));
 
     await page.reload();

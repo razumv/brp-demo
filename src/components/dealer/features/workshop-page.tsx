@@ -51,25 +51,51 @@ export function WorkshopPage() {
   const [form, setForm] = useState<WorkshopOrderInput>(() => emptyWorkshopForm(firstCustomerId));
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [transitionError, setTransitionError] = useState("");
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, WorkshopOrder["status"]>>({});
+  const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<"all" | WorkshopOrder["status"]>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | WorkshopOrder["type"]>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const displayedOrders = useMemo(() => snapshot.workshopOrders.map((order) => ({
+    ...order,
+    status: optimisticStatuses[order.id] ?? order.status,
+  })), [optimisticStatuses, snapshot.workshopOrders]);
   const filteredOrders = useMemo(() => filterWorkshopOrders(
-    snapshot.workshopOrders,
+    displayedOrders,
     snapshot.customers,
     {
       query,
       stages: stageFilter === "all" ? [] : [stageFilter],
       types: typeFilter === "all" ? [] : [typeFilter],
     },
-  ), [query, snapshot.customers, snapshot.workshopOrders, stageFilter, typeFilter]);
+  ), [displayedOrders, query, snapshot.customers, stageFilter, typeFilter]);
   const counts = useMemo(() => getWorkshopColumnCounts(filteredOrders), [filteredOrders]);
   const groups = useMemo(() => groupWorkshopOrders(filteredOrders), [filteredOrders]);
   const customerById = useMemo(
     () => new Map(snapshot.customers.map((customer) => [customer.id, customer])),
     [snapshot.customers],
   );
+
+  const transitionOrder = async (orderId: string, status: WorkshopOrder["status"]) => {
+    const order = snapshot.workshopOrders.find((item) => item.id === orderId);
+    if (!order || order.status === status) return;
+    setTransitionError("");
+    setOptimisticStatuses((current) => ({ ...current, [orderId]: status }));
+    const result = await commands.transitionWorkshopOrder({ id: orderId, status });
+    setOptimisticStatuses((current) => {
+      const { [orderId]: _discarded, ...remaining } = current;
+      return remaining;
+    });
+    if (!result.ok) {
+      setTransitionError(
+        result.kind === "validation-error"
+          ? result.issues[0]?.message ?? "Не вдалося змінити етап замовлення-наряду."
+          : "Не вдалося зберегти зміну етапу на пристрої.",
+      );
+    }
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -118,6 +144,7 @@ export function WorkshopPage() {
       )}
     >
       {confirmation ? <p className={operationalStyles.successMessage} role="status">{confirmation}</p> : null}
+      {transitionError ? <p className={dealerStyles.formError} role="alert">{transitionError}</p> : null}
 
       <section className={dealerStyles.workshopStats} aria-label="Зведення майстерні">
         {workshopStages.map((stage) => {
@@ -183,7 +210,17 @@ export function WorkshopPage() {
             className={`${dealerStyles.workshopColumn} ${operationalStyles.workshopColumn}`}
             key={stage.id}
           >
-            <div data-testid="workshop-column">
+            <div
+              data-testid="workshop-column"
+              data-workshop-dropzone={stage.id}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const orderId = event.dataTransfer.getData("text/plain") || draggedOrderId;
+                if (orderId) void transitionOrder(orderId, stage.id);
+                setDraggedOrderId(null);
+              }}
+            >
               <header className={operationalStyles.workshopColumnHeader}>
                 <span>{stage.label}</span>
                 <strong>{orders.length}</strong>
@@ -191,12 +228,29 @@ export function WorkshopPage() {
               {orders.length ? (
                 <div className={operationalStyles.workshopOrderList}>
                   {orders.map((order) => (
-                    <article className={operationalStyles.workshopOrder} draggable={false} key={order.id}>
+                    <article
+                      className={operationalStyles.workshopOrder}
+                      draggable
+                      key={order.id}
+                      onDragEnd={() => setDraggedOrderId(null)}
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = "move";
+                        event.dataTransfer.setData("text/plain", order.id);
+                        setDraggedOrderId(order.id);
+                      }}
+                    >
                       <StatusBadge tone={stage.tone}>{workshopTypeLabels[order.type]}</StatusBadge>
                       <h3>{order.description}</h3>
                       <p>{customerById.get(order.customerId)?.name ?? "Клієнта не знайдено"}</p>
                       {order.mechanic ? <small>Механік: {order.mechanic}</small> : null}
                       {order.scheduledAt ? <small>Заплановано: {formatDateTime(order.scheduledAt)}</small> : null}
+                      <BrpSelect
+                        label={`Перемістити ${order.description}`}
+                        hideLabel
+                        value={order.status}
+                        onValueChange={(value) => void transitionOrder(order.id, value as WorkshopOrder["status"])}
+                        options={workshopStages.map((option) => ({ value: option.id, label: option.label }))}
+                      />
                     </article>
                   ))}
                 </div>

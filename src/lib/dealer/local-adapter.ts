@@ -54,6 +54,7 @@ export type DealerStorePort = {
   ) => void;
   setLineNote: (orderId: string, partNumber: string, note: string) => void;
   addWorkshopOrder: (input: WorkshopOrderInput) => WorkshopOrder;
+  transitionWorkshopOrder: (id: string, status: WorkshopOrder["status"]) => void;
 };
 
 type BrowserPort = {
@@ -293,6 +294,13 @@ export function createDealerLocalAdapter(
         return validationError("customerId", "not-found", "Клієнта не знайдено.");
       }
       return runLocalMutation("workshopOrder", () => store.addWorkshopOrder(input));
+    },
+    async transitionWorkshopOrder({ id, status }) {
+      if (!store.isReady()) return sessionRequired();
+      if (!store.state.workshopOrders.some((order) => order.id === id)) {
+        return validationError("id", "not-found", "Замовлення-наряд не знайдено.");
+      }
+      return runLocalMutation("workshopOrder", () => store.transitionWorkshopOrder(id, status));
     },
     async copyText({ text }) {
       if (!store.isReady()) return sessionRequired();
