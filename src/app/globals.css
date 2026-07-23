@@ -1334,6 +1334,106 @@ a {
   border-top: 1px solid var(--border);
 }
 
+.modal-surface-frame {
+  background: var(--surface-raised);
+}
+
+.modal-surface-header,
+.modal-surface-footer {
+  background: color-mix(in srgb, var(--surface-raised) 88%, var(--surface-subtle));
+}
+
+.modal-surface-body {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  background: color-mix(in srgb, var(--surface-subtle) 48%, var(--surface-raised));
+}
+
+.dialog-section {
+  --dialog-section-border: var(--border);
+  --dialog-section-background: var(--surface-raised);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--dialog-section-border);
+  border-radius: 10px;
+  background: var(--dialog-section-background);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--dialog-section-border) 70%, transparent);
+}
+
+.dialog-section-muted,
+.dialog-section-inset {
+  --dialog-section-background: var(--surface-subtle);
+}
+
+.dialog-section-info {
+  --dialog-section-border: color-mix(in srgb, var(--blue) 34%, var(--border));
+  --dialog-section-background: color-mix(in srgb, var(--blue-soft) 42%, var(--surface-raised));
+}
+
+.dialog-section-warning {
+  --dialog-section-border: color-mix(in srgb, var(--amber) 38%, var(--border));
+  --dialog-section-background: color-mix(in srgb, var(--amber-soft) 42%, var(--surface-raised));
+}
+
+.dialog-section-danger {
+  --dialog-section-border: color-mix(in srgb, var(--red) 34%, var(--border));
+  --dialog-section-background: color-mix(in srgb, var(--red-soft) 38%, var(--surface-raised));
+}
+
+.dialog-section-header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dialog-section-heading {
+  min-width: 0;
+}
+
+.dialog-section-heading h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dialog-section-heading p {
+  margin: 3px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.dialog-section-action {
+  flex: 0 0 auto;
+}
+
+.dialog-section-content {
+  min-width: 0;
+}
+
+.dialog-section-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.dialog-section-row:first-child {
+  padding-top: 0;
+}
+
+.dialog-section-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
 .side-drawer {
   display: flex;
   flex-direction: column;
@@ -2023,6 +2123,23 @@ a {
   }
   .modal-body {
     max-height: calc(100vh - 170px);
+  }
+  .modal-surface-close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+  .dialog-section {
+    padding: 12px;
+  }
+  .dialog-section-header,
+  .dialog-section-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .dialog-section-action {
+    width: 100%;
   }
   .side-drawer {
     width: 100%;

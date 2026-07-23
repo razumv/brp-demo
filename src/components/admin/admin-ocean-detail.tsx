@@ -272,10 +272,10 @@ export function OceanBillDetailModal({
     >
       <div className={styles.billLayout}>
         <div className={styles.billMain}>
-          <section className={styles.detailSection}>
+          <section className={styles.detailSection} data-dialog-section="bl-containers" aria-labelledby={`bl-${bill.id}-containers`}>
             <header className={styles.detailSectionHeader}>
               <Box size={14} />
-              <strong>Контейнери</strong>
+              <strong id={`bl-${bill.id}-containers`}>Контейнери</strong>
               <span>{bill.containers.length} container · {unitCount} {quantityNoun}{totalWeight ? ` · ${formatWeight(totalWeight)}` : ""}</span>
             </header>
             <div className={styles.billContainerList}>
@@ -283,7 +283,7 @@ export function OceanBillDetailModal({
                 const isExpanded = expandedContainerId === container.id;
                 const contentId = `bill-${bill.id}-container-${container.id}`;
                 return (
-                  <article key={container.id} className={styles.billContainer}>
+                  <article key={container.id} className={styles.billContainer} data-dialog-section="bl-container">
                     <button
                       type="button"
                       className={styles.billContainerSummary}
@@ -310,10 +310,10 @@ export function OceanBillDetailModal({
             </div>
           </section>
 
-          <section className={styles.detailSection}>
+          <section className={styles.detailSection} data-dialog-section="bl-proformas" aria-labelledby={`bl-${bill.id}-proformas`}>
             <header className={styles.detailSectionHeader}>
               <Link2 size={14} />
-              <strong>Пов&apos;язані проформи</strong>
+              <strong id={`bl-${bill.id}-proformas`}>Пов&apos;язані проформи</strong>
             </header>
             <ul className={styles.proformaList}>
               {bill.containers.map((container) => (
@@ -328,7 +328,7 @@ export function OceanBillDetailModal({
         </div>
 
         <aside className={styles.billRail} aria-label={`Деталі BL ${bill.id}`}>
-          <section className={styles.railSection}>
+          <section className={styles.railSection} data-dialog-section="bl-information">
             <h3 className={styles.sectionEyebrow}>Інформація про BL</h3>
             <dl className={styles.factList}>
               <dt>Номер BL</dt><dd>{bill.id}</dd>
@@ -343,7 +343,7 @@ export function OceanBillDetailModal({
             </dl>
           </section>
 
-          <section className={styles.railSection}>
+          <section className={styles.railSection} data-dialog-section="bl-receipt-1c">
             <h3 className={styles.sectionEyebrow}>Приходные 1C</h3>
             {detail ? (
               <div className={styles.receiptState}>
@@ -358,7 +358,7 @@ export function OceanBillDetailModal({
             )}
           </section>
 
-          <section className={styles.railSection}>
+          <section className={styles.railSection} data-dialog-section="bl-shipment-summary">
             <h3 className={styles.sectionEyebrow}>Зведення по відправці</h3>
             <div className={styles.metricGrid}>
               <div className={styles.metricCard}><strong className="text-[var(--green)]">{assignedCount}</strong><span>{isPartsBill ? "Зафіксовано" : "Призначено"}</span></div>
@@ -368,7 +368,7 @@ export function OceanBillDetailModal({
             </div>
           </section>
 
-          <section className={styles.railSection}>
+          <section className={styles.railSection} data-dialog-section="bl-documents">
             <h3 className={styles.sectionEyebrow}>Документи</h3>
             {detail ? (
               <ul className={styles.documentList}>
@@ -392,7 +392,7 @@ export function OceanBillDetailModal({
             )}
           </section>
 
-          <section className={styles.railSection}>
+          <section className={styles.railSection} data-dialog-section="bl-timeline">
             <h3 className={styles.sectionEyebrow}>Хронологія відстеження</h3>
             {detail ? <ol className={styles.timeline}>{detail.milestones.map((item) => <Milestone key={item.id} item={item} />)}</ol> : (
               <InlineNotice>Milestones не зафіксовані у source evidence.</InlineNotice>
