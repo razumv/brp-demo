@@ -287,11 +287,11 @@ function SupplierOrderQueue() {
   return (
     <Card padding={4}>
       <header className={styles.queueHeader}>
-        <div className={styles.queueCopy}><Heading level={2}>Черга замовлень постачальнику</Heading><Text type="supporting" color="secondary">Операційне створення та зміна статусів стануть доступними після підключення інтеграції.</Text></div>
+        <div className={styles.queueCopy}><Heading level={2}>Черга замовлень постачальнику</Heading><Text type="supporting" color="secondary">Позиції, що очікують консолідації та відправлення постачальнику.</Text></div>
         <Button label="Нове замовлення постачальнику" icon={<Plus size={14} />} endContent={<LockKeyhole size={14} />} variant="secondary" isDisabled />
       </header>
       <Text type="supporting" color="secondary" className={styles.disabledReason}>Створення замовлення постачальнику стане доступним після підключення інтеграції.</Text>
-      <EmptyState isCompact title="Черга порожня" description="Source count для статусу «Очікує постачальника» дорівнює 0." />
+      <EmptyState isCompact title="Черга порожня" description="Наразі немає позицій, що очікують замовлення постачальнику." />
     </Card>
   );
 }

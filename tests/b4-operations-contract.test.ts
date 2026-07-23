@@ -83,6 +83,16 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
 });
 
+test("supplier queue exposes business state rather than source-count copy", () => {
+  const queueSources = [
+    "src/components/admin/current-admin-order-pipeline-view.tsx",
+    "src/components/admin/astryx-admin-order-pipeline-view.tsx",
+  ].map(read).join("\n");
+
+  assert.match(queueSources, /Черга замовлень постачальнику/);
+  assert.doesNotMatch(queueSources, /Source count|source-доказ|локальне замовлення/i);
+});
+
 test("warehouse does not expose secondary shown-of-total notices", () => {
   for (const path of [
     "src/components/admin/admin-warehouse-page.tsx",
