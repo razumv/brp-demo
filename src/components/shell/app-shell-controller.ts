@@ -155,9 +155,10 @@ function createTriggerRef(): RefObject<HTMLButtonElement | null> {
   return {current: null};
 }
 
-function isPathSelected(pathname: string, href: string) {
-  return href === "/"
-    ? pathname === "/"
+export function isPathSelected(pathname: string, href: string) {
+  const isPortalRoot = href === "/" || href === "/admin";
+  return isPortalRoot
+    ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
 }
 
