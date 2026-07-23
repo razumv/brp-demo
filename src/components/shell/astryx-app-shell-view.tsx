@@ -455,6 +455,7 @@ export function AstryxAppShellHeader({controller, onReady}: AstryxShellViewProps
               }}
             />
             <IconButton
+              className={styles.mobileTheme}
               icon={controller.resolvedTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
               label={controller.resolvedTheme === "dark" ? "switch_to_light" : "switch_to_dark"}
               variant="ghost"

@@ -14,6 +14,7 @@ export const astryxShellClasses = {
   desktopSearch: "brp-astryx-shell-desktop-search",
   mobileMenu: "brp-astryx-shell-mobile-menu",
   mobileSearch: "brp-astryx-shell-mobile-search",
+  mobileTheme: "brp-astryx-shell-mobile-theme",
   actions: "brp-astryx-shell-actions",
   identity: "brp-astryx-shell-identity",
   sideNav: "brp-astryx-shell-side-nav",
