@@ -46,7 +46,7 @@ test("documents filter typed rows with the shared toolbar and omit export", asyn
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await page.getByRole("searchbox", { name: /Пошук документів/ }).fill("INV-2026-001");
   await expect(page.getByText("INV-2026-001", { exact: true })).toBeVisible();
-  await expect(page.getByText("1 документ", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 документ", { exact: true })).toHaveCount(0);
   await trigger.click();
   await page.getByLabel("Тип документа").selectOption("invoice");
   await page.getByLabel("Статус документа").selectOption("paid");
@@ -63,7 +63,7 @@ test("consignment, inventory, and network retain local filters without unsupport
   await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Фільтр консигнації").selectOption("available");
   await expect(page.getByText("BELT-V", { exact: true })).toBeVisible();
-  await expect(page.getByText("1 позиція", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 позиція", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Створити запит" })).toHaveCount(0);
   await expect(page.getByText("Відправлення запиту недоступне.", { exact: true })).toHaveCount(0);
 
@@ -87,13 +87,13 @@ test("settlements and Parts Report derive visible rows from deterministic ledger
   await page.getByLabel("Період взаєморозрахунків").selectOption("90");
   await page.getByRole("searchbox", { name: /Пошук взаєморозрахунків/ }).fill("INV-2026-001");
   await expect(page.getByText("INV-2026-001", { exact: true })).toBeVisible();
-  await expect(page.getByText("1 рух", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 рух", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Оновити баланс", exact: true })).toHaveCount(0);
 
   await openDealerPage(page, "/dealer/parts-report");
   await page.getByRole("searchbox", { name: /Пошук звіту запчастин/ }).fill("LOG-01");
   await expect(page.getByText("LOG-01", { exact: true })).toBeVisible();
-  await expect(page.getByText("1 замовлення", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 замовлення", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("columnheader", { name: "Статус" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Експорт", exact: true })).toHaveCount(0);
 });

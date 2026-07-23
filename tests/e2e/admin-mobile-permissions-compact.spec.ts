@@ -85,8 +85,8 @@ test("dealer filters narrow team and company policy without changing read-only s
   await trigger.click();
 
   await page.getByRole("combobox", { name: "Стан доступу команди" }).selectOption("without-access");
-  await expect(page.getByText("Демо-керівник", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Демо-співробітник 2", { exact: true }).last()).toBeVisible();
+  await expect(page.getByText("Олександр Коваль", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Іван Мельник", { exact: true }).last()).toBeVisible();
 
   await page.getByRole("combobox", { name: "Стан політики компанії" }).selectOption("off");
   await expect(page.getByRole("button", { name: "Каталог — 1/4 увімкнено" })).toBeVisible();
@@ -117,7 +117,7 @@ test("active permission filters remain visible and resettable after crossing the
   await page.setViewportSize({ width: 768, height: 1000 });
   await expect(teamAccess).toBeVisible();
   await teamAccess.selectOption("all");
-  await expect(page.getByRole("region", { name: "Команда дилера" })).toContainText("Демо-керівник");
+  await expect(page.getByRole("region", { name: "Команда дилера" })).toContainText("Олександр Коваль");
 });
 
 test("permission tables stay desktop-only at the exact breakpoint and wider", async ({ page }) => {

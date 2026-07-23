@@ -336,7 +336,7 @@ test("target routes never create document-level horizontal overflow", async ({ p
 
   await openAdminRoute(page, "/admin/catalog", 390);
   await page.getByRole("combobox", { name: "Розділ каталогу" }).selectOption("parts");
-  await page.getByRole("button", { name: /Import History/ }).click();
+  await page.getByRole("button", { name: /Історія імпорту/ }).click();
   const importHistory = page.locator('[role="region"][aria-label="Історія імпорту"]');
   await expect(importHistory).toHaveCount(1);
   await expect(importHistory).toHaveAttribute("tabindex", "0");

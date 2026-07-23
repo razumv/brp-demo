@@ -60,21 +60,21 @@ test("catalog keeps active section, filters, table width, pagination, and debug 
   await page.getByRole("tab", {name: "Ціни дистриб'ютора"}).click();
   await page.getByRole("textbox", {name: "Пошук цін дистриб'ютора"}).fill("3JTB");
   await page.getByRole("tab", {name: "Каталог запчастин"}).click();
-  await page.getByRole("button", {name: "Debug Pricing"}).click();
-  await page.getByRole("textbox", {name: "SKU для Debug Pricing"}).fill("415005700");
-  await page.getByRole("button", {name: "Debug", exact: true}).click();
-  await page.getByRole("button", {name: "Next", exact: true}).click();
+  await page.getByRole("button", {name: "Перевірка ціни"}).click();
+  await page.getByRole("textbox", {name: "SKU для перевірки ціни"}).fill("415005700");
+  await page.getByRole("button", {name: "Перевірити", exact: true}).click();
+  await page.getByRole("button", {name: "Далі", exact: true}).click();
   await publishAppearance(page, "astryx", "dark");
 
   await expect(page.locator('[data-admin-catalog-renderer="astryx"]')).toHaveCount(1);
   await expect(page.getByText("415005700", {exact: true})).toBeVisible();
-  await expect(page.getByText("Page 2 of 3525")).toBeVisible();
+  await expect(page.getByText("Сторінка 2 з 3525")).toBeVisible();
   await publishAppearance(page, "shadcn", "light");
 
   await expect(page.locator('[data-admin-catalog-renderer="current"]')).toHaveCount(1);
-  await expect(page.getByRole("button", {name: "Debug Pricing"})).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", {name: "Перевірка ціни"})).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText("415005700", {exact: true})).toBeVisible();
-  await expect(page.getByText("Page 2 of 3525")).toBeVisible();
+  await expect(page.getByText("Сторінка 2 з 3525")).toBeVisible();
 });
 
 test("Astryx catalog keeps its selected category and resized column after a renderer round trip", async ({page}) => {
