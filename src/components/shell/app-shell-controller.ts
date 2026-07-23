@@ -28,12 +28,10 @@ export type ShellOverlay = "mobile-navigation" | "mobile-search" | "dealer-cart"
 export type ShellPopover = "language" | "notifications" | "profile" | null;
 export type ShellTrigger = Exclude<ShellOverlay, null>;
 
-export type ShellLanguage = "uk" | "en" | "ru";
+export type ShellLanguage = "uk";
 
 export const SHELL_LANGUAGES: readonly {id: ShellLanguage; label: string; shortLabel: string}[] = [
   {id: "uk", label: "Українська", shortLabel: "UA"},
-  {id: "en", label: "English", shortLabel: "EN"},
-  {id: "ru", label: "Русский", shortLabel: "RU"},
 ];
 
 function isShellLanguage(value: string): value is ShellLanguage {

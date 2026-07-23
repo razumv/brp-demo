@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
-test("the shared shell persists an explicit language preference without changing the initial render", () => {
+test("the shared shell exposes only the language it actually renders", () => {
   const preferences = read("src/components/shell/use-shell-preferences.ts");
   const controller = read("src/components/shell/app-shell-controller.ts");
 
@@ -13,6 +13,8 @@ test("the shared shell persists an explicit language preference without changing
   assert.match(preferences, /window\.localStorage\.getItem\(key\)/);
   assert.match(preferences, /window\.localStorage\.setItem\(key, nextValue\)/);
   assert.match(controller, /brp-clone-ui-v1:language/);
+  assert.match(controller, /export type ShellLanguage = "uk"/);
+  assert.doesNotMatch(controller, /id: "en"|id: "ru"/);
   assert.match(controller, /language: ShellLanguage/);
   assert.match(controller, /setLanguage\(language: ShellLanguage\): void/);
 });

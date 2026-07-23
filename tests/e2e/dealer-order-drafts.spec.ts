@@ -65,6 +65,18 @@ test("draft filters change visible records, compose with search, and reset", asy
   await expect(page.getByText("Порожня з покупцем", { exact: true })).toBeVisible();
 });
 
+test("draft search keeps keyboard focus after its debounced value is applied", async ({ page }) => {
+  await page.goto("/dealer/order-drafts");
+  const search = page.getByRole("searchbox", { name: /Пошук чернеток/ });
+
+  await search.fill("Logos");
+  await page.waitForTimeout(400);
+
+  await expect(search).toBeFocused();
+  await search.pressSequentially(" 2");
+  await expect(search).toHaveValue("Logos 2");
+});
+
 test("draft toolbar remains a visible one-row control set without Excel at 390 pixels", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dealer/order-drafts");
