@@ -62,7 +62,7 @@ function UnitCollection({ container }: { container: OceanContainer }) {
               <th>Модель</th>
               <th>EUR</th>
               <th>VIN</th>
-              <th>Engine #</th>
+              <th>№ двигуна</th>
               <th>Дилер</th>
               <th>Статус</th>
               <th>Інвойс</th>

@@ -64,6 +64,10 @@ test("Ocean dialogs describe unavailable business data without implementation ev
     oceanSources,
     /source evidence|доказов(?:е|і)\s+(?:покриття|рядки)|домодельован|preview не/i,
   );
+  assert.doesNotMatch(
+    oceanSources,
+    /ПН уже создана|Подготовка ПН|Закрыть|Пересчитать|Документы 1C|Проверить статус|Состав ПН|Engine #|Save, Apply/i,
+  );
 });
 
 test("priority workflows do not expose implementation labels or redundant BossWeb submit", () => {
@@ -125,8 +129,11 @@ test("approved dealer and admin routes omit decorative result counters", () => {
     "src/components/dealer/features/order-drafts-page.tsx",
     "src/components/dealer/features/units-page.tsx",
     "src/components/dealer/features/workshop-page.tsx",
+    "src/components/dealer/features/secondary-data-pages.tsx",
     "src/components/admin/admin-dealer-access-page.tsx",
     "src/components/admin/astryx-admin-dealer-access-view.tsx",
+    "src/components/admin/admin-users-page.tsx",
+    "src/components/admin/astryx-admin-users-view.tsx",
     "src/components/admin/admin-unit-shipping-page.tsx",
     "src/components/admin/astryx-admin-unit-shipping-view.tsx",
   ].map(read).join("\n");
@@ -135,6 +142,7 @@ test("approved dealer and admin routes omit decorative result counters", () => {
     sources,
     /resultMeta=|Показано\s*\{?[\s\S]{0,80}\sз\s\{?|Показано\s*\{?[\s\S]{0,40}(?:користувач|прав)/i,
   );
+  assert.doesNotMatch(sources, /Only the main dealer can manage Team & Access/i);
 });
 
 test("route-specific admin surfaces use theme tokens for neutral switch fills", () => {

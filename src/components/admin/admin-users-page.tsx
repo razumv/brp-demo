@@ -182,16 +182,14 @@ function UserRowActions({ user, onEdit, compact = false }: { user: AdminUserReco
   );
 }
 
-function ActiveUsersGrid({ users, resultCount, onEdit }: {
+function ActiveUsersGrid({ users, onEdit }: {
   users: readonly AdminUserRecord[];
-  resultCount: number;
   onEdit: (user: AdminUserRecord) => void;
 }) {
   return (
     <div role="grid" aria-label="Активні користувачі" className="min-w-0 max-md:hidden">
       <AdminTableShell
         scrollLabel="Активні користувачі"
-        footer={<span className="text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</span>}
       >
         <div className={userGrid} role="row">
           {["КОРИСТУВАЧ", "КОНТАКТ", "КОМПАНІЯ", "РОЛЬ", "СТАТУС", "РЕЄСТРАЦІЯ", "ДІЇ"].map((column) => (
@@ -229,9 +227,8 @@ function UserStatus() {
   );
 }
 
-function ActiveUsersCards({ users, resultCount, onEdit }: {
+function ActiveUsersCards({ users, onEdit }: {
   users: readonly AdminUserRecord[];
-  resultCount: number;
   onEdit: (user: AdminUserRecord) => void;
 }) {
   return (
@@ -251,7 +248,6 @@ function ActiveUsersCards({ users, resultCount, onEdit }: {
           </li>
         ))}
       </ul>
-      <p className="m-0 text-[11px] text-[var(--muted-foreground)]">Показано {resultCount} користувачів</p>
     </div>
   );
 }
@@ -488,7 +484,7 @@ function EditUserPreview({ user, onClose }: { user: AdminUserRecord | null; onCl
               onToggle={() => setOpenMenu((current) => current === "dealer-role" ? null : "dealer-role")}
             />
             <p className="m-0 text-[10px] leading-relaxed text-[var(--muted-foreground)]">
-              Only the main dealer can manage Team &amp; Access for their company.
+              Лише головний дилер може керувати командою та доступом своєї компанії.
             </p>
           </>
         ) : null}
@@ -571,8 +567,8 @@ export function AdminUsersPage() {
       <section id={`admin-users-${tab}-panel`} role="tabpanel" aria-labelledby={`admin-users-${tab}-panel-tab`} className="min-w-0">
         {tab === "active" && visibleUsers.length ? (
           <>
-            <ActiveUsersGrid users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />
-            <ActiveUsersCards users={visibleUsers} resultCount={resultCount} onEdit={setSelectedUser} />
+            <ActiveUsersGrid users={visibleUsers} onEdit={setSelectedUser} />
+            <ActiveUsersCards users={visibleUsers} onEdit={setSelectedUser} />
           </>
         ) : (
           <EmptyUsersState category={tab !== "active"} />
