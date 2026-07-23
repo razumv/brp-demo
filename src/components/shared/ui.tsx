@@ -5,6 +5,7 @@ import {
   useId,
   useRef,
   type ButtonHTMLAttributes,
+  type HTMLAttributes,
   type ReactNode,
 } from "react";
 import { AlertCircle, Inbox, LockKeyhole, X } from "lucide-react";
@@ -42,19 +43,20 @@ export function PageSurface({
   width = "default",
   className,
   as: Component = "section",
+  ...props
 }: {
   children: ReactNode;
   width?: "default" | "wide" | "reading" | "full-workspace";
   className?: string;
-  as?: "section" | "div" | "article";
-}) {
+  as?: "main" | "section" | "div" | "article";
+} & Omit<HTMLAttributes<HTMLElement>, "className">) {
   const widthClass = {
     default: "page-surface-default",
     wide: "page-surface-wide",
     reading: "page-surface-reading",
     "full-workspace": "page-surface-full-workspace",
   }[width];
-  return <Component className={cn("page-surface", widthClass, className)}>{children}</Component>;
+  return <Component className={cn("page-surface", widthClass, className)} {...props}>{children}</Component>;
 }
 
 export function Panel({

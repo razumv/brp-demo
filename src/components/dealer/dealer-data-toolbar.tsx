@@ -1,7 +1,7 @@
 "use client";
 
 import { Filter, Search, X } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import {BrpButton, BrpIconButton, BrpTextInput} from "@/components/brp-ui";
 import {
   type DataToolbarFilterContract,
@@ -22,17 +22,22 @@ export type DealerDataToolbarProps = Readonly<{
 }>;
 
 export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToolbarProps) {
+  return <DealerDataToolbarContent key={search.value} search={search} filters={filters} resultMeta={resultMeta} />;
+}
+
+function DealerDataToolbarContent({ search, filters, resultMeta }: DealerDataToolbarProps) {
   const {renderedDesignSystem} = useAppearance();
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
   const [queryDraft, setQueryDraft] = useState(search.value);
+  const notifySearchChange = useEffectEvent((value: string) => search.onValueChange(value));
 
   useEffect(() => {
     if (queryDraft === search.value) return;
 
-    const timeoutId = window.setTimeout(() => search.onValueChange(queryDraft), 300);
+    const timeoutId = window.setTimeout(() => notifySearchChange(queryDraft), 300);
     return () => window.clearTimeout(timeoutId);
-  }, [queryDraft, search]);
+  }, [queryDraft, search.value]);
 
   useDismissibleDataToolbarFilter({
     open: filters?.open ?? false,

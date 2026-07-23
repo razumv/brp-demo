@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {existsSync, readFileSync} from "node:fs";
 import test from "node:test";
+import {MODAL_CERTIFICATION_INVENTORY} from "../src/lib/appearance/modal-certification-inventory";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
@@ -84,4 +85,6 @@ test("modal certification inventory records the admin modal families and both re
     assert.match(inventory, new RegExp(`id: "${family}"`));
   }
   assert.match(inventory, /renderers: \["current", "astryx"\]/);
+  assert.equal(MODAL_CERTIFICATION_INVENTORY.length, 7);
+  assert.equal(MODAL_CERTIFICATION_INVENTORY.every((entry) => entry.renderers.length === 2), true);
 });

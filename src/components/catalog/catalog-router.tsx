@@ -428,6 +428,12 @@ function CatalogCascade() {
       href: index === selection.path.length - 1 ? undefined : getCascadeHref(node, selection),
     })),
   ];
+  const deepestMatchingColumn = normalizedTreeQuery
+    ? columns.reduce(
+      (deepest, column, index) => column.nodes.some((node) => node.label.toLocaleLowerCase().includes(normalizedTreeQuery)) ? index : deepest,
+      -1,
+    )
+    : -1;
 
   return (
     <CatalogPage wide>
@@ -446,9 +452,12 @@ function CatalogCascade() {
       </div>
       <section ref={viewportRef} className={styles.cascadeViewport} aria-label="Навігація каталогу">
         <div className={styles.cascadeGrid} data-column-count={columns.length}>
-          {columns.map((column) => {
+          {columns.map((column, columnIndex) => {
             const visibleNodes = normalizedTreeQuery
-              ? column.nodes.filter((node) => node.label.toLocaleLowerCase().includes(normalizedTreeQuery))
+              ? column.nodes.filter((node) => (
+                node.label.toLocaleLowerCase().includes(normalizedTreeQuery)
+                || (columnIndex < deepestMatchingColumn && selection.path.some((selectedNode) => selectedNode.kind === node.kind && selectedNode.id === node.id))
+              ))
               : column.nodes;
             const emptyMessage = normalizedTreeQuery && visibleNodes.length === 0
               ? "Нічого не знайдено в поточній гілці каталогу."

@@ -140,6 +140,9 @@ test("SXS catalog tree search filters the loaded taxonomy and can be cleared wit
   await expect(treeSearch).toBeVisible();
   await treeSearch.fill("Maverick Trail 1000");
   await expect(cascade.getByText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", { exact: true })).toBeVisible();
+  await expect(cascade.getByText("Can-Am SXS", { exact: true })).toBeVisible();
+  await expect(cascade.getByText("2021", { exact: true })).toBeVisible();
+  await expect(cascade.getByText("005 - SSV - North America - Maverick Trail Series", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005&model=002$/);
 
   await treeSearch.fill("немає у джерелі");

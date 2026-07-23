@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAppearance } from "@/components/appearance/use-appearance";
-import { PageHeader } from "@/components/shared/ui";
+import { PageHeader, PageSurface } from "@/components/shared/ui";
 import dealerStyles from "../dealer.module.css";
 
 type FeatureDefinition = {
@@ -44,7 +44,9 @@ export function FeatureFrame({ feature, action, children }: { feature: string; a
   const definition = featureDefinitions[feature] || { title: "Розділ", description: "Дилерський робочий розділ.", icon: Box };
   const Icon = definition.icon;
   return (
-    <main
+    <PageSurface
+      as="main"
+      width="default"
       className="page page-narrow"
       data-dealer-feature={feature}
       data-dealer-feature-renderer={renderedDesignSystem}
@@ -56,6 +58,6 @@ export function FeatureFrame({ feature, action, children }: { feature: string; a
       >
         {children}
       </section>
-    </main>
+    </PageSurface>
   );
 }

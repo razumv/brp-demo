@@ -85,7 +85,8 @@ export function WorkshopPage() {
     setOptimisticStatuses((current) => ({ ...current, [orderId]: status }));
     const result = await commands.transitionWorkshopOrder({ id: orderId, status });
     setOptimisticStatuses((current) => {
-      const { [orderId]: _discarded, ...remaining } = current;
+      const remaining = { ...current };
+      delete remaining[orderId];
       return remaining;
     });
     if (!result.ok) {
