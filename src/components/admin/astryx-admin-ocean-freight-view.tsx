@@ -171,7 +171,10 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
                   <td className={styles.mono}>{container.proforma}</td>
                   <td>{formatOceanEur(container.eur)}</td>
                   <td>{container.assigned}/{container.total}</td>
-                  <td><ReceiptAction bill={bill} model={model} /></td>
+                  <td>
+                    <Text color="secondary">{receiptStateLabel(bill)}</Text>
+                    <Text type="supporting" color="secondary">Дія на рівні BL</Text>
+                  </td>
                   <td>
                     <Button label={container.arrivalLabel} variant="ghost" size="sm" icon={<CalendarDays size={13} />} onClick={model.openEta} />
                   </td>
@@ -244,7 +247,6 @@ function OceanPanel({model}: {model: AdminOceanFreightModel}) {
           </div>
           <ToggleButton label="Групувати за BL" isPressed={model.grouped} onPressedChange={model.setGrouped} size="md" />
         </div>
-        <Text className={styles.toolbarMeta} color="secondary" display="block">{model.visibleBillCount} BL · {model.visibleCount} контейнерів</Text>
       </Card>
       {model.view === "table" ? <ContainerRows model={model} /> : <ContainerCards model={model} />}
     </div>

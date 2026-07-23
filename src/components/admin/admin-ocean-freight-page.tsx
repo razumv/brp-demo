@@ -84,8 +84,6 @@ export type AdminOceanFreightModel = {
   expandedContainerId: string | null;
   toggleContainer(id: string): void;
   filteredBills: OceanBillOfLading[];
-  visibleCount: number;
-  visibleBillCount: number;
   groundQuery: string;
   setGroundQuery(value: string): void;
   dealer: (typeof dealerNames)[number];
@@ -457,10 +455,7 @@ function OceanTab({
     status,
     toggleContainer,
     view,
-    visibleBillCount,
-    visibleCount,
   } = model;
-  const isFiltered = search.trim().length > 0 || status !== "all";
   const showCards = view === "cards";
 
   return (
@@ -500,12 +495,6 @@ function OceanTab({
           <button type="button" aria-pressed={grouped} className={`button button-outline ${grouped ? "!border-[var(--orange)] !text-[var(--orange)]" : ""}`} onClick={() => setGrouped(!grouped)}>
             <Grid2X2 size={14} /> Групувати за BL
           </button>
-        )}
-        meta={(
-          <span className="hidden md:inline">
-            {visibleBillCount}/{OCEAN_RESEARCH_COVERAGE.billsOfLading} BL · {visibleCount}/{OCEAN_RESEARCH_COVERAGE.containers} контейнерів
-            {isFiltered ? " · фільтр активний" : ""}
-          </span>
         )}
         mobileDisclosure={{
           sections: ["filters", "view", "actions"],
@@ -866,8 +855,6 @@ function useAdminOceanFreightController(): AdminOceanFreightModel {
     expandedContainerId,
     toggleContainer: (id) => setExpandedContainerId((current) => current === id ? null : id),
     filteredBills,
-    visibleCount: filteredBills.reduce((count, bill) => count + bill.containers.length, 0),
-    visibleBillCount: filteredBills.length,
     groundQuery,
     setGroundQuery,
     dealer,

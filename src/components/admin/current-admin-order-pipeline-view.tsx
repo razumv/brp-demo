@@ -123,7 +123,7 @@ function OrderIdentity({order}: {order: AdminPipelineDisplayOrder}) {
       <span className={styles.code}>{order.code}</span>
       <span>
         <strong>{order.company}</strong>
-        <small className={styles.subline}>{order.contact}{order.local ? " · локальне замовлення" : !order.detailEvidence ? " · обмежені source-докази" : ""}</small>
+        <small className={styles.subline}>{order.contact}</small>
       </span>
       <span className={styles.muted}>{order.date}</span>
       <span className={styles.muted}>{order.parts} запчастин</span>

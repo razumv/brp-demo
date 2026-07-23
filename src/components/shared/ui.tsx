@@ -248,7 +248,7 @@ export function ReadOnlyButton({
       {...props}
       type="button"
       disabled
-      title="Демо: лише перегляд"
+      title="Дія недоступна без підключення сервісу."
       className={cn("button button-outline button-readonly", className)}
     >
       <LockKeyhole size={14} />
