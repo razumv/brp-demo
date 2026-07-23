@@ -83,6 +83,19 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
 });
 
+test("document and order dialogs use product language instead of implementation evidence labels", () => {
+  const dialogSources = [
+    "src/components/admin/admin-invoices-page.tsx",
+    "src/components/admin/admin-order-detail.tsx",
+    "src/components/admin/astryx-admin-order-detail-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    dialogSources,
+    /source[- ](?:summary|preflight|карт)|Failed to build confirm preview|Структура preview|Параметри preview|Репрезентативна source-вибірка/i,
+  );
+});
+
 test("supplier queue exposes business state rather than source-count copy", () => {
   const queueSources = [
     "src/components/admin/current-admin-order-pipeline-view.tsx",
