@@ -93,11 +93,12 @@ test("cart spreadsheet actions are locked with a touch-accessible reason", async
   await expect(page.getByText(/демо|демонстраційн/i)).toHaveCount(0);
 });
 
-test("team access locks are associated with the visible management reason", async ({ page }) => {
+test("team access locks retain an accessible reason without the removed disclaimer panel", async ({ page }) => {
   await page.goto("/dealer/team-access");
 
-  const reason = page.getByText(/Склад команди та профілі прав керуються адміністратором/);
-  await expect(reason).toBeVisible();
+  const reason = page.locator("#team-access-lock-reason");
+  await expect(page.getByText(/Склад команди та профілі прав керуються адміністратором/)).toHaveCount(0);
+  await expect(reason).toHaveText("Зміна складу команди та профілів прав доступна адміністратору.");
   await expect(page.getByRole("button", { name: "Зберегти ім'я" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Зберегти ім'я" })).toHaveAttribute(
     "aria-describedby",
