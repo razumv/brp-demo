@@ -17,6 +17,8 @@ export const astryxShellClasses = {
   mobileTheme: "brp-astryx-shell-mobile-theme",
   actions: "brp-astryx-shell-actions",
   identity: "brp-astryx-shell-identity",
+  notificationControl: "brp-astryx-shell-notification-control",
+  notificationsHeader: "brp-astryx-shell-notifications-header",
   sideNav: "brp-astryx-shell-side-nav",
   sideNavControls: "brp-astryx-shell-side-nav-controls",
   mobileNav: "brp-astryx-shell-mobile-nav",

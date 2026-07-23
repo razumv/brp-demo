@@ -37,6 +37,26 @@ export function PageHeader({
   );
 }
 
+export function PageSurface({
+  children,
+  width = "default",
+  className,
+  as: Component = "section",
+}: {
+  children: ReactNode;
+  width?: "default" | "wide" | "reading" | "full-workspace";
+  className?: string;
+  as?: "section" | "div" | "article";
+}) {
+  const widthClass = {
+    default: "page-surface-default",
+    wide: "page-surface-wide",
+    reading: "page-surface-reading",
+    "full-workspace": "page-surface-full-workspace",
+  }[width];
+  return <Component className={cn("page-surface", widthClass, className)}>{children}</Component>;
+}
+
 export function Panel({
   children,
   className,

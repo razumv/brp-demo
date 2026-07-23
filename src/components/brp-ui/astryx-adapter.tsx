@@ -100,13 +100,13 @@ function AstryxFacadeDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
     >
-      <div>
-        <header>
+      <div className="modal-surface-frame">
+        <header className="modal-surface-header">
           <h2 id={titleId}>{title}</h2>
           {description ? <p id={descriptionId}>{description}</p> : null}
         </header>
-        <div>{children}</div>
-        {footer ? <footer>{footer}</footer> : null}
+        <div className="modal-surface-body">{children}</div>
+        {footer ? <footer className="modal-surface-footer">{footer}</footer> : null}
       </div>
     </AstryxDialog>
   );

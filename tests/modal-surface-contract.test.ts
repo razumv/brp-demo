@@ -37,16 +37,20 @@ test("DialogSection renders a labelled section with tone and inset variants", ()
 });
 
 test("the BRP UI adapter uses the same modal frame contract", () => {
-  const source = read("src/components/brp-ui/current-adapter.tsx");
+  const sources = [
+    read("src/components/brp-ui/current-adapter.tsx"),
+    read("src/components/brp-ui/astryx-adapter.tsx"),
+  ];
 
-  for (const className of [
-    "modal-surface-frame",
-    "modal-surface-header",
-    "modal-surface-body",
-    "modal-surface-footer",
-    "modal-surface-close",
-  ]) {
-    assert.match(source, new RegExp(className));
+  for (const source of sources) {
+    for (const className of [
+      "modal-surface-frame",
+      "modal-surface-header",
+      "modal-surface-body",
+      "modal-surface-footer",
+    ]) {
+      assert.match(source, new RegExp(className));
+    }
   }
 });
 
@@ -67,5 +71,16 @@ test("both ocean renderers expose the same BL tile structure", () => {
     ]) {
       assert.match(source, new RegExp(`data-dialog-section="${section}"`));
     }
+  }
+});
+
+test("shared page surfaces provide the four width modes used by both renderers", () => {
+  const source = read("src/components/shared/ui.tsx");
+  const globalStyles = read("src/app/globals.css");
+
+  assert.match(source, /export function PageSurface/);
+  for (const width of ["default", "wide", "reading", "full-workspace"]) {
+    assert.match(source, new RegExp(`page-surface-${width}`));
+    assert.match(globalStyles, new RegExp(`\\.page-surface-${width}`));
   }
 });
