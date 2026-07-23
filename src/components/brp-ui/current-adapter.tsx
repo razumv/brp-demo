@@ -622,20 +622,20 @@ function CurrentDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40" />
         <Dialog.Viewport className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
-          <Dialog.Popup role={purpose === "required" ? "alertdialog" : "dialog"} initialFocus finalFocus className={`max-h-[75vh] w-full overflow-auto rounded-xl border border-border bg-background shadow-xl outline-none ${dialogWidthClasses[width]}`}>
-            <header className="flex items-start justify-between gap-3 border-b border-border p-4">
+          <Dialog.Popup role={purpose === "required" ? "alertdialog" : "dialog"} initialFocus finalFocus className={`modal-surface-frame max-h-[75vh] w-full overflow-auto rounded-xl border border-border bg-background shadow-xl outline-none ${dialogWidthClasses[width]}`}>
+            <header className="modal-surface-header flex items-start justify-between gap-3 border-b border-border p-4">
               <div>
                 <Dialog.Title className="font-semibold">{title}</Dialog.Title>
                 {description ? <Dialog.Description className="text-sm text-muted-foreground">{description}</Dialog.Description> : null}
               </div>
               {purpose !== "required" ? (
-                <Dialog.Close render={<Button type="button" variant="ghost" size="icon-sm" aria-label="Закрити" />}>
+                <Dialog.Close render={<Button type="button" variant="ghost" size="icon-sm" aria-label="Закрити" className="modal-surface-close" />}>
                   <X aria-hidden="true" />
                 </Dialog.Close>
               ) : null}
             </header>
-            <div className="p-4">{children}</div>
-            {footer ? <footer className="border-t border-border p-4">{footer}</footer> : null}
+            <div className="modal-surface-body p-4">{children}</div>
+            {footer ? <footer className="modal-surface-footer border-t border-border p-4">{footer}</footer> : null}
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>
@@ -659,7 +659,7 @@ function CurrentAlertDialog({
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/40" />
         <AlertDialog.Viewport className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
-          <AlertDialog.Popup initialFocus finalFocus className="w-full max-w-sm rounded-xl border border-border bg-background p-4 shadow-xl outline-none">
+          <AlertDialog.Popup initialFocus finalFocus className="modal-surface-frame w-full max-w-sm rounded-xl border border-border bg-background p-4 shadow-xl outline-none">
             <AlertDialog.Title className="font-semibold">{title}</AlertDialog.Title>
             <AlertDialog.Description className="mt-1 text-sm text-muted-foreground">{description}</AlertDialog.Description>
             <div className="mt-4 flex justify-end gap-2">

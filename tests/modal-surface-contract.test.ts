@@ -35,3 +35,37 @@ test("DialogSection renders a labelled section with tone and inset variants", ()
   assert.match(source, /dialog-section-inset/);
   assert.match(source, /dialog-section-row/);
 });
+
+test("the BRP UI adapter uses the same modal frame contract", () => {
+  const source = read("src/components/brp-ui/current-adapter.tsx");
+
+  for (const className of [
+    "modal-surface-frame",
+    "modal-surface-header",
+    "modal-surface-body",
+    "modal-surface-footer",
+    "modal-surface-close",
+  ]) {
+    assert.match(source, new RegExp(className));
+  }
+});
+
+test("both ocean renderers expose the same BL tile structure", () => {
+  const renderers = [
+    read("src/components/admin/admin-ocean-detail.tsx"),
+    read("src/components/admin/astryx-admin-ocean-freight-view.tsx"),
+  ];
+
+  for (const source of renderers) {
+    for (const section of [
+      "bl-containers",
+      "bl-container",
+      "bl-proformas",
+      "bl-information",
+      "bl-documents",
+      "bl-timeline",
+    ]) {
+      assert.match(source, new RegExp(`data-dialog-section="${section}"`));
+    }
+  }
+});
