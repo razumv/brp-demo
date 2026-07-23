@@ -4,13 +4,9 @@ import Link from "next/link";
 import type {ReactNode} from "react";
 import {
   ArrowRight,
-  BookOpen,
   Box,
-  CalendarDays,
   CheckCircle2,
   ClipboardList,
-  FileClock,
-  FileText,
   Package,
   PackageCheck,
   PackageOpen,
@@ -28,18 +24,6 @@ import { formatMoney, orderTotal } from "@/lib/mock-data";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { formatDate, OrderStatusBadge } from "./common";
 import styles from "./dealer.module.css";
-
-const shortcuts = [
-  { href: "/catalog", label: "Каталог", helper: "Пошук і підбір запчастин", icon: BookOpen },
-  { href: "/dealer/orders", label: "Замовлення", helper: "Історія і статуси замовлень", icon: ClipboardList },
-  { href: "/dealer/order-drafts", label: "Чернетки", helper: "Незавершені замовлення", icon: FileClock },
-  { href: "/dealer/documents", label: "Документи", helper: "Рахунки і накладні", icon: FileText },
-  { href: "/dealer/consignment", label: "Консигнація", helper: "Запаси у дилерській мережі", icon: PackageOpen },
-  { href: "/dealer/settlements", label: "Взаєморозрахунки", helper: "Рух коштів і баланс", icon: WalletCards },
-  { href: "/dealer/customers", label: "Клієнти", helper: "Картки клієнтів і техніка", icon: Users },
-  { href: "/dealer/workshop", label: "Майстерня", helper: "Сервісні роботи", icon: Wrench },
-  { href: "/dealer/schedule", label: "Графік поставки", helper: "Майбутні слоти і залишки", icon: CalendarDays },
-];
 
 function DealerStatCard({icon, label, value, helper, tone = "default"}: {
   icon: ReactNode;
@@ -176,19 +160,6 @@ export function DealerDashboard() {
           </div>
           </BrpCard></div>
         </section>
-
-        <div className={styles.shortcutsPanel}><BrpCard padding="none">
-        <header className={styles.panelHeader}><h2>Доступні розділи</h2></header>
-        <div className={styles.shortcutGrid}>
-          {shortcuts.map(({ href, label, helper, icon: Icon }) => (
-            <Link href={href} className={styles.shortcut} key={href}>
-              <span><Icon size={18} /></span>
-              <div><strong>{label}</strong><small>{helper}</small></div>
-              <ArrowRight size={16} />
-            </Link>
-          ))}
-        </div>
-        </BrpCard></div>
 
         <section className={styles.summaryGrid} aria-label="Додаткові показники">
           <div className={styles.summaryCard}><BrpCard padding="none"><span><PackageCheck size={17} /></span><div><small>Виконано</small><strong>{completed.length}</strong></div></BrpCard></div>
