@@ -69,6 +69,19 @@ test("orders disclose the status filter without moving the view switcher", async
   }
 });
 
+test("dealer toolbar waits briefly before applying a typed search query", async ({ page }) => {
+  await page.goto("/dealer/orders");
+  const search = page.getByRole("searchbox", { name: "Пошук замовлень" });
+  await expect(page.getByRole("link", { name: "LOG-01" })).toBeVisible();
+
+  await search.fill("немає такого замовлення");
+  expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
+  await page.waitForTimeout(150);
+  expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
+
+  await expect(page.getByRole("heading", { name: "Нічого не знайдено" })).toBeVisible();
+});
+
 test("schedule discloses category filtering while keeping slot selection separate", async ({ page }) => {
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);

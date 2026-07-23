@@ -84,6 +84,27 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("button", { name: /Sea-Doo липень 2026/ })).toBeVisible();
   });
 
+  test("schedule timeline can be collapsed and keeps its preference after refresh", async ({ page }) => {
+    const storageKey = "brp-clone-ui-v1:collapsible:dealer.schedule.timeline";
+    await loginAsDealer(page, dealerSessionOptions);
+    await openDealerRoute(page, "/dealer/schedule", "Графік поставки", dealerSessionOptions);
+    await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
+    await page.reload();
+
+    const trigger = page.getByRole("button", { name: "Хронологія прибуття" });
+    const timeline = page.getByRole("region", { name: "Хронологія прибуття" });
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(timeline.getByText("липень", { exact: true })).toBeVisible();
+
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(timeline).toHaveAttribute("data-closed", "");
+    await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("0");
+
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Хронологія прибуття" })).toHaveAttribute("aria-expanded", "false");
+  });
+
   test("workshop persists an accessible local status transition and BossWeb reports local lookup states", async ({ page }) => {
     await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
     await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);

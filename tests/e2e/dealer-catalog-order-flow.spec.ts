@@ -132,6 +132,25 @@ test("SXS catalog preserves the source five-column selection in the URL", async 
   await expect(breadcrumb).toContainText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021");
 });
 
+test("SXS catalog tree search filters the loaded taxonomy and can be cleared without changing the selection URL", async ({ page }) => {
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs?year=2021&series=005&model=002");
+
+  const cascade = page.getByRole("region", { name: "Навігація каталогу" });
+  const treeSearch = page.getByRole("searchbox", { name: "Пошук у дереві каталогу" });
+  await expect(treeSearch).toBeVisible();
+  await treeSearch.fill("Maverick Trail 1000");
+  await expect(cascade.getByText("002 - Maverick Trail 1000 - BASE_DPS - North America, 2021", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005&model=002$/);
+
+  await treeSearch.fill("немає у джерелі");
+  await expect(cascade.getByText("Нічого не знайдено в поточній гілці каталогу.", { exact: true })).toHaveCount(5);
+
+  await page.getByRole("button", { name: "Очистити Пошук у дереві каталогу" }).click();
+  await expect(treeSearch).toHaveValue("");
+  await expect(cascade.getByText("01- Rotax - Crankcase", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005&model=002$/);
+});
+
 test("catalog ancestors clear descendants while unsupported nodes remain unavailable", async ({ page }) => {
   await page.goto("/catalog/CAN_OFF_EN_US/sxs?year=2021&series=005&model=002");
 

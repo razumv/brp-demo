@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState, InlineNotice, Modal, Panel, StatCard, StatusBadge } from "@/components/shared/ui";
+import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
 import {
   dealerScheduleCategoryLabels,
   dealerScheduleSlots,
@@ -102,23 +103,25 @@ export function SchedulePage() {
       </section>
 
       <Panel className={dealerStyles.timelineOverview}>
-        <SectionHeading
+        <PersistedCollapsibleSection
+          persistenceId="dealer.schedule.timeline"
           title="Хронологія прибуття"
-          action={<span className={operationalStyles.timeframe} data-testid="schedule-timeframe">{timeframeLabel}</span>}
-        />
-        {timeframe.length ? (
-          <ol className={operationalStyles.scheduleTimeline} aria-label="Місяці поставок">
-            {timeframe.map((month) => (
-              <li key={month.key}>
-                <span aria-hidden="true" />
-                <strong>{month.label}</strong>
-                <small>{month.key.slice(0, 4)} · {ukrainianCount(month.slotCount, ["слот", "слоти", "слотів"])}</small>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className={operationalStyles.timelineEmpty}>Для поточного фільтра немає дат прибуття.</p>
-        )}
+          titleAccessory={<span className={operationalStyles.timeframe} data-testid="schedule-timeframe">{timeframeLabel}</span>}
+        >
+          {timeframe.length ? (
+            <ol className={operationalStyles.scheduleTimeline} aria-label="Місяці поставок">
+              {timeframe.map((month) => (
+                <li key={month.key}>
+                  <span aria-hidden="true" />
+                  <strong>{month.label}</strong>
+                  <small>{month.key.slice(0, 4)} · {ukrainianCount(month.slotCount, ["слот", "слоти", "слотів"])}</small>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className={operationalStyles.timelineEmpty}>Для поточного фільтра немає дат прибуття.</p>
+          )}
+        </PersistedCollapsibleSection>
       </Panel>
 
       <DealerDataToolbar
