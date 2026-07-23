@@ -193,6 +193,38 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("heading", { name: "Робота без збереження" })).toHaveCount(0);
   });
 
+  test("workshop rolls back a failed durable stage transition", async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key === storageKey && window.sessionStorage.getItem("block-workshop-write") === "1") {
+          throw new Error("storage blocked");
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    }, dealerStorageKey);
+    await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
+    await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
+    await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
+    await page.getByLabel("Опис *").fill("Перевірка rollback");
+    await page.getByRole("button", { name: "Створити замовлення-наряд" }).click();
+
+    const card = page.getByRole("article").filter({ hasText: "Перевірка rollback" });
+    await expect(card).toBeVisible();
+    await page.evaluate(() => window.sessionStorage.setItem("block-workshop-write", "1"));
+    await card.getByLabel("Перемістити Перевірка rollback").selectOption("scheduled");
+
+    await expect(page.getByText("Не вдалося зберегти зміну етапу на пристрої.", {exact: true})).toBeVisible();
+    await expect(page.getByTestId("workshop-column").nth(0)).toContainText("Перевірка rollback");
+    await expect(page.getByTestId("workshop-column").nth(1)).not.toContainText("Перевірка rollback");
+    await expect.poll(async () => page.evaluate((storageKey) => {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return null;
+      return (JSON.parse(raw) as {workshopOrders?: Array<{description: string; status: string}>})
+        .workshopOrders?.find((order) => order.description === "Перевірка rollback")?.status ?? null;
+    }, dealerStorageKey)).toBe("new");
+  });
+
   test("dashboard reads the same dealer cart as accessories and order creation", async ({ page }) => {
     await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
     await openDealerRoute(page, "/dealer/accessories", "Каталог аксесуарів", dealerSessionOptions);

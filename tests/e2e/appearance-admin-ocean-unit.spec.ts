@@ -211,7 +211,7 @@ test.describe("admin unit shipping appearance matrix", () => {
       await expect(page.locator(`[data-admin-unit-shipping-renderer="${appearance.renderer}"]`)).toHaveCount(1);
       await expect(page.getByRole("heading", {name: "Відвантаження техніки"})).toBeVisible();
       await expect(page.getByRole("button", {name: "Синхр. з BossWeb"})).toBeDisabled();
-      await expect(page.getByText(/зовнішня синхронізація заблокована/i)).toBeVisible();
+      await expect(page.getByText(/зовнішня синхронізація дат стане доступна після підключення сервісу/i)).toBeVisible();
 
       const search = page.getByRole("textbox", {name: "Пошук замовлення або моделі"});
       await search.fill("1022615153");

@@ -75,11 +75,13 @@ test("dealer toolbar waits briefly before applying a typed search query", async 
   await expect(page.getByRole("link", { name: "LOG-01" })).toBeVisible();
 
   await search.fill("немає такого замовлення");
+  await expect(search).toBeFocused();
   expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
   await page.waitForTimeout(150);
   expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
 
   await expect(page.getByRole("heading", { name: "Нічого не знайдено" })).toBeVisible();
+  await expect(search).toBeFocused();
 });
 
 test("schedule discloses category filtering while keeping slot selection separate", async ({ page }) => {

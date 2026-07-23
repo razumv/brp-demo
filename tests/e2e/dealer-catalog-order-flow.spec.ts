@@ -145,6 +145,12 @@ test("SXS catalog tree search filters the loaded taxonomy and can be cleared wit
   await expect(cascade.getByText("005 - SSV - North America - Maverick Trail Series", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021&series=005&model=002$/);
 
+  await treeSearch.fill("2021");
+  await cascade.getByRole("link", { name: "2021", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/CAN_OFF_EN_US\/sxs\?year=2021$/);
+  await expect(page.getByRole("navigation", { name: "Хлібні крихти" })).toContainText("2021");
+
+  await page.goto("/catalog/CAN_OFF_EN_US/sxs?year=2021&series=005&model=002");
   await treeSearch.fill("немає у джерелі");
   await expect(cascade.getByText("Нічого не знайдено в поточній гілці каталогу.", { exact: true })).toHaveCount(5);
 

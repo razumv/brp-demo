@@ -163,6 +163,24 @@ test("current shell popovers expose menu semantics and restore focus after Escap
   await expect(profileTrigger).toBeFocused();
 });
 
+for (const renderer of ["shadcn", "astryx"] as const) {
+  test(`${renderer} shell persists language metadata and exposes working notifications`, async ({page}) => {
+    await seedAppearance(page, renderer);
+    await loginAsAdmin(page);
+
+    await page.getByRole("button", {name: "language_switcher"}).click();
+    await page.getByText("English", {exact: true}).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect.poll(() => page.evaluate(() => window.localStorage.getItem("brp-clone-ui-v1:language"))).toBe("en");
+
+    await page.getByRole("button", {name: "Сповіщення"}).click();
+    await page.getByText("Позначити все прочитаним", {exact: true}).click();
+    await expect(page.getByText("Усі сповіщення прочитані.")).toBeVisible();
+  });
+}
+
 test.describe("Astryx shell at 390px", () => {
   test.use({hasTouch: true, isMobile: true, viewport: {width: 390, height: 844}});
 

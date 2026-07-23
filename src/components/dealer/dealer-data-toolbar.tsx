@@ -22,22 +22,22 @@ export type DealerDataToolbarProps = Readonly<{
 }>;
 
 export function DealerDataToolbar({ search, filters, resultMeta }: DealerDataToolbarProps) {
-  return <DealerDataToolbarContent key={search.value} search={search} filters={filters} resultMeta={resultMeta} />;
-}
-
-function DealerDataToolbarContent({ search, filters, resultMeta }: DealerDataToolbarProps) {
   const {renderedDesignSystem} = useAppearance();
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
-  const [queryDraft, setQueryDraft] = useState(search.value);
+  const [queryState, setQueryState] = useState({draft: search.value, external: search.value});
   const notifySearchChange = useEffectEvent((value: string) => search.onValueChange(value));
 
-  useEffect(() => {
-    if (queryDraft === search.value) return;
+  if (queryState.external !== search.value) {
+    setQueryState({draft: search.value, external: search.value});
+  }
 
-    const timeoutId = window.setTimeout(() => notifySearchChange(queryDraft), 300);
+  useEffect(() => {
+    if (queryState.draft === search.value) return;
+
+    const timeoutId = window.setTimeout(() => notifySearchChange(queryState.draft), 300);
     return () => window.clearTimeout(timeoutId);
-  }, [queryDraft, search.value]);
+  }, [queryState.draft, search.value]);
 
   useDismissibleDataToolbarFilter({
     open: filters?.open ?? false,
@@ -57,8 +57,8 @@ function DealerDataToolbarContent({ search, filters, resultMeta }: DealerDataToo
             leadingIcon={<Search size={16} aria-hidden="true" />}
             clearable
             placeholder={search.placeholder}
-            value={queryDraft}
-            onValueChange={setQueryDraft}
+            value={queryState.draft}
+            onValueChange={(draft) => setQueryState((current) => ({...current, draft}))}
           />
         </div>
         {filters ? (
