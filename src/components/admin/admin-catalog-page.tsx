@@ -818,8 +818,8 @@ function PartsCatalog() {
         {!hasFilters ? (
           <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3">
             <button type="button" className="button button-outline" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={14} /> Prev</button>
-            <span className="text-[11px] text-[var(--muted-foreground)]">Page {page} of {catalogPartsSourcePages}</span>
-            <button type="button" className="button button-outline" disabled={page === catalogPartsSourcePages} onClick={() => setPage((current) => Math.min(catalogPartsSourcePages, current + 1))}>Next <ChevronRight size={14} /></button>
+            <span className="text-[11px] text-[var(--muted-foreground)]">Сторінка {page} з {catalogPartsSourcePages}</span>
+            <button type="button" className="button button-outline" disabled={page === catalogPartsSourcePages} onClick={() => setPage((current) => Math.min(catalogPartsSourcePages, current + 1))}>Далі <ChevronRight size={14} /></button>
           </div>
         ) : null}
       </Panel>

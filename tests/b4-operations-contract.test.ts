@@ -86,6 +86,7 @@ test("priority workflows do not expose implementation labels or redundant BossWe
 test("document and order dialogs use product language instead of implementation evidence labels", () => {
   const dialogSources = [
     "src/components/admin/admin-invoices-page.tsx",
+    "src/components/admin/astryx-admin-invoices-view.tsx",
     "src/components/admin/admin-order-detail.tsx",
     "src/components/admin/astryx-admin-order-detail-view.tsx",
   ].map(read).join("\n");

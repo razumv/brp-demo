@@ -475,7 +475,7 @@ function AppendicesTab(props: Pick<AdminInvoicesViewProps, "appendicesQuery" | "
                   <td className="text-right font-semibold text-[var(--green)]">{appendix.amount}</td>
                   <td>
                     <div className="flex min-w-max items-center gap-1">
-                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити підтверджений документ" : "Повний preview не зафіксовано у source"} icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedAppendixChange(appendix)} disabled={!appendix.preview} />
+                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити документ" : "Повний документ ще не завантажено"} icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedAppendixChange(appendix)} disabled={!appendix.preview} />
                       <AdminIconAction label={`Митний документ ${appendix.name}`} tooltip="Генерація митного документа вимкнена" icon={<Download size={13} />} disabled />
                       <AdminIconAction label={`Банківський документ ${appendix.name}`} tooltip="Генерація банківського документа вимкнена" icon={<Landmark size={13} />} disabled />
                       <AdminIconAction label={`Видалити ${appendix.name}`} tooltip="Видалення додатка вимкнене" icon={<Trash2 size={13} />} tone="danger" disabled />

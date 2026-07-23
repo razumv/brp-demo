@@ -314,7 +314,7 @@ function SlotList({
       <div className={styles.slotListScroller}>
         <div className={`${styles.slotListHeader} border-b border-[var(--border)] text-[10px] text-[var(--muted-foreground)]`}><span>Назва</span><span>Статус</span><span>Прибуття</span><span className="text-right">Вільно</span></div>
         {slots.map((slot) => <SlotRow key={slot.id} slot={slot} selected={selectedId === slot.id} onSelect={onSelect} />)}
-        {slots.length === 0 && page <= 2 ? <div className="grid min-h-44 place-items-center p-6 text-[11px] text-[var(--muted-foreground)]">У репрезентативній вибірці немає слотів цієї категорії.</div> : null}
+        {slots.length === 0 && page <= 2 ? <div className="grid min-h-44 place-items-center p-6 text-[11px] text-[var(--muted-foreground)]">Слотів цієї категорії не знайдено.</div> : null}
         {page > 2 ? <SourceBoundaryEmpty page={page} /> : null}
       </div>
       <div className="flex items-center justify-center gap-4 border-t border-[var(--border)] px-4 py-3">
