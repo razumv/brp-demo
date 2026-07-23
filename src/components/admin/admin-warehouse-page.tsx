@@ -230,14 +230,6 @@ function ProcessNavigation({ active, onChange }: {
   );
 }
 
-function RepresentativeNotice({ shown, total, noun = "рядків" }: { shown: number; total: number; noun?: string }) {
-  return (
-    <div className="border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2.5 text-[10px] text-[var(--muted-foreground)]">
-      Показано {shown} з {total} {noun}.
-    </div>
-  );
-}
-
 function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
   const {shipmentId, setShipmentId} = model;
   const shipment = warehouseShipments.find((item) => item.id === shipmentId) ?? warehouseShipments[0];
@@ -316,7 +308,6 @@ function ReceivingTab({model}: {model: AdminWarehouseModel["receiving"]}) {
             </div>
             <StatusBadge tone="neutral">{shipment.manifest.sourceLineCount} позицій</StatusBadge>
           </div>
-          <RepresentativeNotice shown={shipment.manifest.representativeLines.length} total={shipment.manifest.sourceLineCount} />
           <div className="data-table-wrap" role="region" aria-label="Packing list" tabIndex={0}>
             <table className="data-table min-w-[620px]">
               <thead><tr><th>Артикул</th><th>Опис</th><th className="text-right">К-ть</th><th className="text-center">Скан</th></tr></thead>
@@ -618,7 +609,6 @@ function InventoryPartsTable({ query, shipmentFilter }: { query: string; shipmen
 
   return (
     <Panel className="overflow-hidden shadow-none">
-      <RepresentativeNotice shown={rows.length} total={warehouseInventoryTotals.parts} noun="деталей" />
       {rows.length ? (
         <div className="data-table-wrap" role="region" aria-label="Зведення за деталями" tabIndex={0}>
           <table className="data-table min-w-[1100px]">
@@ -870,7 +860,6 @@ function PlacementTab({model}: {model: AdminWarehouseModel["placement"]}) {
       />
 
       <Panel className="overflow-hidden shadow-none">
-        <RepresentativeNotice shown={visibleRows.length} total={warehousePlacementSummary.total} noun="позицій" />
         {visibleRows.length ? (
           <div className="data-table-wrap" role="region" aria-label="Розміщення на складі" tabIndex={0}>
             <table className="data-table min-w-[940px]">

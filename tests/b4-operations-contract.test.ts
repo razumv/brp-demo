@@ -69,6 +69,15 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
 });
 
+test("warehouse does not expose secondary shown-of-total notices", () => {
+  for (const path of [
+    "src/components/admin/admin-warehouse-page.tsx",
+    "src/components/admin/astryx-admin-warehouse-view.tsx",
+  ]) {
+    assert.doesNotMatch(read(path), /Показано\s*\{?[\s\S]{0,80}\sз\s\{?/i);
+  }
+});
+
 test("route-specific admin surfaces use theme tokens for neutral switch fills", () => {
   assert.doesNotMatch(read("src/components/admin/admin-users-page.tsx"), /bg-white|dark:bg-\[#f0f6fc\]/);
   assert.doesNotMatch(read("src/components/admin/admin-permission-matrix.module.css"), /background:\s*#fff(?:fff)?/i);
