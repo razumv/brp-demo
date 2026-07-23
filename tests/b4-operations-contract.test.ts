@@ -70,6 +70,7 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   const prioritySources = [
     "src/components/dealer/features/bossweb-page.tsx",
     "src/components/dealer/features/feature-frame.tsx",
+    "src/components/dealer/team-access.tsx",
     "src/components/admin/astryx-admin-overview-view.tsx",
     "src/components/admin/admin-consignment-page.tsx",
     "src/components/admin/admin-order-detail.tsx",
@@ -80,6 +81,7 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   ].map(read).join("\n");
 
   assert.doesNotMatch(prioritySources, /демо|демонстраційн|клон|локальн(?:а|е|ий|і|ому)\s+(?:верс|перегляд|вибірк|замовлен|фільтр|діапазон|довідник)/i);
+  assert.doesNotMatch(prioritySources, /Склад команди та профілі прав керуються адміністратором/i);
   assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
 });
 

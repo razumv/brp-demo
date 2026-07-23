@@ -12,7 +12,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
-import { InlineNotice, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
+import { PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
 import { useAppearance } from "@/components/appearance/use-appearance";
 import { BrpButton, BrpSwitch, BrpTextInput } from "@/components/brp-ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
@@ -47,12 +47,11 @@ export function TeamAccessPage() {
         icon={<UsersRound size={21} />}
         title="Команда і доступи"
         description="Налаштуйте користувачів компанії та профілі доступу."
-        action={<StatusBadge tone="neutral"><UsersRound size={12} /> 1</StatusBadge>}
       />
 
-      <InlineNotice>
-        <span id={accessReasonId}>Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.</span>
-      </InlineNotice>
+      <span id={accessReasonId} className="sr-only">
+        Зміна складу команди та профілів прав доступна адміністратору.
+      </span>
 
       <Panel className={styles.teamUsersPanel}>
         <header><h2>Користувачі</h2><p>Профіль обирається окремо для кожного користувача.</p></header>
