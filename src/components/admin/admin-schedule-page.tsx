@@ -473,7 +473,6 @@ function WarehouseStock() {
     <section id="schedule-stock-panel" role="tabpanel" aria-labelledby="schedule-stock-panel-tab" className={styles.stockPanel}>
       <AdminTableShell
         className={styles.stockTable}
-        notice="Показано 5 категорій · загальний складський лічильник — 33 од."
         scrollLabel="Складські запаси"
       >
         <table className="data-table min-w-[760px]">

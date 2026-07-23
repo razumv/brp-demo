@@ -134,6 +134,8 @@ test("approved dealer and admin routes omit decorative result counters", () => {
     "src/components/admin/astryx-admin-dealer-access-view.tsx",
     "src/components/admin/admin-users-page.tsx",
     "src/components/admin/astryx-admin-users-view.tsx",
+    "src/components/admin/admin-schedule-page.tsx",
+    "src/components/admin/astryx-admin-schedule-view.tsx",
     "src/components/admin/admin-unit-shipping-page.tsx",
     "src/components/admin/astryx-admin-unit-shipping-view.tsx",
   ].map(read).join("\n");
