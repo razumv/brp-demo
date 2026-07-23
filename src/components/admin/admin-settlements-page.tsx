@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowLeftRight,
   Building2,
@@ -24,7 +23,6 @@ import {
   AdminToolbar,
 } from "@/components/admin/admin-ui";
 import {RendererViewSwitch} from "@/components/appearance/renderer-view-switch";
-import { PersistedCollapsibleSection } from "@/components/shared/persisted-collapsible-section";
 import { Panel, StatusBadge } from "@/components/shared/ui";
 import {usePersistedBoolean} from "@/hooks/use-persisted-boolean";
 import {
@@ -94,24 +92,48 @@ const mostRecentMovementDate = settlementDealers.reduce<string>(
   settlementDealers[0].movements.lastMovementDate,
 );
 
-function SyncDiagnostic({onOpenChange}: {onOpenChange(open: boolean): void}) {
+function SyncDiagnostic({model}: {model: AdminSettlementsModel}) {
   const diagnostic = settlementSyncDiagnostic;
 
   return (
-    <Panel className="overflow-hidden shadow-none">
-      <PersistedCollapsibleSection
-        persistenceId="admin.settlements.sync-diagnostic"
-        title="Оновлюється"
-        defaultOpen={false}
-        collapseMode="mobile"
-        headingLevel="h2"
-        icon={<span className="size-2 shrink-0 rounded-full bg-[var(--amber)]" />}
-        titleContent={<span data-settlement-status><StatusBadge tone="amber">{diagnostic.stateLabel}</StatusBadge></span>}
-        actions={(
+    <div className="relative">
+      <button
+        type="button"
+        className="icon-button !size-11 md:!size-9"
+        aria-label="Стан синхронізації"
+        aria-expanded={model.diagnosticOpen}
+        aria-controls="settlements-sync-popover"
+        onFocus={() => model.setDiagnosticOpen(true)}
+        onMouseEnter={() => model.setDiagnosticOpen(true)}
+        onClick={() => model.setDiagnosticOpen(true)}
+      >
+        <RefreshCw size={16} />
+        <span className="absolute right-1 top-1 size-2 rounded-full bg-[var(--amber)]" aria-hidden="true" />
+      </button>
+      {model.diagnosticOpen ? (
+        <div id="settlements-sync-popover" className="absolute right-0 z-40 mt-2 w-[min(360px,calc(100vw-32px))]">
+        <Panel className="grid gap-3 p-4 text-left shadow-lg">
+          <div className="flex items-center justify-between gap-3">
+            <strong className="text-sm">Оновлюється</strong>
+            <div className="flex items-center gap-2">
+              <StatusBadge tone="amber">{diagnostic.stateLabel}</StatusBadge>
+              <button type="button" className="icon-button icon-button-small" aria-label="Закрити стан синхронізації" onClick={() => model.setDiagnosticOpen(false)}>×</button>
+            </div>
+          </div>
+          <dl className="grid gap-2 text-[11px]">
+            <div><dt className="text-[var(--muted-foreground)]">Остання синхронізація</dt><dd className="m-0 font-medium">{diagnostic.lastSuccessfulSync}</dd></div>
+            <div><dt className="text-[var(--muted-foreground)]">Рухи</dt><dd className="m-0">{diagnostic.synchronizedMovementCount} синхронізовано</dd></div>
+            <div><dt className="text-[var(--muted-foreground)]">Маппінги / помилки</dt><dd className="m-0">{diagnostic.mappingCount} / {diagnostic.errorCount}</dd></div>
+            <div><dt className="text-[var(--muted-foreground)]">Розклад</dt><dd className="m-0">{diagnostic.daytimeSchedule} · {diagnostic.nighttimeSchedule}</dd></div>
+          </dl>
+          <div className="rounded-md border border-[var(--red)] bg-[var(--red-soft)] px-3 py-2 text-[11px] text-[var(--red)]">
+            <strong>Остання помилка</strong>
+            <code className="mt-1 block break-all font-mono">{diagnostic.lastError}</code>
+          </div>
           <button
             type="button"
             data-settlement-refresh
-            className="button button-outline w-fit"
+            className="button button-outline w-full"
             disabled
             title="Синхронізація з 1С недоступна: доступ лише для читання."
           >
@@ -119,42 +141,10 @@ function SyncDiagnostic({onOpenChange}: {onOpenChange(open: boolean): void}) {
             <RefreshCw size={14} />
             Оновити з 1С (30 днів)
           </button>
-        )}
-        headerClassName="border-b border-[var(--border)] px-4 py-3"
-        contentClassName="p-4"
-        hiddenUntilFound={false}
-        keepMounted
-        hideActionsWhenMobileClosed
-        dataComponent="settlements-diagnostic"
-        onOpenChange={onOpenChange}
-      >
-        <div data-settlement-diagnostic-grid className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.74fr)]">
-          <div className="grid content-start gap-2 text-[12px] text-[var(--muted-foreground)]">
-            <p className="m-0">
-              Остання успішна синхронізація: <strong className="text-[var(--foreground)]">{diagnostic.lastSuccessfulSync}</strong>
-            </p>
-            <p className="m-0">
-              Рухи синхронізовано: <strong className="text-[var(--foreground)]">{diagnostic.movementsSyncedAt}</strong>
-            </p>
-            <p className="m-0">{diagnostic.daytimeSchedule} · {diagnostic.nighttimeSchedule}</p>
-            <p className="m-0">{diagnostic.liveBalanceNote}</p>
-          </div>
-
-          <div className="grid content-start gap-2">
-            <p className="m-0 w-fit rounded-full border border-[var(--border)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px]">
-              {diagnostic.synchronizedMovementCount} рухів / {diagnostic.mappingCount} маппінгів / {diagnostic.errorCount} помилок
-            </p>
-            <div className="flex min-w-0 items-start gap-2 rounded-md border border-[var(--red)] bg-[var(--red-soft)] px-3 py-2 text-[11px] text-[var(--red)]">
-              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-              <p className="m-0 min-w-0">
-                <span className="font-medium">Остання помилка: </span>
-                <code className="break-all font-mono">{diagnostic.lastError}</code>
-              </p>
-            </div>
-          </div>
+        </Panel>
         </div>
-      </PersistedCollapsibleSection>
-    </Panel>
+      ) : null}
+    </div>
   );
 }
 
@@ -285,9 +275,8 @@ function CurrentAdminSettlementsView({model}: {model: AdminSettlementsModel}) {
           icon={<ArrowLeftRight size={20} />}
           title="Взаєморозрахунки з дилерами"
           description="Баланси дилерів з розбивкою по контрагентах в 1С (Bombardier / Bombardier СД / Sea Doo СД)"
+          actions={<SyncDiagnostic model={model} />}
         />
-
-        <SyncDiagnostic onOpenChange={model.setDiagnosticOpen} />
 
         <AdminKpiGrid
           columns={3}

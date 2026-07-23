@@ -56,25 +56,42 @@
   color: var(--color-icon-orange);
 }
 
-.diagnosticCard {
-  min-width: 0;
-  overflow: hidden;
+.diagnosticWrap {
+  position: relative;
+  margin-left: auto;
 }
 
-.diagnosticTrigger {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
+.diagnosticWrap > button {
+  min-width: 44px;
+  min-height: 44px;
 }
 
-.diagnosticContent {
+.diagnosticDot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-icon-warning);
+}
+
+.diagnosticPopover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  right: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr) auto;
-  gap: 16px;
-  align-items: start;
-  padding: 16px;
-  border-top: 1px solid var(--color-border);
+  width: min(380px, calc(100vw - 32px));
+  gap: 12px;
+  box-shadow: var(--shadow-menu);
+}
+
+.diagnosticHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .diagnosticFacts,
@@ -302,6 +319,13 @@
 
   .periodControls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .diagnosticWrap > button {
+    min-width: 36px;
+    min-height: 36px;
   }
 }
 

@@ -59,78 +59,28 @@ test("catalog swaps its desktop table for mobile cards at the exact breakpoint",
   expect(desktopProductIds).toEqual(["vehicle-4rtb"]);
 });
 
-test("settlements diagnostic is mobile-persisted and desktop-static", async ({ page }) => {
+test("settlements exposes synchronization details from a compact persisted status control", async ({ page }) => {
   const storageKey = "brp-clone-ui-v1:collapsible:admin.settlements.sync-diagnostic";
   await openAdminRoute(page, "/admin/settlements", 390);
   await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
   await page.reload();
-  const trigger = page.getByRole("button", { name: "Оновлюється" });
-  const diagnosticPanel = page.locator('[data-collapse-mode="mobile"] [role="region"]');
+  const trigger = page.getByRole("button", { name: "Стан синхронізації", exact: true });
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expectTouchTarget(trigger);
-  await expect(diagnosticPanel).toHaveCSS("display", "none");
-  await expect(diagnosticPanel).toHaveAttribute("hidden", "");
+  await expect(page.getByText("Остання синхронізація", { exact: true })).toHaveCount(0);
   await trigger.click();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("Остання синхронізація", { exact: true })).toBeVisible();
+  await expect(page.getByText("Розклад", { exact: true })).toBeVisible();
+  await expect(page.getByText("Маппінги / помилки", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Оновити з 1С (30 днів)" })).toBeDisabled();
   await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("1");
 
-  await page.setViewportSize({ width: 768, height: 1000 });
-  await expect(page.getByText("Остання успішна синхронізація:")).toBeVisible();
-  await expect(page.locator('[data-settlement-status] .status-badge.status-amber')).toHaveText("Оновлюється");
-  await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("1");
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "true");
-
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.getByRole("button", { name: "Оновлюється" }).click();
-  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("button", { name: "Оновлюється" }).click();
-  await expect(page.getByRole("button", { name: "Оновлюється" })).toHaveAttribute("aria-expanded", "true");
-});
-
-test("settlements keeps its baseline diagnostic composition while making the refresh action mobile-disclosed", async ({ page }) => {
-  const storageKey = "brp-clone-ui-v1:collapsible:admin.settlements.sync-diagnostic";
-
-  await openAdminRoute(page, "/admin/settlements", 390);
-  await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
   await page.reload();
-  const mobileDiagnostic = page.locator('[data-component="settlements-diagnostic"]');
-  const trigger = page.getByRole("button", { name: "Оновлюється" });
-  const refresh = page.getByRole("button", { name: "Оновити з 1С (30 днів)" });
-  await expect(mobileDiagnostic).toHaveAttribute("data-effective-open", "false");
-  await expect(mobileDiagnostic.locator("[data-settlement-status]")).toBeVisible();
-  await expect(refresh).toBeHidden();
-  await trigger.click();
-  await expect(mobileDiagnostic).toHaveAttribute("data-effective-open", "true");
-  await expect(refresh).toBeVisible();
-
-  for (const width of [768, 1440] as const) {
-    await page.setViewportSize({ width, height: 1000 });
-    const diagnostic = page.locator('[data-component="settlements-diagnostic"]');
-    const status = diagnostic.locator("[data-settlement-status]");
-    const statusBadge = status.locator(".status-badge.status-amber");
-    const action = diagnostic.getByRole("button", { name: "Оновити з 1С (30 днів)" });
-    const details = diagnostic.locator("[data-settlement-diagnostic-grid]");
-    await expect(diagnostic).toHaveAttribute("data-effective-open", "true");
-    await expect(status).toBeVisible();
-    await expect(status).toHaveCount(1);
-    await expect(statusBadge).toHaveCount(1);
-    await expect(statusBadge).toHaveText("Оновлюється");
-    await expect(diagnostic.getByText("Стан синхронізації з 1С")).toHaveCount(0);
-    await expect(diagnostic.getByRole("button", { name: "Оновлюється" })).toBeDisabled();
-    await expect(action).toBeVisible();
-    await expect(details).toBeVisible();
-    const [statusBox, actionBox, detailsColumns] = await Promise.all([
-      status.boundingBox(),
-      action.boundingBox(),
-      details.evaluate((element) => getComputedStyle(element).gridTemplateColumns),
-    ]);
-    expect(actionBox?.x ?? 0).toBeGreaterThan(statusBox?.x ?? 0);
-    expect(Math.abs((actionBox?.y ?? 0) - (statusBox?.y ?? 0))).toBeLessThanOrEqual(12);
-    expect(detailsColumns).not.toBe("none");
-    if (width === 1440) expect(detailsColumns.split(" ")).toHaveLength(2);
-  }
+  await expect(page.getByRole("button", { name: "Стан синхронізації", exact: true })).toHaveAttribute("aria-expanded", "true");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.getByText("Остання синхронізація", { exact: true })).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).resolves.toBeTruthy();
 });
 
 test("admin search, clear, icon, and Schedule pagination controls are touch-sized below 768px", async ({ page }) => {

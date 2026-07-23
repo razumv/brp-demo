@@ -167,7 +167,7 @@ for (const mode of appearanceModes) {
       }
 
       await openAdminRoute(page, "/admin/settlements", 390);
-      const diagnostic = page.getByRole("button", {name: "Оновлюється"});
+      const diagnostic = page.getByRole("button", {name: "Стан синхронізації", exact: true});
       await expect(diagnostic).toHaveAttribute("aria-expanded", "false");
       await diagnostic.click();
       await expect(diagnostic).toHaveAttribute("aria-expanded", "true");
@@ -178,7 +178,7 @@ for (const mode of appearanceModes) {
       );
       await switchRenderer(page, alternate(mode.designSystem), mode.colorMode);
       await expectRenderer(page, alternate(mode.designSystem));
-      await expect(page.getByRole("button", {name: "Оновлюється"})).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByRole("button", {name: "Стан синхронізації", exact: true})).toHaveAttribute("aria-expanded", "true");
 
       if (mode.designSystem === "astryx") {
         await expect(page.getByText(/demo|mockup|clone/i)).toHaveCount(0);

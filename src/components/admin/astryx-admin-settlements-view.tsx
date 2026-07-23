@@ -16,11 +16,9 @@ import {Banner} from "@astryxdesign/core/Banner";
 import {Button} from "@astryxdesign/core/Button";
 import {Card} from "@astryxdesign/core/Card";
 import {CheckboxInput} from "@astryxdesign/core/CheckboxInput";
-import {Collapsible} from "@astryxdesign/core/Collapsible";
 import {EmptyState} from "@astryxdesign/core/EmptyState";
 import {SegmentedControl, SegmentedControlItem} from "@astryxdesign/core/SegmentedControl";
 import {Selector} from "@astryxdesign/core/Selector";
-import {StatusDot} from "@astryxdesign/core/StatusDot";
 import {TextInput} from "@astryxdesign/core/TextInput";
 import type {AstryxRendererViewProps} from "@/components/appearance/renderer-view-switch";
 import {AstryxBrpUiProvider} from "@/components/brp-ui/astryx-brp-ui-provider";
@@ -62,18 +60,27 @@ function SyncDiagnostic({model}: {model: AdminSettlementsModel}) {
   const reason = "Синхронізація з 1С недоступна: доступ лише для читання.";
 
   return (
-    <Card className={styles.diagnosticCard} padding={0}>
-      <Collapsible
-        isOpen={model.diagnosticOpen}
-        onOpenChange={model.setDiagnosticOpen}
-        trigger={(
-          <span className={styles.diagnosticTrigger}>
-            <StatusDot variant="warning" label="Синхронізація виконується" isPulsing />
+    <div className={styles.diagnosticWrap}>
+      <Button
+        label="Стан синхронізації"
+        icon={<RefreshCw size={15} />}
+        isIconOnly
+        variant="secondary"
+        onFocus={() => model.setDiagnosticOpen(true)}
+        onMouseEnter={() => model.setDiagnosticOpen(true)}
+        onClick={() => model.setDiagnosticOpen(true)}
+        aria-expanded={model.diagnosticOpen}
+      />
+      <span className={styles.diagnosticDot} aria-hidden="true" />
+      {model.diagnosticOpen ? (
+        <Card className={styles.diagnosticPopover} padding={4}>
+          <div className={styles.diagnosticHeading}>
             <strong>Оновлюється</strong>
-          </span>
-        )}
-      >
-        <div className={styles.diagnosticContent}>
+            <div className={styles.actions}>
+              <Badge label={diagnostic.stateLabel} variant="warning" />
+              <Button label="Закрити стан синхронізації" isIconOnly variant="ghost" onClick={() => model.setDiagnosticOpen(false)}>×</Button>
+            </div>
+          </div>
           <div className={styles.diagnosticFacts}>
             <p>Остання успішна синхронізація: <strong>{diagnostic.lastSuccessfulSync}</strong></p>
             <p>Рухи синхронізовано: <strong>{diagnostic.movementsSyncedAt}</strong></p>
@@ -93,9 +100,9 @@ function SyncDiagnostic({model}: {model: AdminSettlementsModel}) {
               tooltip={reason}
             />
           </div>
-        </div>
-      </Collapsible>
-    </Card>
+        </Card>
+      ) : null}
+    </div>
   );
 }
 
@@ -181,9 +188,9 @@ export default function AstryxAdminSettlementsView({
         <header className={styles.pageHeader}>
           <span className={styles.pageIcon}><ArrowLeftRight size={21} /></span>
           <div><h1>Взаєморозрахунки з дилерами</h1><p>Баланси дилерів з розбивкою по контрагентах в 1С (Bombardier / Bombardier СД / Sea Doo СД)</p></div>
+          <SyncDiagnostic model={model} />
         </header>
 
-        <SyncDiagnostic model={model} />
         <KpiGrid model={model} />
 
         <Card className={styles.toolbarCard} padding={3}>
