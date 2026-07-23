@@ -193,14 +193,14 @@ export function Modal({
     }}>
       <section
         ref={dialogRef}
-        className={cn("modal", className)}
+        className={cn("modal modal-surface-frame", className)}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
       >
-        <header className="modal-header">
+        <header className="modal-header modal-surface-header">
           <div className="modal-header-heading">
             <h2 id={titleId}>{title}</h2>
             {description ? <p id={descriptionId}>{description}</p> : null}
@@ -208,11 +208,11 @@ export function Modal({
           {headerMeta ? <div className="modal-header-meta">{headerMeta}</div> : null}
           <div className="modal-header-actions">
             {headerActions}
-            <button ref={closeRef} type="button" className="icon-button" aria-label="Закрити" onClick={onClose}><X size={18} /></button>
+            <button ref={closeRef} type="button" className="icon-button modal-surface-close" aria-label="Закрити" onClick={onClose}><X size={18} /></button>
           </div>
         </header>
-        <div className={cn("modal-body", bodyClassName)}>{children}</div>
-        {footer ? <footer className="modal-footer">{footer}</footer> : null}
+        <div className={cn("modal-body modal-surface-body", bodyClassName)}>{children}</div>
+        {footer ? <footer className="modal-footer modal-surface-footer">{footer}</footer> : null}
       </section>
     </div>
   );
