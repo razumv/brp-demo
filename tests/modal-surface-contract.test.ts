@@ -76,6 +76,7 @@ test("both ocean renderers expose the same BL tile structure", () => {
 
 test("shared page surfaces provide the four width modes used by both renderers", () => {
   const source = read("src/components/shared/ui.tsx");
+  const adminFeatures = read("src/components/admin/admin-feature-page.tsx");
   const globalStyles = read("src/app/globals.css");
 
   assert.match(source, /export function PageSurface/);
@@ -83,4 +84,5 @@ test("shared page surfaces provide the four width modes used by both renderers",
     assert.match(source, new RegExp(`page-surface-${width}`));
     assert.match(globalStyles, new RegExp(`\\.page-surface-${width}`));
   }
+  assert.match(adminFeatures, /<PageSurface[\s\S]*width="default"[\s\S]*data-admin-feature-shell/);
 });
