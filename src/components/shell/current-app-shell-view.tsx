@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   Bell,
   Check,
+  ChevronsLeft,
+  ChevronsRight,
   CircleUserRound,
   Globe2,
   Menu,
@@ -24,7 +26,9 @@ import type {
   AppShellController,
   DealerAppShellController,
   ShellNavGroup,
+  ShellPopover,
 } from "@/components/shell/app-shell-controller";
+import {SHELL_LANGUAGES} from "@/components/shell/app-shell-controller";
 import {DealerGlobalPartsSearch} from "@/components/shell/global-parts-search";
 import {formatMoney} from "@/lib/mock-data";
 import {cn} from "@/lib/utils";
@@ -47,12 +51,14 @@ export function CurrentBrand({controller}: {controller: AppShellController}) {
 function CurrentRoleNav({
   groups,
   onNavigate,
+  collapsed = false,
 }: {
   groups: ShellNavGroup[];
   onNavigate?: () => void;
+  collapsed?: boolean;
 }) {
   return (
-    <nav className="role-nav">
+    <nav className={cn("role-nav", collapsed && "role-nav-collapsed")} aria-label="Основна навігація">
       {groups.map((group, groupIndex) => (
         <div className="nav-group" key={(group.label || "main") + groupIndex}>
           {group.label ? <p className="nav-group-label">{group.label}</p> : null}
@@ -63,6 +69,8 @@ function CurrentRoleNav({
                 href={item.href}
                 className={cn("nav-link", item.isSelected && "nav-link-active")}
                 key={item.href}
+                aria-label={collapsed ? item.label : undefined}
+                title={collapsed ? item.label : undefined}
                 onClick={onNavigate}
               >
                 <Icon size={16} strokeWidth={1.7} />
@@ -89,15 +97,22 @@ export function CurrentAppShellHeader({
   const {closePopover, popover} = controller;
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
+  const notificationTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const notificationMenuRef = useRef<HTMLDivElement | null>(null);
   const profileTriggerRef = useRef<HTMLButtonElement | null>(null);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const popoverNodes = (activePopover: Exclude<ShellPopover, null>) => {
+    if (activePopover === "language") return {trigger: languageTriggerRef.current, menu: languageMenuRef.current};
+    if (activePopover === "notifications") return {trigger: notificationTriggerRef.current, menu: notificationMenuRef.current};
+    return {trigger: profileTriggerRef.current, menu: profileMenuRef.current};
+  };
+
   useEffect(() => {
     if (!popover) return;
-    const trigger = popover === "language" ? languageTriggerRef.current : profileTriggerRef.current;
-    const menu = popover === "language" ? languageMenuRef.current : profileMenuRef.current;
+    const {trigger, menu} = popoverNodes(popover);
     const focusFirstItem = window.requestAnimationFrame(() => {
-      menu?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({preventScroll: true});
+      menu?.querySelector<HTMLElement>('[role="menuitem"], [role="menuitemradio"]')?.focus({preventScroll: true});
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -107,7 +122,7 @@ export function CurrentAppShellHeader({
         return;
       }
       if (!menu || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-      const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+      const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]'));
       if (!items.length) return;
       event.preventDefault();
       const currentIndex = items.indexOf(document.activeElement as HTMLElement);
@@ -136,7 +151,8 @@ export function CurrentAppShellHeader({
   }, [closePopover, popover]);
 
   const closePopoverAndRestoreFocus = () => {
-    const trigger = popover === "language" ? languageTriggerRef.current : profileTriggerRef.current;
+    if (!popover) return;
+    const {trigger} = popoverNodes(popover);
     closePopover();
     window.requestAnimationFrame(() => trigger?.focus({preventScroll: true}));
   };
@@ -205,7 +221,7 @@ export function CurrentAppShellHeader({
                 aria-expanded={controller.popover === "language"}
                 aria-haspopup="menu"
                 onClick={() => controller.togglePopover("language")}
-              ><Globe2 size={17} /><span>UA</span></button>
+              ><Globe2 size={17} /><span>{SHELL_LANGUAGES.find((language) => language.id === controller.language)?.shortLabel}</span></button>
               {controller.popover === "language" ? (
                 <div
                   ref={languageMenuRef}
@@ -214,15 +230,68 @@ export function CurrentAppShellHeader({
                   role="menu"
                   aria-label="Мова інтерфейсу"
                 >
-                  {["English", "Русский", "Українська"].map((language) => (
-                    <button type="button" role="menuitem" key={language} onClick={closePopoverAndRestoreFocus}>
-                      <span>{language}</span>{language === "Українська" ? <Check size={14} /> : null}
+                  {SHELL_LANGUAGES.map((language) => (
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={language.id === controller.language}
+                      key={language.id}
+                      onClick={() => {
+                        controller.setLanguage(language.id);
+                        closePopoverAndRestoreFocus();
+                      }}
+                    >
+                      <span>{language.label}</span>{language.id === controller.language ? <Check size={14} /> : null}
                     </button>
                   ))}
                 </div>
               ) : null}
             </div>
-            <button type="button" className="icon-button notification-button" aria-label="Сповіщення"><Bell size={18} /><span>9+</span></button>
+            <div className="menu-anchor">
+              <button
+                ref={notificationTriggerRef}
+                type="button"
+                className="icon-button notification-button"
+                aria-label="Сповіщення"
+                aria-controls="current-notifications-menu"
+                aria-expanded={controller.popover === "notifications"}
+                aria-haspopup="menu"
+                onClick={() => controller.togglePopover("notifications")}
+              >
+                <Bell size={18} />
+                {controller.unreadNotificationCount ? <span>{controller.unreadNotificationCount}</span> : null}
+              </button>
+              {controller.popover === "notifications" ? (
+                <div
+                  ref={notificationMenuRef}
+                  id="current-notifications-menu"
+                  className="popover-menu notifications-menu"
+                  role="menu"
+                  aria-label="Сповіщення"
+                >
+                  <div className="popover-menu-heading">
+                    <strong>Сповіщення</strong>
+                    {controller.unreadNotificationCount ? (
+                      <button type="button" role="menuitem" onClick={controller.markAllNotificationsRead}>Позначити все прочитаним</button>
+                    ) : null}
+                  </div>
+                  {controller.notifications.length ? controller.notifications.map((notification) => (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={cn("notification-item", !notification.read && "notification-item-unread")}
+                      key={notification.id}
+                      onClick={() => controller.openNotification(notification)}
+                    >
+                      <span><strong>{notification.title}</strong><small>{notification.description}</small></span>
+                      {!notification.read ? <i aria-label="Непрочитане" /> : null}
+                    </button>
+                  )) : <p className="notification-empty" role="status">Немає нових сповіщень.</p>}
+                  {!controller.unreadNotificationCount ? <p className="notification-empty" role="status">Усі сповіщення прочитані.</p> : null}
+                  <p className="notification-note">Статус прочитання зберігається до оновлення сторінки.</p>
+                </div>
+              ) : null}
+            </div>
           </>
         ) : null}
         <div className="profile-summary">
@@ -271,10 +340,29 @@ export function CurrentAppShellHeader({
   );
 }
 
-export function CurrentAppShellNavigation({controller}: {controller: AppShellController}) {
+export function CurrentAppShellNavigation({
+  controller,
+  sidebarCollapsed,
+  onSidebarCollapsedChange,
+}: {
+  controller: AppShellController;
+  sidebarCollapsed: boolean;
+  onSidebarCollapsedChange(value: boolean): void;
+}) {
   return (
     <aside className="desktop-sidebar">
-      <CurrentRoleNav groups={controller.navGroups} />
+      <CurrentRoleNav groups={controller.navGroups} collapsed={sidebarCollapsed} />
+      <div className="desktop-sidebar-controls">
+        <button
+          type="button"
+          className="icon-button desktop-sidebar-toggle"
+          aria-label={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+          title={sidebarCollapsed ? "Розгорнути бічну навігацію" : "Згорнути бічну навігацію"}
+          onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
+        >
+          {sidebarCollapsed ? <ChevronsRight size={17} /> : <ChevronsLeft size={17} />}
+        </button>
+      </div>
     </aside>
   );
 }

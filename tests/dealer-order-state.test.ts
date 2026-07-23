@@ -11,6 +11,7 @@ import {
   saveDealerOrderDraft,
   setDealerOrderLineNote,
   startDealerOrderDraft,
+  transitionDealerWorkshopOrder,
   updateDealerOrderBuilder,
 } from "@/lib/dealer/order-state";
 import { initialDemoState } from "@/lib/mock-data";
@@ -270,4 +271,53 @@ test("order creation rejects an unresolved cart line without clearing work", () 
     /Кошик не змінено/,
   );
   assert.equal(state.cart[0]?.partNumber, "UNKNOWN-SKU");
+});
+
+test("workshop status transition updates only the requested locally persisted order", () => {
+  const state = {
+    ...initialState(),
+    workshopOrders: [
+      {
+        id: "workshop-1",
+        type: "maintenance" as const,
+        customerId: "customer-1",
+        description: "Seasonal service",
+        mechanic: "",
+        scheduledAt: "",
+        notes: "",
+        status: "new" as const,
+      },
+      {
+        id: "workshop-2",
+        type: "repair" as const,
+        customerId: "customer-2",
+        description: "Brake repair",
+        mechanic: "",
+        scheduledAt: "",
+        notes: "",
+        status: "in_progress" as const,
+      },
+    ],
+  };
+  const current = state.workshopOrders[0];
+  assert.ok(current);
+
+  const next = transitionDealerWorkshopOrder(state, {
+    id: current.id,
+    status: "scheduled",
+  });
+
+  assert.equal(state.workshopOrders.find((order) => order.id === current.id)?.status, current.status);
+  assert.equal(next.workshopOrders.find((order) => order.id === current.id)?.status, "scheduled");
+  assert.deepEqual(
+    next.workshopOrders.filter((order) => order.id !== current.id),
+    state.workshopOrders.filter((order) => order.id !== current.id),
+  );
+});
+
+test("workshop status transition rejects an unknown local order", () => {
+  assert.throws(
+    () => transitionDealerWorkshopOrder(initialState(), { id: "missing-workshop", status: "done" }),
+    /Замовлення-наряд не знайдено/,
+  );
 });

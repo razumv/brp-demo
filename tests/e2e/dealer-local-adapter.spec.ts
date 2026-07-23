@@ -17,9 +17,10 @@ type MutationCalls = {
   appendOrderMessage: number;
   setOrderLineNote: number;
   createWorkshopOrder: number;
+  transitionWorkshopOrder: number;
 };
 
-function createHarness(options: { failUpdateOrderBuilder?: boolean } = {}) {
+function createHarness(options: { failUpdateOrderBuilder?: boolean; failWorkshopTransition?: boolean } = {}) {
   const state = createInitialDealerState(initialDemoState, "dealer@example.invalid::logos", "Logos", "2026-07-21T00:00:00.000Z", "submission-test");
   state.cart = [];
   const calls: MutationCalls = {
@@ -28,6 +29,7 @@ function createHarness(options: { failUpdateOrderBuilder?: boolean } = {}) {
     appendOrderMessage: 0,
     setOrderLineNote: 0,
     createWorkshopOrder: 0,
+    transitionWorkshopOrder: 0,
   };
 
   const commands = createDealerLocalAdapter({
@@ -89,6 +91,10 @@ function createHarness(options: { failUpdateOrderBuilder?: boolean } = {}) {
     addWorkshopOrder(input: WorkshopOrderInput): WorkshopOrder {
       calls.createWorkshopOrder += 1;
       return { ...input, id: "workshop-created", status: "new" };
+    },
+    transitionWorkshopOrder() {
+      calls.transitionWorkshopOrder += 1;
+      if (options.failWorkshopTransition) throw new DealerLocalPersistenceError();
     },
   }, {
     async writeClipboard() {},
@@ -164,6 +170,50 @@ test("workshop creation rejects an unknown customer without calling the store", 
 
   expectValidationError(result);
   expect(calls.createWorkshopOrder).toBe(0);
+});
+
+test("workshop status transition validates the record and returns a durable local result", async () => {
+  const { calls, commands, state } = createHarness();
+  const existing = {
+    id: "workshop-existing",
+    type: "maintenance" as const,
+    customerId: state.customers[0]?.id ?? "",
+    description: "Seasonal service",
+    mechanic: "",
+    scheduledAt: "",
+    notes: "",
+    status: "new" as const,
+  };
+  state.workshopOrders = [existing];
+
+  const missing = await commands.transitionWorkshopOrder({ id: "missing-workshop", status: "done" });
+  const moved = await commands.transitionWorkshopOrder({ id: existing.id, status: "scheduled" });
+
+  expectValidationError(missing);
+  expect(calls.transitionWorkshopOrder).toBe(1);
+  expect(moved).toEqual({ ok: true, kind: "local-mutation", value: undefined });
+});
+
+test("workshop status transition reports a persistence failure without claiming success", async () => {
+  const { commands, state } = createHarness({ failWorkshopTransition: true });
+  const existing = {
+    id: "workshop-existing",
+    type: "maintenance" as const,
+    customerId: state.customers[0]?.id ?? "",
+    description: "Seasonal service",
+    mechanic: "",
+    scheduledAt: "",
+    notes: "",
+    status: "new" as const,
+  };
+  state.workshopOrders = [existing];
+
+  await expect(commands.transitionWorkshopOrder({ id: existing.id, status: "done" })).resolves.toEqual({
+    ok: false,
+    kind: "local-error",
+    message: "Не вдалося зберегти зміни на пристрої.",
+    retryable: true,
+  });
 });
 
 test("local mutations return a truthful failure when durable persistence is unavailable", async () => {

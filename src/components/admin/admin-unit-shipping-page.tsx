@@ -346,7 +346,7 @@ function CurrentAdminUnitShippingView({model}: {model: AdminUnitShippingModel}) 
               </button>
             </div>
             <p id="bossweb-sync-safety" className="m-0 inline-flex items-center gap-1.5 text-[11px] text-[var(--muted-foreground)]">
-              <LockKeyhole size={12} /> Дати змінюються лише локально; зовнішня синхронізація заблокована.
+              <LockKeyhole size={12} /> Зовнішня синхронізація дат стане доступна після підключення сервісу.
             </p>
           </div>
         )}

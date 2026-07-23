@@ -84,13 +84,34 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("button", { name: /Sea-Doo липень 2026/ })).toBeVisible();
   });
 
-  test("workshop exposes local creation only and BossWeb reports local lookup states", async ({ page }) => {
+  test("schedule timeline can be collapsed and keeps its preference after refresh", async ({ page }) => {
+    const storageKey = "brp-clone-ui-v1:collapsible:dealer.schedule.timeline";
+    await loginAsDealer(page, dealerSessionOptions);
+    await openDealerRoute(page, "/dealer/schedule", "Графік поставки", dealerSessionOptions);
+    await page.evaluate((key) => window.localStorage.removeItem(key), storageKey);
+    await page.reload();
+
+    const trigger = page.getByRole("button", { name: "Хронологія прибуття" });
+    const timeline = page.getByRole("region", { name: "Хронологія прибуття" });
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(timeline.getByText("липень", { exact: true })).toBeVisible();
+
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(timeline).toHaveAttribute("data-closed", "");
+    await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).toBe("0");
+
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Хронологія прибуття" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("workshop persists an accessible local status transition and BossWeb reports local lookup states", async ({ page }) => {
     await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
     await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
 
     await expect(page.getByText(/підтверджено лише створення нового замовлення-наряду/i)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Зміна статусу недоступна" })).toHaveCount(0);
-    await expect(page.locator('[draggable="true"], [data-dropzone], [aria-dropeffect]')).toHaveCount(0);
+    await expect(page.locator('[data-workshop-dropzone]')).toHaveCount(4);
     await expect(page.getByText(/демонстрац|тестов|середовищ/i)).toHaveCount(0);
     await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
     await page.getByLabel("Опис *").fill("Сезонне технічне обслуговування");
@@ -100,8 +121,7 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("status")).toHaveText("Замовлення-наряд створено.");
     const workshopCard = page.getByRole("article").filter({ hasText: "Сезонне технічне обслуговування" });
     await expect(workshopCard).toBeVisible();
-    expect(await workshopCard.evaluate((element) => (element as HTMLElement).draggable)).toBe(false);
-    expect(await workshopCard.evaluate((element) => getComputedStyle(element).cursor)).not.toMatch(/grab|move/);
+    await expect(workshopCard).toHaveAttribute("draggable", "true");
 
     const workshopSearch = page.getByRole("searchbox", { name: /Пошук у майстерні/ });
     for (const query of ["Сезонне", "Клієнт Logos", "Олексій", "Терміново"]) {
@@ -120,25 +140,16 @@ test.describe("dealer operational features on desktop", () => {
 
     const newColumn = page.getByTestId("workshop-column").nth(0);
     const scheduledColumn = page.getByTestId("workshop-column").nth(1);
-    const cardBox = await workshopCard.boundingBox();
-    const targetBox = await scheduledColumn.boundingBox();
-    expect(cardBox).not.toBeNull();
-    expect(targetBox).not.toBeNull();
-    if (cardBox && targetBox) {
-      await page.mouse.move(cardBox.x + cardBox.width / 2, cardBox.y + cardBox.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 80, { steps: 5 });
-      await page.mouse.up();
-    }
-    await expect(newColumn).toContainText("Сезонне технічне обслуговування");
-    await expect(scheduledColumn).not.toContainText("Сезонне технічне обслуговування");
+    await workshopCard.getByLabel("Перемістити Сезонне технічне обслуговування").selectOption("scheduled");
+    await expect(newColumn).not.toContainText("Сезонне технічне обслуговування");
+    await expect(scheduledColumn).toContainText("Сезонне технічне обслуговування");
     await expect.poll(async () => page.evaluate((storageKey) => {
       const raw = window.localStorage.getItem(storageKey);
       if (!raw) return [];
       return (JSON.parse(raw) as { workshopOrders?: Array<{ description: string; status: string }> }).workshopOrders ?? [];
     }, dealerStorageKey)).toContainEqual(expect.objectContaining({
       description: "Сезонне технічне обслуговування",
-      status: "new",
+      status: "scheduled",
     }));
 
     await page.reload();
@@ -148,13 +159,12 @@ test.describe("dealer operational features on desktop", () => {
     await expect(dashboardSummary.getByText("Робіт у майстерні").locator("..")).toContainText("1");
 
     await openDealerRoute(page, "/dealer/bossweb", "Пошук запчастин", dealerSessionOptions);
-    await expect(page.getByText("Перевіряйте номер запчастини у локальному довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
-    await expect(page.getByText("Пошук виконується лише в локальному довіднику. Онлайн-наявність BossWeb, заміни та ETA не завантажуються.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Перевіряйте номер запчастини у довіднику перед створенням замовлення.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Дані про онлайн-наявність BossWeb, заміни та ETA стануть доступні після підключення сервісу.", { exact: true })).toBeVisible();
     await expect(page.getByText("COOLANT,EXT LIFE", { exact: true })).toBeVisible();
-    await expect(page.getByText(/лише в локальному довіднику/i)).toBeVisible();
+    await expect(page.getByText(/локальн(ому|ий) довідник/i)).toHaveCount(0);
     await page.getByRole("searchbox", { name: "Номер запчастини" }).fill("0000000");
-    await page.getByRole("button", { name: "Пошук" }).click();
-    expect(await page.getByRole("button", { name: "Пошук" }).isEnabled()).toBe(true);
+    await expect(page.getByText("Запчастину не знайдено")).toBeVisible();
     expect(await page.getByRole("status").count()).toBe(0);
     await expect(page.getByRole("heading", { name: "Запчастину не знайдено" })).toBeVisible();
     await expect(page.getByText(/для демонстрації|онлайн-пошук виконується/i)).toHaveCount(0);
@@ -181,6 +191,38 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("dialog").getByRole("alert")).toHaveText("Не вдалося зберегти зміни на пристрої.");
     await expect(page.getByText("Замовлення-наряд створено.")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Робота без збереження" })).toHaveCount(0);
+  });
+
+  test("workshop rolls back a failed durable stage transition", async ({ page }) => {
+    await page.addInitScript((storageKey) => {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key === storageKey && window.sessionStorage.getItem("block-workshop-write") === "1") {
+          throw new Error("storage blocked");
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    }, dealerStorageKey);
+    await loginAsDealer(page, { ...dealerSessionOptions, assertIdentity: false });
+    await openDealerRoute(page, "/dealer/workshop", "Майстерня", dealerSessionOptions);
+    await page.getByRole("button", { name: "Нове замовлення-наряд" }).click();
+    await page.getByLabel("Опис *").fill("Перевірка rollback");
+    await page.getByRole("button", { name: "Створити замовлення-наряд" }).click();
+
+    const card = page.getByRole("article").filter({ hasText: "Перевірка rollback" });
+    await expect(card).toBeVisible();
+    await page.evaluate(() => window.sessionStorage.setItem("block-workshop-write", "1"));
+    await card.getByLabel("Перемістити Перевірка rollback").selectOption("scheduled");
+
+    await expect(page.getByText("Не вдалося зберегти зміну етапу на пристрої.", {exact: true})).toBeVisible();
+    await expect(page.getByTestId("workshop-column").nth(0)).toContainText("Перевірка rollback");
+    await expect(page.getByTestId("workshop-column").nth(1)).not.toContainText("Перевірка rollback");
+    await expect.poll(async () => page.evaluate((storageKey) => {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return null;
+      return (JSON.parse(raw) as {workshopOrders?: Array<{description: string; status: string}>})
+        .workshopOrders?.find((order) => order.description === "Перевірка rollback")?.status ?? null;
+    }, dealerStorageKey)).toBe("new");
   });
 
   test("dashboard reads the same dealer cart as accessories and order creation", async ({ page }) => {

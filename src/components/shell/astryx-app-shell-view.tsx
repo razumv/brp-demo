@@ -52,6 +52,7 @@ import type {
   DealerAppShellController,
   ShellNavGroup,
 } from "@/components/shell/app-shell-controller";
+import {SHELL_LANGUAGES} from "@/components/shell/app-shell-controller";
 import {astryxShellClasses as styles} from "@/components/shell/astryx-shell.css";
 import {
   GLOBAL_PARTS_SEARCH_TABS,
@@ -337,18 +338,17 @@ function AstryxLanguagePopover({controller}: {controller: AppShellController}) {
       }}
       content={(
         <div className={styles.popover}>
-          {[
-            {label: "English", selected: false},
-            {label: "Русский", selected: false},
-            {label: "Українська", selected: true},
-          ].map((language) => (
+          {SHELL_LANGUAGES.map((language) => (
             <Button
-              key={language.label}
+              key={language.id}
               label={language.label}
-              endContent={language.selected ? <Check size={14} /> : undefined}
+              endContent={language.id === controller.language ? <Check size={14} /> : undefined}
               variant="ghost"
               width="100%"
-              onClick={controller.closePopover}
+              onClick={() => {
+                controller.setLanguage(language.id);
+                controller.closePopover();
+              }}
             />
           ))}
         </div>
@@ -365,6 +365,58 @@ function AstryxLanguagePopover({controller}: {controller: AppShellController}) {
           aria-expanded={triggerProps["aria-expanded"]}
           aria-controls={triggerProps["aria-controls"]}
         />
+      )}
+    </Popover>
+  );
+}
+
+function AstryxNotificationsPopover({controller}: {controller: AppShellController}) {
+  const open = controller.renderedDesignSystem === "astryx" && controller.popover === "notifications";
+  return (
+    <Popover
+      label="Сповіщення"
+      className={styles.popover}
+      isOpen={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen && controller.popover !== "notifications") controller.togglePopover("notifications");
+        if (!nextOpen) controller.closePopover();
+      }}
+      content={(
+        <div className={styles.popover}>
+          <div className={styles.notificationsHeader}>
+            <Heading level={3}>Сповіщення</Heading>
+            {controller.unreadNotificationCount ? (
+              <Button label="Позначити все прочитаним" variant="ghost" size="sm" onClick={controller.markAllNotificationsRead} />
+            ) : null}
+          </div>
+          {controller.notifications.length ? controller.notifications.map((notification) => (
+            <Button
+              key={notification.id}
+              label={notification.title}
+              variant={notification.read ? "ghost" : "secondary"}
+              width="100%"
+              onClick={() => controller.openNotification(notification)}
+            ><Text type="supporting" color="secondary">{notification.description}</Text></Button>
+          )) : <Text color="secondary">Немає нових сповіщень.</Text>}
+          {!controller.unreadNotificationCount ? <Text type="supporting" color="secondary">Усі сповіщення прочитані.</Text> : null}
+          <Text type="supporting" color="secondary">Статус прочитання зберігається до оновлення сторінки.</Text>
+        </div>
+      )}
+    >
+      {(triggerProps: PopoverTriggerRenderProps) => (
+        <div className={styles.notificationControl}>
+          <IconButton
+            ref={triggerProps.ref as Ref<HTMLButtonElement>}
+            icon={<Bell size={18} />}
+            label="Сповіщення"
+            variant="ghost"
+            onClick={triggerProps.onClick}
+            aria-haspopup={triggerProps["aria-haspopup"]}
+            aria-expanded={triggerProps["aria-expanded"]}
+            aria-controls={triggerProps["aria-controls"]}
+          />
+          {controller.unreadNotificationCount ? <Badge label={String(controller.unreadNotificationCount)} variant="error" /> : null}
+        </div>
       )}
     </Popover>
   );
@@ -464,7 +516,7 @@ export function AstryxAppShellHeader({controller, onReady}: AstryxShellViewProps
             {controller.role === "admin" ? (
               <>
                 <AstryxLanguagePopover controller={controller} />
-                <IconButton icon={<Bell size={18} />} label="Сповіщення" variant="ghost" />
+                <AstryxNotificationsPopover controller={controller} />
               </>
             ) : null}
             <div className={styles.identity}>

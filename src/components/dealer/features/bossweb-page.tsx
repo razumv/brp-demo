@@ -1,8 +1,8 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import { BrpButton, BrpCard, BrpTextInput } from "@/components/brp-ui";
+import { useEffect, useState } from "react";
+import { BrpCard, BrpTextInput } from "@/components/brp-ui";
 import { EmptyState, InlineNotice, Panel, StatusBadge } from "@/components/shared/ui";
 import {
   findBossWebReferencePart,
@@ -33,26 +33,29 @@ export function BossWebPage() {
   const [input, setInput] = useState(initialQuery);
   const [lookup, setLookup] = useState<BossWebLookupState>(initialLookupState);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const query = normalizeBossWebQuery(input);
-    if (!query) {
-      setLookup({ status: "idle" });
-      return;
-    }
-    const part = findBossWebReferencePart(query);
-    setLookup(part
-      ? { status: "found", part }
-      : { status: "not-found", query });
-  };
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const query = normalizeBossWebQuery(input);
+      if (!query) {
+        setLookup({ status: "idle" });
+        return;
+      }
+      const part = findBossWebReferencePart(query);
+      setLookup(part
+        ? { status: "found", part }
+        : { status: "not-found", query });
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [input]);
 
   return (
     <FeatureFrame feature="bossweb">
       <InlineNotice>
-        Пошук виконується лише в локальному довіднику. Онлайн-наявність BossWeb, заміни та ETA не завантажуються.
+        Дані про онлайн-наявність BossWeb, заміни та ETA стануть доступні після підключення сервісу.
       </InlineNotice>
 
-      <form className={`${dealerStyles.bossSearch} ${operationalStyles.bossSearch}`} onSubmit={submit} aria-label="Пошук у локальному довіднику">
+      <div className={`${dealerStyles.bossSearch} ${operationalStyles.bossSearch}`}>
         <BrpTextInput
           type="search"
           value={input}
@@ -63,25 +66,24 @@ export function BossWebPage() {
           placeholder="Введіть номер запчастини"
           clearable
         />
-        <BrpButton label="Пошук" icon={<Search size={16} />} type="submit" />
-      </form>
+      </div>
 
       {lookup.status === "found" ? (
         <section className={dealerStyles.bossGrid} aria-live="polite">
           <BrpCard padding="md">
-            <SectionHeading title="Результат локального пошуку" action={<StatusBadge tone="neutral">{lookup.part.category}</StatusBadge>} />
+            <SectionHeading title="Результат пошуку" action={<StatusBadge tone="neutral">{lookup.part.category}</StatusBadge>} />
             <div className={dealerStyles.bossContent}>
               <strong className={dealerStyles.mono}>{lookup.part.number}</strong>
               <p>{lookup.part.description}</p>
               <dl className={operationalStyles.bossMeta}>
                 <div><dt>Позначення на схемі</dt><dd>{lookup.part.reference}</dd></div>
-                <div><dt>Джерело</dt><dd>Локальний довідник</dd></div>
+                <div><dt>Джерело</dt><dd>Довідник запчастин</dd></div>
               </dl>
               <InlineNotice>Дані про віддалену наявність і терміни постачання відсутні.</InlineNotice>
             </div>
           </BrpCard>
           <BrpCard padding="md">
-            <SectionHeading title="Локальний каталог" />
+            <SectionHeading title="Каталог дилера" />
             <dl className={dealerStyles.catalogStock}>
               <div><dt>На складі:</dt><dd>{lookup.part.localStock}</dd></div>
               <div><dt>Статус:</dt><dd><StatusBadge tone={lookup.part.localStock ? "green" : "neutral"}>{lookup.part.localStock ? "В наявності" : "Немає"}</StatusBadge></dd></div>
@@ -98,7 +100,7 @@ export function BossWebPage() {
             <EmptyState
               icon={<Search size={25} />}
               title="Запчастину не знайдено"
-              description={`У локальному довіднику немає номера ${lookup.query}. Перевірте введене значення.`}
+              description={`У довіднику немає номера ${lookup.query}. Перевірте введене значення.`}
             />
           </div>
         </Panel>
@@ -109,7 +111,7 @@ export function BossWebPage() {
           <EmptyState
             icon={<Search size={25} />}
             title="Введіть номер запчастини"
-            description="Пошук доступний для записів локального довідника."
+            description="Пошук почнеться автоматично після введення номера."
           />
         </Panel>
       ) : null}

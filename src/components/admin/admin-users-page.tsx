@@ -342,7 +342,7 @@ function PermissionSwitch({ state, label }: { state: Exclude<PermissionState, "n
       title="Зміна дозволу потребує підключення сервісу контролю доступу."
       className={`relative mx-auto block h-5 w-9 cursor-not-allowed rounded-full border opacity-100 ${enabled ? "border-[#1a7f37] bg-[#1a7f37] dark:border-[#3fb950] dark:bg-[#238636]" : "border-[var(--border)] bg-[var(--surface-subtle)]"}`}
     >
-      <span className={`absolute top-[2px] size-3 rounded-full bg-white shadow-sm dark:bg-[#f0f6fc] ${enabled ? "right-[2px]" : "left-[2px]"}`} aria-hidden="true" />
+      <span className={`absolute top-[2px] size-3 rounded-full bg-[var(--surface-raised)] shadow-sm ${enabled ? "right-[2px]" : "left-[2px]"}`} aria-hidden="true" />
     </button>
   );
 }

@@ -45,6 +45,7 @@ import {
   saveDealerOrderDraft,
   setDealerOrderLineNote,
   startDealerOrderDraft,
+  transitionDealerWorkshopOrder,
   updateDealerCustomer,
   updateDealerEquipment,
   updateDealerOrderBuilder,
@@ -341,6 +342,9 @@ export function DealerWorkflowProvider({ children }: { children: ReactNode }) {
         workshopOrders: [order, ...current.workshopOrders],
       }));
       return order;
+    },
+    transitionWorkshopOrder(id: string, status: WorkshopOrder["status"]) {
+      commit((current) => transitionDealerWorkshopOrder(current, { id, status }));
     },
   }), [commit]);
 

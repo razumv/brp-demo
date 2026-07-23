@@ -207,7 +207,7 @@ function OrderRow({order}: {order: AdminPipelineDisplayOrder}) {
   const body = (
     <>
       <Text weight="semibold">{order.code}</Text>
-      <span><Text weight="semibold" display="block">{order.company}</Text><Text type="supporting" color="secondary" display="block" className={styles.orderSubline}>{order.contact}{order.local ? " · локальне замовлення" : !order.detailEvidence ? " · обмежені source-докази" : ""}</Text></span>
+      <span><Text weight="semibold" display="block">{order.company}</Text><Text type="supporting" color="secondary" display="block" className={styles.orderSubline}>{order.contact}</Text></span>
       <Text type="supporting" color="secondary">{order.date}</Text>
       <Text type="supporting" color="secondary">{order.parts} запчастин</Text>
       <Text weight="semibold" hasTabularNumbers>{formatMoney(order.amount)}</Text>

@@ -355,6 +355,7 @@ function CascadeRow({
 function CatalogCascade() {
   const searchParams = useSearchParams();
   const viewportRef = useRef<HTMLElement>(null);
+  const [treeQuery, setTreeQuery] = useState("");
   const selection = resolveCatalogSelection("sxs", {
     year: searchParams.get("year"),
     series: searchParams.get("series"),
@@ -405,6 +406,7 @@ function CatalogCascade() {
       : selection.year
         ? "series"
         : "years";
+  const normalizedTreeQuery = treeQuery.trim().toLocaleLowerCase();
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -426,26 +428,55 @@ function CatalogCascade() {
       href: index === selection.path.length - 1 ? undefined : getCascadeHref(node, selection),
     })),
   ];
+  const deepestMatchingColumn = normalizedTreeQuery
+    ? columns.reduce(
+      (deepest, column, index) => column.nodes.some((node) => node.label.toLocaleLowerCase().includes(normalizedTreeQuery)) ? index : deepest,
+      -1,
+    )
+    : -1;
 
   return (
     <CatalogPage wide>
       <Breadcrumbs items={breadcrumbItems} />
       <h1 className="sr-only">Каталог запчастин Can-Am SXS</h1>
+      <div className={styles.cascadeSearch}>
+        <BrpTextInput
+          label="Пошук у дереві каталогу"
+          type="search"
+          value={treeQuery}
+          onValueChange={setTreeQuery}
+          placeholder="Модель, серія або схема…"
+          leadingIcon={<Search size={16} />}
+          clearable
+        />
+      </div>
       <section ref={viewportRef} className={styles.cascadeViewport} aria-label="Навігація каталогу">
         <div className={styles.cascadeGrid} data-column-count={columns.length}>
-          {columns.map((column) => (
-            <section className={styles.browserColumn} aria-label={column.label} data-catalog-column={column.id} key={column.id}>
-              {column.nodes.map((node) => (
+          {columns.map((column, columnIndex) => {
+            const visibleNodes = normalizedTreeQuery
+              ? column.nodes.filter((node) => (
+                node.label.toLocaleLowerCase().includes(normalizedTreeQuery)
+                || (columnIndex < deepestMatchingColumn && selection.path.some((selectedNode) => selectedNode.kind === node.kind && selectedNode.id === node.id))
+              ))
+              : column.nodes;
+            const emptyMessage = normalizedTreeQuery && visibleNodes.length === 0
+              ? "Нічого не знайдено в поточній гілці каталогу."
+              : column.empty;
+
+            return (
+              <section className={styles.browserColumn} aria-label={column.label} data-catalog-column={column.id} key={column.id}>
+                {visibleNodes.map((node) => (
                 <CascadeRow
                   key={`${node.kind}-${node.id}`}
                   node={node}
                   selected={selection.path.some((selectedNode) => selectedNode.kind === node.kind && selectedNode.id === node.id)}
                   selection={selection}
                 />
-              ))}
-              {column.nodes.length === 0 && column.empty ? <p className={styles.cascadeEmpty}>{column.empty}</p> : null}
-            </section>
-          ))}
+                ))}
+                {visibleNodes.length === 0 && emptyMessage ? <p className={styles.cascadeEmpty}>{emptyMessage}</p> : null}
+              </section>
+            );
+          })}
         </div>
       </section>
     </CatalogPage>

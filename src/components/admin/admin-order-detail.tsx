@@ -379,7 +379,7 @@ function CurrentAdminOrderDetailView({model}: {model: AdminOrderDetailViewModel}
     <main className="page page-narrow" data-admin-order-detail-renderer="current">
       <div className={styles.pageStack}>
         <nav className={styles.breadcrumb} aria-label="Навігаційний ланцюжок"><Link href="/admin/order-pipeline">Пайплайн замовлень</Link><ChevronRight size={14} /><strong>{order.code}</strong></nav>
-        <InlineNotice tone="warning"><LockKeyhole size={15} /> Адміністративні дії вимкнені. Доступні лише локальні фільтри, розкриття панелей і preflight без підтвердження.</InlineNotice>
+        <InlineNotice tone="warning"><LockKeyhole size={15} /> Адміністративні дії вимкнені до підключення сервісу. Доступні фільтри, розкриття панелей і перевірка без підтвердження.</InlineNotice>
 
         <div className={styles.orderDetailGrid}>
           <div className={styles.stack}>

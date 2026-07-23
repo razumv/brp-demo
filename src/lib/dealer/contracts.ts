@@ -190,6 +190,10 @@ export type DealerCommands = {
   createWorkshopOrder: (
     input: WorkshopOrderInput,
   ) => Promise<DealerCommandResult<WorkshopOrder>>;
+  transitionWorkshopOrder: (input: {
+    id: string;
+    status: WorkshopOrder["status"];
+  }) => Promise<DealerCommandResult<void>>;
   copyText: (input: { text: string }) => Promise<DealerCommandResult<void>>;
 };
 

@@ -5,6 +5,7 @@ import {
   useId,
   useRef,
   type ButtonHTMLAttributes,
+  type HTMLAttributes,
   type ReactNode,
 } from "react";
 import { AlertCircle, Inbox, LockKeyhole, X } from "lucide-react";
@@ -35,6 +36,27 @@ export function PageHeader({
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
+}
+
+export function PageSurface({
+  children,
+  width = "default",
+  className,
+  as: Component = "section",
+  ...props
+}: {
+  children: ReactNode;
+  width?: "default" | "wide" | "reading" | "full-workspace";
+  className?: string;
+  as?: "main" | "section" | "div" | "article";
+} & Omit<HTMLAttributes<HTMLElement>, "className">) {
+  const widthClass = {
+    default: "page-surface-default",
+    wide: "page-surface-wide",
+    reading: "page-surface-reading",
+    "full-workspace": "page-surface-full-workspace",
+  }[width];
+  return <Component className={cn("page-surface", widthClass, className)} {...props}>{children}</Component>;
 }
 
 export function Panel({
@@ -228,7 +250,7 @@ export function ReadOnlyButton({
       {...props}
       type="button"
       disabled
-      title="Демо: лише перегляд"
+      title="Дія недоступна без підключення сервісу."
       className={cn("button button-outline button-readonly", className)}
     >
       <LockKeyhole size={14} />

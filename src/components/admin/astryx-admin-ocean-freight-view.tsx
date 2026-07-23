@@ -171,7 +171,10 @@ function ContainerRows({model}: {model: AdminOceanFreightModel}) {
                   <td className={styles.mono}>{container.proforma}</td>
                   <td>{formatOceanEur(container.eur)}</td>
                   <td>{container.assigned}/{container.total}</td>
-                  <td><ReceiptAction bill={bill} model={model} /></td>
+                  <td>
+                    <Text color="secondary">{receiptStateLabel(bill)}</Text>
+                    <Text type="supporting" color="secondary">Дія на рівні BL</Text>
+                  </td>
                   <td>
                     <Button label={container.arrivalLabel} variant="ghost" size="sm" icon={<CalendarDays size={13} />} onClick={model.openEta} />
                   </td>
@@ -244,7 +247,6 @@ function OceanPanel({model}: {model: AdminOceanFreightModel}) {
           </div>
           <ToggleButton label="Групувати за BL" isPressed={model.grouped} onPressedChange={model.setGrouped} size="md" />
         </div>
-        <Text className={styles.toolbarMeta} color="secondary" display="block">{model.visibleBillCount} BL · {model.visibleCount} контейнерів</Text>
       </Card>
       {model.view === "table" ? <ContainerRows model={model} /> : <ContainerCards model={model} />}
     </div>
@@ -255,11 +257,11 @@ function GroundPanel({model}: {model: AdminOceanFreightModel}) {
   return (
     <Card padding={4} width="100%">
       <div className={styles.sectionHeader}>
-        <span><Heading level={2}>Наземна доставка</Heading><Text color="secondary">Пошук та локальний перегляд рейсів.</Text></span>
+        <span><Heading level={2}>Наземна доставка</Heading><Text color="secondary">Пошук та перегляд рейсів.</Text></span>
         <Button label="Додати перевезення" variant="primary" onClick={model.openGround} />
       </div>
       <TextInput label="Пошук наземної доставки" value={model.groundQuery} onChange={model.setGroundQuery} placeholder="Номер рейсу, перевізник або маршрут..." isLabelHidden startIcon={<Search size={15} />} width="100%" />
-      <EmptyState title={model.groundQuery ? "Рейси не знайдено" : "Наземних рейсів поки немає"} description="Новий запис відкривається у безпечному локальному перегляді." icon={<Truck size={26} />} />
+      <EmptyState title={model.groundQuery ? "Рейси не знайдено" : "Наземних рейсів поки немає"} description="Новий запис відкривається у режимі перевірки без надсилання." icon={<Truck size={26} />} />
     </Card>
   );
 }
@@ -330,9 +332,9 @@ function BillDetailDialog({model, bill, open}: {model: AdminOceanFreightModel; b
             <section className={styles.dialogSection} data-dialog-section="bl-proformas"><Heading level={3}>Пов’язані проформи</Heading>{bill.containers.map((container) => <div className={styles.listRow} key={container.proforma}><span className={styles.mono}>{container.proforma}</span><span>{container.total} од.</span><strong>{formatOceanEur(container.eur)}</strong></div>)}</section>
           </main>
           <aside className={styles.billDialogRail}>
-            <section data-dialog-section="bl-information"><Heading level={3}>Інформація про BL</Heading><dl className={styles.railFacts}><dt>Номер</dt><dd>{bill.id}</dd><dt>Судно</dt><dd>{bill.detail?.vessel ?? "—"}</dd><dt>ETD</dt><dd>{bill.detail?.etd ?? "—"}</dd><dt>ETA</dt><dd>{bill.detail?.modalEtaLabel ?? bill.eta}</dd><dt>Статус</dt><dd><Badge variant={statusVariant(bill.status)} label={statusLabel(bill.status)} /></dd></dl></section>
-            <section data-dialog-section="bl-documents"><Heading level={3}>Документи</Heading>{bill.detail?.documents.map((document) => <div className={styles.listRow} key={document.id}><span>{document.label}</span><Badge variant={document.state === "uploaded" ? "success" : document.state === "awaiting" ? "warning" : "error"} label={document.state === "uploaded" ? "Завантажено" : document.state === "awaiting" ? "Очікується" : "Відсутній"} /></div>) ?? <Text color="secondary">Дані документів відсутні.</Text>}</section>
-            <section data-dialog-section="bl-timeline"><Heading level={3}>Хронологія</Heading><ol className={styles.timeline}>{bill.detail?.milestones.map((milestone) => <li key={milestone.id} data-state={milestone.state}><span>{milestone.label}</span>{milestone.date ? <small>{milestone.date}</small> : null}</li>)}</ol></section>
+            <section className={styles.dialogSection} data-dialog-section="bl-information"><Heading level={3}>Інформація про BL</Heading><dl className={styles.railFacts}><dt>Номер</dt><dd>{bill.id}</dd><dt>Судно</dt><dd>{bill.detail?.vessel ?? "—"}</dd><dt>ETD</dt><dd>{bill.detail?.etd ?? "—"}</dd><dt>ETA</dt><dd>{bill.detail?.modalEtaLabel ?? bill.eta}</dd><dt>Статус</dt><dd><Badge variant={statusVariant(bill.status)} label={statusLabel(bill.status)} /></dd></dl></section>
+            <section className={styles.dialogSection} data-dialog-section="bl-documents"><Heading level={3}>Документи</Heading>{bill.detail?.documents.map((document) => <div className={styles.listRow} key={document.id}><span>{document.label}</span><Badge variant={document.state === "uploaded" ? "success" : document.state === "awaiting" ? "warning" : "error"} label={document.state === "uploaded" ? "Завантажено" : document.state === "awaiting" ? "Очікується" : "Відсутній"} /></div>) ?? <Text color="secondary">Дані документів відсутні.</Text>}</section>
+            <section className={styles.dialogSection} data-dialog-section="bl-timeline"><Heading level={3}>Хронологія</Heading><ol className={styles.timeline}>{bill.detail?.milestones.map((milestone) => <li key={milestone.id} data-state={milestone.state}><span>{milestone.label}</span>{milestone.date ? <small>{milestone.date}</small> : null}</li>)}</ol></section>
           </aside>
         </div>
       </div>
@@ -347,7 +349,7 @@ function PreviewDialogs({model, committed}: {model: AdminOceanFreightModel; comm
   const receiptBill = receiptPreview ? oceanBillsOfLading.find((bill) => bill.id === receiptPreview.billId) ?? null : null;
   return (
     <>
-      <InfoDialog open={committed && model.preview?.type === "upload"} title="Завантаження документів" subtitle="Локальний перегляд пакета документів" onClose={model.closePreview}><Banner status="info" title="Пакет підготовлено до перевірки" description="Оберіть документи та перевірте їх перед передаванням у підключений workflow." /><div className={styles.dropZone}><Upload size={28} /><strong>Перетягніть файли сюди</strong><Text color="secondary">PDF, XLSX або зображення</Text></div></InfoDialog>
+      <InfoDialog open={committed && model.preview?.type === "upload"} title="Завантаження документів" subtitle="Перевірка пакета документів" onClose={model.closePreview}><Banner status="info" title="Пакет підготовлено до перевірки" description="Оберіть документи та перевірте їх перед передаванням у підключений workflow." /><div className={styles.dropZone}><Upload size={28} /><strong>Перетягніть файли сюди</strong><Text color="secondary">PDF, XLSX або зображення</Text></div></InfoDialog>
       <InfoDialog open={committed && model.preview?.type === "ground"} title="Нове наземне перевезення" subtitle="Інформаційний перегляд форми" onClose={model.closePreview}><div className={styles.formGrid}><TextInput label="Номер рейсу" value="" onChange={() => undefined} placeholder="Наприклад, LAND-026" width="100%" /><TextInput label="Перевізник" value="" onChange={() => undefined} placeholder="Назва перевізника" width="100%" /><TextInput label="Маршрут" value="" onChange={() => undefined} placeholder="Пункт відправлення — пункт прибуття" width="100%" /></div></InfoDialog>
       <InfoDialog open={committed && model.preview?.type === "eta"} title="ETA — лише перегляд" subtitle="Дата та статус контейнера не змінюються" onClose={model.closePreview}><Banner status="warning" title="Зовнішнє оновлення недоступне" description="Можна переглянути поточну ETA, але збереження й застосування нової дати вимкнені для поточного доступу." /></InfoDialog>
       <InfoDialog open={committed && Boolean(receiptBill)} title={receiptBill?.receipt.kind === "parts" ? "Прибуткова запчастин" : "Прибуткова техніки"} subtitle={receiptBill ? `BL ${receiptBill.id} · ${receiptStateLabel(receiptBill)}` : undefined} onClose={model.closePreview}>{receiptBill?.receipt.kind === "parts" ? <PartsReceiptContent model={model} /> : <ReceiptContent bill={receiptBill} />}</InfoDialog>

@@ -164,7 +164,7 @@
 
 .permissionSwitch[data-state="checked"] .permissionSwitchTrack > span {
   left: 14px;
-  background: #fff;
+  background: var(--surface-raised);
 }
 
 .notApplicable {

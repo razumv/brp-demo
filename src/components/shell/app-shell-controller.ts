@@ -17,6 +17,7 @@ import {
   type DealerGlobalPartsSearchController,
 } from "@/components/shell/global-parts-search";
 import {navForRole, type NavItem} from "@/components/shell/nav-data";
+import {usePersistedChoicePreference} from "@/components/shell/use-shell-preferences";
 import {dealerNewDocumentCount} from "@/lib/dealer/secondary-data";
 import type {DealerCommandResult} from "@/lib/dealer/contracts";
 import {formatMoney, getPart, orderTotal} from "@/lib/mock-data";
@@ -24,8 +25,45 @@ import type {Part, Role} from "@/lib/types";
 
 export type ShellRenderer = "current" | "astryx";
 export type ShellOverlay = "mobile-navigation" | "mobile-search" | "dealer-cart" | null;
-export type ShellPopover = "language" | "profile" | null;
+export type ShellPopover = "language" | "notifications" | "profile" | null;
 export type ShellTrigger = Exclude<ShellOverlay, null>;
+
+export type ShellLanguage = "uk" | "en" | "ru";
+
+export const SHELL_LANGUAGES: readonly {id: ShellLanguage; label: string; shortLabel: string}[] = [
+  {id: "uk", label: "Українська", shortLabel: "UA"},
+  {id: "en", label: "English", shortLabel: "EN"},
+  {id: "ru", label: "Русский", shortLabel: "RU"},
+];
+
+function isShellLanguage(value: string): value is ShellLanguage {
+  return SHELL_LANGUAGES.some((language) => language.id === value);
+}
+
+export type ShellNotification = {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  read: boolean;
+};
+
+const initialAdminNotifications: readonly ShellNotification[] = [
+  {
+    id: "orders-awaiting-review",
+    title: "Нові замовлення очікують перевірки",
+    description: "Відкрийте пайплайн, щоб переглянути поточну чергу.",
+    href: "/admin/order-pipeline",
+    read: false,
+  },
+  {
+    id: "ocean-eta-updated",
+    title: "Оновлено ETA морського перевезення",
+    description: "Статуси BL доступні у розділі морських перевезень.",
+    href: "/admin/ocean-freight",
+    read: false,
+  },
+];
 
 export type ShellIdentity = {
   name: string;
@@ -66,6 +104,9 @@ type CommonShellController = {
   overlay: ShellOverlay;
   popover: ShellPopover;
   resolvedTheme: "light" | "dark";
+  language: ShellLanguage;
+  notifications: readonly ShellNotification[];
+  unreadNotificationCount: number;
   triggerRefs: ShellTriggerRefs;
   openOverlay(overlay: Exclude<ShellOverlay, null>): void;
   closeOverlay(): void;
@@ -73,6 +114,10 @@ type CommonShellController = {
   closePopover(): void;
   closeTransientUi(): void;
   toggleTheme(): void;
+  setLanguage(language: ShellLanguage): void;
+  markNotificationRead(notificationId: string): void;
+  markAllNotificationsRead(): void;
+  openNotification(notification: ShellNotification): void;
   logout(): void;
   openAdminSearch(): void;
   runAdminSearch(): void;
@@ -135,6 +180,14 @@ function useCommonShellController(role: Role) {
     updatePreference,
   } = useAppearance();
   const [globalQuery, setGlobalQuery] = useState("");
+  const [language, setLanguage] = usePersistedChoicePreference<ShellLanguage>(
+    "brp-clone-ui-v1:language",
+    "uk",
+    isShellLanguage,
+  );
+  const [notifications, setNotifications] = useState<ShellNotification[]>(() => (
+    role === "admin" ? [...initialAdminNotifications] : []
+  ));
   const [overlayState, setOverlayState] = useState<{
     value: ShellOverlay;
     pathname: string;
@@ -196,6 +249,11 @@ function useCommonShellController(role: Role) {
     setPopoverState({value: null, pathname});
   }, [pathname]);
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dataset.brpLanguage = language;
+  }, [language]);
+
   const toggleTheme = useCallback(() => {
     void updatePreference({
       version: 1,
@@ -210,6 +268,22 @@ function useCommonShellController(role: Role) {
     setSession(null);
     router.push("/login");
   }, [pathname, router, setSession]);
+
+  const markNotificationRead = useCallback((notificationId: string) => {
+    setNotifications((current) => current.map((notification) => (
+      notification.id === notificationId ? {...notification, read: true} : notification
+    )));
+  }, []);
+
+  const markAllNotificationsRead = useCallback(() => {
+    setNotifications((current) => current.map((notification) => ({...notification, read: true})));
+  }, []);
+
+  const openNotification = useCallback((notification: ShellNotification) => {
+    markNotificationRead(notification.id);
+    setPopoverState({value: null, pathname});
+    router.push(notification.href);
+  }, [markNotificationRead, pathname, router]);
 
   const runAdminSearch = useCallback(() => {
     const query = globalQuery.trim();
@@ -241,6 +315,9 @@ function useCommonShellController(role: Role) {
     overlay,
     popover,
     resolvedTheme,
+    language,
+    notifications,
+    unreadNotificationCount: notifications.filter((notification) => !notification.read).length,
     triggerRefs,
     openOverlay,
     closeOverlay,
@@ -248,6 +325,10 @@ function useCommonShellController(role: Role) {
     closePopover,
     closeTransientUi,
     toggleTheme,
+    setLanguage,
+    markNotificationRead,
+    markAllNotificationsRead,
+    openNotification,
     logout,
     openAdminSearch,
     runAdminSearch,

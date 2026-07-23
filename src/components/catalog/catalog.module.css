@@ -374,6 +374,11 @@
   overscroll-behavior-inline: contain;
 }
 
+.cascadeSearch {
+  width: min(100%, 480px);
+  margin: 0 0 12px;
+}
+
 .cascadeGrid {
   display: grid;
   width: 100%;

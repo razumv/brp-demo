@@ -48,8 +48,12 @@ function ShellFrame({
   const headerRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inertTargets = useMemo(() => [headerRef, bodyRef] as const, []);
-  const [sidebarCollapsed, setSidebarCollapsed, sidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:astryx-sidebar-collapsed", false);
+  const [astryxSidebarCollapsed, setAstryxSidebarCollapsed, astryxSidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:astryx-sidebar-collapsed", false);
+  const [currentSidebarCollapsed, setCurrentSidebarCollapsed, currentSidebarPreferencesReady] = usePersistedBooleanPreference("brp-clone-ui-v1:current-sidebar-collapsed", false);
   const isAstryxShell = controller.renderedDesignSystem === "astryx";
+  const sidebarCollapsed = isAstryxShell ? astryxSidebarCollapsed : currentSidebarCollapsed;
+  const setSidebarCollapsed = isAstryxShell ? setAstryxSidebarCollapsed : setCurrentSidebarCollapsed;
+  const sidebarPreferencesReady = isAstryxShell ? astryxSidebarPreferencesReady : currentSidebarPreferencesReady;
 
   if (!controller.authorized) return <ShellAccessGate />;
 
@@ -70,7 +74,13 @@ function ShellFrame({
       <div ref={bodyRef} className="app-body">
         <RendererViewSwitch
           slotId="app-shell-navigation"
-          currentView={<CurrentAppShellNavigation controller={controller} />}
+          currentView={(
+            <CurrentAppShellNavigation
+              controller={controller}
+              sidebarCollapsed={currentSidebarCollapsed}
+              onSidebarCollapsedChange={setCurrentSidebarCollapsed}
+            />
+          )}
           loadAstryxView={loadAstryxShellNavigation}
           astryxViewProps={{
             controller,
