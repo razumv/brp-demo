@@ -77,7 +77,7 @@ export const airFreightEvents: readonly AirFreightEvent[] = [
     id: "log-01-message",
     occurredAt: "Jul 18, 01:42 AM",
     title: "New message — LOG-01",
-    detail: "LOG-01: CODEX QA — тестове повідомлення по демонстраційному замовленню",
+    detail: "LOG-01: надіслано запит на перевірку терміну постачання",
     tone: "blue",
   },
   {

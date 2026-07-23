@@ -169,13 +169,16 @@ function LockedButton({label, reason, icon, isIconOnly = false}: {
   );
 }
 
-function DataNotice({shown, total, noun = "рядків"}: {shown: number; total: number; noun?: string}) {
-  return <p className={styles.dataNotice}>Показано {shown} з {total} {noun}.</p>;
-}
-
 function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
   const shipment = warehouseShipments.find((item) => item.id === model.shipmentId) ?? warehouseShipments[0];
   const receivingReason = "Запуск приймання недоступний: доступ лише для читання.";
+  const visibleLines = useMemo(() => {
+    const needle = normalize(model.query);
+    if (!needle) return shipment.manifest.representativeLines;
+    return shipment.manifest.representativeLines.filter((line) => normalize(
+      `${line.partNumber} ${line.description} ${line.quantity}`,
+    ).includes(needle));
+  }, [model.query, shipment]);
 
   return (
     <section className={styles.section} aria-label="Приймання">
@@ -190,6 +193,15 @@ function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
               value: item.id,
               label: `${item.proforma} · ${item.shipmentNumber} · ${item.status}`,
             }))}
+            width="100%"
+          />
+          <TextInput
+            label="Пошук у packing list"
+            isLabelHidden
+            value={model.query}
+            onChange={model.setQuery}
+            placeholder="Артикул або опис…"
+            hasClear
             width="100%"
           />
           <div className={styles.actionRow}>
@@ -224,13 +236,12 @@ function ReceivingView({model}: {model: AdminWarehouseModel["receiving"]}) {
             <div><h3>Packing list</h3><p>{shipment.proforma} · склад маніфесту</p></div>
             <Badge label={`${shipment.manifest.sourceLineCount} позицій`} variant="neutral" />
           </header>
-          <DataNotice shown={shipment.manifest.representativeLines.length} total={shipment.manifest.sourceLineCount} />
           <div className={styles.tableScroll} role="region" aria-label="Packing list" tabIndex={0}>
             <table className={styles.table}>
               <thead><tr><th>Артикул</th><th>Опис</th><th>К-ть</th><th>Скан</th></tr></thead>
-              <tbody>{shipment.manifest.representativeLines.map((line) => (
+              <tbody>{visibleLines.map((line) => (
                 <tr key={line.id}><th scope="row">{line.partNumber}</th><td>{line.description}</td><td>{line.quantity}</td><td>{line.scannedQuantity ?? "—"}</td></tr>
-              ))}</tbody>
+              ))}{!visibleLines.length ? <tr><td colSpan={4}>Позицій не знайдено</td></tr> : null}</tbody>
             </table>
           </div>
         </Card>
@@ -408,7 +419,6 @@ function InventoryParts({model}: {model: AdminWarehouseModel["inventory"]}) {
 
   return (
     <Card className={styles.tableCard} padding={0}>
-      <DataNotice shown={rows.length} total={warehouseInventoryTotals.parts} noun="деталей" />
       <div className={styles.tableScroll} role="region" aria-label="Зведення за деталями" tabIndex={0}>
         <table className={`${styles.table} ${styles.inventoryTable}`}>
           <thead><tr><th>Артикул</th><th>Опис</th><th>Постачання</th><th>Відправлено</th><th>Отримано</th><th>€ шт.</th><th>€ всього</th><th>Стан</th><th>Розподіл</th></tr></thead>
@@ -507,7 +517,6 @@ function PlacementView({model}: {model: AdminWarehouseModel["placement"]}) {
         </div>
       </Card>
       <Card className={styles.tableCard} padding={0}>
-        <DataNotice shown={rows.length} total={warehousePlacementSummary.total} noun="позицій" />
         {rows.length ? (
           <div className={styles.tableScroll} role="region" aria-label="Розміщення на складі" tabIndex={0}>
             <table className={`${styles.table} ${styles.placementTable}`}>

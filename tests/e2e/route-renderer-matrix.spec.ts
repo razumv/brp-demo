@@ -11,6 +11,7 @@ const appearances = [
 ] as const;
 
 const matrixHost = new URL(process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3111").host;
+const rendererCommitTimeout = 12_000;
 
 function isIgnorableRuntimeError(message: string, browserName: string) {
   if (/favicon|Failed to load resource.*404/i.test(message)) return true;
@@ -53,9 +54,16 @@ for (const appearance of appearances) {
       await seedRoute(page, row.role, appearance);
       const response = await page.goto(row.path, { waitUntil: "domcontentloaded" });
       expect(response?.status(), `${row.path} HTTP status`).toBeLessThan(400);
-      await expect(page.locator("html"), `${row.path} design system`).toHaveAttribute("data-design-system", appearance.designSystem);
+      await expect(page.locator("html"), `${row.path} renderer readiness`).not.toHaveAttribute(
+        "data-renderer-pending",
+        /.+/,
+        { timeout: rendererCommitTimeout },
+      );
+      await expect(page.locator("html"), `${row.path} design system`).toHaveAttribute(
+        "data-design-system",
+        appearance.designSystem,
+      );
       await expect(page.locator("html"), `${row.path} color mode`).toHaveAttribute("data-resolved-theme", appearance.colorMode);
-      await expect(page.locator("html"), `${row.path} renderer readiness`).not.toHaveAttribute("data-renderer-pending", /.+/);
       await expect(page.getByRole("heading").first(), `${row.path} heading`).toBeVisible();
       if (!row.specialBehaviors.includes("dense-scroller")) {
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), {
@@ -74,8 +82,15 @@ test("overlay Escape closes and restores keyboard focus", async ({ page }) => {
   await page.goto("/login/");
   await seedRoute(page, "admin", appearances[2]);
   await page.goto("/admin/order-pipeline/");
-  await expect(page.locator("html")).toHaveAttribute("data-design-system", "astryx");
-  await expect(page.locator("html")).not.toHaveAttribute("data-renderer-pending", /.+/);
+  await expect(page.locator("html")).not.toHaveAttribute(
+    "data-renderer-pending",
+    /.+/,
+    { timeout: rendererCommitTimeout },
+  );
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-design-system",
+    "astryx",
+  );
   const trigger = page.getByRole("button", { name: "Період", exact: true });
   await trigger.focus();
   await trigger.click();

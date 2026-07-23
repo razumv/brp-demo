@@ -28,6 +28,7 @@ import {
 import {
   EmptyState,
   PageHeader,
+  PageSurface,
   Panel,
 } from "@/components/shared/ui";
 import { AdminAirFreightPage } from "./admin-air-freight-page";
@@ -100,34 +101,41 @@ function FeatureShell({ feature, action, children }: { feature: string; action?:
 
 export function AdminFeaturePage({ feature }: { feature: string }) {
   const normalized = feature.replace(/^\/+|\/+$/g, "");
+  let content: ReactNode;
   switch (normalized) {
-    case "supplier-orders": return <AdminSupplierOrdersPage />;
-    case "consignment": return <AdminConsignmentPage />;
-    case "returns": return <AdminReturnsPage />;
-    case "air-freight": return <AdminAirFreightPage />;
-    case "ocean-freight": return <AdminOceanFreightPage />;
-    case "unit-shipping": return <AdminUnitShippingPage />;
-    case "warehouse": return <AdminWarehousePage />;
-    case "settlements": return <AdminSettlementsPage />;
-    case "invoices": return <AdminInvoicesPage />;
-    case "catalog": return <AdminCatalogPage />;
-    case "schedule": return <AdminSchedulePage />;
-    case "companies": return <AdminCompaniesPage />;
-    case "dealer-access": return <AdminDealerAccessPage />;
-    case "users": return <AdminUsersPage />;
-    case "permissions": return <AdminPermissionsPage />;
-    case "tasks": return <AdminTasksPage />;
-    case "analytics": return <AdminAnalyticsPage />;
-    case "parts-report": return <AdminPartsReportPage />;
-    case "performance": return <AdminPerformancePage />;
-    case "bossweb-lookup": return <AdminBossWebLookupPage />;
-    case "integrations": return <AdminIntegrationsPage />;
-    case "settings": return <AdminSettingsPage />;
+    case "supplier-orders": content = <AdminSupplierOrdersPage />; break;
+    case "consignment": content = <AdminConsignmentPage />; break;
+    case "returns": content = <AdminReturnsPage />; break;
+    case "air-freight": content = <AdminAirFreightPage />; break;
+    case "ocean-freight": content = <AdminOceanFreightPage />; break;
+    case "unit-shipping": content = <AdminUnitShippingPage />; break;
+    case "warehouse": content = <AdminWarehousePage />; break;
+    case "settlements": content = <AdminSettlementsPage />; break;
+    case "invoices": content = <AdminInvoicesPage />; break;
+    case "catalog": content = <AdminCatalogPage />; break;
+    case "schedule": content = <AdminSchedulePage />; break;
+    case "companies": content = <AdminCompaniesPage />; break;
+    case "dealer-access": content = <AdminDealerAccessPage />; break;
+    case "users": content = <AdminUsersPage />; break;
+    case "permissions": content = <AdminPermissionsPage />; break;
+    case "tasks": content = <AdminTasksPage />; break;
+    case "analytics": content = <AdminAnalyticsPage />; break;
+    case "parts-report": content = <AdminPartsReportPage />; break;
+    case "performance": content = <AdminPerformancePage />; break;
+    case "bossweb-lookup": content = <AdminBossWebLookupPage />; break;
+    case "integrations": content = <AdminIntegrationsPage />; break;
+    case "settings": content = <AdminSettingsPage />; break;
     default:
-      return (
+      content = (
         <FeatureShell feature={normalized}>
           <Panel><EmptyState title="Розділ не знайдено" description="Цей адміністративний маршрут не входить до дослідженого набору." /></Panel>
         </FeatureShell>
       );
   }
+
+  return (
+    <PageSurface as="div" width="default" data-admin-feature-shell={normalized}>
+      {content}
+    </PageSurface>
+  );
 }

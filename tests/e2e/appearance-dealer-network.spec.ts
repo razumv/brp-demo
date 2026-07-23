@@ -27,7 +27,7 @@ test("customers, network, team access and parts report expose Astryx renderers",
 
   await page.goto("/dealer/team-access");
   await expect(page.locator('[data-dealer-team-access-renderer="astryx"]')).toHaveCount(1);
-  await expect(page.getByText("Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Склад команди та профілі прав керуються адміністратором. У дилерській частині доступний лише перегляд поточного облікового запису.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Зберегти", exact: true })).toBeDisabled();
 });
 

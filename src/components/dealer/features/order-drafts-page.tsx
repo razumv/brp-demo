@@ -117,7 +117,6 @@ export function OrderDraftsPage() {
             onClear: resetFilters,
             content: <><BrpSelect label="Вміст чернетки" value={content} onValueChange={(value) => setContent(value as DraftContentFilter)} options={[{ value: "all", label: "Усі" }, { value: "with-items", label: "З позиціями" }, { value: "empty", label: "Порожні" }]} /><BrpSelect label="Покупець чернетки" value={buyer} onValueChange={(value) => setBuyer(value as DraftBuyerFilter)} options={[{ value: "all", label: "Усі" }, { value: "assigned", label: "Призначений" }, { value: "unassigned", label: "Не призначений" }]} /></>,
           }}
-          resultMeta={`Показано ${filtered.length} з ${snapshot.drafts.length}`}
         />
         {feedback ? <p className={styles.feedback} role="status">{feedback}</p> : null}
 

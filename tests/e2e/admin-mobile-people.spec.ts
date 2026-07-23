@@ -43,7 +43,13 @@ test("users swap the active-user grid for matching labelled cards at the exact b
     "Видалити Користувач 03 — заблоковано",
   ] as const;
   const mobileActionStates = await Promise.all(actionNames.map((name) => mobileCard.getByRole("button", { name }).isDisabled()));
-  await expect(cards.locator("..").getByText(/Показано \d+ користувачів/)).toBeVisible();
+  await expect(cards.locator("..").getByText(/Показано \d+ користувачів/)).toHaveCount(0);
+  const dealerCard = cards.locator('li[data-record-id]').filter({ hasText: "Дилер" }).first();
+  await dealerCard.getByRole("button", { name: /^Редагувати / }).click();
+  const editDialog = page.getByRole("dialog", { name: "Редагувати користувача" });
+  await expect(editDialog).toContainText("Лише головний дилер може керувати командою та доступом своєї компанії.");
+  await expect(editDialog.getByText("Only the main dealer can manage Team & Access for their company.")).toHaveCount(0);
+  await page.getByRole("button", { name: "Скасувати" }).click();
 
   await openAdminRoute(page, "/admin/users", 767);
   await expect(cards).toBeVisible();

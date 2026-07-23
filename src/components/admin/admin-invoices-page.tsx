@@ -153,7 +153,7 @@ function LockedButton({ children, className = "", title }: {
 function RepresentativeNotice({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
     <span>
-      Репрезентативна source-вибірка: показано {shown} з {total} {noun}. Загальні лічильники збережені точно.
+      {total} {noun} · у поточному перегляді {shown}
     </span>
   );
 }
@@ -267,12 +267,12 @@ function ContractDetailModal({ contract, onClose }: { contract: InvoiceContract 
       open
       onClose={onClose}
       title={`Контракт ${contract.shortNumber}`}
-      description="Безпечний перегляд source-summary контракту"
+      description="Реквізити контракту"
       className="!w-[min(860px,100%)]"
       footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}
     >
       <div className="grid gap-4">
-        <InlineNotice>Source підтверджує номер картки, постачальника та покупця. Реквізити з форми нового контракту або окремих додатків не приписуються збереженому контракту; непідтверджені поля позначені «—».</InlineNotice>
+        <InlineNotice>Незаповнені реквізити позначені «—». Перегляд не змінює контракт.</InlineNotice>
         <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
           {fields.map(([label, value]) => (
             <div key={label} className="bg-[var(--surface)] p-3">
@@ -401,7 +401,7 @@ function AppendixPreviewModal({ preview, onClose }: { preview: AppendixPreview |
                     </tr>
                   ))}
                 </tbody>
-                <tfoot><tr className="border-t-2 border-[var(--border)]"><td className="p-3 font-semibold">Source total · {preview.totalSourceRows} рядків</td><td className="p-3 text-right font-semibold">{preview.totalQuantity}</td><td /><td className="p-3 text-right font-mono font-bold">{formatPreviewMoney(preview.totalAmount, preview.currency)}</td></tr></tfoot>
+                <tfoot><tr className="border-t-2 border-[var(--border)]"><td className="p-3 font-semibold">Разом · {preview.totalSourceRows} рядків</td><td className="p-3 text-right font-semibold">{preview.totalQuantity}</td><td /><td className="p-3 text-right font-mono font-bold">{formatPreviewMoney(preview.totalAmount, preview.currency)}</td></tr></tfoot>
               </table>
             </div>
           </div>
@@ -475,7 +475,7 @@ function AppendicesTab(props: Pick<AdminInvoicesViewProps, "appendicesQuery" | "
                   <td className="text-right font-semibold text-[var(--green)]">{appendix.amount}</td>
                   <td>
                     <div className="flex min-w-max items-center gap-1">
-                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити підтверджений документ" : "Повний preview не зафіксовано у source"} icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedAppendixChange(appendix)} disabled={!appendix.preview} />
+                      <AdminIconAction label={`Переглянути ${appendix.name}`} tooltip={appendix.preview ? "Відкрити документ" : "Повний документ ще не завантажено"} icon={<Eye size={13} />} tone="primary" onClick={() => props.onSelectedAppendixChange(appendix)} disabled={!appendix.preview} />
                       <AdminIconAction label={`Митний документ ${appendix.name}`} tooltip="Генерація митного документа вимкнена" icon={<Download size={13} />} disabled />
                       <AdminIconAction label={`Банківський документ ${appendix.name}`} tooltip="Генерація банківського документа вимкнена" icon={<Landmark size={13} />} disabled />
                       <AdminIconAction label={`Видалити ${appendix.name}`} tooltip="Видалення додатка вимкнене" icon={<Trash2 size={13} />} tone="danger" disabled />
@@ -518,9 +518,9 @@ function InvoiceSummaryModal({ preview, onClose }: { preview: InvoiceSummaryPrev
       ];
 
   return (
-    <Modal open onClose={onClose} title={title} description="Безпечний перегляд source-summary" className="!w-[min(680px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+    <Modal open onClose={onClose} title={title} description="Деталі документа" className="!w-[min(680px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
       <div className="grid gap-4">
-        <InlineNotice>Source не підтверджує глибші рядки цього розкриття. Preview показує тільки факти, вже наявні у картці, та не формує й не завантажує документ.</InlineNotice>
+        <InlineNotice>Перегляд показує збережені дані та не формує і не завантажує документ.</InlineNotice>
         <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
           {fields.map(([label, value]) => <div key={label} className="bg-[var(--surface)] p-3"><dt className="text-[10px] font-semibold uppercase text-[var(--muted-foreground)]">{label}</dt><dd className="mb-0 mt-1 text-[13px] font-medium">{value}</dd></div>)}
         </dl>
@@ -563,7 +563,7 @@ function InvoicesTab(props: Pick<AdminInvoicesViewProps, "invoiceQuery" | "invoi
                     <td>—</td>
                     <td><div className="flex flex-wrap gap-1"><StatusBadge tone="amber">{group.readiness}</StatusBadge><StatusBadge tone="green">ETA: {group.eta} ({group.visibleStatusLabel})</StatusBadge></div></td>
                     <td>—</td><td>—</td><td>—</td><td>—</td>
-                    <td><div className="flex min-w-max items-center gap-1"><AdminIconAction label={`Переглянути BL ${group.billOfLading}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "shipment", item: group })} /><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></div></td>
+                    <td><div className="flex min-w-max items-center gap-1"><AdminIconAction label={`Переглянути BL ${group.billOfLading}`} tooltip="Переглянути деталі BL" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "shipment", item: group })} /><LockedButton className="button-primary min-h-8 whitespace-nowrap px-2 text-[10px]" title="Формування BL вимкнене">Сформувати BL</LockedButton></div></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -578,7 +578,7 @@ function InvoicesTab(props: Pick<AdminInvoicesViewProps, "invoiceQuery" | "invoi
               <FileText size={16} className="shrink-0 text-[var(--blue)]" />
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => props.onInvoicePreviewChange({ kind: "formed", item: invoice })} aria-haspopup="dialog"><strong className="block font-mono text-[12px] text-[var(--blue)] hover:underline">{invoice.invoiceNumber}</strong><span className="mt-1 block text-[10px] text-[var(--muted-foreground)]">{invoice.containerNumber} · {invoice.unitCount} од. · {invoice.total}</span></button>
               <time className="text-[10px] text-[var(--muted-foreground)]">{invoice.date}</time>
-              <AdminIconAction label={`Переглянути інвойс ${invoice.invoiceNumber}`} tooltip="Безпечний source-summary" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "formed", item: invoice })} />
+              <AdminIconAction label={`Переглянути інвойс ${invoice.invoiceNumber}`} tooltip="Переглянути деталі інвойсу" icon={<Eye size={13} />} tone="primary" onClick={() => props.onInvoicePreviewChange({ kind: "formed", item: invoice })} />
               <AdminIconAction label={`Завантажити DOCX ${invoice.invoiceNumber}`} tooltip="Завантаження DOCX вимкнене" icon={<Download size={13} />} disabled />
             </article>
           ))}
@@ -666,10 +666,10 @@ function CostDetailModal({ card, onClose }: { card: InvoiceCostCard | null; onCl
   ] as const;
 
   return (
-    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Деталізація source-картки" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
+    <Modal open onClose={onClose} title={`Собівартість · BL ${card.billOfLading}`} description="Деталізація витрат" className="!w-[min(820px,100%)]" footer={<button type="button" className="button button-outline" onClick={onClose}>Закрити</button>}>
       <div className="grid gap-4">
         <InlineNotice tone={card.incomplete ? "warning" : "info"}>
-          {card.incomplete ? "У source-картці є незаповнені витрати; вони залишені як «—». " : ""}Перегляд не архівує BL і не змінює курс або суми.
+          {card.incomplete ? "Незаповнені витрати позначені «—». " : ""}Перегляд не архівує BL і не змінює курс або суми.
         </InlineNotice>
         <dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
           {fields.map(([label, value]) => <div key={label} className="bg-[var(--surface)] p-3"><dt className="text-[10px] font-semibold uppercase text-[var(--muted-foreground)]">{label}</dt><dd className="mb-0 mt-1 text-[13px] font-semibold">{value}</dd></div>)}

@@ -164,16 +164,17 @@ test("current shell popovers expose menu semantics and restore focus after Escap
 });
 
 for (const renderer of ["shadcn", "astryx"] as const) {
-  test(`${renderer} shell persists language metadata and exposes working notifications`, async ({page}) => {
+  test(`${renderer} shell exposes only supported language and working notifications`, async ({page}) => {
     await seedAppearance(page, renderer);
     await loginAsAdmin(page);
 
     await page.getByRole("button", {name: "language_switcher"}).click();
-    await page.getByText("English", {exact: true}).click();
-    await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect.poll(() => page.evaluate(() => window.localStorage.getItem("brp-clone-ui-v1:language"))).toBe("en");
+    const languageMenu = page.getByRole("menu", {name: "Мова інтерфейсу"});
+    await expect(languageMenu.getByText("Українська", {exact: true})).toBeVisible();
+    await expect(languageMenu.getByText("English", {exact: true})).toHaveCount(0);
+    await expect(languageMenu.getByText("Русский", {exact: true})).toHaveCount(0);
+    await expect(page.locator("html")).toHaveAttribute("lang", "uk");
+    await page.keyboard.press("Escape");
 
     await page.getByRole("button", {name: "Сповіщення"}).click();
     await page.getByText("Позначити все прочитаним", {exact: true}).click();

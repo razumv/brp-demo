@@ -148,8 +148,8 @@ test("parts cards paginate on mobile and preserve page-two identities on desktop
   await expect(page.getByRole("list", { name: "Каталог запчастин" })).toHaveCount(1);
   await expect(mobileList.getByRole("button")).toHaveCount(0);
   const firstPageIds = await recordIds(mobileList);
-  await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(page.getByText("Page 2 of 3525")).toBeVisible();
+  await page.getByRole("button", { name: "Далі", exact: true }).click();
+  await expect(page.getByText("Сторінка 2 з 3525")).toBeVisible();
   const mobilePageTwoIds = await recordIds(mobileList);
   expect(mobilePageTwoIds).not.toEqual(firstPageIds);
   await expectPageFits(page);
@@ -158,6 +158,6 @@ test("parts cards paginate on mobile and preserve page-two identities on desktop
   await selectCatalogSection(page, "parts", false);
   await expectInactiveSurface(mobileList);
   await expect(desktopTable).toBeVisible();
-  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("button", { name: "Далі", exact: true }).click();
   expect(await recordIds(desktopTable)).toEqual(mobilePageTwoIds);
 });

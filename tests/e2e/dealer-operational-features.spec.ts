@@ -30,7 +30,8 @@ test.describe("dealer operational features on desktop", () => {
     await expect(unitSummary.locator(".stat-card").filter({ hasText: "Очікує РН" }).getByText("13", { exact: true })).toBeVisible();
     await expect(unitSummary.locator(".stat-card").filter({ hasText: "Прийнято" }).getByText("0", { exact: true })).toBeVisible();
     await expect(unitSummary.locator(".stat-card").filter({ hasText: "Мої одиниці" }).getByText("13", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("unit-result-count")).toHaveText("15 відправок · 13 одиниць");
+    await expect(page.getByTestId("unit-result-count")).toHaveCount(0);
+    await expect(page.getByText("15 відправок · 13 одиниць", { exact: true })).toHaveCount(0);
 
     const unitTable = page.getByTestId("unit-desktop-table");
     const shipmentHeader = unitTable.locator("table").first().locator("thead > tr").first();
@@ -65,15 +66,15 @@ test.describe("dealer operational features on desktop", () => {
     await expect(page.getByRole("button", { name: "Розгорнути контейнер HAMU4124410" })).toBeFocused();
 
     await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("CANYON REDR");
-    await expect(page.getByTestId("unit-result-count")).toHaveText("1 відправка · 1 одиниця");
     await expect(unitTable.getByText("RD CANYON REDR 1330 SE6 GN EU", { exact: true })).toBeVisible();
+    await expect(unitTable.getByText("RD SPYDER F3 LTD 1330 SE6 RD S", { exact: true })).toHaveCount(0);
     await page.getByRole("searchbox", { name: /Пошук техніки/ }).fill("");
 
     await page.getByRole("button", { name: "Фільтри техніки" }).click();
     await page.getByLabel("Дія").selectOption("awaiting_registration");
-    await expect(page.getByTestId("unit-result-count")).toHaveText("8 відправок · 9 одиниць");
+    await expect(unitTable.getByText(/чекає РН/).first()).toBeVisible();
     await page.getByRole("button", { name: "Скинути фільтри" }).click();
-    await expect(page.getByTestId("unit-result-count")).toHaveText("15 відправок · 13 одиниць");
+    await expect(unitTable.getByText("RD SPYDER F3 LTD 1330 SE6 RD S", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /прийняти|змінити статус|продати|відправити|синхронізувати/i })).toHaveCount(0);
 
     await openDealerRoute(page, "/dealer/schedule", "Графік поставки", dealerSessionOptions);
@@ -126,16 +127,16 @@ test.describe("dealer operational features on desktop", () => {
     const workshopSearch = page.getByRole("searchbox", { name: /Пошук у майстерні/ });
     for (const query of ["Сезонне", "Клієнт Logos", "Олексій", "Терміново"]) {
       await workshopSearch.fill(query);
-      await expect(page.getByTestId("workshop-result-count")).toHaveText("1 замовлення");
+      await expect(page.getByTestId("workshop-result-count")).toHaveCount(0);
       await expect(workshopCard).toBeVisible();
     }
     await workshopSearch.fill("");
     await page.getByRole("button", { name: "Фільтри майстерні" }).click();
     await page.getByLabel("Етап").selectOption("scheduled");
-    await expect(page.getByTestId("workshop-result-count")).toHaveText("0 замовлень");
+    await expect(workshopCard).toHaveCount(0);
     await page.getByLabel("Етап").selectOption("new");
     await page.getByLabel("Тип роботи").selectOption("maintenance");
-    await expect(page.getByTestId("workshop-result-count")).toHaveText("1 замовлення");
+    await expect(workshopCard).toBeVisible();
     await page.getByRole("button", { name: "Скинути фільтри" }).click();
 
     const newColumn = page.getByTestId("workshop-column").nth(0);

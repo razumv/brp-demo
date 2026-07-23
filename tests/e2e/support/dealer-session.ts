@@ -20,9 +20,10 @@ function dealerUrl(path: string, options: DealerSessionOptions = {}) {
 
 export async function loginAsDealer(page: Page, options: DealerSessionOptions = {}) {
   await page.goto(dealerUrl("/login", options));
-  await page.getByLabel("Електронна пошта").fill("dealer@example.invalid");
-  await page.locator('input[type="password"]:visible').fill("not-persisted");
-  await page.getByRole("button", { name: "Увійти" }).click();
+  await page.locator('input[type="email"]:visible').fill("dealer@example.invalid");
+  const password = page.locator('input[type="password"]:visible');
+  await password.fill("not-persisted");
+  await password.press("Enter");
 
   await expect.poll(() => new URL(page.url()).pathname).toBe(dealerPathname("/", options));
   if (options.assertIdentity !== false) {

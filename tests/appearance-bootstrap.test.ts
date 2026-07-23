@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import vm from "node:vm";
 import test from "node:test";
 import {
@@ -85,7 +86,7 @@ function createBootstrapHarness(options: {
       return {matches: options.prefersDark ?? false};
     },
     setTimeout(callback: TimeoutCallback, delay: number) {
-      assert.equal(delay, 4_000);
+      assert.equal(delay, 15_000);
       const handle = nextTimer++;
       timers.set(handle, callback);
       return handle;
@@ -222,7 +223,7 @@ test("blocked legacy migration and unavailable storage retain shadcn light", () 
   assert.equal(blockedRead.timerCount(), 0);
 });
 
-test("cold Astryx replaces an earlier watchdog and recovers atomically after 4 seconds", () => {
+test("cold Astryx gives supported browsers enough time before atomic recovery", () => {
   const harness = createBootstrapHarness({
     initial: {
       [APPEARANCE_STORAGE_KEY]: JSON.stringify({
@@ -252,4 +253,11 @@ test("cold Astryx replaces an earlier watchdog and recovers atomically after 4 s
   });
   assert.doesNotThrow(() => JSON.stringify(harness.context.__BRP_APPEARANCE_DIAGNOSTIC__));
   assert.equal(harness.context.__BRP_ASTRYX_WATCHDOG__, undefined);
+});
+
+test("bootstrap and provider use the same non-aggressive Astryx readiness budget", () => {
+  const provider = readFileSync("src/components/providers/appearance-provider.tsx", "utf8");
+
+  assert.match(getAppearanceBootstrapSource(), /},15000\)/);
+  assert.match(provider, /}, 15_000\);/);
 });

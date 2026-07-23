@@ -255,7 +255,7 @@ function CreateReturnDialog({ model, open }: { model: AdminReturnsModel; open: b
             ) : (
               <Panel className="overflow-hidden shadow-none">
                 <div className="border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2.5 text-[11px] text-[var(--muted-foreground)]">
-                  Показано {dealerLines.length} доказово зафіксованих позицій із {dealer.eligibleLineCount}.
+                  Знайдено {dealerLines.length} із {dealer.eligibleLineCount} доступних позицій.
                 </div>
                 <div
                   className="max-w-full overflow-x-auto overscroll-contain"

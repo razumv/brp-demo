@@ -84,7 +84,6 @@ export default function AstryxAdminConsignmentView({
   requestStatus,
   holder,
   filteredPositions,
-  hasQuery,
   warehouseCount,
   networkCount,
   networkUnits,
@@ -125,11 +124,11 @@ export default function AstryxAdminConsignmentView({
         </section>
 
         {activeView === "warehouse" ? <section id="consignment-warehouse-panel" role="tabpanel" aria-label="Весь склад" className={styles.panel}>
-          <div className={styles.summary}><div><strong>{warehouseCount} запчастин · {CONSIGNMENT_SOURCE_TOTALS.dealers} дилерів</strong><p>Репрезентативна вибірка: {filteredPositions.length} з {hasQuery ? "результатів локальної вибірки" : CONSIGNMENT_SOURCE_TOTALS.parts}.</p></div><Button label="Експорт CSV" icon={<Download size={15} />} variant="secondary" isDisabled tooltip="Експорт потребує підключення до облікової системи." /></div>
+          <div className={styles.summary}><div><strong>{warehouseCount} запчастин · {CONSIGNMENT_SOURCE_TOTALS.dealers} дилерів</strong></div><Button label="Експорт CSV" icon={<Download size={15} />} variant="secondary" isDisabled tooltip="Експорт потребує підключення до облікової системи." /></div>
           <WarehouseMatrix positions={filteredPositions} />
         </section> : null}
         {activeView === "network" ? <section id="consignment-network-panel" role="tabpanel" aria-label="Мережа" className={styles.panel}>
-          <div className={styles.summary}><div><strong>{networkCount} позицій · {networkUnits} од.</strong><p>Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. Репрезентативна локальна вибірка: {filteredPositions.length} рядків.</p></div></div>
+          <div className={styles.summary}><div><strong>{networkCount} позицій · {networkUnits} од.</strong></div></div>
           <NetworkTable positions={filteredPositions} />
         </section> : null}
         {activeView === "requests" ? <section id="consignment-requests-panel" role="tabpanel" aria-label="Заявки" className={styles.panel}>

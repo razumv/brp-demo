@@ -261,7 +261,6 @@ function CurrentAdminConsignmentView({
   requestStatus,
   holder,
   filteredPositions,
-  hasQuery,
   warehouseCount,
   networkCount,
   networkUnits,
@@ -334,9 +333,6 @@ function CurrentAdminConsignmentView({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div aria-live="polite">
               <strong className="text-sm">{warehouseCount} запчастин · {CONSIGNMENT_SOURCE_TOTALS.dealers} дилерів</strong>
-              <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
-                Репрезентативна вибірка: {filteredPositions.length} з {hasQuery ? "результатів локальної вибірки" : CONSIGNMENT_SOURCE_TOTALS.parts}.
-              </p>
             </div>
             <button
               type="button"
@@ -362,9 +358,6 @@ function CurrentAdminConsignmentView({
         >
           <div aria-live="polite">
             <strong className="text-sm">{networkCount} позицій · {networkUnits} од.</strong>
-            <p className="mb-0 mt-1 text-[11px] text-[var(--muted-foreground)]">
-              Показано {networkCount} з {CONSIGNMENT_SOURCE_TOTALS.parts}. У поточному перегляді: {filteredPositions.length} рядків.
-            </p>
           </div>
           <NetworkTable positions={filteredPositions} />
         </section>

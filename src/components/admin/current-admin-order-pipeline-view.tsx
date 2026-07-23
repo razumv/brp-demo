@@ -200,10 +200,10 @@ function SupplierOrderQueue() {
   return (
     <Panel>
       <div className={styles.panelHeader}>
-        <div><h2 className={styles.sectionTitle}>Черга замовлень постачальнику</h2><p className={styles.sectionCopy}>Операційне створення та зміна статусів стануть доступними після підключення інтеграції.</p></div>
+        <div><h2 className={styles.sectionTitle}>Черга замовлень постачальнику</h2><p className={styles.sectionCopy}>Позиції, що очікують консолідації та відправлення постачальнику.</p></div>
         <button type="button" className="button button-outline" disabled title="Створення замовлення постачальнику стане доступним після підключення інтеграції."><LockKeyhole size={14} /><Plus size={14} /> Нове замовлення постачальнику</button>
       </div>
-      <EmptyState compact title="Черга порожня" description="Source count для статусу «Очікує постачальника» дорівнює 0." />
+      <EmptyState compact title="Черга порожня" description="Наразі немає позицій, що очікують замовлення постачальнику." />
     </Panel>
   );
 }

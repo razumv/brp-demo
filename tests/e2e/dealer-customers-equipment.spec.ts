@@ -22,10 +22,10 @@ test("dealer creates, filters, and deletes an unrelated customer", async ({ page
   await page.getByLabel("Категорія клієнтів").selectOption("wholesale");
   await expect(page.getByRole("button", { name: "ПП Озерний", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Скинути фільтри" }).click();
-  await page.getByRole("button", { name: "Клієнт Logos", exact: true }).click();
+  await page.getByRole("button", { name: "ТОВ Логос Сервіс", exact: true }).click();
   await page.getByRole("button", { name: "Фільтри", exact: true }).click();
   await page.getByLabel("Категорія клієнтів").selectOption("wholesale");
-  await expect(page.getByRole("heading", { name: "Клієнт Logos", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "ТОВ Логос Сервіс", exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "ПП Озерний", exact: true })).toBeVisible();
   await expect(page.getByText("Продана техніка (0)", { exact: true })).toBeVisible();
   await expect(page.getByText("Немає продажів техніки", { exact: true })).toBeVisible();
@@ -62,7 +62,7 @@ test("dealer adds, edits, removes, and persists customer equipment", async ({ pa
 
 test("dealer edits a customer and cannot delete one with related work", async ({ page }) => {
   await page.goto("/dealer/customers");
-  await page.getByRole("button", { name: "Клієнт Logos", exact: true }).click();
+  await page.getByRole("button", { name: "ТОВ Логос Сервіс", exact: true }).click();
   await page.getByRole("button", { name: "Редагувати клієнта" }).click();
   await page.getByLabel("Телефон").fill("+380 44 111 22 33");
   await page.getByRole("button", { name: "Зберегти", exact: true }).click();
@@ -72,7 +72,7 @@ test("dealer edits a customer and cannot delete one with related work", async ({
   await page.getByRole("button", { name: "Видалити клієнта" }).click();
   await page.getByRole("button", { name: "Видалити", exact: true }).click();
   await expect(page.getByText("Клієнта неможливо видалити: є пов’язані записи.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Клієнт Logos", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ТОВ Логос Сервіс", exact: true })).toBeVisible();
 });
 
 test("customer management remains usable at 390px", async ({ page }) => {

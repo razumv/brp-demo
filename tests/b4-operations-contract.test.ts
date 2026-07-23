@@ -39,10 +39,42 @@ test("admin UI never exposes clone or local implementation wording", () => {
   }
 });
 
+test("seeded operational data does not expose demo or agent QA labels", () => {
+  const operationalData = [
+    "src/lib/admin-dealer-access-data.ts",
+    "src/lib/admin-order-data.ts",
+    "src/lib/admin-air-freight-data.ts",
+    "src/lib/mock-data.ts",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    operationalData,
+    /Демо[-\s]|демонстраційн|CODEX QA|демонстрационного|тестов(?:ий|ый)\s+заказ/i,
+  );
+});
+
+test("Ocean dialogs describe unavailable business data without implementation evidence copy", () => {
+  const oceanSources = [
+    "src/components/admin/admin-ocean-detail.tsx",
+    "src/components/admin/admin-ocean-freight-page.tsx",
+    "src/components/admin/astryx-admin-ocean-freight-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    oceanSources,
+    /source evidence|доказов(?:е|і)\s+(?:покриття|рядки)|домодельован|preview не/i,
+  );
+  assert.doesNotMatch(
+    oceanSources,
+    /ПН уже создана|Подготовка ПН|Закрыть|Пересчитать|Документы 1C|Проверить статус|Состав ПН|Engine #|Save, Apply/i,
+  );
+});
+
 test("priority workflows do not expose implementation labels or redundant BossWeb submit", () => {
   const prioritySources = [
     "src/components/dealer/features/bossweb-page.tsx",
     "src/components/dealer/features/feature-frame.tsx",
+    "src/components/dealer/team-access.tsx",
     "src/components/admin/astryx-admin-overview-view.tsx",
     "src/components/admin/admin-consignment-page.tsx",
     "src/components/admin/admin-order-detail.tsx",
@@ -53,7 +85,66 @@ test("priority workflows do not expose implementation labels or redundant BossWe
   ].map(read).join("\n");
 
   assert.doesNotMatch(prioritySources, /демо|демонстраційн|клон|локальн(?:а|е|ий|і|ому)\s+(?:верс|перегляд|вибірк|замовлен|фільтр|діапазон|довідник)/i);
+  assert.doesNotMatch(prioritySources, /Склад команди та профілі прав керуються адміністратором/i);
   assert.doesNotMatch(read("src/components/dealer/features/bossweb-page.tsx"), /BrpButton label="Пошук"/);
+});
+
+test("document and order dialogs use product language instead of implementation evidence labels", () => {
+  const dialogSources = [
+    "src/components/admin/admin-invoices-page.tsx",
+    "src/components/admin/astryx-admin-invoices-view.tsx",
+    "src/components/admin/admin-order-detail.tsx",
+    "src/components/admin/astryx-admin-order-detail-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    dialogSources,
+    /source[- ](?:summary|preflight|карт)|Failed to build confirm preview|Структура preview|Параметри preview|Репрезентативна source-вибірка/i,
+  );
+});
+
+test("supplier queue exposes business state rather than source-count copy", () => {
+  const queueSources = [
+    "src/components/admin/current-admin-order-pipeline-view.tsx",
+    "src/components/admin/astryx-admin-order-pipeline-view.tsx",
+  ].map(read).join("\n");
+
+  assert.match(queueSources, /Черга замовлень постачальнику/);
+  assert.doesNotMatch(queueSources, /Source count|source-доказ|локальне замовлення/i);
+});
+
+test("warehouse does not expose secondary shown-of-total notices", () => {
+  for (const path of [
+    "src/components/admin/admin-warehouse-page.tsx",
+    "src/components/admin/astryx-admin-warehouse-view.tsx",
+  ]) {
+    assert.doesNotMatch(read(path), /Показано\s*\{?[\s\S]{0,80}\sз\s\{?/i);
+  }
+});
+
+test("approved dealer and admin routes omit decorative result counters", () => {
+  const sources = [
+    "src/components/dealer/dealer-orders.tsx",
+    "src/components/dealer/dealer-customers.tsx",
+    "src/components/dealer/features/order-drafts-page.tsx",
+    "src/components/dealer/features/units-page.tsx",
+    "src/components/dealer/features/workshop-page.tsx",
+    "src/components/dealer/features/secondary-data-pages.tsx",
+    "src/components/admin/admin-dealer-access-page.tsx",
+    "src/components/admin/astryx-admin-dealer-access-view.tsx",
+    "src/components/admin/admin-users-page.tsx",
+    "src/components/admin/astryx-admin-users-view.tsx",
+    "src/components/admin/admin-schedule-page.tsx",
+    "src/components/admin/astryx-admin-schedule-view.tsx",
+    "src/components/admin/admin-unit-shipping-page.tsx",
+    "src/components/admin/astryx-admin-unit-shipping-view.tsx",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    sources,
+    /resultMeta=|Показано\s*\{?[\s\S]{0,80}\sз\s\{?|Показано\s*\{?[\s\S]{0,40}(?:користувач|прав)/i,
+  );
+  assert.doesNotMatch(sources, /Only the main dealer can manage Team & Access/i);
 });
 
 test("route-specific admin surfaces use theme tokens for neutral switch fills", () => {

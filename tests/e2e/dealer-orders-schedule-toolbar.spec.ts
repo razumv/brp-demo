@@ -61,26 +61,26 @@ test("orders disclose the status filter without moving the view switcher", async
     const trigger = page.getByRole("button", { name: "Фільтри замовлень", exact: true });
     await trigger.click();
     await selectStatus(page, "done", "Виконані (0)");
-    await expect(page.getByText("0 замовлень", { exact: true })).toBeVisible();
+    await expect(page.getByText("0 замовлень", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Нічого не знайдено" })).toBeVisible();
     await expect(trigger).toHaveText("1");
     await page.getByRole("button", { name: "Скинути фільтри" }).click();
-    await expect(page.getByText("1 замовлення", { exact: true })).toBeVisible();
+    await expect(page.getByText("1 замовлення", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "LOG-01" })).toBeVisible();
     await expect(trigger).not.toHaveText("1");
   }
 });
 
-test("dealer toolbar waits briefly before applying a typed search query", async ({ page }) => {
+test("dealer toolbar applies a typed query automatically without a submit action", async ({ page }) => {
   await page.goto("/dealer/orders");
   const search = page.getByRole("searchbox", { name: "Пошук замовлень" });
   await expect(page.getByRole("link", { name: "LOG-01" })).toBeVisible();
 
   await search.fill("немає такого замовлення");
   await expect(search).toBeFocused();
-  expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
-  await page.waitForTimeout(150);
-  expect(await page.getByRole("link", { name: "LOG-01" }).count()).toBe(1);
-
   await expect(page.getByRole("heading", { name: "Нічого не знайдено" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "LOG-01" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Пошук", exact: true })).toHaveCount(0);
   await expect(search).toBeFocused();
 });
 

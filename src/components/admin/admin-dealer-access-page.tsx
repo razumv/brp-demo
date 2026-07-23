@@ -31,7 +31,6 @@ import {
 import {
   dealerCompanyOptions,
   dealerPermissionGroups,
-  dealerPermissionSummary,
   dealerTeamSummaries,
   type DealerCompanyOption,
   type DealerPermissionEntry,
@@ -232,15 +231,12 @@ function PolicyPanel({ groups }: {
     readonly permissions: readonly DealerPermissionEntry[];
   }>;
 }) {
-  const visibleCount = groups.reduce((total, group) => total + group.permissions.length, 0);
-
   return (
     <AdminPermissionMatrix
       actions={dealerPermissionActions}
       rows={policyRows(groups)}
       ariaLabel="Політика компанії"
       title="Політика компанії"
-      description={`Показано ${visibleCount} з ${dealerPermissionSummary.total} прав · ${dealerPermissionSummary.checked} увімкнено · ${dealerPermissionSummary.unchecked} вимкнено`}
       emptyCopy="Немає доступних дилерських прав"
     />
   );

@@ -163,7 +163,7 @@ function SearchField({ value, onChange, placeholder, label }: {
 function RepresentativeNotice({ shown, total, noun }: { shown: number; total: number; noun: string }) {
   return (
     <p className="m-0 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 text-[10px] text-[var(--muted-foreground)]">
-      Показано {shown} з {formatInteger(total)} {noun}. Загальний лічильник збережено точно.
+      {formatInteger(total)} {noun} · у поточному перегляді {shown}
     </p>
   );
 }
@@ -608,14 +608,14 @@ function DebugPricing() {
   return (
     <Panel className="overflow-hidden shadow-none">
       <button type="button" className="flex min-h-12 w-full items-center gap-2 px-4 text-left text-[13px] font-medium" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
-        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />} <Bug size={15} /> Debug Pricing
-        <span className="ml-1 text-[11px] font-normal text-[var(--muted-foreground)]">— explain how a SKU&apos;s price is calculated</span>
+        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />} <Bug size={15} /> Перевірка ціни
+        <span className="ml-1 text-[11px] font-normal text-[var(--muted-foreground)]">— деталі розрахунку ціни SKU</span>
       </button>
       {open ? (
         <div className="grid gap-3 border-t border-[var(--border)] p-4">
           <div className="flex flex-col gap-2 sm:flex-row">
-            <input className="input min-w-0 flex-1 font-mono" aria-label="SKU для Debug Pricing" value={query} onChange={(event) => { setQuery(event.target.value); setSubmittedQuery(null); }} placeholder="SKU" />
-            <button type="button" disabled={!normalize(query)} className="button button-primary sm:min-w-24" onClick={() => setSubmittedQuery(query)}>Debug</button>
+            <input className="input min-w-0 flex-1 font-mono" aria-label="SKU для перевірки ціни" value={query} onChange={(event) => { setQuery(event.target.value); setSubmittedQuery(null); }} placeholder="SKU" />
+            <button type="button" disabled={!normalize(query)} className="button button-primary sm:min-w-24" onClick={() => setSubmittedQuery(query)}>Перевірити</button>
           </div>
 
           {submittedQuery && hasObservedResult ? (
@@ -700,7 +700,7 @@ function ImportHistory() {
   return (
     <Panel className="overflow-hidden shadow-none">
       <button type="button" className="flex min-h-12 w-full items-center gap-2 px-4 text-left text-[13px] font-medium" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
-        <History size={15} /> Import History <span className="text-[var(--muted-foreground)]">(20)</span>
+        <History size={15} /> Історія імпорту <span className="text-[var(--muted-foreground)]">(20)</span>
         {open ? <ChevronUp size={15} className="ml-auto" /> : <ChevronDown size={15} className="ml-auto" />}
       </button>
       {open ? (
@@ -708,7 +708,7 @@ function ImportHistory() {
           <RepresentativeNotice shown={catalogImportHistory.length} total={20} noun="імпортів" />
           <div className="data-table-wrap" role="region" aria-label="Історія імпорту" tabIndex={0}>
             <table className="data-table min-w-[900px]">
-              <thead><tr><th>Date</th><th>Mode</th><th>SKUs</th><th>New/Upd</th><th>Changes</th><th>Chains</th><th>Duration</th><th>Статус</th></tr></thead>
+              <thead><tr><th>Дата</th><th>Режим</th><th>SKU</th><th>Нові/оновлені</th><th>Зміни</th><th>Ланцюжки</th><th>Тривалість</th><th>Статус</th></tr></thead>
               <tbody>{catalogImportHistory.map((row) => (
                 <tr key={row.id}><td>{row.date}</td><td><StatusBadge tone={row.mode === "1C" ? "blue" : "amber"}>{row.mode}</StatusBadge></td><td>{row.skus === null ? "—" : formatInteger(row.skus)}</td><td className="font-mono text-[10px] text-[var(--green)]">{row.newUpdated}</td><td className="text-[10px]">{row.changes}</td><td>{row.chains}</td><td>{row.durationSeconds.toFixed(1)}s</td><td><StatusBadge tone={row.status === "OK" ? "green" : "red"}>{row.status}</StatusBadge></td></tr>
               ))}</tbody>
@@ -818,8 +818,8 @@ function PartsCatalog() {
         {!hasFilters ? (
           <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3">
             <button type="button" className="button button-outline" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={14} /> Prev</button>
-            <span className="text-[11px] text-[var(--muted-foreground)]">Page {page} of {catalogPartsSourcePages}</span>
-            <button type="button" className="button button-outline" disabled={page === catalogPartsSourcePages} onClick={() => setPage((current) => Math.min(catalogPartsSourcePages, current + 1))}>Next <ChevronRight size={14} /></button>
+            <span className="text-[11px] text-[var(--muted-foreground)]">Сторінка {page} з {catalogPartsSourcePages}</span>
+            <button type="button" className="button button-outline" disabled={page === catalogPartsSourcePages} onClick={() => setPage((current) => Math.min(catalogPartsSourcePages, current + 1))}>Далі <ChevronRight size={14} /></button>
           </div>
         ) : null}
       </Panel>

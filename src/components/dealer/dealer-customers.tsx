@@ -23,7 +23,6 @@ import type {
   DealerCustomerInput,
 } from "@/lib/dealer/contracts";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
-import { ukrainianCount } from "@/lib/dealer/format";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import type { EquipmentInput } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -228,7 +227,6 @@ export function CustomersPage() {
           onClear: () => setFilter("all"),
           content: <BrpSelect label="Категорія клієнтів" value={filter} onValueChange={(value) => setFilter(value as (typeof categories)[number])} options={categories.map((value) => ({ value, label: value === "all" ? "Всі" : categoryLabels[value] }))} />,
         }}
-        resultMeta={ukrainianCount(filtered.length, ["клієнт", "клієнти", "клієнтів"])}
       />
 
       <section className={styles.customerLayout}>

@@ -150,7 +150,6 @@ function Filters({model}: {model: AdminUnitShippingModel}) {
         {model.activeTab === "shipped" ? <><DateInput label="Дата відвантаження з" value={(model.shippedFrom || undefined) as ISODateString | undefined} onChange={(value) => model.setShippedFrom(value ?? "")} isLabelHidden width={155} hasClear /><DateInput label="Дата відвантаження по" value={(model.shippedTo || undefined) as ISODateString | undefined} onChange={(value) => model.setShippedTo(value ?? "")} isLabelHidden width={155} hasClear /></> : null}
         <Button label="Скинути фільтри" variant="ghost" icon={<X size={14} />} isIconOnly onClick={model.resetFilters} />
       </div>
-      <Text className={styles.toolbarMeta} color="secondary" display="block">Показано {model.filteredRecords.length} з {model.activeRecords.length}</Text>
     </Card>
   );
 }

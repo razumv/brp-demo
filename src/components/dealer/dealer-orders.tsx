@@ -22,7 +22,6 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/shared/ui";
 import { useDealerWorkflow } from "@/components/dealer/dealer-workflow-provider";
 import { formatMoney, orderTotal } from "@/lib/mock-data";
-import { ukrainianCount } from "@/lib/dealer/format";
 import { dealerOrderHref } from "@/lib/order-route-hrefs";
 import { findDealerOrder } from "@/lib/dealer/order-state";
 import type { DealerAttachmentMetadata, DealerCommandResult, DealerSnapshot } from "@/lib/dealer/contracts";
@@ -166,7 +165,6 @@ export function DealerOrdersPage() {
                 <BrpSelect label="Статус замовлень" value={status} onValueChange={(value) => setStatus(value as "all" | OrderStatus)} options={filterStatuses.map((item) => ({value: item.value, label: `${item.label} (${counts[item.value]})`}))} />
               ),
             }}
-            resultMeta={ukrainianCount(filtered.length, ["замовлення", "замовлення", "замовлень"])}
           />
         </div>
         <div className={styles.orderViewModes}>

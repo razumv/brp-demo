@@ -207,7 +207,7 @@ function toneText(tone: AdminTone) {
 }
 
 const actionUnavailableReason = "Дія недоступна в поточному стані";
-const preflightUnavailableReason = "Source preflight зафіксовано лише для LOG-01 і KHA-08";
+const preflightUnavailableReason = "Попередня перевірка доступна лише для LOG-01 і KHA-08";
 const legacyCheckUnavailableReason = "POST check-legacy вимкнено: кнопка не виконує запит.";
 
 function DisabledActionButton({
@@ -341,10 +341,10 @@ function ChatModal({ order, open, onClose }: { order: AdminOrderFixture; open: b
 
 function PreviewTable({ order, delivery, replenishment, onDelivery, onReplenishment }: { order: AdminOrderFixture; delivery: DeliveryChannel; replenishment: number; onDelivery: (value: DeliveryChannel) => void; onReplenishment: (value: number) => void }) {
   const activeLines = order.lines.filter((line) => line.status !== "cancelled");
-  if (!activeLines.length) return <EmptyState compact title="Немає підтверджених позицій для preview" description="Для цього рядка немає evidence-backed складу позицій; розрахунок не вигадується." />;
+  if (!activeLines.length) return <EmptyState compact title="Немає позицій для попереднього розрахунку" description="Додайте або підтвердьте позиції замовлення, щоб переглянути розподіл." />;
   return (
     <div className="grid gap-4">
-      <InlineNotice>Репрезентативний layout джерельного preview. Значення нижче не записуються до замовлення.</InlineNotice>
+      <InlineNotice>Попередній розрахунок не змінює замовлення, доки його не буде підтверджено.</InlineNotice>
       <div className="grid gap-3 sm:grid-cols-2"><label className="field"><span>Канал доставки</span><select value={delivery} onChange={(event) => onDelivery(event.target.value as DeliveryChannel)}><option value="air">air</option><option value="ocean">ocean</option></select></label><label className="field"><span>Поповнення, к-сть</span><input type="number" min={0} value={replenishment} onChange={(event) => onReplenishment(Math.max(0, Number(event.target.value) || 0))} /></label></div>
       <div className="data-table-wrap rounded-md border border-[var(--border)]"><table className="data-table min-w-[1120px]"><thead><tr><th>Артикул</th><th>Запитано</th><th>Склад зараз</th><th>Зі складу</th><th>Після підтвердження</th><th>Оборот</th><th>Відкрито Logos</th><th>До замовлення</th><th>Канал</th><th>Рішення Logos</th></tr></thead><tbody>{activeLines.map((line) => {
         const stock = Number.parseInt(line.stockSource, 10) || 0;
@@ -361,8 +361,8 @@ function PreflightModal({ order, open, onClose, view, setView, delivery, setDeli
   return (
     <Modal open={open} onClose={onClose} title="Перевірка перед підтвердженням" description={`${order.code} · замовлення ще не підтверджено`} className="!w-[min(1180px,100%)]" footer={<><button type="button" className="button button-outline" onClick={onClose}>Скасувати</button><DisabledActionButton>Підтвердити замовлення</DisabledActionButton></>}>
       <div className="grid gap-4">
-        <div className="segmented w-fit"><button type="button" aria-pressed={view === "error"} onClick={() => setView("error")}>Зафіксована відповідь</button><button type="button" aria-pressed={view === "representative"} onClick={() => setView("representative")}>Структура preview</button></div>
-        {view === "error" ? <div className="rounded-md border border-[var(--red)] bg-[var(--red-soft)] p-5 text-[var(--red)]"><div className="flex items-start gap-3"><AlertTriangle size={20} /><div><strong className="block">Failed to build confirm preview</strong><p className="mb-0 mt-2 text-[11px]">Це точний результат безпечного source preflight для LOG-01 і KHA-08. Статус замовлення не змінився.</p></div></div></div> : <PreviewTable order={order} delivery={delivery} replenishment={replenishment} onDelivery={setDelivery} onReplenishment={setReplenishment} />}
+        <div className="segmented w-fit"><button type="button" aria-pressed={view === "error"} onClick={() => setView("error")}>Помилка розрахунку</button><button type="button" aria-pressed={view === "representative"} onClick={() => setView("representative")}>Попередній розрахунок</button></div>
+        {view === "error" ? <div className="rounded-md border border-[var(--red)] bg-[var(--red-soft)] p-5 text-[var(--red)]"><div className="flex items-start gap-3"><AlertTriangle size={20} /><div><strong className="block">Не вдалося підготувати розрахунок</strong><p className="mb-0 mt-2 text-[11px]">Статус замовлення не змінився. Спробуйте повторити перевірку пізніше.</p></div></div></div> : <PreviewTable order={order} delivery={delivery} replenishment={replenishment} onDelivery={setDelivery} onReplenishment={setReplenishment} />}
       </div>
     </Modal>
   );

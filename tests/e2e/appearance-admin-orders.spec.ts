@@ -253,7 +253,7 @@ test.describe("admin order detail appearance matrix", () => {
     await waitingFilter.click();
     await expect(waitingFilter).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", {name: "Перевірити перед підтвердженням"}).click();
-    await page.getByRole("button", {name: "Структура preview"}).click();
+    await page.getByRole("button", {name: "Попередній розрахунок"}).click();
     await page.getByRole("combobox", {name: "Канал доставки"}).selectOption("ocean");
     await page.getByRole("spinbutton", {name: "Поповнення, к-сть"}).fill("3");
     await expect(page.getByRole("button", {name: "Оновити розрахунок"})).toBeDisabled();
@@ -265,7 +265,7 @@ test.describe("admin order detail appearance matrix", () => {
     await expect(page.locator('[data-admin-order-detail-renderer="astryx"]')).toHaveCount(1);
     await expect(page.getByRole("button", {name: /Очікування 1/})).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("dialog", {name: "Перевірка перед підтвердженням"})).toBeVisible();
-    await expect(page.getByRole("radio", {name: "Структура preview"})).toBeChecked();
+    await expect(page.getByRole("radio", {name: "Попередній розрахунок"})).toBeChecked();
     await expect(page.getByRole("combobox", {name: "Канал доставки"})).toContainText("ocean");
     await expect(page.getByRole("spinbutton", {name: "Поповнення, к-сть"})).toHaveValue("3");
     await expect(page.getByRole("button", {name: "Оновити розрахунок"})).toBeDisabled();
@@ -313,7 +313,7 @@ test.describe("admin order detail appearance matrix", () => {
 
       const preflight = page.getByRole("button", {name: "Preflight не зафіксовано"});
       await expect(preflight).toBeDisabled();
-      await expect.poll(() => preflight.evaluate((element) => element.getAttribute("title") ?? element.getAttribute("aria-description"))).toBe("Source preflight зафіксовано лише для LOG-01 і KHA-08");
+      await expect.poll(() => preflight.evaluate((element) => element.getAttribute("title") ?? element.getAttribute("aria-description"))).toBe("Попередня перевірка доступна лише для LOG-01 і KHA-08");
 
       const legacy = page.getByRole("button", {name: "Перевірити старий склад"});
       await expect(legacy).toBeDisabled();
