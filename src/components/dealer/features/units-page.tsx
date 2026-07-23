@@ -22,7 +22,7 @@ import {
   type DealerUnitShipment,
   type DealerUnitTab,
 } from "@/lib/dealer/units-data";
-import { ukrainianCount } from "@/lib/dealer/format";
+import { normalizeDealerSearch, ukrainianCount } from "@/lib/dealer/format";
 import dealerStyles from "../dealer.module.css";
 import operationalStyles from "./operational-features.module.css";
 import { FeatureFrame } from "./feature-frame";
@@ -62,10 +62,21 @@ function UnitStatusBadge({ unit }: { unit: DealerUnitRecord }) {
     : <StatusBadge tone="amber">● Чекає РН</StatusBadge>;
 }
 
-function ShipmentUnitList({ shipment }: { shipment: DealerUnitShipment }) {
+function visibleShipmentUnits(shipment: DealerUnitShipment, query: string) {
+  const needle = normalizeDealerSearch(query);
+  if (!needle) return shipment.units;
+  if ([shipment.container, shipment.bl].some((value) => normalizeDealerSearch(value).includes(needle))) {
+    return shipment.units;
+  }
+  return shipment.units.filter((unit) => [unit.model, unit.sku, unit.vin ?? ""]
+    .some((value) => normalizeDealerSearch(value).includes(needle)));
+}
+
+function ShipmentUnitList({ shipment, query }: { shipment: DealerUnitShipment; query: string }) {
+  const units = visibleShipmentUnits(shipment, query);
   return (
     <ul className={operationalStyles.unitList}>
-      {shipment.units.map((unit) => (
+      {units.map((unit) => (
         <li key={unit.id}>
           <div>
             <strong>{unit.number}. {unit.model}</strong>
@@ -179,6 +190,7 @@ export function UnitsPage() {
                   <tbody>
                     {shipments.map((shipment) => {
                       const isExpanded = expanded === shipment.container;
+                      const visibleUnits = visibleShipmentUnits(shipment, query);
                       return (
                         <Fragment key={shipment.id}>
                           <tr>
@@ -211,7 +223,7 @@ export function UnitsPage() {
                                     <tr><th>#</th><th>Модель</th><th>Артикул</th><th>Рік</th><th>VIN</th><th>Статус</th><th>Дія</th></tr>
                                   </thead>
                                   <tbody>
-                                    {shipment.units.map((unit) => (
+                                    {visibleUnits.map((unit) => (
                                       <tr key={unit.id}>
                                         <td>{unit.number}</td>
                                         <td>{unit.model}</td>
@@ -254,7 +266,7 @@ export function UnitsPage() {
                         <div><dt>ETA</dt><dd>{shipment.eta}</dd></div>
                         <div><dt>Дія</dt><dd><ShipmentActionBadge shipment={shipment} /></dd></div>
                       </dl>
-                      {isExpanded ? <ShipmentUnitList shipment={shipment} /> : null}
+                      {isExpanded ? <ShipmentUnitList shipment={shipment} query={query} /> : null}
                     </article>
                   );
                 })}
