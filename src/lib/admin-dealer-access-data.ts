@@ -61,8 +61,8 @@ export const dealerCompanyOptions = [
 export const dealerTeamSummaries = [
   {
     id: "dealer-primary",
-    displayName: "Демо-керівник",
-    accountLabel: "Демо-акаунт 01",
+    displayName: "Олександр Коваль",
+    accountLabel: "Основний акаунт",
     role: "Головний дилер",
     profile: "Full Access",
     accessStatus: "Основний акаунт",
@@ -70,8 +70,8 @@ export const dealerTeamSummaries = [
   },
   {
     id: "dealer-employee-1",
-    displayName: "Демо-співробітник 1",
-    accountLabel: "Демо-акаунт 02",
+    displayName: "Марія Бондар",
+    accountLabel: "Акаунт працівника 02",
     role: "Співробітник",
     profile: "Full Access",
     accessStatus: "Доступ призначено",
@@ -79,8 +79,8 @@ export const dealerTeamSummaries = [
   },
   {
     id: "dealer-employee-2",
-    displayName: "Демо-співробітник 2",
-    accountLabel: "Демо-акаунт 03",
+    displayName: "Іван Мельник",
+    accountLabel: "Акаунт працівника 03",
     role: "Співробітник",
     profile: "Без доступу",
     accessStatus: "Потрібно призначити доступ",
@@ -88,8 +88,8 @@ export const dealerTeamSummaries = [
   },
   {
     id: "dealer-employee-3",
-    displayName: "Демо-співробітник 3",
-    accountLabel: "Демо-акаунт 04",
+    displayName: "Олена Ткаченко",
+    accountLabel: "Акаунт працівника 04",
     role: "Співробітник",
     profile: "Без доступу",
     accessStatus: "Потрібно призначити доступ",
@@ -97,8 +97,8 @@ export const dealerTeamSummaries = [
   },
   {
     id: "dealer-employee-4",
-    displayName: "Демо-співробітник 4",
-    accountLabel: "Демо-акаунт 05",
+    displayName: "Андрій Шевченко",
+    accountLabel: "Акаунт працівника 05",
     role: "Співробітник",
     profile: "Без доступу",
     accessStatus: "Потрібно призначити доступ",

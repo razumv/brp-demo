@@ -182,11 +182,11 @@ const line = (
 
 export const ADMIN_ORDER_FIXTURES: readonly AdminOrderFixture[] = [
   {
-    id: "a20b2bdd-2a1f-4322-a50a-fe68a17f4963", code: "LOG-01", company: "Logos", contact: "Финансы", dealer: "Logos", created: "Jul 18, 2026", po: "CODEX-QA-20260718", delivery: "Доставка", notes: "CODEX QA — тестовый заказ для анализа демонстрационного сайта; не аппрувить в админке", status: "new", statusLabel: "Новий", stage: "Очікує постачання", age: "0d old", activeParts: 1, totalUnits: 1, total: 13.09, lineBadges: [badge("Очікування", 1, "amber")],
+    id: "a20b2bdd-2a1f-4322-a50a-fe68a17f4963", code: "LOG-01", company: "Logos", contact: "Фінанси", dealer: "Logos", created: "Jul 18, 2026", po: "LOGOS-20260718", delivery: "Доставка", notes: "Замовлення очікує перевірки менеджером перед підтвердженням.", status: "new", statusLabel: "Новий", stage: "Очікує постачання", age: "0d old", activeParts: 1, totalUnits: 1, total: 13.09, lineBadges: [badge("Очікування", 1, "amber")],
     lines: [line("log-01-9779150", "9779150", "COOLANT,EXT LIFE", "pending", "Очікування · Склад", 1, 13.09, { stockSource: "1" })],
     totals: [{ label: "Замовлено (1)", value: 13.09, tone: "amber" }],
-    messages: [{ id: "log-chat-1", author: "Финансы", role: "dealer", body: "CODEX QA — тестовое сообщение по демонстрационному заказу", time: "10h" }],
-    timeline: [{ id: "log-tl-1", time: "Jul 18 01:40 AM", text: "Order LOG-01 — $13.09" }, { id: "log-tl-2", time: "Jul 18 01:42 AM", text: "LOG-01: CODEX QA — тестовое сообщение по демонстрационному заказу" }],
+    messages: [{ id: "log-chat-1", author: "Фінанси", role: "dealer", body: "Просимо перевірити позицію та підтвердити доступний термін постачання.", time: "10h" }],
+    timeline: [{ id: "log-tl-1", time: "Jul 18 01:40 AM", text: "Замовлення LOG-01 — $13.09" }, { id: "log-tl-2", time: "Jul 18 01:42 AM", text: "LOG-01: надіслано запит на перевірку терміну постачання" }],
     documents: [], shipments: [], evidenceComplete: true,
   },
   {

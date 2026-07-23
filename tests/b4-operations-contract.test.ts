@@ -39,6 +39,20 @@ test("admin UI never exposes clone or local implementation wording", () => {
   }
 });
 
+test("seeded operational data does not expose demo or agent QA labels", () => {
+  const operationalData = [
+    "src/lib/admin-dealer-access-data.ts",
+    "src/lib/admin-order-data.ts",
+    "src/lib/admin-air-freight-data.ts",
+    "src/lib/mock-data.ts",
+  ].map(read).join("\n");
+
+  assert.doesNotMatch(
+    operationalData,
+    /Демо[-\s]|демонстраційн|CODEX QA|демонстрационного|тестов(?:ий|ый)\s+заказ/i,
+  );
+});
+
 test("Ocean dialogs describe unavailable business data without implementation evidence copy", () => {
   const oceanSources = [
     "src/components/admin/admin-ocean-detail.tsx",
